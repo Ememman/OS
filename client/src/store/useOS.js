@@ -3,6 +3,7 @@ import { create } from "zustand";
 export const APPS = {
   library: { title: "Library", w: 860, h: 580 },
   music: { title: "Music", w: 760, h: 520 },
+  terminal: { title: "Terminal", w: 740, h: 480 },
   updates: { title: "Updates", w: 620, h: 640 },
   chats: { title: "Chats", w: 420, h: 620 },
   gallery: { title: "Gallery", w: 880, h: 600 },
@@ -88,6 +89,12 @@ export const useOS = create((set, get) => ({
     set({ osMode: mode });
   },
   reopenPicker: () => set({ osChosen: false }),
+
+  // System-wide Spotlight / Search
+  spotlightOpen: false,
+  openSpotlight: () => set({ spotlightOpen: true }),
+  closeSpotlight: () => set({ spotlightOpen: false }),
+  toggleSpotlight: () => set((s) => ({ spotlightOpen: !s.spotlightOpen })),
 
   resetDefaults: () => {
     ["os_accent", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha"].forEach((k) =>

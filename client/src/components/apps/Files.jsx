@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { Folder, FileText, ExternalLink, Grid3x3, List, ChevronRight, Star, HardDrive } from "lucide-react";
+import { Folder, FileText, ExternalLink, Grid3x3, List, HardDrive } from "lucide-react";
+import { GIconStar, GIconChevronRight, GIconTerminal } from "../icons/GravityIcons";
 import { fileTree } from "../../data/files";
 import { useOS } from "../../store/useOS";
 
@@ -7,6 +8,7 @@ const FAVORITES = [
   { label: "All Files", path: [] },
   { label: "About", path: [], target: "About_Bron.txt" },
   { label: "Skills", path: [], target: "Skills.txt" },
+  { label: "Terminal", path: [], target: "Terminal.sh" },
   { label: "Projects", path: ["Projects"] },
   { label: "Gallery", path: ["Gallery"] }
 ];
@@ -21,6 +23,9 @@ function resolvePath(path) {
 }
 
 function Icon({ item }) {
+  if (item.name?.toLowerCase().includes("terminal") || item.app === "terminal") {
+    return <GIconTerminal size={item._size || 32} className="text-emerald-400" />;
+  }
   if (item.type === "folder") return <Folder size={item._size || 34} className="text-sky-300" fill="currentColor" fillOpacity={0.15} />;
   if (item.type === "app-link") return <ExternalLink size={item._size || 30} className="text-amber-300" />;
   return <FileText size={item._size || 30} className="text-white/70" />;
@@ -57,7 +62,7 @@ export default function Files() {
     <div className="flex h-full">
       <div className="w-24 sm:w-40 border-r border-white/10 p-2 sm:p-3 shrink-0">
         <div className="text-[10px] uppercase tracking-wide text-white/40 mb-2 flex items-center gap-1">
-          <Star size={11} /> Favorites
+          <GIconStar size={11} /> Favorites
         </div>
         <div className="space-y-0.5">
           {FAVORITES.map((f) => (
@@ -79,7 +84,7 @@ export default function Files() {
             <button onClick={() => setPath([])} className="hover:text-white shrink-0">Root</button>
             {path.map((seg, i) => (
               <span key={i} className="flex items-center gap-1 shrink-0">
-                <ChevronRight size={11} />
+                <GIconChevronRight size={11} />
                 <button onClick={() => setPath(path.slice(0, i + 1))} className="hover:text-white truncate">{seg}</button>
               </span>
             ))}

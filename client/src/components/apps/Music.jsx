@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  Play, Pause, SkipBack, SkipForward, Volume2, ListMusic, AudioLines,
-  Search, Plus, Check, ExternalLink, Loader2, Sparkles, MonitorPlay, Disc3
+  ListMusic, AudioLines, Plus, Check, ExternalLink, Loader2, Sparkles, MonitorPlay, Disc3
 } from "lucide-react";
+import {
+  GIconPlay, GIconPause, GIconBackward, GIconForward, GIconVolume, GIconSearch
+} from "../icons/GravityIcons";
 import { playlists } from "../../data/music";
 import { API_URL } from "../../lib/config";
 import { usePlayer } from "../../store/usePlayer";
@@ -213,7 +215,7 @@ export default function Music() {
               mode === "search" ? "bg-accent/25 text-white" : "text-white/70 hover:bg-white/5"
             }`}
           >
-            <Search size={12} /> Search
+            <GIconSearch size={12} /> Search
           </button>
 
           <div className="flex items-center gap-1.5 text-[11px] text-white/50 mb-1"><ListMusic size={12} /> Ambient</div>
@@ -263,7 +265,7 @@ export default function Music() {
               </div>
 
               <form onSubmit={(e) => { e.preventDefault(); runSearch(); }} className="flex items-center gap-2 bg-white/8 rounded-xl px-3 h-9">
-                <Search size={13} className="text-white/40 shrink-0" />
+                <GIconSearch size={14} className="text-white/40 shrink-0" />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
@@ -439,11 +441,11 @@ export default function Music() {
           <div className="text-[10px] text-white/45 truncate">{track?.artist || "—"}</div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button onClick={prev} disabled={!queue.length} className="p-1.5 hover:bg-white/10 rounded-full transition-colors disabled:opacity-30"><SkipBack size={14} /></button>
-          <button onClick={handleTogglePlay} disabled={!track} className="p-2 bg-accent rounded-full hover:brightness-110 active:scale-95 transition disabled:opacity-40">
-            {playing ? <Pause size={14} /> : <Play size={14} />}
+          <button onClick={prev} disabled={!queue.length} className="p-1.5 hover:bg-white/10 rounded-full transition-colors disabled:opacity-30 text-white/80 hover:text-white" title="Previous"><GIconBackward size={14} /></button>
+          <button onClick={handleTogglePlay} disabled={!track} className="p-2 bg-accent rounded-full hover:brightness-110 active:scale-95 transition disabled:opacity-40 text-white" title={playing ? "Pause" : "Play"}>
+            {playing ? <GIconPause size={14} /> : <GIconPlay size={14} />}
           </button>
-          <button onClick={next} disabled={!queue.length} className="p-1.5 hover:bg-white/10 rounded-full transition-colors disabled:opacity-30"><SkipForward size={14} /></button>
+          <button onClick={next} disabled={!queue.length} className="p-1.5 hover:bg-white/10 rounded-full transition-colors disabled:opacity-30 text-white/80 hover:text-white" title="Next"><GIconForward size={14} /></button>
         </div>
         <div className="flex-1 flex items-center gap-2 text-[10px] text-white/50 min-w-0">
           <span className="font-mono">{fmt(progress)}</span>
@@ -457,8 +459,8 @@ export default function Music() {
           />
           <span className="font-mono">{fmt(duration || track?.duration)}</span>
         </div>
-        <div className="hidden sm:flex items-center gap-1 shrink-0">
-          <Volume2 size={14} className="text-white/50" />
+        <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+          <GIconVolume size={15} className="text-white/50" />
           <input
             type="range"
             min={0}

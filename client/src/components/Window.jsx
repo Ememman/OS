@@ -1,5 +1,5 @@
 import { useRef, useCallback, useState, useEffect } from "react";
-import { Minus, Square, X } from "lucide-react";
+import { GIconMinus, GIconSquare, GIconClose } from "./icons/GravityIcons";
 import { useOS } from "../store/useOS";
 import { useIsMobile } from "../lib/useMediaQuery";
 
@@ -78,7 +78,7 @@ export default function Window({ win, children }) {
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [win, moveWindow, focusWindow]
+    [win, moveWindow, focusWindow, isMobile]
   );
 
   const onResizeStart = useCallback(
@@ -157,25 +157,39 @@ export default function Window({ win, children }) {
         {isWin ? (
           <>
             <div className="flex-1 text-xs text-white/70 font-medium select-none">{win.title}</div>
-            <button onClick={requestMinimize} className="w-11 h-9 flex items-center justify-center hover:bg-white/10" aria-label="Minimize window">
-              <Minus size={13} />
+            <button onClick={requestMinimize} className="w-11 h-9 flex items-center justify-center hover:bg-white/10 text-white/70 hover:text-white transition-colors" aria-label="Minimize window">
+              <GIconMinus size={13} />
             </button>
             {!isMobile && (
-              <button onClick={() => toggleMaximize(win.id)} className="w-11 h-9 flex items-center justify-center hover:bg-white/10" aria-label="Maximize window">
-                <Square size={11} />
+              <button onClick={() => toggleMaximize(win.id)} className="w-11 h-9 flex items-center justify-center hover:bg-white/10 text-white/70 hover:text-white transition-colors" aria-label="Maximize window">
+                <GIconSquare size={11} />
               </button>
             )}
-            <button onClick={requestClose} className="w-11 h-9 flex items-center justify-center hover:bg-[#e81123]" aria-label="Close window">
-              <X size={14} />
+            <button onClick={requestClose} className="w-11 h-9 flex items-center justify-center hover:bg-[#e81123] text-white/70 hover:text-white transition-colors" aria-label="Close window">
+              <GIconClose size={13} />
             </button>
           </>
         ) : (
           <>
-            <button onClick={requestClose} className="w-3 h-3 rounded-full bg-[#ff5f57] hover:brightness-90" aria-label="Close window" />
-            <button onClick={requestMinimize} className="w-3 h-3 rounded-full bg-[#febc2e] hover:brightness-90" aria-label="Minimize window" />
-            {!isMobile && (
-              <button onClick={() => toggleMaximize(win.id)} className="w-3 h-3 rounded-full bg-[#28c840] hover:brightness-90" aria-label="Maximize window" />
-            )}
+            <div className="group/controls flex items-center gap-2">
+              <button onClick={requestClose} className="w-3 h-3 rounded-full bg-[#ff5f57] hover:brightness-90 flex items-center justify-center text-black/70 opacity-90 transition-all" aria-label="Close window">
+                <span className="opacity-0 group-hover/controls:opacity-100 transition-opacity">
+                  <GIconClose size={8} />
+                </span>
+              </button>
+              <button onClick={requestMinimize} className="w-3 h-3 rounded-full bg-[#febc2e] hover:brightness-90 flex items-center justify-center text-black/70 opacity-90 transition-all" aria-label="Minimize window">
+                <span className="opacity-0 group-hover/controls:opacity-100 transition-opacity">
+                  <GIconMinus size={8} />
+                </span>
+              </button>
+              {!isMobile && (
+                <button onClick={() => toggleMaximize(win.id)} className="w-3 h-3 rounded-full bg-[#28c840] hover:brightness-90 flex items-center justify-center text-black/70 opacity-90 transition-all" aria-label="Maximize window">
+                  <span className="opacity-0 group-hover/controls:opacity-100 transition-opacity">
+                    <GIconSquare size={7} />
+                  </span>
+                </button>
+              )}
+            </div>
             <div className="flex-1 text-center text-xs text-white/60 font-medium select-none pr-10">{win.title}</div>
           </>
         )}

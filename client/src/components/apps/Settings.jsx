@@ -1,7 +1,15 @@
-import { Check, Sparkles, Palette, Volume2, RotateCcw, Eye } from "lucide-react";
+import { useState } from "react";
 import { useOS } from "../../store/useOS";
 import Wallpaper from "../Wallpaper";
-import { useState } from "react";
+import {
+  GIconCheck,
+  GIconSparkles,
+  GIconSliders,
+  GIconVolume,
+  GIconTrash,
+  GIconTerminal,
+  GIconSearch,
+} from "../icons/GravityIcons";
 
 // Preview images for the wallpaper selector — served from /public/wallpapers
 const PREVIEW_IMAGES = {
@@ -71,6 +79,8 @@ export default function Settings() {
     glassAlpha,
     setGlassAlpha,
     resetDefaults,
+    openApp,
+    openSpotlight,
   } = useOS();
 
   const [cityDraft, setCityDraft] = useState(weatherLoc.name);
@@ -152,7 +162,7 @@ export default function Settings() {
                   : "border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-white/20 hover:bg-white/10"
               }`}>
               <span className="font-medium">{o.label}</span>
-              {osMode === o.id && <Check size={14} className="text-accent flex-shrink-0" />}
+              {osMode === o.id && <GIconCheck size={14} className="text-accent flex-shrink-0" />}
             </button>
           ))}
         </div>
@@ -182,7 +192,7 @@ export default function Settings() {
                   />
                 </div>
                 <span className="font-medium">{o.label}</span>
-                {dockPosition === o.id && <Check size={11} className="text-accent" />}
+                {dockPosition === o.id && <GIconCheck size={11} className="text-accent" />}
               </button>
             ))}
           </div>
@@ -216,7 +226,7 @@ export default function Settings() {
                   />
                   {isSelected && (
                     <span className="absolute top-1.5 right-1.5 bg-accent rounded-full p-1 shadow-lg shadow-accent/40">
-                      <Check size={10} className="text-white" />
+                      <GIconCheck size={10} className="text-white" />
                     </span>
                   )}
                 </div>
@@ -243,7 +253,7 @@ export default function Settings() {
                 accent === a.value ? "border-white scale-110" : "border-transparent hover:border-white/30"
               }`}
               style={{ background: `rgb(${a.value})`, boxShadow: accent === a.value ? "0 0 20px rgba(255,255,255,0.15)" : "none" }}>
-              {accent === a.value && <Check size={14} className="text-white" />}
+              {accent === a.value && <GIconCheck size={14} className="text-white" />}
             </button>
           ))}
           <label className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border-2 border-dashed border-white/25 cursor-pointer hover:border-white/50 transition relative overflow-hidden" title="Custom color">
@@ -270,7 +280,7 @@ export default function Settings() {
           How solid windows, widgets, and menus look. Lower it to see more of the wallpaper through the panels.
         </p>
         <div className="flex items-center gap-3 p-3 sm:p-4 rounded-xl border border-white/10 bg-white/5">
-          <Eye size={14} className="text-white/40 shrink-0" />
+          <GIconSliders size={14} className="text-white/40 shrink-0" />
           <input
             type="range"
             min={0.3}
@@ -284,8 +294,50 @@ export default function Settings() {
         </div>
       </section>
 
+      {/* ============ NEXT-GEN SYSTEM & GRAVITY UI ============ */}
+      <GroupHeader icon={GIconSparkles} label="Next-Gen Features & Gravity UI" />
+      <section className="space-y-3">
+        <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <GIconTerminal size={16} />
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-white">Interactive Terminal Shell</h4>
+                <p className="text-[10px] text-white/45">Full CLI with neofetch, matrix rain, and app launcher</p>
+              </div>
+            </div>
+            <button
+              onClick={() => openApp("terminal")}
+              className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-emerald-500 hover:text-black font-medium transition-colors text-white"
+            >
+              Launch
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-white/10">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center text-accent">
+                <GIconSearch size={16} />
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-white">System Spotlight Search</h4>
+                <p className="text-[10px] text-white/45">Instant search across apps, files & actions (⌘K / Ctrl+K)</p>
+              </div>
+            </div>
+            <button
+              onClick={openSpotlight}
+              className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-accent text-white font-medium transition-colors"
+            >
+              Open
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* ============ WIDGETS ============ */}
-      <GroupHeader icon={Sparkles} label="Widgets" />
+      <GroupHeader icon={GIconSparkles} label="Widgets" />
 
       <section className="space-y-2">
         <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Photo</h3>
@@ -318,7 +370,7 @@ export default function Settings() {
       </section>
 
       {/* ============ SOUND & MOTION ============ */}
-      <GroupHeader icon={Volume2} label="Sound & Motion" />
+      <GroupHeader icon={GIconVolume} label="Sound & Motion" />
 
       <section className="space-y-2">
         <ToggleRow label="Reduce motion (pause ambient animations)" checked={reduceMotion} onToggle={toggleMotion} />
@@ -331,7 +383,7 @@ export default function Settings() {
       </section>
 
       {/* ============ DANGER ZONE ============ */}
-      <GroupHeader icon={RotateCcw} label="Danger zone" />
+      <GroupHeader icon={GIconTrash} label="Danger zone" />
       <section className="space-y-2">
         <button
           onClick={() => {

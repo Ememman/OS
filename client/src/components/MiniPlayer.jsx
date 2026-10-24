@@ -1,7 +1,13 @@
-import { Play, Pause, SkipBack, SkipForward, Music2 } from "lucide-react";
 import { usePlayer } from "../store/usePlayer";
 import { useOS } from "../store/useOS";
 import EqualizerBars from "./EqualizerBars";
+import {
+  GIconPlay,
+  GIconPause,
+  GIconBackward,
+  GIconForward,
+  GIconMusic,
+} from "./icons/GravityIcons";
 
 export default function MiniPlayer() {
   const { queue, queueIdx, playing, togglePlay, next, prev } = usePlayer();
@@ -11,9 +17,7 @@ export default function MiniPlayer() {
   const musicWin = windows.find((w) => w.app === "music");
   const musicVisible = musicWin && !musicWin.minimized;
 
-  // Only surface this when there's actually something to show for it — a
-  // track loaded, and the Music window itself isn't already visible (it has
-  // its own full player bar in that case, no need to duplicate it).
+  // Only surface this when there's actually something to show for it
   if (!track || musicVisible) return null;
 
   const bottomClearance = osMode === "win" ? "bottom-[76px]" : "bottom-20 sm:bottom-20";
@@ -28,7 +32,9 @@ export default function MiniPlayer() {
         {track.cover ? (
           <img src={track.cover} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center"><Music2 size={14} className="text-white/40" /></div>
+          <div className="w-full h-full flex items-center justify-center">
+            <GIconMusic size={14} className="text-white/40" />
+          </div>
         )}
       </div>
       <div className="text-left min-w-0 max-w-[120px] sm:max-w-[160px]">
@@ -38,15 +44,15 @@ export default function MiniPlayer() {
         </div>
         <div className="text-[9px] text-white/45 truncate">{track.artist}</div>
       </div>
-      <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-        <button onClick={prev} className="p-1 hover:bg-white/10 rounded-full transition-colors" title="Previous">
-          <SkipBack size={11} />
+      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+        <button onClick={prev} className="p-1 hover:bg-white/10 rounded-full transition-colors text-white/70 hover:text-white" title="Previous">
+          <GIconBackward size={12} />
         </button>
-        <button onClick={togglePlay} className="p-1.5 bg-accent rounded-full hover:brightness-110 active:scale-95 transition" title={playing ? "Pause" : "Play"}>
-          {playing ? <Pause size={11} /> : <Play size={11} />}
+        <button onClick={togglePlay} className="p-1.5 bg-accent rounded-full hover:brightness-110 active:scale-95 transition text-white" title={playing ? "Pause" : "Play"}>
+          {playing ? <GIconPause size={12} /> : <GIconPlay size={12} />}
         </button>
-        <button onClick={next} className="p-1 hover:bg-white/10 rounded-full transition-colors" title="Next">
-          <SkipForward size={11} />
+        <button onClick={next} className="p-1 hover:bg-white/10 rounded-full transition-colors text-white/70 hover:text-white" title="Next">
+          <GIconForward size={12} />
         </button>
       </div>
     </button>

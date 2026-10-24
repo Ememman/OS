@@ -1,23 +1,36 @@
-import { Library, Music2, Bell, MessageCircle, Images, Gamepad2, Settings, FileUser, Trash2, FolderOpen } from "lucide-react";
 import { useOS } from "./../store/useOS";
 import { useIsMobile } from "../lib/useMediaQuery";
+import {
+  GIconLibrary,
+  GIconMusic,
+  GIconTerminal,
+  GIconUpdates,
+  GIconChats,
+  GIconGallery,
+  GIconGames,
+  GIconFiles,
+  GIconSettings,
+  GIconResume,
+  GIconTrash,
+} from "./icons/GravityIcons";
 
 const DOCK_ITEMS = [
-  { app: "library", label: "Library", icon: Library, color: "#5BB8B0" },
-  { app: "music", label: "Music", icon: Music2, color: "#D9678C" },
-  { app: "updates", label: "Updates", icon: Bell, color: "#5FBF7C" },
-  { app: "chats", label: "Chats", icon: MessageCircle, color: "#8E7BE0" },
-  { app: "gallery", label: "Gallery", icon: Images, color: "#B8C25A" },
-  { app: "games", label: "Games", icon: Gamepad2, color: "#D98A4E" },
-  { app: "files", label: "Files", icon: FolderOpen, color: "#E0B84E" },
-  { app: "settings", label: "Settings", icon: Settings, color: "#8892A6" },
-  { app: "resume", label: "Resume", icon: FileUser, color: "#4B5A73" }
+  { app: "terminal", label: "Terminal", icon: GIconTerminal, color: "#22c55e" },
+  { app: "library", label: "Library", icon: GIconLibrary, color: "#5BB8B0" },
+  { app: "music", label: "Music", icon: GIconMusic, color: "#D9678C" },
+  { app: "updates", label: "Updates", icon: GIconUpdates, color: "#5FBF7C" },
+  { app: "chats", label: "Chats", icon: GIconChats, color: "#8E7BE0" },
+  { app: "gallery", label: "Gallery", icon: GIconGallery, color: "#B8C25A" },
+  { app: "games", label: "Games", icon: GIconGames, color: "#D98A4E" },
+  { app: "files", label: "Files", icon: GIconFiles, color: "#E0B84E" },
+  { app: "settings", label: "Settings", icon: GIconSettings, color: "#8892A6" },
+  { app: "resume", label: "Resume", icon: GIconResume, color: "#4B5A73" },
 ];
 
 const POSITION_CLASSES = {
   bottom: "bottom-1 sm:bottom-2 left-1/2 -translate-x-1/2 max-w-[calc(100vw-16px)]",
   left: "left-1 sm:left-2 top-1/2 -translate-y-1/2 max-h-[calc(100vh-56px)]",
-  right: "right-1 sm:right-2 top-1/2 -translate-y-1/2 max-h-[calc(100vh-56px)]"
+  right: "right-1 sm:right-2 top-1/2 -translate-y-1/2 max-h-[calc(100vh-56px)]",
 };
 
 export default function Dock() {
@@ -57,7 +70,7 @@ export default function Dock() {
             }`}
             style={{ background: `linear-gradient(160deg, ${color}33, ${color}18)`, border: `1px solid ${color}30` }}
           >
-            <Icon size={iconSize} color={color} strokeWidth={2} />
+            <Icon size={iconSize} color={color} />
             <span className={`pointer-events-none absolute ${tooltipPos} text-[10px] bg-black/85 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap hidden sm:block`}>
               {label}
             </span>
@@ -79,7 +92,7 @@ export default function Dock() {
           }`}
           style={{ background: "linear-gradient(160deg, #8892a633, #8892a618)", border: "1px solid #8892a630" }}
         >
-          <Trash2 size={effectiveCompact ? 15 : 20} color="#8892A6" />
+          <GIconTrash size={effectiveCompact ? 15 : 20} color="#8892A6" />
           <span className={`pointer-events-none absolute ${tooltipPos} text-[10px] bg-black/85 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap hidden sm:block`}>
             Close all
           </span>

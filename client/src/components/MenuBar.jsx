@@ -1,16 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  Wifi,
-  Search,
-  BatteryMedium,
-  Check,
-  X,
-  Menu as MenuIcon,
-} from "lucide-react";
-import { useOS, APPS } from "../store/useOS";
+import { useOS } from "../store/useOS";
 import { useOutsideClick as useOutsideClose } from "../lib/useOutsideClick";
 import LiveBadge from "./LiveBadge";
-import codeXmlIcon from "../assets/code-xml.png"; // Import the icon
+import {
+  GIconCode,
+  GIconSignal,
+  GIconPower,
+  GIconSearch,
+  GIconCheck,
+  GIconClose,
+} from "./icons/GravityIcons";
 
 function MenuDropdown({ label, isOpen, onToggle, onClose, children }) {
   const ref = useRef(null);
@@ -43,7 +42,7 @@ function MenuItem({ children, onClick, disabled, checked, shortcut }) {
           ? "text-white/25 cursor-default"
           : "text-white/85 hover:bg-accent hover:text-white cursor-default"
       }`}>
-      <span className="w-4 shrink-0">{checked && <Check size={14} />}</span>
+      <span className="w-4 shrink-0">{checked && <GIconCheck size={14} />}</span>
       <span className="flex-1">{children}</span>
       {shortcut && (
         <span className="text-[12px] text-white/35">{shortcut}</span>
@@ -66,8 +65,8 @@ function InfoModal({ title, onClose, children }) {
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-display text-sm font-semibold">{title}</h3>
-          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded">
-            <X size={14} />
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded text-white/60 hover:text-white">
+            <GIconClose size={14} />
           </button>
         </div>
         <div className="text-xs text-white/75 leading-relaxed space-y-2">
@@ -87,16 +86,14 @@ export default function MenuBar() {
     focusWindow,
     reduceMotion,
     toggleMotion,
+    openSpotlight,
+    reopenPicker,
   } = useOS();
   const [now, setNow] = useState(new Date());
   const [openMenu, setOpenMenu] = useState(null);
   const [modal, setModal] = useState(null); // "about" | "shortcuts" | null
-  const [searchOpen, setSearchOpen] = useState(false);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
-  const [query, setQuery] = useState("");
   const [fullscreen, setFullscreen] = useState(false);
-  const searchRef = useRef(null);
-  const searchWrapRef = useRef(null);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -109,12 +106,6 @@ export default function MenuBar() {
     return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, []);
 
-  useEffect(() => {
-    if (searchOpen) searchRef.current?.focus();
-  }, [searchOpen]);
-
-  useOutsideClose(searchWrapRef, () => setSearchOpen(false));
-
   const toggleFullscreen = () => {
     if (document.fullscreenElement) document.exitFullscreen();
     else document.documentElement.requestFullscreen().catch(() => {});
@@ -123,20 +114,6 @@ export default function MenuBar() {
   const focusedId = windows.length
     ? windows.reduce((a, b) => (a.z > b.z ? a : b)).id
     : null;
-
-  const appMatches = Object.entries(APPS)
-    .filter(([key, meta]) =>
-      meta.title.toLowerCase().includes(query.toLowerCase()),
-    )
-    .slice(0, 6);
-
-  const runSearch = () => {
-    if (appMatches.length) {
-      openApp(appMatches[0][0]);
-      setQuery("");
-      setSearchOpen(false);
-    }
-  };
 
   const time = now.toLocaleTimeString([], {
     hour: "numeric",
@@ -156,30 +133,81 @@ export default function MenuBar() {
 
   return (
     <div className="absolute top-0 left-0 right-0 h-8 z-[999] glass flex items-center justify-between px-3 sm:px-4 text-[14px] text-white/80 select-none">
-      <div className="flex items-center gap-3 sm:gap-5 min-w-0">
-        {/* Icon with responsive sizing */}
-        <div className="flex items-center shrink-0">
-          <img
-            src={codeXmlIcon}
-            alt="Code XML"
-            className="h-5 w-5 sm:h-5 md:h-6 object-contain brightness-0 invert opacity-90 hover:opacity-100 transition-opacity"
-          />
-        </div>
+      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        {/* Apple-style OS Logo using Gravity UI */}
+        <MenuDropdown
+          label={
+            <div className="flex items-center gap-1.5 py-0.5 font-bold tracking-tight text-white hover:text-white transition-opacity">
+              <GIconCode size={16} className="text-accent" />
+              <span className="hidden xs:inline text-[13px] font-semibold">Portfolio OS</span>
+            </div>
+          }
+          {...m("apple")}
+        >
+          <MenuItem
+            onClick={() => {
+              setModal("about");
+              setOpenMenu(null);
+            }}>
+            About This Portfolio
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              openApp("settings");
+              setOpenMenu(null);
+            }}>
+            System Settings…
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              reopenPicker();
+              setOpenMenu(null);
+            }}>
+            Switch OS Style…
+          </MenuItem>
+          <MenuSeparator />
+          <MenuItem
+            onClick={() => {
+              openApp("terminal");
+              setOpenMenu(null);
+            }}
+            shortcut="⌘T">
+            Open Terminal
+          </MenuItem>
+          <MenuSeparator />
+          <MenuItem
+            onClick={() => {
+              windows.forEach((w) => closeWindow(w.id));
+              setOpenMenu(null);
+            }}>
+            Force Quit All Windows
+          </MenuItem>
+        </MenuDropdown>
 
         <button
           onClick={() => setMobileSheetOpen(true)}
           className="sm:hidden p-1 -ml-1 hover:bg-white/10 rounded">
-          <MenuIcon size={16} />
+          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
         </button>
 
         <div className="hidden sm:flex items-center gap-1">
           <MenuDropdown label="File" {...m("file")}>
             <MenuItem
               onClick={() => {
+                openApp("terminal");
+                setOpenMenu(null);
+              }}
+              shortcut="⌘T">
+              New Terminal
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
                 openApp("files");
                 setOpenMenu(null);
               }}>
-              New Window
+              New Finder Window
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -201,11 +229,13 @@ export default function MenuBar() {
           </MenuDropdown>
 
           <MenuDropdown label="Edit" {...m("edit")}>
-            <MenuItem disabled shortcut="⌘Z">
-              Undo
-            </MenuItem>
-            <MenuItem disabled shortcut="⇧⌘Z">
-              Redo
+            <MenuItem
+              onClick={() => {
+                openSpotlight();
+                setOpenMenu(null);
+              }}
+              shortcut="⌘K">
+              Spotlight Search…
             </MenuItem>
             <MenuSeparator />
             <MenuItem
@@ -309,54 +339,19 @@ export default function MenuBar() {
       </div>
 
       <div className="flex items-center gap-3 sm:gap-4 text-white/70">
-        <div
-          data-search-wrap
-          ref={searchWrapRef}
-          className="relative flex items-center">
-          {searchOpen ? (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                runSearch();
-              }}
-              className="flex items-center gap-1.5 bg-white/10 rounded-md px-2.5 py-1">
-              <Search size={14} className="text-white/40 shrink-0" />
-              <input
-                ref={searchRef}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onBlur={() => setTimeout(() => setSearchOpen(false), 120)}
-                placeholder="Search apps…"
-                className="bg-transparent outline-none text-[13px] w-32 sm:w-44"
-              />
-            </form>
-          ) : (
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="hover:text-white transition-colors p-1">
-              <Search size={15} />
-            </button>
-          )}
-          {searchOpen && query && appMatches.length > 0 && (
-            <div className="absolute top-full right-0 mt-1.5 min-w-[200px] glass rounded-lg border border-white/10 shadow-2xl py-1.5 z-[1300]">
-              {appMatches.map(([key, meta]) => (
-                <button
-                  key={key}
-                  onMouseDown={() => {
-                    openApp(key);
-                    setQuery("");
-                    setSearchOpen(false);
-                  }}
-                  className="w-full text-left px-4 py-2 text-[13px] text-white/80 hover:bg-accent hover:text-white">
-                  {meta.title}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Spotlight Trigger */}
+        <button
+          onClick={openSpotlight}
+          title="Spotlight Search (⌘K)"
+          className="flex items-center gap-1.5 hover:text-white transition-colors p-1 rounded-md hover:bg-white/10 text-white/80"
+        >
+          <GIconSearch size={15} />
+          <span className="hidden md:inline text-[11px] text-white/40 border border-white/15 rounded px-1.5 py-0.2">⌘K</span>
+        </button>
+
         <LiveBadge compact />
-        <Wifi size={14} className="hidden xs:inline" />
-        <BatteryMedium size={16} className="hidden xs:inline" />
+        <GIconSignal size={15} className="hidden xs:inline text-white/80" />
+        <GIconPower size={16} className="hidden xs:inline text-white/80" />
         <span className="font-mono text-white/85 text-[12px] sm:text-[14px] whitespace-nowrap">
           <span className="hidden sm:inline">{date} · </span>
           {time}
@@ -379,35 +374,41 @@ export default function MenuBar() {
               </span>
               <button
                 onClick={() => setMobileSheetOpen(false)}
-                className="p-1 hover:bg-white/10 rounded">
-                <X size={14} />
+                className="p-1 hover:bg-white/10 rounded text-white/60 hover:text-white">
+                <GIconClose size={14} />
               </button>
             </div>
 
             <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-white/35">
-              File
+              System
             </div>
+            <MenuItem
+              onClick={() => {
+                openSpotlight();
+                setMobileSheetOpen(false);
+              }}>
+              Spotlight Search (⌘K)
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                openApp("terminal");
+                setMobileSheetOpen(false);
+              }}>
+              Terminal
+            </MenuItem>
             <MenuItem
               onClick={() => {
                 openApp("files");
                 setMobileSheetOpen(false);
               }}>
-              New Window
+              Files
             </MenuItem>
             <MenuItem
               onClick={() => {
                 openApp("resume");
                 setMobileSheetOpen(false);
               }}>
-              Open Resume
-            </MenuItem>
-            <MenuItem
-              disabled={!focusedId}
-              onClick={() => {
-                closeWindow(focusedId);
-                setMobileSheetOpen(false);
-              }}>
-              Close Window
+              Resume
             </MenuItem>
 
             <div className="px-2 py-1 mt-1 text-[10px] uppercase tracking-wide text-white/35">
@@ -428,41 +429,6 @@ export default function MenuBar() {
               }}>
               Reduce Motion
             </MenuItem>
-            <MenuItem
-              disabled={!windows.length}
-              onClick={() => {
-                windows.forEach((w) => minimizeWindow(w.id));
-                setMobileSheetOpen(false);
-              }}>
-              Show Desktop
-            </MenuItem>
-
-            <div className="px-2 py-1 mt-1 text-[10px] uppercase tracking-wide text-white/35">
-              Window
-            </div>
-            {windows.length === 0 && (
-              <MenuItem disabled>No Open Windows</MenuItem>
-            )}
-            {windows.map((w) => (
-              <MenuItem
-                key={w.id}
-                checked={w.id === focusedId}
-                onClick={() => {
-                  focusWindow(w.id);
-                  setMobileSheetOpen(false);
-                }}>
-                {w.title}
-              </MenuItem>
-            ))}
-            {windows.length > 0 && (
-              <MenuItem
-                onClick={() => {
-                  windows.forEach((w) => closeWindow(w.id));
-                  setMobileSheetOpen(false);
-                }}>
-                Close All
-              </MenuItem>
-            )}
 
             <div className="px-2 py-1 mt-1 text-[10px] uppercase tracking-wide text-white/35">
               Help
@@ -486,34 +452,32 @@ export default function MenuBar() {
       )}
 
       {modal === "about" && (
-        <InfoModal title="About This Portfolio" onClose={() => setModal(null)}>
+        <InfoModal title="About Portfolio OS" onClose={() => setModal(null)}>
           <p>
-            A desktop-style portfolio built with React, Vite, Tailwind, and a
-            real-time Socket.IO backend.
+            A high-performance desktop portfolio operating system powered by <strong>React 19</strong>, <strong>Tailwind v4</strong>, <strong>Gravity UI Icons</strong>, and real-time Socket.IO.
           </p>
           <p>
-            Switch between macOS and Windows 11 shells anytime from Settings —
-            same apps and data underneath either way.
+            Switch dynamically between macOS Sequoia and Windows 11 Fluent interfaces with custom accents, draggable windows, full shell terminal, and live audio.
           </p>
         </InfoModal>
       )}
       {modal === "shortcuts" && (
         <InfoModal title="Keyboard Shortcuts" onClose={() => setModal(null)}>
-          <div className="flex justify-between">
+          <div className="flex justify-between py-0.5">
+            <span>Spotlight Search</span>
+            <span className="font-mono text-emerald-400 font-semibold">⌘K / Ctrl+K</span>
+          </div>
+          <div className="flex justify-between py-0.5">
             <span>Close focused window</span>
             <span className="font-mono text-white/50">⌘W</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between py-0.5">
             <span>Copy portfolio link</span>
             <span className="font-mono text-white/50">⌘C</span>
           </div>
-          <div className="flex justify-between">
-            <span>Close gallery/lightbox</span>
+          <div className="flex justify-between py-0.5">
+            <span>Close gallery / modal</span>
             <span className="font-mono text-white/50">Esc</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Navigate gallery</span>
-            <span className="font-mono text-white/50">← →</span>
           </div>
         </InfoModal>
       )}

@@ -29,6 +29,11 @@ export const fileTree = {
       children: [{ name: "Blast It!.exe", type: "app-link", app: "games" }]
     },
     {
+      name: "Terminal.sh",
+      type: "app-link",
+      app: "terminal"
+    },
+    {
       name: "Music",
       type: "folder",
       children: [{ name: "Now Playing.link", type: "app-link", app: "music" }]

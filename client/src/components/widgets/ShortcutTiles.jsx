@@ -1,11 +1,16 @@
-import { Library, Music2, FileUser, MessageCircle } from "lucide-react";
 import { useOS } from "../../store/useOS";
+import {
+  GIconLibrary,
+  GIconMusic,
+  GIconTerminal,
+  GIconChats,
+} from "../icons/GravityIcons";
 
 const TILES = [
-  { app: "library", label: "Browse Projects", icon: Library, from: "#f5a642", to: "#d9822c" },
-  { app: "music", label: "Play Music", icon: Music2, from: "#d9678c", to: "#b8496b" },
-  { app: "resume", label: "View Resume", icon: FileUser, from: "#57b8d9", to: "#357fa3" },
-  { app: "chats", label: "Say Hi", icon: MessageCircle, from: "#8e7be0", to: "#6a58c2" }
+  { app: "terminal", label: "Open Terminal", icon: GIconTerminal, from: "#16a34a", to: "#15803d" },
+  { app: "library", label: "Browse Projects", icon: GIconLibrary, from: "#f5a642", to: "#d9822c" },
+  { app: "music", label: "Play Music", icon: GIconMusic, from: "#d9678c", to: "#b8496b" },
+  { app: "chats", label: "Say Hi", icon: GIconChats, from: "#8e7be0", to: "#6a58c2" }
 ];
 
 export default function ShortcutTiles() {
@@ -17,10 +22,10 @@ export default function ShortcutTiles() {
         <button
           key={t.app}
           onClick={() => openApp(t.app)}
-          className="rounded-xl px-3 py-2.5 flex flex-col justify-between shadow-lg text-left hover:brightness-110 transition"
+          className="rounded-xl px-3 py-2.5 flex flex-col justify-between shadow-lg text-left hover:brightness-110 active:scale-95 transition-all group"
           style={{ background: `linear-gradient(160deg, ${t.from}, ${t.to})` }}
         >
-          <t.icon size={16} className="text-white/90" />
+          <t.icon size={18} className="text-white/90 group-hover:scale-110 transition-transform" />
           <span className="text-[11px] text-white font-medium leading-tight">{t.label}</span>
         </button>
       ))}

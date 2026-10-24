@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useOS } from "../store/useOS";
+import { GIconCode } from "./icons/GravityIcons";
 
 const STEPS = [
-  "Waking up widgets…",
-  "Loading projects…",
-  "Warming up the dock…",
-  "Almost there…",
+  "Initializing Gravity UI system icons…",
+  "Waking up widgets & audio engine…",
+  "Loading projects & live terminal…",
+  "Almost ready…",
 ];
 
 export default function BootScreen() {
@@ -43,23 +44,19 @@ export default function BootScreen() {
 
       {/* Subtle glow effect */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-64 h-64 bg-accent/5 rounded-full blur-3xl animate-pulse" />
+        <div className="w-64 h-64 bg-accent/10 rounded-full blur-3xl animate-pulse" />
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-sm px-4">
         {/* Icon with gradient border - matching OS Picker theme */}
         <div className="relative">
           {/* Glow effect behind icon */}
-          <div className="absolute -inset-4 bg-accent/10 rounded-2xl blur-xl animate-pulse" />
+          <div className="absolute -inset-4 bg-accent/20 rounded-3xl blur-2xl animate-pulse" />
 
           {/* Icon container with gradient border */}
-          <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl p-0.5 bg-gradient-to-br from-accent/50 via-accent/20 to-transparent shadow-2xl shadow-accent/20">
+          <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl p-0.5 bg-gradient-to-br from-accent/60 via-accent/30 to-transparent shadow-2xl shadow-accent/25">
             <div className="w-full h-full rounded-2xl bg-[#0a0a0f]/95 backdrop-blur-xl border border-white/10 flex items-center justify-center overflow-hidden">
-              <img
-                src="/src/assets/code-xml.png"
-                alt="Code XML Icon"
-                className="w-12 h-12 sm:w-14 sm:h-14 object-contain"
-              />
+              <GIconCode size={36} className="text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.4)]" />
             </div>
           </div>
         </div>
@@ -86,10 +83,10 @@ export default function BootScreen() {
 
         {/* Step text with progress percentage */}
         <div className="mt-4 sm:mt-5 flex flex-col items-center gap-1">
-          <p className="text-[10px] sm:text-[11px] text-white/40 font-light tracking-wider">
+          <p className="text-[10px] sm:text-[11px] text-white/50 font-light tracking-wider">
             {STEPS[stepIdx]}
           </p>
-          <p className="text-[9px] sm:text-[10px] text-white/20 font-mono tracking-wider">
+          <p className="text-[9px] sm:text-[10px] text-white/30 font-mono tracking-wider">
             {progress}%
           </p>
         </div>
@@ -114,7 +111,7 @@ export default function BootScreen() {
         </div>
       </div>
 
-      {/* Add shimmer animation */}
+      {/* Shimmer animation */}
       <style>{`
         @keyframes shimmer {
           0% { transform: translateX(-100%); }

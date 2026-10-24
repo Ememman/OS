@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Wallpaper from "./Wallpaper";
 import { useOS } from "../store/useOS";
+import { GIconCheck, GIconChevronRight, GIconSparkles } from "./icons/GravityIcons";
 
 export default function OsPicker() {
   const { osMode, chooseOs } = useOS();
@@ -89,19 +90,8 @@ export default function OsPicker() {
                   {/* Selection indicator */}
                   {selected === id && (
                     <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
-                      <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-accent flex items-center justify-center shadow-lg shadow-accent/50 animate-pulse border-2 border-white/20">
-                        <svg
-                          className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={3}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
+                      <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-accent flex items-center justify-center shadow-lg shadow-accent/50 animate-pulse border-2 border-white/20 text-white">
+                        <GIconCheck size={14} />
                       </div>
                     </div>
                   )}
@@ -174,25 +164,26 @@ export default function OsPicker() {
 
           <span className="relative flex items-center justify-center gap-2">
             Continue with {selected === "mac" ? "macOS" : "Windows 11"}
-            <svg
-              className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 group-hover:translate-x-1"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 7l5 5m0 0l-5 5m5-5H6"
-              />
-            </svg>
+            <GIconChevronRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
           </span>
         </button>
 
+        {/* Feature highlight badges */}
+        <div className="mt-5 flex items-center justify-center gap-2 flex-wrap">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] text-white/60">
+            <GIconSparkles size={12} className="text-amber-400" /> Gravity UI Iconography
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] text-white/60">
+            ⌘K Spotlight Search
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] text-white/60">
+            UNIX Terminal Shell
+          </span>
+        </div>
+
         {/* Friendly footer text */}
-        <p className="mt-6 text-[10px] sm:text-xs text-white/20 font-light tracking-wide">
-          Both styles offer the same great experience — pick what feels right
-          for you
+        <p className="mt-4 text-[10px] sm:text-xs text-white/30 font-light tracking-wide">
+          Both styles offer the same full feature set — pick what feels right for you
         </p>
       </div>
     </div>
