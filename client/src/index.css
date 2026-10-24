@@ -1,0 +1,221 @@
+@import "tailwindcss";
+
+@theme {
+  --breakpoint-xs: 420px;
+}
+
+:root {
+  --accent: 232 84 63;
+  --glass: 12 18 32;
+  --glass-alpha: 0.72;
+  --radius-window: 16px;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; overscroll-behavior: none; }
+
+body {
+  margin: 0;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  color: #EAF0FA;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+.font-display { font-family: "Space Grotesk", "Inter", sans-serif; }
+.font-mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+.font-comic { font-family: "Comic Neue", "Comic Sans MS", cursive, sans-serif; }
+.font-shout { font-family: "Bangers", "Space Grotesk", sans-serif; letter-spacing: 0.03em; }
+
+/* Manga panel backgrounds — pick your poison in the Chats header */
+.manga-panel--halftone {
+  background-color: #f4f1ea;
+  background-image: radial-gradient(#000 0.9px, transparent 0.9px);
+  background-size: 10px 10px;
+  background-position: -4px -4px;
+}
+.manga-panel--notebook {
+  background-color: #f7f4ec;
+  background-image:
+    repeating-linear-gradient(#f7f4ec 0 27px, rgba(70,110,200,0.28) 27px 28px),
+    linear-gradient(90deg, transparent 0 38px, rgba(220,80,80,0.35) 38px 39px, transparent 39px);
+  background-size: 100% 28px, 100% 100%;
+}
+.manga-panel--ink {
+  background-color: #0d0d10;
+  background-image: radial-gradient(rgba(255,255,255,0.08) 0.9px, transparent 0.9px);
+  background-size: 10px 10px;
+  background-position: -4px -4px;
+}
+.manga-panel--plain {
+  background-color: #efece3;
+}
+.manga-panel--action {
+  background-color: #17161c;
+  background-image: repeating-conic-gradient(from 0deg, rgba(255,255,255,0.05) 0deg 2deg, transparent 2deg 10deg);
+  background-position: center;
+}
+
+/* Speech bubble with a comic tail, pointing down-left (their messages) */
+.manga-bubble {
+  position: relative;
+  background: #fff;
+  color: #14120f;
+  border: 2.5px solid #14120f;
+  border-radius: 16px;
+  box-shadow: 3px 3px 0 rgba(20,18,15,0.9);
+}
+.manga-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -9px;
+  left: 18px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-right: 2.5px solid #14120f;
+  border-bottom: 2.5px solid #14120f;
+  transform: rotate(45deg) skew(-6deg,-6deg);
+  border-radius: 0 0 3px 0;
+}
+
+/* Their own messages — tail on the right, accent-tinted fill */
+.manga-bubble-self {
+  background: rgb(var(--accent) / 0.14);
+  border-color: #14120f;
+}
+.manga-bubble-self::after {
+  left: auto;
+  right: 18px;
+  background: rgb(var(--accent) / 0.14);
+}
+
+/* Pending (optimistic, not yet confirmed by the server) and failed states */
+.manga-bubble-pending {
+  opacity: 0.6;
+}
+.manga-bubble-failed {
+  border-color: #b3261e;
+  background: rgba(179,38,30,0.08);
+}
+.manga-bubble-failed::after {
+  border-right-color: #b3261e;
+  border-bottom-color: #b3261e;
+  background: rgba(179,38,30,0.08);
+}
+
+@keyframes bubblePop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.manga-bubble-in {
+  animation: bubblePop 260ms cubic-bezier(.34,1.56,.64,1) both;
+}
+
+.accent { color: rgb(var(--accent)); }
+.bg-accent { background-color: rgb(var(--accent)); }
+.border-accent { border-color: rgb(var(--accent)); }
+.ring-accent { --tw-ring-color: rgb(var(--accent)); }
+
+.glass {
+  background: rgba(var(--glass), var(--glass-alpha));
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: background-color 200ms ease;
+}
+
+.no-select { user-select: none; }
+.allow-select { user-select: text; }
+::selection { background: rgba(var(--accent), 0.35); }
+
+.thin-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.thin-scroll::-webkit-scrollbar-track { background: transparent; }
+.thin-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 8px; }
+.thin-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.28); }
+
+/* For rows that scroll horizontally as a swipe gesture (dock icons on a
+   crowded phone screen, taskbar pill) — functional scrolling, no visible
+   scrollbar clutter, matching native mobile app conventions. */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+@keyframes twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+@keyframes drift { 0% { transform: translate(0,0);} 50% { transform: translate(-14px,-10px);} 100% { transform: translate(0,0);} }
+@keyframes rise { 0% { transform: translateY(0) rotate(0deg);} 50% { transform: translateY(-16px) rotate(0.6deg);} 100% { transform: translateY(0) rotate(0deg);} }
+@keyframes ripple { 0% { transform: scaleX(1); opacity: 0.5;} 100% { transform: scaleX(1.4); opacity: 0;} }
+
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.reveal {
+  animation: riseIn 420ms cubic-bezier(.16,1,.3,1) both;
+}
+
+@keyframes menuDrop {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes menuOpen {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes eqBounce {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
+}
+.eq-bar {
+  transform-origin: bottom;
+  animation: eqBounce 0.9s ease-in-out infinite;
+}
+
+@keyframes fadeInOpacity {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.reveal-fade {
+  animation: fadeInOpacity 420ms ease 260ms both;
+}
+
+/* Block Blast juice */
+@keyframes blockDrop {
+  0% { transform: scale(0.35); opacity: 0.3; }
+  60% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.bb-drop {
+  animation: blockDrop 200ms cubic-bezier(.34,1.56,.64,1) both;
+}
+
+@keyframes blockClear {
+  0% { transform: scale(1); opacity: 1; filter: brightness(1); }
+  40% { transform: scale(1.15); opacity: 1; filter: brightness(2.2); }
+  100% { transform: scale(0.2); opacity: 0; filter: brightness(2.5); }
+}
+.bb-clear {
+  animation: blockClear 260ms ease-in both;
+}
+
+@keyframes scorePop {
+  0% { transform: translateY(0) scale(0.8); opacity: 0; }
+  25% { transform: translateY(-6px) scale(1.1); opacity: 1; }
+  100% { transform: translateY(-34px) scale(1); opacity: 0; }
+}
+.bb-score-pop {
+  animation: scorePop 700ms ease-out both;
+}
+
+@keyframes shakeSm {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+.bb-shake {
+  animation: shakeSm 180ms ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

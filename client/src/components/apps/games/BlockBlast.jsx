@@ -1,0 +1,371 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { RotateCcw, Trophy, Volume2, VolumeX } from "lucide-react";
+
+const SIZE = 8;
+const COLORS = ["#e8543f", "#57d9c7", "#9478ff", "#f5a642", "#ec6096", "#5fbf7c"];
+
+const SHAPES = [
+  [[0, 0]],
+  [[0, 0], [0, 1]],
+  [[0, 0], [1, 0]],
+  [[0, 0], [0, 1], [0, 2]],
+  [[0, 0], [1, 0], [2, 0]],
+  [[0, 0], [0, 1], [1, 0], [1, 1]],
+  [[0, 0], [0, 1], [0, 2], [1, 0]],
+  [[0, 0], [0, 1], [0, 2], [1, 2]],
+  [[0, 0], [1, 0], [1, 1], [2, 1]],
+  [[0, 1], [1, 0], [1, 1], [2, 1]],
+  [[0, 0], [0, 1], [0, 2], [1, 1]],
+  [[0, 0], [1, 0], [2, 0], [2, 1]]
+];
+
+function randomPiece(id) {
+  const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+  const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+  return { id, shape, color };
+}
+
+function emptyGrid() {
+  return Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+}
+
+function canPlace(grid, shape, r, c) {
+  return shape.every(([dr, dc]) => {
+    const rr = r + dr, cc = c + dc;
+    return rr >= 0 && rr < SIZE && cc >= 0 && cc < SIZE && !grid[rr][cc];
+  });
+}
+
+function pieceFitsSomewhere(grid, shape) {
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (canPlace(grid, shape, r, c)) return true;
+  return false;
+}
+
+// --- Sound effects, synthesized with Web Audio — no audio files to ship. ---
+function useGameAudio(enabled) {
+  const ctxRef = useRef(null);
+  const musicIntervalRef = useRef(null);
+  const musicStepRef = useRef(0);
+
+  const getCtx = () => {
+    if (!enabled) return null;
+    if (!ctxRef.current) {
+      try {
+        ctxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      } catch {
+        return null;
+      }
+    }
+    if (ctxRef.current.state === "suspended") ctxRef.current.resume();
+    return ctxRef.current;
+  };
+
+  const tone = (freq, dur, type = "sine", startGain = 0.09, delay = 0) => {
+    const ctx = getCtx();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    const t0 = ctx.currentTime + delay;
+    osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(startGain, t0);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur);
+  };
+
+  // A short, deliberately simple looping bassline + off-beat pluck —
+  // procedurally generated at runtime rather than a shipped audio file, kept
+  // quiet enough to sit under the placement/clear sound effects. Loops
+  // indefinitely via setInterval until explicitly stopped.
+  const BASSLINE = [130.81, 0, 130.81, 164.81, 0, 146.83, 0, 174.61];
+  const PLUCK = [0, 261.63, 0, 0, 329.63, 0, 293.66, 0];
+  const STEP_MS = 340;
+
+  const startMusic = () => {
+    if (musicIntervalRef.current || !enabled) return;
+    const ctx = getCtx();
+    if (!ctx) return;
+    musicStepRef.current = 0;
+    musicIntervalRef.current = setInterval(() => {
+      const step = musicStepRef.current % BASSLINE.length;
+      const bass = BASSLINE[step];
+      const pluck = PLUCK[step];
+      if (bass) tone(bass, 0.32, "triangle", 0.028);
+      if (pluck) tone(pluck, 0.22, "sine", 0.02, 0.02);
+      musicStepRef.current++;
+    }, STEP_MS);
+  };
+
+  const stopMusic = () => {
+    if (musicIntervalRef.current) {
+      clearInterval(musicIntervalRef.current);
+      musicIntervalRef.current = null;
+    }
+  };
+
+  // If sound gets muted mid-loop, kill the interval immediately rather than
+  // waiting for the next tick to silently no-op.
+  useEffect(() => {
+    if (!enabled) stopMusic();
+    return stopMusic;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled]);
+
+  return {
+    place: () => tone(320, 0.09, "triangle", 0.07),
+    clear: (combo) => {
+      // A little ascending arpeggio, richer with bigger combos.
+      const base = 520;
+      for (let i = 0; i < Math.min(3 + combo, 6); i++) {
+        tone(base + i * 90, 0.16, "sine", 0.08, i * 0.045);
+      }
+    },
+    gameOver: () => {
+      stopMusic();
+      tone(300, 0.3, "sawtooth", 0.06);
+      tone(220, 0.4, "sawtooth", 0.06, 0.12);
+      tone(160, 0.5, "sawtooth", 0.06, 0.24);
+    },
+    startMusic,
+    stopMusic
+  };
+}
+
+export default function BlockBlast() {
+  const [grid, setGrid] = useState(emptyGrid());
+  const [tray, setTray] = useState(() => [randomPiece(1), randomPiece(2), randomPiece(3)]);
+  const [selected, setSelected] = useState(null);
+  const [score, setScore] = useState(0);
+  const [best, setBest] = useState(() => Number(localStorage.getItem("blockblast_best") || 0));
+  const [hover, setHover] = useState(null);
+  const [gameOver, setGameOver] = useState(false);
+  const [soundOn, setSoundOn] = useState(() => localStorage.getItem("blockblast_sound") !== "off");
+  const [dropCells, setDropCells] = useState(new Set());
+  const [clearingCells, setClearingCells] = useState(new Set());
+  const [popups, setPopups] = useState([]);
+  const [shake, setShake] = useState(false);
+  const nextId = useState({ current: 4 })[0];
+  const popupId = useRef(0);
+  const sfx = useGameAudio(soundOn);
+
+  useEffect(() => {
+    localStorage.setItem("blockblast_sound", soundOn ? "on" : "off");
+  }, [soundOn]);
+
+  const refillIfNeeded = useCallback((newTray) => {
+    if (newTray.every((p) => p === null)) {
+      return [randomPiece(nextId.current++), randomPiece(nextId.current++), randomPiece(nextId.current++)];
+    }
+    return newTray;
+  }, [nextId]);
+
+  useEffect(() => {
+    if (gameOver) return;
+    const anyFits = tray.some((p) => p && pieceFitsSomewhere(grid, p.shape));
+    if (tray.some((p) => p) && !anyFits) {
+      setGameOver(true);
+      sfx.gameOver();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [grid, tray, gameOver]);
+
+  const place = (r, c) => {
+    if (selected === null || gameOver) return;
+    const piece = tray[selected];
+    if (!piece || !canPlace(grid, piece.shape, r, c)) return;
+
+    const next = grid.map((row) => row.slice());
+    const justDropped = new Set();
+    piece.shape.forEach(([dr, dc]) => {
+      next[r + dr][c + dc] = piece.color;
+      justDropped.add(`${r + dr}-${c + dc}`);
+    });
+
+    sfx.place();
+    sfx.startMusic();
+    setDropCells(justDropped);
+    setTimeout(() => setDropCells(new Set()), 220);
+
+    const fullRows = [];
+    const fullCols = [];
+    for (let i = 0; i < SIZE; i++) {
+      if (next[i].every(Boolean)) fullRows.push(i);
+      if (next.every((row) => row[i])) fullCols.push(i);
+    }
+    const cleared = fullRows.length + fullCols.length;
+    const gained = piece.shape.length * 2 + cleared * 18;
+
+    let newTray = tray.slice();
+    newTray[selected] = null;
+    newTray = refillIfNeeded(newTray);
+    setTray(newTray);
+    setSelected(null);
+
+    if (cleared > 0) {
+      // Flash the about-to-clear cells first, then actually remove them —
+      // gives the eye a moment to register what happened instead of an
+      // instant, jarring wipe.
+      const clearSet = new Set();
+      fullRows.forEach((r2) => { for (let c2 = 0; c2 < SIZE; c2++) clearSet.add(`${r2}-${c2}`); });
+      fullCols.forEach((c2) => { for (let r2 = 0; r2 < SIZE; r2++) clearSet.add(`${r2}-${c2}`); });
+
+      setGrid(next); // show the placed piece immediately
+      setClearingCells(clearSet);
+      sfx.clear(cleared - 1);
+      setShake(true);
+      setTimeout(() => setShake(false), 200);
+
+      setTimeout(() => {
+        const finalGrid = next.map((row) => row.slice());
+        fullRows.forEach((r2) => { for (let c2 = 0; c2 < SIZE; c2++) finalGrid[r2][c2] = null; });
+        fullCols.forEach((c2) => { for (let r2 = 0; r2 < SIZE; r2++) finalGrid[r2][c2] = null; });
+        setGrid(finalGrid);
+        setClearingCells(new Set());
+      }, 240);
+    } else {
+      setGrid(next);
+    }
+
+    const newScore = score + gained;
+    setScore(newScore);
+    if (newScore > best) {
+      setBest(newScore);
+      localStorage.setItem("blockblast_best", String(newScore));
+    }
+
+    const id = popupId.current++;
+    setPopups((p) => [...p, { id, text: `+${gained}`, r, c, big: cleared > 0 }]);
+    setTimeout(() => setPopups((p) => p.filter((x) => x.id !== id)), 700);
+  };
+
+  const reset = () => {
+    setGrid(emptyGrid());
+    setTray([randomPiece(nextId.current++), randomPiece(nextId.current++), randomPiece(nextId.current++)]);
+    setSelected(null);
+    setScore(0);
+    setGameOver(false);
+    setClearingCells(new Set());
+    setDropCells(new Set());
+    setPopups([]);
+    sfx.startMusic();
+  };
+
+  const previewCells = new Set();
+  if (selected !== null && hover && tray[selected]) {
+    tray[selected].shape.forEach(([dr, dc]) => {
+      const rr = hover.r + dr, cc = hover.c + dc;
+      if (rr >= 0 && rr < SIZE && cc >= 0 && cc < SIZE) previewCells.add(`${rr}-${cc}`);
+    });
+  }
+  const validHover = selected !== null && hover && tray[selected] && canPlace(grid, tray[selected].shape, hover.r, hover.c);
+
+  return (
+    <div className="p-4 flex flex-col items-center gap-3 select-none">
+      <div className="flex items-center justify-between w-full max-w-xs text-sm">
+        <div>
+          <div className="text-[10px] text-white/40 uppercase tracking-wide">Score</div>
+          <div className="font-display font-semibold text-lg tabular-nums">{score}</div>
+        </div>
+        <div className="flex items-center gap-1 text-white/60">
+          <Trophy size={14} className="text-amber-300" />
+          <span className="font-mono text-xs">{best}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setSoundOn((s) => !s)} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors" title={soundOn ? "Mute" : "Unmute"}>
+            {soundOn ? <Volume2 size={15} /> : <VolumeX size={15} className="text-white/40" />}
+          </button>
+          <button onClick={reset} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors" title="Restart">
+            <RotateCcw size={16} />
+          </button>
+        </div>
+      </div>
+
+      <div
+        className={`relative grid gap-[3px] p-2 rounded-xl bg-white/5 border border-white/10 transition-transform w-full max-w-[320px] aspect-square ${shake ? "bb-shake" : ""}`}
+        style={{ gridTemplateColumns: `repeat(${SIZE}, 1fr)`, gridTemplateRows: `repeat(${SIZE}, 1fr)` }}
+      >
+        {grid.map((row, r) =>
+          row.map((cell, c) => {
+            const key = `${r}-${c}`;
+            const isPreview = previewCells.has(key);
+            const isDropping = dropCells.has(key);
+            const isClearing = clearingCells.has(key);
+            return (
+              <div
+                key={key}
+                onMouseEnter={() => setHover({ r, c })}
+                onClick={() => place(r, c)}
+                className={`rounded-[4px] ${isDropping ? "bb-drop" : ""} ${isClearing ? "bb-clear" : ""}`}
+                style={{
+                  background: cell || (isPreview ? (validHover ? "rgba(255,255,255,0.35)" : "rgba(255,80,80,0.35)") : "rgba(255,255,255,0.06)"),
+                  transition: "background .1s",
+                  boxShadow: cell && !isClearing ? "inset 0 0 0 1px rgba(255,255,255,0.25), inset 0 -3px 0 rgba(0,0,0,0.18)" : "none"
+                }}
+              />
+            );
+          })
+        )}
+
+        {popups.map((p) => (
+          <div
+            key={p.id}
+            className={`pointer-events-none absolute font-display font-bold bb-score-pop ${p.big ? "text-amber-300 text-sm" : "text-white/80 text-xs"}`}
+            style={{
+              left: `${(p.c / SIZE) * 100}%`,
+              top: `${(p.r / SIZE) * 100}%`,
+              transform: "translate(-10%, -60%)"
+            }}
+          >
+            {p.text}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-3 mt-1">
+        {tray.map((p, i) =>
+          p ? (
+            <button
+              key={p.id}
+              onClick={() => setSelected(selected === i ? null : i)}
+              className={`p-2 rounded-lg border transition-all duration-150 hover:scale-105 active:scale-95 ${selected === i ? "border-white bg-white/10 scale-105" : "border-white/10"}`}
+            >
+              <MiniShape shape={p.shape} color={p.color} />
+            </button>
+          ) : (
+            <div key={i} className="w-14 h-14" />
+          )
+        )}
+      </div>
+
+      <p className="text-[11px] text-white/40 text-center max-w-xs">
+        Tap a piece, then tap a cell on the board to drop it. Clear full rows or columns for bonus points.
+      </p>
+
+      {gameOver && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center" style={{ animation: "fadeInOpacity 200ms ease both" }}>
+          <div className="glass rounded-2xl p-6 text-center" style={{ animation: "menuOpen 220ms cubic-bezier(.34,1.56,.64,1) both" }}>
+            <h3 className="font-display text-lg font-semibold mb-1">Board's full</h3>
+            <p className="text-sm text-white/60 mb-4">Final score: <span className="accent font-semibold">{score}</span></p>
+            <button onClick={reset} className="px-4 py-2 rounded-lg bg-accent text-sm hover:brightness-110 active:scale-95 transition">Play again</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MiniShape({ shape, color }) {
+  const maxR = Math.max(...shape.map((s) => s[0])) + 1;
+  const maxC = Math.max(...shape.map((s) => s[1])) + 1;
+  const cell = 10;
+  return (
+    <svg width={maxC * cell + 4} height={maxR * cell + 4}>
+      {shape.map(([r, c], i) => (
+        <rect key={i} x={c * cell + 2} y={r * cell + 2} width={cell - 2} height={cell - 2} rx={2} fill={color} />
+      ))}
+    </svg>
+  );
+}

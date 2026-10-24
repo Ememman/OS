@@ -1,0 +1,358 @@
+import { Check, Sparkles, Palette, Volume2, RotateCcw, Eye } from "lucide-react";
+import { useOS } from "../../store/useOS";
+import Wallpaper from "../Wallpaper";
+import { useState } from "react";
+
+// Preview images for the wallpaper selector — served from /public/wallpapers
+const PREVIEW_IMAGES = {
+  bg1: "/wallpapers/BG_1.jpg",
+  bg2: "/wallpapers/BG_2.png",
+  bg3: "/wallpapers/BG_3.jpg",
+};
+
+// Fallback gradients if images don't load
+const PREVIEW_FALLBACK = {
+  bg1: "linear-gradient(135deg, #1a1a2e, #16213e)",
+  bg2: "linear-gradient(135deg, #0f0c29, #302b63)",
+  bg3: "linear-gradient(135deg, #1a1a2e, #2d2b4a)",
+  ocean: "linear-gradient(180deg,#0A1220,#1b2740)",
+  galaxy: "radial-gradient(ellipse at 30% 20%,#3a2a70,#0a0818)",
+  aurora: "linear-gradient(120deg,#0a1a1f,#123027,#0a1a1f)",
+};
+
+function GroupHeader({ icon: Icon, label }) {
+  return (
+    <div className="flex items-center gap-2 pt-1 pb-0.5">
+      <Icon size={13} className="accent" />
+      <h2 className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.12em] text-white/50">{label}</h2>
+      <div className="flex-1 h-px bg-white/10" />
+    </div>
+  );
+}
+
+function ToggleRow({ label, checked, onToggle }) {
+  return (
+    <label className="flex items-center justify-between p-3 sm:p-4 rounded-xl border border-white/10 bg-white/5 hover:border-white/20 transition-all cursor-pointer">
+      <span className="text-xs sm:text-sm text-white/80">{label}</span>
+      <button
+        onClick={onToggle}
+        className={`w-10 sm:w-11 h-6 rounded-full relative transition-all duration-300 flex-shrink-0 ${checked ? "bg-accent" : "bg-white/20"}`}
+      >
+        <span
+          className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all duration-300 shadow-md ${
+            checked ? "left-[18px] sm:left-[22px]" : "left-0.5"
+          }`}
+        />
+      </button>
+    </label>
+  );
+}
+
+export default function Settings() {
+  const {
+    wallpaper,
+    setWallpaper,
+    wallpapers,
+    accent,
+    setAccent,
+    accents,
+    reduceMotion,
+    toggleMotion,
+    osMode,
+    setOsMode,
+    dockPosition,
+    setDockPosition,
+    weatherLoc,
+    setWeatherLoc,
+    chatSound,
+    toggleChatSound,
+    compact,
+    toggleCompact,
+    glassAlpha,
+    setGlassAlpha,
+    resetDefaults,
+  } = useOS();
+
+  const [cityDraft, setCityDraft] = useState(weatherLoc.name);
+  const [geoStatus, setGeoStatus] = useState("");
+  const [imageErrors, setImageErrors] = useState({});
+
+  const lookupCity = async () => {
+    const q = cityDraft.trim();
+    if (!q) return;
+    setGeoStatus("Searching…");
+    try {
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1`);
+      const data = await res.json();
+      const hit = data.results?.[0];
+      if (hit) {
+        setWeatherLoc({ name: hit.name, lat: hit.latitude, lon: hit.longitude });
+        setGeoStatus(`Set to ${hit.name}${hit.country ? ", " + hit.country : ""}`);
+      } else {
+        setGeoStatus("City not found");
+      }
+    } catch {
+      setGeoStatus("Lookup failed");
+    }
+  };
+
+  const useMyLocation = () => {
+    if (!navigator.geolocation) {
+      setGeoStatus("Geolocation not supported");
+      return;
+    }
+    setGeoStatus("Locating…");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc = { name: "My location", lat: pos.coords.latitude, lon: pos.coords.longitude };
+        setWeatherLoc(loc);
+        setCityDraft(loc.name);
+        setGeoStatus("Using your current location");
+      },
+      () => setGeoStatus("Permission denied"),
+      { timeout: 8000 }
+    );
+  };
+
+  const getWallpaperInfo = (id) => {
+    const info = {
+      bg1: { name: "Balloon Sunset", desc: "Hot air balloons at dusk" },
+      bg2: { name: "Cyborg Dark", desc: "Dark cyborg portrait" },
+      bg3: { name: "Balloon Night", desc: "Balloon over moonlit water" },
+      ocean: { name: "Ocean Night", desc: "Calm ocean under stars" },
+      galaxy: { name: "Galaxy", desc: "Deep space nebula" },
+      aurora: { name: "Aurora", desc: "Northern lights display" },
+    };
+    return info[id] || { name: id, desc: "" };
+  };
+
+  const handleImageError = (id) => setImageErrors((prev) => ({ ...prev, [id]: true }));
+
+  return (
+    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-5 bg-[#0a0a0f] min-h-screen">
+      {/* Header */}
+      <div className="space-y-1">
+        <h1 className="font-display text-lg sm:text-xl font-semibold text-white">Settings</h1>
+        <p className="text-xs sm:text-sm text-white/50">Make this desktop yours.</p>
+      </div>
+
+      {/* ============ APPEARANCE ============ */}
+      <GroupHeader icon={Palette} label="Appearance" />
+
+      <section className="space-y-2">
+        <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Desktop style</h3>
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+          {[{ id: "mac", label: "macOS" }, { id: "win", label: "Windows 11" }].map((o) => (
+            <button
+              key={o.id}
+              onClick={() => setOsMode(o.id)}
+              className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm transition-all duration-200 ${
+                osMode === o.id
+                  ? "border-accent bg-accent/15 text-white shadow-lg shadow-accent/10"
+                  : "border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-white/20 hover:bg-white/10"
+              }`}>
+              <span className="font-medium">{o.label}</span>
+              {osMode === o.id && <Check size={14} className="text-accent flex-shrink-0" />}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {osMode === "mac" && (
+        <section className="space-y-2">
+          <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Dock position</h3>
+          <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
+            Move the Dock to the bottom, left, or right of the screen. Always sits at the bottom on phones, where there's less room to spare.
+          </p>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {[{ id: "bottom", label: "Bottom" }, { id: "left", label: "Left" }, { id: "right", label: "Right" }].map((o) => (
+              <button
+                key={o.id}
+                onClick={() => setDockPosition(o.id)}
+                className={`flex flex-col items-center gap-1.5 px-2 py-2.5 sm:py-3 rounded-xl border text-xs transition-all duration-200 ${
+                  dockPosition === o.id
+                    ? "border-accent bg-accent/15 text-white shadow-lg shadow-accent/10"
+                    : "border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-white/20 hover:bg-white/10"
+                }`}>
+                <div className="w-10 h-7 rounded-md border border-white/20 relative bg-black/20">
+                  <div
+                    className={`absolute bg-accent/80 rounded-sm ${
+                      o.id === "bottom" ? "left-1 right-1 bottom-0.5 h-1.5" : o.id === "left" ? "left-0.5 top-1 bottom-1 w-1.5" : "right-0.5 top-1 bottom-1 w-1.5"
+                    }`}
+                  />
+                </div>
+                <span className="font-medium">{o.label}</span>
+                {dockPosition === o.id && <Check size={11} className="text-accent" />}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section>
+        <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium mb-2">Wallpaper</h3>
+        <p className="text-[10px] sm:text-[11px] text-white/30 mb-2.5">Choose a background for your desktop</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+          {wallpapers.map((w) => {
+            const info = getWallpaperInfo(w.id);
+            const isSelected = wallpaper === w.id;
+            const imageUrl = PREVIEW_IMAGES[w.id];
+            const hasError = imageErrors[w.id];
+            return (
+              <button key={w.id} onClick={() => setWallpaper(w.id)} className="group text-left">
+                <div
+                  className={`relative aspect-video rounded-lg border-2 overflow-hidden transition-all duration-200 ${
+                    isSelected ? "border-accent shadow-lg shadow-accent/20 scale-[1.02]" : "border-white/10 group-hover:border-white/30 group-hover:scale-[1.02]"
+                  }`}>
+                  {imageUrl && !hasError ? (
+                    <img src={imageUrl} alt={info.name} className="w-full h-full object-cover" loading="lazy" onError={() => handleImageError(w.id)} />
+                  ) : (
+                    <div className="w-full h-full" style={{ background: PREVIEW_FALLBACK[w.id] || "#0a0a0f" }} />
+                  )}
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-300 ${
+                      isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-60"
+                    }`}
+                  />
+                  {isSelected && (
+                    <span className="absolute top-1.5 right-1.5 bg-accent rounded-full p-1 shadow-lg shadow-accent/40">
+                      <Check size={10} className="text-white" />
+                    </span>
+                  )}
+                </div>
+                <div className="mt-1.5 space-y-0.5">
+                  <div className="text-[10px] sm:text-[11px] font-medium text-white/80 group-hover:text-white transition-colors">{info.name}</div>
+                  <div className="text-[8px] sm:text-[9px] text-white/30 group-hover:text-white/40 transition-colors truncate">{info.desc}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Accent color</h3>
+        <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">Used for focus rings, hover states, and highlights across the desktop.</p>
+        <div className="flex gap-2 sm:gap-3 flex-wrap">
+          {accents.map((a) => (
+            <button
+              key={a.value}
+              onClick={() => setAccent(a.value)}
+              title={a.name}
+              className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border-2 transition-all duration-200 hover:scale-110 ${
+                accent === a.value ? "border-white scale-110" : "border-transparent hover:border-white/30"
+              }`}
+              style={{ background: `rgb(${a.value})`, boxShadow: accent === a.value ? "0 0 20px rgba(255,255,255,0.15)" : "none" }}>
+              {accent === a.value && <Check size={14} className="text-white" />}
+            </button>
+          ))}
+          <label className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border-2 border-dashed border-white/25 cursor-pointer hover:border-white/50 transition relative overflow-hidden" title="Custom color">
+            <input
+              type="color"
+              defaultValue={`#${accent.split(" ").map((n) => Number(n).toString(16).padStart(2, "0")).join("")}`}
+              onChange={(e) => {
+                const hex = e.target.value;
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                setAccent(`${r} ${g} ${b}`);
+              }}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+            />
+            <span className="text-white/50 text-[10px]">+</span>
+          </label>
+        </div>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Glass intensity</h3>
+        <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
+          How solid windows, widgets, and menus look. Lower it to see more of the wallpaper through the panels.
+        </p>
+        <div className="flex items-center gap-3 p-3 sm:p-4 rounded-xl border border-white/10 bg-white/5">
+          <Eye size={14} className="text-white/40 shrink-0" />
+          <input
+            type="range"
+            min={0.3}
+            max={0.95}
+            step={0.01}
+            value={glassAlpha}
+            onChange={(e) => setGlassAlpha(Number(e.target.value))}
+            className="flex-1 accent-[rgb(var(--accent))]"
+          />
+          <span className="text-[10px] font-mono text-white/50 w-9 text-right">{Math.round(((glassAlpha - 0.3) / (0.95 - 0.3)) * 100)}%</span>
+        </div>
+      </section>
+
+      {/* ============ WIDGETS ============ */}
+      <GroupHeader icon={Sparkles} label="Widgets" />
+
+      <section className="space-y-2">
+        <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Photo</h3>
+        <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">Paste an image URL to replace the placeholder photo widget on the desktop.</p>
+        <input
+          defaultValue={useOS.getState().photoUrl}
+          onBlur={(e) => useOS.getState().setPhotoUrl(e.target.value.trim())}
+          placeholder="https://example.com/image.jpg"
+          className="w-full bg-white/5 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-white outline-none border border-white/10 focus:border-accent transition-colors placeholder:text-white/20"
+        />
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Weather location</h3>
+        <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
+          Currently set to <span className="text-white/70">{weatherLoc.name}</span>. Drives the Weather widget and taskbar chip.
+        </p>
+        <div className="flex gap-1.5">
+          <input
+            value={cityDraft}
+            onChange={(e) => setCityDraft(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && lookupCity()}
+            placeholder="City name…"
+            className="flex-1 bg-white/5 rounded-lg px-3 py-2 text-xs text-white outline-none border border-white/10 focus:border-accent transition-colors placeholder:text-white/20"
+          />
+          <button onClick={lookupCity} className="text-xs px-3 py-2 rounded-lg bg-accent shrink-0 hover:brightness-110 active:scale-95 transition">Set</button>
+        </div>
+        <button onClick={useMyLocation} className="text-[11px] text-white/50 hover:text-white mt-1.5 underline">Use my current location</button>
+        {geoStatus && <p className="text-[10px] text-white/40 mt-1">{geoStatus}</p>}
+      </section>
+
+      {/* ============ SOUND & MOTION ============ */}
+      <GroupHeader icon={Volume2} label="Sound & Motion" />
+
+      <section className="space-y-2">
+        <ToggleRow label="Reduce motion (pause ambient animations)" checked={reduceMotion} onToggle={toggleMotion} />
+      </section>
+      <section className="space-y-2">
+        <ToggleRow label="Play a sound for new chat messages" checked={chatSound} onToggle={toggleChatSound} />
+      </section>
+      <section className="space-y-2">
+        <ToggleRow label="Compact dock / taskbar icons" checked={compact} onToggle={toggleCompact} />
+      </section>
+
+      {/* ============ DANGER ZONE ============ */}
+      <GroupHeader icon={RotateCcw} label="Danger zone" />
+      <section className="space-y-2">
+        <button
+          onClick={() => {
+            if (confirm("Reset all desktop settings to defaults? This clears saved wallpaper, accent, photo, weather location, and tasks.")) {
+              resetDefaults();
+            }
+          }}
+          className="w-full text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20 transition-all"
+        >
+          Reset to defaults
+        </button>
+      </section>
+
+      {/* Preview */}
+      <section className="space-y-2">
+        <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Preview</h3>
+        <div className="relative h-24 sm:h-28 md:h-32 rounded-xl overflow-hidden border border-white/10">
+          <Wallpaper />
+        </div>
+        <p className="text-[9px] sm:text-[10px] text-white/20 text-center">Current wallpaper preview</p>
+      </section>
+    </div>
+  );
+}
