@@ -1,4 +1,5 @@
 import { useOS } from "../store/useOS";
+import StarfieldCanvas from "./StarfieldCanvas";
 
 // Custom image wallpapers, served from /public/wallpapers so they work
 // identically in `npm run dev` and in a production build.
@@ -60,10 +61,19 @@ function AuroraScene() {
 export default function Wallpaper() {
   const wallpaper = useOS((s) => s.wallpaper);
 
+  let scene = <OceanScene />;
   if (wallpaper === "bg1" || wallpaper === "bg2" || wallpaper === "bg3") {
-    return <ImageScene id={wallpaper} />;
+    scene = <ImageScene id={wallpaper} />;
+  } else if (wallpaper === "galaxy") {
+    scene = <GalaxyScene />;
+  } else if (wallpaper === "aurora") {
+    scene = <AuroraScene />;
   }
-  if (wallpaper === "galaxy") return <GalaxyScene />;
-  if (wallpaper === "aurora") return <AuroraScene />;
-  return <OceanScene />;
+
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      {scene}
+      <StarfieldCanvas />
+    </div>
+  );
 }

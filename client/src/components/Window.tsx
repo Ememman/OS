@@ -4,12 +4,42 @@ import { useOS } from "../store/useOS";
 import { useIsMobile } from "../lib/useMediaQuery";
 
 export default function Window({ win, children }) {
-  const { closeWindow, minimizeWindow, toggleMaximize, moveWindow, resizeWindow, focusWindow, osMode, windows, dockPosition } = useOS();
+  const {
+    closeWindow,
+    minimizeWindow,
+    toggleMaximize,
+    snapWindow,
+    moveWindow,
+    resizeWindow,
+    focusWindow,
+    osMode,
+    windows,
+    dockPosition,
+  } = useOS();
   const isWin = osMode === "win";
   const isMobile = useIsMobile();
   const isFocused = win.z === Math.max(...windows.map((w) => w.z));
   const dragRef = useRef(null);
   const resizeStart = useRef(null);
+
+  // Snap layout menu state
+  const [showSnapMenu, setShowSnapMenu] = useState(false);
+  const snapTimeout = useRef<any>(null);
+
+  const handleSnapEnter = () => {
+    if (isMobile) return;
+    snapTimeout.current = setTimeout(() => setShowSnapMenu(true), 260);
+  };
+
+  const handleSnapLeave = () => {
+    if (snapTimeout.current) clearTimeout(snapTimeout.current);
+    snapTimeout.current = setTimeout(() => setShowSnapMenu(false), 240);
+  };
+
+  const applySnap = (layout: "left" | "right" | "top" | "center" | "fullscreen") => {
+    snapWindow(win.id, layout);
+    setShowSnapMenu(false);
+  };
 
   // entrance/exit animation phases: "entering" -> "open" -> "closing" | "minimizing"
   const [phase, setPhase] = useState("entering");
@@ -137,7 +167,88 @@ export default function Window({ win, children }) {
     opacity = 0;
   }
 
-  const style = { ...baseStyle, transform, opacity, transition: "transform 220ms cubic-bezier(.4,0,.2,1), opacity 200ms ease, box-shadow 180ms ease" };
+  const style = {
+    ...baseStyle,
+    transform,
+    opacity,
+    transition:
+      "left 240ms cubic-bezier(.16, 1, 0.3, 1), top 240ms cubic-bezier(.16, 1, 0.3, 1), width 240ms cubic-bezier(.16, 1, 0.3, 1), height 240ms cubic-bezier(.16, 1, 0.3, 1), transform 220ms cubic-bezier(.4,0,.2,1), opacity 200ms ease, box-shadow 180ms ease",
+  };
+
+  const renderSnapFlyout = () => {
+    if (!showSnapMenu || isMobile) return null;
+    return (
+      <div
+        onMouseEnter={() => {
+          if (snapTimeout.current) clearTimeout(snapTimeout.current);
+        }}
+        onMouseLeave={handleSnapLeave}
+        className={`absolute z-50 p-2.5 rounded-xl bg-[#141416]/95 backdrop-blur-xl border border-white/20 shadow-2xl transition-all ${
+          isWin ? "top-10 right-8" : "top-8 left-16"
+        }`}
+        style={{ width: "220px" }}
+      >
+        <div className="text-[10px] uppercase font-mono tracking-wider text-white/50 mb-2 px-0.5">
+          Snap Layouts
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {/* Left / Right Split */}
+          <div className="flex flex-col gap-1">
+            <div className="h-14 rounded-md border border-white/10 p-1 flex gap-1 bg-white/5">
+              <button
+                type="button"
+                onClick={() => applySnap("left")}
+                className="flex-1 rounded bg-white/10 hover:bg-emerald-500/30 hover:border hover:border-emerald-400/50 transition-all flex items-center justify-center group"
+                title="Snap Left (50%)"
+              >
+                <span className="text-[10px] text-white/50 group-hover:text-emerald-300 font-mono">L</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => applySnap("right")}
+                className="flex-1 rounded bg-white/10 hover:bg-emerald-500/30 hover:border hover:border-emerald-400/50 transition-all flex items-center justify-center group"
+                title="Snap Right (50%)"
+              >
+                <span className="text-[10px] text-white/50 group-hover:text-emerald-300 font-mono">R</span>
+              </button>
+            </div>
+            <span className="text-[9px] text-center text-white/50 font-mono">50 / 50 Split</span>
+          </div>
+
+          {/* Top / Center presets */}
+          <div className="flex flex-col gap-1">
+            <div className="h-14 rounded-md border border-white/10 p-1 flex flex-col gap-1 bg-white/5">
+              <button
+                type="button"
+                onClick={() => applySnap("top")}
+                className="flex-1 rounded bg-white/10 hover:bg-sky-500/30 hover:border hover:border-sky-400/50 transition-all flex items-center justify-center group"
+                title="Snap Top Half"
+              >
+                <span className="text-[9px] text-white/50 group-hover:text-sky-300 font-mono">Top</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => applySnap("center")}
+                className="flex-1 rounded bg-white/10 hover:bg-amber-500/30 hover:border hover:border-amber-400/50 transition-all flex items-center justify-center group"
+                title="Center Stage"
+              >
+                <span className="text-[9px] text-white/50 group-hover:text-amber-300 font-mono">Center</span>
+              </button>
+            </div>
+            <span className="text-[9px] text-center text-white/50 font-mono">Focus / Top</span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => applySnap("fullscreen")}
+          className="mt-2 w-full py-1.5 px-2 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 text-white/80 hover:text-white text-[11px] font-mono flex items-center justify-center gap-1.5 transition-all"
+        >
+          <GIconSquare size={10} /> Fullscreen
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div
@@ -162,7 +273,13 @@ export default function Window({ win, children }) {
               <GIconMinus size={13} />
             </button>
             {!isMobile && (
-              <button onClick={() => toggleMaximize(win.id)} className="w-11 h-9 flex items-center justify-center hover:bg-white/10 text-white/70 hover:text-white transition-colors" aria-label="Maximize window">
+              <button
+                onClick={() => toggleMaximize(win.id)}
+                onMouseEnter={handleSnapEnter}
+                onMouseLeave={handleSnapLeave}
+                className="w-11 h-9 flex items-center justify-center hover:bg-white/10 text-white/70 hover:text-white transition-colors relative"
+                aria-label="Maximize window or hover for snap layouts"
+              >
                 <GIconSquare size={11} />
               </button>
             )}
@@ -184,7 +301,13 @@ export default function Window({ win, children }) {
                 </span>
               </button>
               {!isMobile && (
-                <button onClick={() => toggleMaximize(win.id)} className="w-3 h-3 rounded-full bg-[#28c840] hover:brightness-90 flex items-center justify-center text-black/70 opacity-90 transition-all" aria-label="Maximize window">
+                <button
+                  onClick={() => toggleMaximize(win.id)}
+                  onMouseEnter={handleSnapEnter}
+                  onMouseLeave={handleSnapLeave}
+                  className="w-3 h-3 rounded-full bg-[#28c840] hover:brightness-90 flex items-center justify-center text-black/70 opacity-90 transition-all"
+                  aria-label="Maximize window or hover for snap layouts"
+                >
                   <span className="opacity-0 group-hover/controls:opacity-100 transition-opacity">
                     <GIconSquare size={7} />
                   </span>
@@ -195,6 +318,7 @@ export default function Window({ win, children }) {
           </>
         )}
       </div>
+      {renderSnapFlyout()}
       <div className="flex-1 min-h-0 thin-scroll overflow-auto allow-select">{children}</div>
       {!win.maximized && !isMobile && (
         <div

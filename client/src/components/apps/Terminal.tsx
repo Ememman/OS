@@ -157,7 +157,7 @@ export default function Terminal() {
             <div>
               <span className="text-emerald-400 font-semibold">Backend & Architecture:</span>
               <div className="flex flex-wrap gap-1.5 mt-1">
-                {["Node.js", "Express", "Socket.IO", "PHP (MVC)", "RESTful APIs", "Authentication"].map((s) => (
+                {["NestJS", "Node.js", "Express", "Socket.IO", "PHP (MVC)", "RESTful APIs", "Authentication"].map((s) => (
                   <span key={s} className="px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/40 text-emerald-200 text-[11px]">
                     {s}
                   </span>
@@ -304,10 +304,10 @@ export default function Terminal() {
             <div className="space-y-1">
               <p><span className="text-accent font-bold">bron@portfolio-os</span></p>
               <p className="text-white/40">-------------------</p>
-              <p><span className="text-emerald-400 font-semibold">OS:</span> Portfolio OS 2.4.0 (x86_64)</p>
+              <p><span className="text-emerald-400 font-semibold">OS:</span> Portfolio OS 2.5.0 (Next.js & NestJS Ready)</p>
               <p><span className="text-emerald-400 font-semibold">Style:</span> {osMode === "win" ? "Windows 11 Fluent" : "macOS Sequoia Glass"}</p>
               <p><span className="text-emerald-400 font-semibold">Icons:</span> Gravity UI Icons (@gravity-ui/icons)</p>
-              <p><span className="text-emerald-400 font-semibold">Kernel:</span> React 19.2 + Vite 8.1</p>
+              <p><span className="text-emerald-400 font-semibold">Stack:</span> Next.js + NestJS + TypeScript + React 19</p>
               <p><span className="text-emerald-400 font-semibold">Shell:</span> portfolio-sh v1.0.0</p>
               <p><span className="text-emerald-400 font-semibold">Resolution:</span> {window.innerWidth}x{window.innerHeight}</p>
               <p><span className="text-emerald-400 font-semibold">Memory:</span> 128MB / 1024MB (Simulated)</p>
