@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, CalendarDays, ArrowLeft } from "lucide-react";
+import {
+  GIconChevronLeft,
+  GIconChevronRight,
+  GIconCalendar,
+  GIconArrowLeft,
+} from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
 
 const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -52,16 +57,16 @@ export default function CalendarWidget({ onBack }) {
         <div className="flex items-center gap-1.5 min-w-0">
           {onBack && (
             <button onClick={onBack} className="p-1 -ml-1 rounded hover:bg-white/10 transition-colors shrink-0" title="Back">
-              <ArrowLeft size={14} className="text-white/60" />
+              <GIconArrowLeft size={14} className="text-white/60" />
             </button>
           )}
-          <CalendarDays size={14} className="accent shrink-0" />
+          <GIconCalendar size={14} className="accent shrink-0" />
           <span className="text-sm font-medium truncate">{monthLabel}</span>
         </div>
         <div className="flex items-center gap-0.5 shrink-0">
-          <button onClick={() => shift(-1)} className="p-1 rounded hover:bg-white/10 transition-colors"><ChevronLeft size={14} /></button>
+          <button onClick={() => shift(-1)} className="p-1 rounded hover:bg-white/10 transition-colors"><GIconChevronLeft size={14} /></button>
           <button onClick={goToday} className="text-[10px] px-1.5 py-0.5 rounded hover:bg-white/10 text-white/60 transition-colors whitespace-nowrap">Today</button>
-          <button onClick={() => shift(1)} className="p-1 rounded hover:bg-white/10 transition-colors"><ChevronRight size={14} /></button>
+          <button onClick={() => shift(1)} className="p-1 rounded hover:bg-white/10 transition-colors"><GIconChevronRight size={14} /></button>
         </div>
       </div>
       <div className="grid grid-cols-7 text-[11px] text-white/50 mb-1.5">

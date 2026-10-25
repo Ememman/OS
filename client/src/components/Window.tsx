@@ -1,5 +1,12 @@
 import { useRef, useCallback, useState, useEffect } from "react";
-import { GIconMinus, GIconSquare, GIconClose } from "./icons/GravityIcons";
+import {
+  GIconMinus,
+  GIconSquare,
+  GIconClose,
+  GIconLayoutColumns,
+  GIconLayoutHeader,
+  GIconLayoutCells,
+} from "./icons/GravityIcons";
 import { useOS } from "../store/useOS";
 import { useIsMobile } from "../lib/useMediaQuery";
 
@@ -141,11 +148,19 @@ export default function Window({ win, children }) {
   const macRight = !isWin && dockPosition === "right" && !isMobile ? dockClearance : 8;
   const baseStyle = forceFull
     ? isMobile
-      ? { top: isWin ? 4 : 32, left: 4, right: 4, bottom: isWin ? 60 : 4, width: "auto", height: "auto", zIndex: win.z }
+      ? { top: isWin ? 6 : 34, left: 6, right: 6, bottom: isWin ? 56 : 72, width: "auto", height: "auto", zIndex: win.z }
       : isWin
         ? { top: 8, left: 8, right: 8, bottom: 64, width: "auto", height: "auto", zIndex: win.z }
         : { top: 30, left: macLeft, right: macRight, bottom: 8, width: "auto", height: "auto", zIndex: win.z }
-    : { top: win.y, left: win.x, width: win.w, height: win.h, zIndex: win.z };
+    : {
+        top: Math.min(win.y, window.innerHeight - 120),
+        left: Math.min(win.x, window.innerWidth - 120),
+        width: Math.min(win.w, window.innerWidth - 20),
+        height: Math.min(win.h, window.innerHeight - (isWin ? 68 : 84)),
+        maxWidth: "calc(100vw - 16px)",
+        maxHeight: "calc(100vh - 64px)",
+        zIndex: win.z,
+      };
 
   // compute transform/opacity for each phase
   let transform = "scale(1) translate(0,0)";
@@ -201,7 +216,7 @@ export default function Window({ win, children }) {
                 className="flex-1 rounded bg-white/10 hover:bg-emerald-500/30 hover:border hover:border-emerald-400/50 transition-all flex items-center justify-center group"
                 title="Snap Left (50%)"
               >
-                <span className="text-[10px] text-white/50 group-hover:text-emerald-300 font-mono">L</span>
+                <GIconLayoutColumns size={16} className="text-white/60 group-hover:text-emerald-300 transition-colors" />
               </button>
               <button
                 type="button"
@@ -209,7 +224,7 @@ export default function Window({ win, children }) {
                 className="flex-1 rounded bg-white/10 hover:bg-emerald-500/30 hover:border hover:border-emerald-400/50 transition-all flex items-center justify-center group"
                 title="Snap Right (50%)"
               >
-                <span className="text-[10px] text-white/50 group-hover:text-emerald-300 font-mono">R</span>
+                <GIconLayoutColumns size={16} className="text-white/60 group-hover:text-emerald-300 transition-colors rotate-180" />
               </button>
             </div>
             <span className="text-[9px] text-center text-white/50 font-mono">50 / 50 Split</span>
@@ -224,7 +239,7 @@ export default function Window({ win, children }) {
                 className="flex-1 rounded bg-white/10 hover:bg-sky-500/30 hover:border hover:border-sky-400/50 transition-all flex items-center justify-center group"
                 title="Snap Top Half"
               >
-                <span className="text-[9px] text-white/50 group-hover:text-sky-300 font-mono">Top</span>
+                <GIconLayoutHeader size={15} className="text-white/60 group-hover:text-sky-300 transition-colors" />
               </button>
               <button
                 type="button"
@@ -232,7 +247,7 @@ export default function Window({ win, children }) {
                 className="flex-1 rounded bg-white/10 hover:bg-amber-500/30 hover:border hover:border-amber-400/50 transition-all flex items-center justify-center group"
                 title="Center Stage"
               >
-                <span className="text-[9px] text-white/50 group-hover:text-amber-300 font-mono">Center</span>
+                <GIconLayoutCells size={15} className="text-white/60 group-hover:text-amber-300 transition-colors" />
               </button>
             </div>
             <span className="text-[9px] text-center text-white/50 font-mono">Focus / Top</span>

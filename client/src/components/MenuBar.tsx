@@ -9,6 +9,7 @@ import {
   GIconSearch,
   GIconCheck,
   GIconClose,
+  GIconBars,
 } from "./icons/GravityIcons";
 
 function MenuDropdown({ label, isOpen, onToggle, onClose, children }) {
@@ -186,10 +187,10 @@ export default function MenuBar() {
 
         <button
           onClick={() => setMobileSheetOpen(true)}
-          className="sm:hidden p-1 -ml-1 hover:bg-white/10 rounded">
-          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
+          className="sm:hidden p-1 -ml-1 hover:bg-white/10 rounded text-white"
+          aria-label="Open mobile menu"
+        >
+          <GIconBars size={16} />
         </button>
 
         <div className="hidden sm:flex items-center gap-1">

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { Heart, Wrench, Sparkles, Rocket } from "lucide-react";
+import { GIconHeart, GIconWrench, GIconSparkles, GIconRocket } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
 import { getSocket } from "../../lib/socket";
 
-const TAG_META = {
-  fix: { label: "Fix", Icon: Wrench, color: "#D98A4E" },
-  feature: { label: "Feature", Icon: Sparkles, color: "#5FBF7C" },
-  launch: { label: "Launch", Icon: Rocket, color: "#8E7BE0" }
+const TAG_META: Record<string, { label: string; Icon: any; color: string }> = {
+  fix: { label: "Fix", Icon: GIconWrench, color: "#D98A4E" },
+  feature: { label: "Feature", Icon: GIconSparkles, color: "#5FBF7C" },
+  launch: { label: "Launch", Icon: GIconRocket, color: "#8E7BE0" },
 };
 
 export default function Updates() {
@@ -80,8 +80,8 @@ export default function Updates() {
               </div>
               <div className="text-sm font-medium mb-1">{u.title}</div>
               <p className="text-xs text-white/65 leading-relaxed">{u.body}</p>
-              <button onClick={() => react(u.id)} className="mt-2 flex items-center gap-1 text-[11px] text-white/50 hover:text-rose-300 transition-colors">
-                <Heart size={12} className={`transition-transform ${justReacted === u.id ? "scale-150 text-rose-400 fill-rose-400" : ""}`} />
+              <button onClick={() => react(u.id)} className="mt-2 flex items-center gap-1.5 text-[11px] text-white/50 hover:text-rose-300 transition-colors">
+                <GIconHeart size={12} className={`transition-transform ${justReacted === u.id ? "scale-150 text-rose-400" : ""}`} />
                 {reactions[u.id] || 0}
               </button>
             </div>

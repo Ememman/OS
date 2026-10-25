@@ -1,21 +1,27 @@
 import { useEffect, useState } from "react";
-import { Cloud, CloudRain, Sun, CloudSun, CloudLightning, Snowflake, CloudFog, CloudDrizzle } from "lucide-react";
+import {
+  GIconSun,
+  GIconCloud,
+  GIconClouds,
+  GIconDroplet,
+  GIconSnowflake,
+} from "../icons/GravityIcons";
 import { useOS } from "../../store/useOS";
 
-const CODE_MAP = {
-  0: { label: "Clear", Icon: Sun },
-  1: { label: "Mostly clear", Icon: CloudSun },
-  2: { label: "Partly cloudy", Icon: CloudSun },
-  3: { label: "Mostly cloudy", Icon: Cloud },
-  45: { label: "Foggy", Icon: CloudFog },
-  48: { label: "Foggy", Icon: CloudFog },
-  51: { label: "Drizzle", Icon: CloudDrizzle },
-  61: { label: "Rain", Icon: CloudRain },
-  63: { label: "Rain", Icon: CloudRain },
-  65: { label: "Heavy rain", Icon: CloudRain },
-  80: { label: "Showers", Icon: CloudRain },
-  95: { label: "Storms", Icon: CloudLightning },
-  71: { label: "Snow", Icon: Snowflake }
+const CODE_MAP: Record<number, { label: string; Icon: any }> = {
+  0: { label: "Clear", Icon: GIconSun },
+  1: { label: "Mostly clear", Icon: GIconSun },
+  2: { label: "Partly cloudy", Icon: GIconClouds },
+  3: { label: "Mostly cloudy", Icon: GIconCloud },
+  45: { label: "Foggy", Icon: GIconClouds },
+  48: { label: "Foggy", Icon: GIconClouds },
+  51: { label: "Drizzle", Icon: GIconDroplet },
+  61: { label: "Rain", Icon: GIconDroplet },
+  63: { label: "Rain", Icon: GIconDroplet },
+  65: { label: "Heavy rain", Icon: GIconDroplet },
+  80: { label: "Showers", Icon: GIconDroplet },
+  95: { label: "Storms", Icon: GIconDroplet },
+  71: { label: "Snow", Icon: GIconSnowflake },
 };
 
 export default function WeatherChip({ compact = false }) {

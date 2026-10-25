@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useOS, APPS } from "../../store/useOS";
 import { fallbackProjects } from "../../data/projects";
 import { fileTree } from "../../data/files";
-import { GIconTerminal } from "../icons/GravityIcons";
+import { GIconTerminal, GIconFolder, GIconFileText } from "../icons/GravityIcons";
 
 const BANNER = `
   ██████╗  ██████╗ ██████╗ ████████╗███████╗ ██████╗ ██╗     ██╗ ██████╗      ██████╗ ███████╗
@@ -230,8 +230,13 @@ export default function Terminal() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 py-1 text-xs">
             {fileTree.children.map((item) => (
               <div key={item.name} className="flex items-center gap-1.5">
-                <span className={item.type === "folder" ? "text-sky-400 font-semibold" : "text-white/80"}>
-                  {item.type === "folder" ? "📁" : "📄"} {item.name}
+                {item.type === "folder" ? (
+                  <GIconFolder size={14} className="text-sky-400 shrink-0" />
+                ) : (
+                  <GIconFileText size={14} className="text-white/60 shrink-0" />
+                )}
+                <span className={item.type === "folder" ? "text-sky-300 font-semibold" : "text-white/80"}>
+                  {item.name}
                 </span>
               </div>
             ))}
@@ -435,22 +440,23 @@ export default function Terminal() {
         {history.map((item, idx) => {
           if (item.type === "banner") {
             return (
-              <pre key={idx} className="text-[10px] sm:text-[11px] leading-tight text-emerald-400/90 whitespace-pre overflow-x-auto select-none">
+              <pre key={idx} className="text-[8px] xs:text-[10px] sm:text-[11px] leading-tight text-emerald-400/90 whitespace-pre overflow-x-auto select-none no-scrollbar">
                 {item.content}
               </pre>
             );
           }
           if (item.type === "system") {
             return (
-              <div key={idx} className="text-[11px] text-white/50">
+              <div key={idx} className="text-[10px] sm:text-[11px] text-white/50">
                 {item.content}
               </div>
             );
           }
           if (item.type === "prompt") {
             return (
-              <div key={idx} className="flex items-start gap-2 text-[12px] pt-1">
-                <span className="text-accent font-semibold shrink-0">bron@portfolio-os:~$</span>
+              <div key={idx} className="flex items-start gap-1.5 sm:gap-2 text-[11px] sm:text-[12px] pt-1">
+                <span className="text-accent font-semibold shrink-0 hidden sm:inline">bron@portfolio-os:~$</span>
+                <span className="text-accent font-semibold shrink-0 sm:hidden">os:~$</span>
                 <span className="text-white font-medium">{item.cmd}</span>
               </div>
             );
@@ -466,8 +472,9 @@ export default function Terminal() {
         })}
 
         {/* Current prompt line */}
-        <div className="flex items-center gap-2 pt-1">
-          <span className="text-accent font-semibold shrink-0">bron@portfolio-os:~$</span>
+        <div className="flex items-center gap-1.5 sm:gap-2 pt-1">
+          <span className="text-accent font-semibold shrink-0 hidden sm:inline">bron@portfolio-os:~$</span>
+          <span className="text-accent font-semibold shrink-0 sm:hidden">os:~$</span>
           <input
             ref={inputRef}
             type="text"
@@ -477,7 +484,7 @@ export default function Terminal() {
             autoFocus
             spellCheck="false"
             autoComplete="off"
-            className="flex-1 bg-transparent text-white outline-none font-mono text-[12px] caret-emerald-400"
+            className="flex-1 min-w-0 bg-transparent text-white outline-none font-mono text-[12px] caret-emerald-400"
           />
         </div>
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RotateCcw, Trophy, Volume2, VolumeX } from "lucide-react";
+import { GIconRotateLeft, GIconTrophy, GIconVolume, GIconVolumeMute } from "../../icons/GravityIcons";
 
 const SIZE = 8;
 const COLORS = ["#e8543f", "#57d9c7", "#9478ff", "#f5a642", "#ec6096", "#5fbf7c"];
@@ -269,16 +269,16 @@ export default function BlockBlast() {
           <div className="text-[10px] text-white/40 uppercase tracking-wide">Score</div>
           <div className="font-display font-semibold text-lg tabular-nums">{score}</div>
         </div>
-        <div className="flex items-center gap-1 text-white/60">
-          <Trophy size={14} className="text-amber-300" />
+        <div className="flex items-center gap-1.5 text-white/60">
+          <GIconTrophy size={14} className="text-amber-300" />
           <span className="font-mono text-xs">{best}</span>
         </div>
         <div className="flex items-center gap-1">
           <button onClick={() => setSoundOn((s) => !s)} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors" title={soundOn ? "Mute" : "Unmute"}>
-            {soundOn ? <Volume2 size={15} /> : <VolumeX size={15} className="text-white/40" />}
+            {soundOn ? <GIconVolume size={15} /> : <GIconVolumeMute size={15} className="text-white/40" />}
           </button>
           <button onClick={reset} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors" title="Restart">
-            <RotateCcw size={16} />
+            <GIconRotateLeft size={15} />
           </button>
         </div>
       </div>

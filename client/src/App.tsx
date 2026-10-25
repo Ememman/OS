@@ -130,42 +130,24 @@ export default function App() {
       <GlobalAudioPlayer />
       {!isWin && <MenuBar />}
 
-      {/* Desktop icons */}
+      {/* Desktop icons - fully responsive flex layout with safe mobile wrapping */}
       <div
-        className={`absolute ${isWin ? "top-4" : "top-11"} ${macDockLeft ? "left-24" : "left-4 sm:left-6"} reveal`}
-        style={{ animationDelay: "40ms" }}
+        className={`absolute ${isWin ? "top-3" : "top-10 sm:top-12"} ${
+          macDockLeft ? "left-20 sm:left-24" : "left-3 sm:left-6"
+        } flex flex-wrap items-center gap-2 sm:gap-4 max-w-[calc(100vw-24px)] z-10 pointer-events-auto reveal`}
+        style={{ animationDelay: "50ms" }}
       >
         <DesktopIcon icon={GIconResume} label="Resume" color="#4B5A73" onOpen={() => openApp("resume")} />
-      </div>
-      <div
-        className={`absolute ${isWin ? "top-4" : "top-11"} ${macDockLeft ? "left-44 sm:left-48" : "left-24 sm:left-28"} reveal`}
-        style={{ animationDelay: "90ms" }}
-      >
         <DesktopIcon icon={GIconGames} label="Blast It!" color="#D98A4E" onOpen={() => openApp("games")} />
-      </div>
-      <div
-        className={`absolute ${isWin ? "top-4" : "top-11"} ${macDockLeft ? "left-64 sm:left-72" : "left-44 sm:left-50"} reveal`}
-        style={{ animationDelay: "130ms" }}
-      >
         <DesktopIcon icon={GIconTerminal} label="Terminal" color="#22c55e" onOpen={() => openApp("terminal")} />
-      </div>
-      <div
-        className={`absolute ${isWin ? "top-4" : "top-11"} ${macDockLeft ? "left-[340px]" : "left-64 sm:left-72"} reveal`}
-        style={{ animationDelay: "170ms" }}
-      >
         <DesktopIcon icon={GIconNotes} label="Notes" color="#f59e0b" onOpen={() => openApp("notes")} />
-      </div>
-      <div
-        className={`absolute ${isWin ? "top-4" : "top-11"} ${macDockLeft ? "left-[420px]" : "left-[330px] sm:left-[364px]"} reveal`}
-        style={{ animationDelay: "210ms" }}
-      >
         <DesktopIcon icon={GIconCalculator} label="Calculator" color="#06b6d4" onOpen={() => openApp("calculator")} />
       </div>
 
       {/* Widget stack — macOS style only */}
       {!isWin && (
         isMobile ? (
-          <div className="absolute top-28 left-0 right-0 bottom-32 flex flex-col items-center gap-4 overflow-y-auto thin-scroll px-4 pb-4">
+          <div className="absolute top-48 xs:top-52 left-0 right-0 bottom-24 flex flex-col items-center gap-4 overflow-y-auto thin-scroll px-4 pb-8">
             <div className="reveal w-full flex justify-center" style={{ animationDelay: "120ms" }}><PhotoWidget /></div>
             <div className="reveal w-full flex justify-center" style={{ animationDelay: "150ms" }}><WeatherWidget /></div>
             <div className="reveal w-full flex justify-center" style={{ animationDelay: "180ms" }}><ClockWidget /></div>

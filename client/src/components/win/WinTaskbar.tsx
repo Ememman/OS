@@ -137,7 +137,7 @@ function DateFlyout({ onClose }) {
   const ref = useRef(null);
   useOutsideClick(ref, onClose);
   return (
-    <div ref={ref} className="absolute bottom-16 right-2 sm:right-3 z-[1200] origin-bottom-right" style={POP_ANIM}>
+    <div ref={ref} className="absolute bottom-16 right-2 sm:right-3 z-[1200] origin-bottom-right max-w-[calc(100vw-16px)]" style={POP_ANIM}>
       <CalendarWidget />
     </div>
   );
@@ -147,7 +147,7 @@ function WeatherFlyout({ onClose }) {
   const ref = useRef(null);
   useOutsideClick(ref, onClose);
   return (
-    <div ref={ref} className="absolute bottom-16 left-2 sm:left-3 z-[1200] origin-bottom-left" style={POP_ANIM}>
+    <div ref={ref} className="absolute bottom-16 left-2 sm:left-3 z-[1200] origin-bottom-left max-w-[calc(100vw-16px)]" style={POP_ANIM}>
       <WeatherWidget />
     </div>
   );
@@ -208,7 +208,7 @@ export default function WinTaskbar() {
         <div className="w-px h-6 bg-white/10 mx-1 shrink-0" />
 
         {/* Pinned / Active Taskbar Apps */}
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-0.5 shrink-0">
           {TASKBAR_ITEMS.filter((i) => i.app !== "resume").map(({ app, label, icon: Icon, color }) => (
             <button
               key={app}

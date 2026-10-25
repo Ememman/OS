@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Users, Pencil, Check, RotateCw, Palette, RefreshCw } from "lucide-react";
+import {
+  GIconPaperPlane,
+  GIconPersons,
+  GIconPencil,
+  GIconCheck,
+  GIconRotateRight,
+  GIconSliders,
+} from "../icons/GravityIcons";
 import { getSocket } from "../../lib/socket";
 import { useOS } from "../../store/useOS";
 import { useOutsideClick } from "../../lib/useOutsideClick";
@@ -129,9 +136,45 @@ export default function Chats() {
   // Sends a message with an optimistic local echo, so you always see it
   // appear immediately — then confirms (or flags as failed) via a server
   // acknowledgement instead of silently hoping the round-trip arrives.
+  // When offline, seamlessly falls back to interactive Portfolio Bot!
   const sendText = (t) => {
-    if (!t || !connected) return;
-    const tempId = `pending-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    if (!t) return;
+    const tempId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+    if (!connected) {
+      const userMsg = { id: tempId, name: name || "You", text: t, ts: Date.now() };
+      setMessages((m) => [...m, userMsg]);
+      setTypingName("Portfolio Bot");
+      setTimeout(() => {
+        setTypingName(null);
+        const lower = t.toLowerCase();
+        let reply = "Thanks for visiting Portfolio OS! Feel free to explore the Music player, Terminal CLI, Library projects, and Games!";
+        if (lower.includes("hi") || lower.includes("hello") || lower.includes("hey")) {
+          reply = "Hello there! Welcome to Portfolio OS. You can test out all apps in the dock, play music, or open Terminal.";
+        } else if (lower.includes("who") || lower.includes("about") || lower.includes("bron")) {
+          reply = "Bron Mendoza is a Full-Stack Developer specializing in MERN stack, React Native / Expo, and modern web architectures!";
+        } else if (lower.includes("skill") || lower.includes("stack") || lower.includes("tech")) {
+          reply = "Core skills include React, Next.js, TypeScript, Node.js, Express, NestJS, MongoDB, MySQL, and Tailwind CSS.";
+        } else if (lower.includes("project") || lower.includes("work")) {
+          reply = "Check out the Library app to view all featured projects, or open Resume to see work experience!";
+        } else if (lower.includes("music") || lower.includes("song")) {
+          reply = "Open the Music app from the dock to stream Lo-fi beats, synthwave, or search Apple Music tracks live!";
+        } else if (lower.includes("game") || lower.includes("blast")) {
+          reply = "You can play the Block Blast puzzle game right now by launching the Games app from the dock!";
+        }
+
+        const botMsg = {
+          id: `bot-${Date.now()}`,
+          name: "Portfolio Bot",
+          text: reply,
+          ts: Date.now(),
+        };
+        setMessages((m) => [...m, botMsg]);
+        if (chatSound) playPing();
+      }, 600);
+      return;
+    }
+
     const optimistic = { id: tempId, name: name || "you", text: t, ts: Date.now(), pending: true };
     setMessages((m) => [...m, optimistic]);
 
@@ -196,21 +239,21 @@ export default function Chats() {
           </span>
           <span
             className={`hidden xs:flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border-2 shrink-0 ${isDark ? "border-white/80" : "border-black"} ${
-              connected ? "bg-emerald-300" : connecting ? "bg-amber-300" : "bg-red-300"
+              connected ? "bg-emerald-300" : connecting ? "bg-amber-300" : "bg-sky-200"
             }`}
           >
             <span className={`w-1.5 h-1.5 rounded-full bg-black ${connecting ? "animate-pulse" : ""}`} />
-            {connected ? "ON AIR" : connecting ? "TUNING IN…" : "OFFLINE"}
+            {connected ? "ON AIR" : connecting ? "TUNING IN…" : "BOT DEMO"}
           </span>
           {!connected && !connecting && (
             <button onClick={retryConnection} className={`flex items-center gap-0.5 text-[10px] font-bold underline shrink-0 ${isDark ? "text-white/70 hover:text-white" : "text-black/70 hover:text-black"}`}>
-              <RotateCw size={11} /> Retry
+              <GIconRotateRight size={11} /> Connect Live
             </button>
           )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <div className={`flex items-center gap-1 text-[11px] font-bold rounded-full px-2 py-0.5 border-2 ${isDark ? "border-white/80 bg-black text-white/80" : "border-black bg-white text-black/70"}`}>
-            <Users size={12} /> {online}
+            <GIconPersons size={12} /> {online}
           </div>
           <div className="relative">
             <button
@@ -218,7 +261,7 @@ export default function Chats() {
               title="Change chat background"
               className={`p-1.5 rounded-full border-2 transition-colors ${isDark ? "border-white/80 hover:bg-white/10 text-white" : "border-black hover:bg-black/10 text-black"}`}
             >
-              <Palette size={13} />
+              <GIconSliders size={13} />
             </button>
             {bgPickerOpen && <BgPicker current={chatBg} onPick={setChatBg} onClose={() => setBgPickerOpen(false)} />}
           </div>
@@ -228,9 +271,12 @@ export default function Chats() {
       {/* Panel body */}
       <div ref={listRef} className="flex-1 overflow-auto thin-scroll p-3 space-y-3">
         {!connected && !connecting && messages.length === 0 && (
-          <p className={`text-xs text-center mt-8 font-comic ${isDark ? "text-white/60" : "text-black/60"}`}>
-            Couldn't reach the chat server. Make sure the backend (<code className="font-mono">server/</code>) is running, then hit Retry.
-          </p>
+          <div className={`text-xs text-center mt-6 font-comic p-3 rounded-xl border-2 border-dashed ${isDark ? "border-white/30 text-white/80" : "border-black/30 text-black/80"}`}>
+            <p className="font-bold mb-1">Local Bot Mode Active</p>
+            <p className="text-[11px] opacity-75">
+              Live server is disconnected. You can chat directly with <strong>Portfolio Bot</strong> below!
+            </p>
+          </div>
         )}
         {messages.length === 0 && connecting && (
           <p className={`text-xs text-center mt-8 ${isDark ? "text-white/60" : "text-black/60"}`}>Connecting to live chat…</p>
@@ -266,7 +312,7 @@ export default function Chats() {
                 {m.pending && <div className="text-[9px] text-black/40 mt-0.5">Sending…</div>}
                 {m.failed && (
                   <button onClick={() => retryMessage(m)} className="flex items-center gap-1 text-[9px] text-red-500 font-bold mt-0.5 hover:underline">
-                    <RefreshCw size={9} /> Failed to send — tap to retry
+                    <GIconRotateRight size={10} /> Failed to send — tap to retry
                   </button>
                 )}
               </div>
@@ -299,11 +345,11 @@ export default function Chats() {
               className="bg-white border-2 border-black rounded px-2 py-0.5 text-black outline-none w-32 font-comic font-bold"
               placeholder="Your guest name"
             />
-            <button onClick={saveName} className="p-1 hover:bg-black/10 rounded border-2 border-black bg-white"><Check size={12} /></button>
+            <button onClick={saveName} className="p-1 hover:bg-black/10 rounded border-2 border-black bg-white"><GIconCheck size={12} /></button>
           </>
         ) : (
           <button onClick={() => { setDraftName(name); setEditingName(true); }} className={`flex items-center gap-1 font-bold ${isDark ? "text-white/70 hover:text-white" : "text-black/60 hover:text-black"}`}>
-            <Pencil size={11} /> {name || "guest"}
+            <GIconPencil size={11} /> {name || "guest"}
           </button>
         )}
       </div>
@@ -312,18 +358,20 @@ export default function Chats() {
       <div className="p-2.5 bg-black flex items-center gap-2">
         <input
           value={text}
-          onChange={(e) => { setText(e.target.value); getSocket().emit("chat:typing"); }}
+          onChange={(e) => {
+            setText(e.target.value);
+            if (connected) getSocket().emit("chat:typing");
+          }}
           onKeyDown={(e) => e.key === "Enter" && send()}
-          placeholder={connected ? "Say something…" : "Waiting for connection…"}
-          disabled={!connected}
-          className="flex-1 bg-white text-black placeholder:text-black/40 rounded-full px-3.5 py-2 text-sm outline-none font-comic font-bold border-2 border-white focus:ring-2 ring-accent disabled:opacity-50"
+          placeholder={connected ? "Say something…" : "Chat with Portfolio Bot…"}
+          className="flex-1 bg-white text-black placeholder:text-black/40 rounded-full px-3.5 py-2 text-sm outline-none font-comic font-bold border-2 border-white focus:ring-2 ring-accent"
         />
         <button
           onClick={send}
-          disabled={!connected}
+          disabled={!text.trim()}
           className="flex items-center gap-1 px-3 py-2 bg-accent text-white rounded-full font-shout text-sm border-2 border-white disabled:opacity-40 active:scale-95 transition"
         >
-          <Send size={14} />
+          <GIconPaperPlane size={14} />
         </button>
       </div>
     </div>

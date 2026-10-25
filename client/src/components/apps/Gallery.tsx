@@ -1,5 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
-import { X, ChevronLeft, ChevronRight, PlayCircle } from "lucide-react";
+import {
+  GIconClose,
+  GIconChevronLeft,
+  GIconChevronRight,
+  GIconPlay,
+} from "../icons/GravityIcons";
 import { galleryItems } from "../../data/gallery";
 
 export default function Gallery() {
@@ -53,7 +58,7 @@ export default function Gallery() {
             />
             {g.type === "video" && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                <PlayCircle size={28} className="text-white/90" />
+                <GIconPlay size={28} className="text-white/90" />
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-2">
@@ -65,11 +70,11 @@ export default function Gallery() {
 
       {openIdx !== null && (
         <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 sm:p-8" onClick={close}>
-          <button onClick={(e) => { e.stopPropagation(); close(); }} className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 hover:bg-white/10 rounded-full z-10">
-            <X size={18} />
+          <button onClick={(e) => { e.stopPropagation(); close(); }} className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 hover:bg-white/10 rounded-full z-10 text-white" aria-label="Close">
+            <GIconClose size={18} />
           </button>
-          <button onClick={(e) => { e.stopPropagation(); go(-1); }} className="absolute left-1 sm:left-4 p-1.5 sm:p-2 hover:bg-white/10 rounded-full z-10">
-            <ChevronLeft size={20} />
+          <button onClick={(e) => { e.stopPropagation(); go(-1); }} className="absolute left-1 sm:left-4 p-1.5 sm:p-2 hover:bg-white/10 rounded-full z-10 text-white" aria-label="Previous">
+            <GIconChevronLeft size={22} />
           </button>
           <div onClick={(e) => e.stopPropagation()} className="max-w-2xl w-full">
             {shown[openIdx].type === "video" ? (
@@ -87,8 +92,8 @@ export default function Gallery() {
             <p className="text-center text-sm text-white/70 mt-3">{shown[openIdx].caption} · <span className="accent">{shown[openIdx].tag}</span></p>
             <p className="text-center text-[10px] text-white/30 mt-1">{openIdx + 1} / {shown.length} · ← → to navigate, Esc to close</p>
           </div>
-          <button onClick={(e) => { e.stopPropagation(); go(1); }} className="absolute right-1 sm:right-4 p-1.5 sm:p-2 hover:bg-white/10 rounded-full z-10">
-            <ChevronRight size={20} />
+          <button onClick={(e) => { e.stopPropagation(); go(1); }} className="absolute right-1 sm:right-4 p-1.5 sm:p-2 hover:bg-white/10 rounded-full z-10 text-white" aria-label="Next">
+            <GIconChevronRight size={22} />
           </button>
         </div>
       )}

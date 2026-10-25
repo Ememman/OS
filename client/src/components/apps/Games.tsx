@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Gamepad2, Lock } from "lucide-react";
+import { GIconArrowLeft, GIconPuzzle, GIconLock } from "../icons/GravityIcons";
 import BlockBlast from "./games/BlockBlast";
 
 const RECOMMENDATIONS = [
@@ -15,7 +15,7 @@ export default function Games() {
     return (
       <div className="h-full flex flex-col">
         <div className="px-3 py-2 border-b border-white/10 flex items-center gap-2">
-          <button onClick={() => setOpen(null)} className="p-1 hover:bg-white/10 rounded"><ArrowLeft size={14} /></button>
+          <button onClick={() => setOpen(null)} className="p-1 hover:bg-white/10 rounded"><GIconArrowLeft size={14} /></button>
           <span className="text-xs font-medium">Block Blast</span>
         </div>
         <div className="flex-1 overflow-auto thin-scroll">
@@ -34,7 +34,7 @@ export default function Games() {
         onClick={() => setOpen("blockblast")}
         className="w-full flex items-center gap-3 p-3 rounded-xl border border-accent/50 bg-accent/10 mb-4 text-left"
       >
-        <Gamepad2 className="accent" size={22} />
+        <GIconPuzzle className="accent" size={22} />
         <div>
           <div className="text-sm font-medium">Block Blast</div>
           <div className="text-[11px] text-white/50">Clear rows and columns before the board fills up.</div>
@@ -45,7 +45,7 @@ export default function Games() {
       <div className="space-y-2">
         {RECOMMENDATIONS.map((g) => (
           <div key={g.name} className="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/5 opacity-60">
-            <Lock size={16} />
+            <GIconLock size={16} />
             <div>
               <div className="text-sm font-medium">{g.name}</div>
               <div className="text-[11px] text-white/50">{g.desc}</div>

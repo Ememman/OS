@@ -8,7 +8,7 @@ const DEFAULT_NOTES = [
     id: "welcome-note",
     title: "Welcome to Portfolio OS Notes",
     updatedAt: "Just now",
-    content: `# Welcome to Portfolio OS Notes 📝
+    content: `# Welcome to Portfolio OS Notes
 
 This is your persistent notepad and markdown scratchpad.
 
