@@ -1,6 +1,11 @@
 import { useState, useMemo } from "react";
-import { Folder, FileText, ExternalLink, Grid3x3, List, HardDrive } from "lucide-react";
 import {
+  GIconFolder,
+  GIconFileText,
+  GIconExternalLink,
+  GIconLayoutCells,
+  GIconList,
+  GIconHardDrive,
   GIconStar,
   GIconChevronRight,
   GIconTerminal,
@@ -40,9 +45,9 @@ function Icon({ item }) {
   if (item.name?.toLowerCase().includes("calculator") || item.app === "calculator") {
     return <GIconCalculator size={item._size || 32} className="text-cyan-400" />;
   }
-  if (item.type === "folder") return <Folder size={item._size || 34} className="text-sky-300" fill="currentColor" fillOpacity={0.15} />;
-  if (item.type === "app-link") return <ExternalLink size={item._size || 30} className="text-amber-300" />;
-  return <FileText size={item._size || 30} className="text-white/70" />;
+  if (item.type === "folder") return <GIconFolder size={item._size || 34} className="text-sky-300" />;
+  if (item.type === "app-link") return <GIconExternalLink size={item._size || 28} className="text-amber-300" />;
+  return <GIconFileText size={item._size || 30} className="text-white/70" />;
 }
 
 export default function Files() {
@@ -85,7 +90,7 @@ export default function Files() {
               onClick={() => goFavorite(f)}
               className="w-full flex items-center gap-2 text-left text-xs px-2 py-1.5 rounded-lg hover:bg-white/8 text-white/75"
             >
-              <HardDrive size={12} className="text-white/40 shrink-0" />
+              <GIconHardDrive size={13} className="text-white/40 shrink-0" />
               <span className="truncate">{f.label}</span>
             </button>
           ))}
@@ -104,11 +109,11 @@ export default function Files() {
             ))}
           </div>
           <div className="flex gap-1 shrink-0">
-            <button onClick={() => setView("grid")} className={`p-1.5 rounded ${view === "grid" ? "bg-white/15" : "hover:bg-white/8"}`}>
-              <Grid3x3 size={13} />
+            <button onClick={() => setView("grid")} title="Grid View" className={`p-1.5 rounded ${view === "grid" ? "bg-white/15" : "hover:bg-white/8"}`}>
+              <GIconLayoutCells size={13} />
             </button>
-            <button onClick={() => setView("list")} className={`p-1.5 rounded ${view === "list" ? "bg-white/15" : "hover:bg-white/8"}`}>
-              <List size={13} />
+            <button onClick={() => setView("list")} title="List View" className={`p-1.5 rounded ${view === "list" ? "bg-white/15" : "hover:bg-white/8"}`}>
+              <GIconList size={13} />
             </button>
           </div>
         </div>
@@ -154,7 +159,7 @@ export default function Files() {
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 sm:p-8" onClick={() => setOpenText(null)}>
           <div className="glass rounded-2xl max-w-md w-full p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2 mb-3">
-              <FileText size={14} className="text-white/60" />
+              <GIconFileText size={14} className="text-white/60" />
               <span className="text-xs font-medium">{openText.name}</span>
             </div>
             <pre className="text-xs text-white/80 whitespace-pre-wrap font-sans leading-relaxed">{openText.content}</pre>

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useOS, APPS } from "../../store/useOS";
 import { fallbackProjects } from "../../data/projects";
 import { fileTree } from "../../data/files";
-import { GIconTerminal } from "../icons/GravityIcons";
+import { GIconTerminal, GIconFolder, GIconFileText } from "../icons/GravityIcons";
 
 const BANNER = `
   ██████╗  ██████╗ ██████╗ ████████╗███████╗ ██████╗ ██╗     ██╗ ██████╗      ██████╗ ███████╗
@@ -230,8 +230,13 @@ export default function Terminal() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 py-1 text-xs">
             {fileTree.children.map((item) => (
               <div key={item.name} className="flex items-center gap-1.5">
-                <span className={item.type === "folder" ? "text-sky-400 font-semibold" : "text-white/80"}>
-                  {item.type === "folder" ? "📁" : "📄"} {item.name}
+                {item.type === "folder" ? (
+                  <GIconFolder size={14} className="text-sky-400 shrink-0" />
+                ) : (
+                  <GIconFileText size={14} className="text-white/60 shrink-0" />
+                )}
+                <span className={item.type === "folder" ? "text-sky-300 font-semibold" : "text-white/80"}>
+                  {item.name}
                 </span>
               </div>
             ))}

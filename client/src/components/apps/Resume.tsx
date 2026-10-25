@@ -1,4 +1,4 @@
-import { Download, Mail, MapPin } from "lucide-react";
+import { GIconDownload, GIconMail, GIconMapPin } from "../icons/GravityIcons";
 
 const EXPERIENCE = [
   {
@@ -31,16 +31,16 @@ export default function Resume() {
           <h2 className="font-display text-xl sm:text-2xl font-semibold">Bron Mendoza</h2>
           <p className="text-sm text-white/60">Full-Stack Developer — MERN &amp; Mobile</p>
           <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-white/50">
-            <span className="flex items-center gap-1"><MapPin size={12} /> Manila, Philippines</span>
-            <span className="flex items-center gap-1"><Mail size={12} /> hello@example.com</span>
+            <span className="flex items-center gap-1.5"><GIconMapPin size={13} className="text-white/60" /> Manila, Philippines</span>
+            <span className="flex items-center gap-1.5"><GIconMail size={13} className="text-white/60" /> hello@example.com</span>
           </div>
         </div>
         <a
           href="/resume.pdf"
           download
-          className="flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-accent shrink-0 hover:brightness-110 active:scale-95 transition"
+          className="flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-accent text-white shrink-0 hover:brightness-110 active:scale-95 transition"
         >
-          <Download size={14} /> Download PDF
+          <GIconDownload size={14} /> Download PDF
         </a>
       </div>
 

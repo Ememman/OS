@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Users, Pencil, Check, RotateCw, Palette, RefreshCw } from "lucide-react";
+import {
+  GIconPaperPlane,
+  GIconPersons,
+  GIconPencil,
+  GIconCheck,
+  GIconRotateRight,
+  GIconSliders,
+} from "../icons/GravityIcons";
 import { getSocket } from "../../lib/socket";
 import { useOS } from "../../store/useOS";
 import { useOutsideClick } from "../../lib/useOutsideClick";
@@ -204,13 +211,13 @@ export default function Chats() {
           </span>
           {!connected && !connecting && (
             <button onClick={retryConnection} className={`flex items-center gap-0.5 text-[10px] font-bold underline shrink-0 ${isDark ? "text-white/70 hover:text-white" : "text-black/70 hover:text-black"}`}>
-              <RotateCw size={11} /> Retry
+              <GIconRotateRight size={11} /> Retry
             </button>
           )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <div className={`flex items-center gap-1 text-[11px] font-bold rounded-full px-2 py-0.5 border-2 ${isDark ? "border-white/80 bg-black text-white/80" : "border-black bg-white text-black/70"}`}>
-            <Users size={12} /> {online}
+            <GIconPersons size={12} /> {online}
           </div>
           <div className="relative">
             <button
@@ -218,7 +225,7 @@ export default function Chats() {
               title="Change chat background"
               className={`p-1.5 rounded-full border-2 transition-colors ${isDark ? "border-white/80 hover:bg-white/10 text-white" : "border-black hover:bg-black/10 text-black"}`}
             >
-              <Palette size={13} />
+              <GIconSliders size={13} />
             </button>
             {bgPickerOpen && <BgPicker current={chatBg} onPick={setChatBg} onClose={() => setBgPickerOpen(false)} />}
           </div>
@@ -266,7 +273,7 @@ export default function Chats() {
                 {m.pending && <div className="text-[9px] text-black/40 mt-0.5">Sending…</div>}
                 {m.failed && (
                   <button onClick={() => retryMessage(m)} className="flex items-center gap-1 text-[9px] text-red-500 font-bold mt-0.5 hover:underline">
-                    <RefreshCw size={9} /> Failed to send — tap to retry
+                    <GIconRotateRight size={10} /> Failed to send — tap to retry
                   </button>
                 )}
               </div>
@@ -299,11 +306,11 @@ export default function Chats() {
               className="bg-white border-2 border-black rounded px-2 py-0.5 text-black outline-none w-32 font-comic font-bold"
               placeholder="Your guest name"
             />
-            <button onClick={saveName} className="p-1 hover:bg-black/10 rounded border-2 border-black bg-white"><Check size={12} /></button>
+            <button onClick={saveName} className="p-1 hover:bg-black/10 rounded border-2 border-black bg-white"><GIconCheck size={12} /></button>
           </>
         ) : (
           <button onClick={() => { setDraftName(name); setEditingName(true); }} className={`flex items-center gap-1 font-bold ${isDark ? "text-white/70 hover:text-white" : "text-black/60 hover:text-black"}`}>
-            <Pencil size={11} /> {name || "guest"}
+            <GIconPencil size={11} /> {name || "guest"}
           </button>
         )}
       </div>
@@ -323,7 +330,7 @@ export default function Chats() {
           disabled={!connected}
           className="flex items-center gap-1 px-3 py-2 bg-accent text-white rounded-full font-shout text-sm border-2 border-white disabled:opacity-40 active:scale-95 transition"
         >
-          <Send size={14} />
+          <GIconPaperPlane size={14} />
         </button>
       </div>
     </div>

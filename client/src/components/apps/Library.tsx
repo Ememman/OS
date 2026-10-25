@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ExternalLink, Code2 as Github } from "lucide-react";
+import { GIconExternalLink, GIconGithub } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
 import { fallbackProjects } from "../../data/projects";
 
@@ -78,16 +78,16 @@ export default function Library() {
             </div>
             <div className="flex gap-2">
               {active.links.live && (
-                <a href={active.links.live} target="_blank" rel="noreferrer" className="text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-accent">
-                  <ExternalLink size={12} /> Live
+                <a href={active.links.live} target="_blank" rel="noreferrer" className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-white">
+                  <GIconExternalLink size={12} /> Live
                 </a>
               )}
               {active.links.repo && (
-                <a href={active.links.repo} target="_blank" rel="noreferrer" className="text-xs flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-white/15">
-                  <Github size={12} /> Code
+                <a href={active.links.repo} target="_blank" rel="noreferrer" className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/15 text-white/80 hover:text-white">
+                  <GIconGithub size={12} /> Code
                 </a>
               )}
-              <button onClick={() => setActive(null)} className="ml-auto text-xs px-2.5 py-1.5 rounded-lg border border-white/15">Close</button>
+              <button onClick={() => setActive(null)} className="ml-auto text-xs px-3 py-1.5 rounded-lg border border-white/15 hover:bg-white/10 text-white">Close</button>
             </div>
           </div>
         </div>

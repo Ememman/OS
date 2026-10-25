@@ -1,5 +1,12 @@
 import { useRef, useCallback, useState, useEffect } from "react";
-import { GIconMinus, GIconSquare, GIconClose } from "./icons/GravityIcons";
+import {
+  GIconMinus,
+  GIconSquare,
+  GIconClose,
+  GIconLayoutColumns,
+  GIconLayoutHeader,
+  GIconLayoutCells,
+} from "./icons/GravityIcons";
 import { useOS } from "../store/useOS";
 import { useIsMobile } from "../lib/useMediaQuery";
 
@@ -201,7 +208,7 @@ export default function Window({ win, children }) {
                 className="flex-1 rounded bg-white/10 hover:bg-emerald-500/30 hover:border hover:border-emerald-400/50 transition-all flex items-center justify-center group"
                 title="Snap Left (50%)"
               >
-                <span className="text-[10px] text-white/50 group-hover:text-emerald-300 font-mono">L</span>
+                <GIconLayoutColumns size={16} className="text-white/60 group-hover:text-emerald-300 transition-colors" />
               </button>
               <button
                 type="button"
@@ -209,7 +216,7 @@ export default function Window({ win, children }) {
                 className="flex-1 rounded bg-white/10 hover:bg-emerald-500/30 hover:border hover:border-emerald-400/50 transition-all flex items-center justify-center group"
                 title="Snap Right (50%)"
               >
-                <span className="text-[10px] text-white/50 group-hover:text-emerald-300 font-mono">R</span>
+                <GIconLayoutColumns size={16} className="text-white/60 group-hover:text-emerald-300 transition-colors rotate-180" />
               </button>
             </div>
             <span className="text-[9px] text-center text-white/50 font-mono">50 / 50 Split</span>
@@ -224,7 +231,7 @@ export default function Window({ win, children }) {
                 className="flex-1 rounded bg-white/10 hover:bg-sky-500/30 hover:border hover:border-sky-400/50 transition-all flex items-center justify-center group"
                 title="Snap Top Half"
               >
-                <span className="text-[9px] text-white/50 group-hover:text-sky-300 font-mono">Top</span>
+                <GIconLayoutHeader size={15} className="text-white/60 group-hover:text-sky-300 transition-colors" />
               </button>
               <button
                 type="button"
@@ -232,7 +239,7 @@ export default function Window({ win, children }) {
                 className="flex-1 rounded bg-white/10 hover:bg-amber-500/30 hover:border hover:border-amber-400/50 transition-all flex items-center justify-center group"
                 title="Center Stage"
               >
-                <span className="text-[9px] text-white/50 group-hover:text-amber-300 font-mono">Center</span>
+                <GIconLayoutCells size={15} className="text-white/60 group-hover:text-amber-300 transition-colors" />
               </button>
             </div>
             <span className="text-[9px] text-center text-white/50 font-mono">Focus / Top</span>

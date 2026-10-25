@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { GIconChevronDown } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
 import CalendarWidget from "./CalendarWidget";
 
@@ -34,7 +34,7 @@ export default function AgendaWidget() {
           <div className="text-[10px] uppercase tracking-wider accent font-semibold">
             {today.toLocaleDateString([], { weekday: "long" })}
           </div>
-          <ChevronDown size={13} className="text-white/30 group-hover:text-white/60 transition" />
+          <GIconChevronDown size={13} className="text-white/30 group-hover:text-white/60 transition" />
         </div>
         <div className="text-[28px] font-display font-bold leading-none mt-0.5 mb-2">{today.getDate()}</div>
         <div className="space-y-1.5 min-w-0">

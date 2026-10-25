@@ -27,10 +27,14 @@ export default function GlobalAudioPlayer() {
     <audio
       ref={audioRef}
       src={track?.src}
-      crossOrigin="anonymous"
-      onTimeUpdate={(e) => setProgress(e.target.currentTime)}
-      onLoadedMetadata={(e) => setDuration(e.target.duration)}
+      onTimeUpdate={(e: any) => setProgress(e.target.currentTime)}
+      onLoadedMetadata={(e: any) => setDuration(e.target.duration)}
       onEnded={next}
+      onError={() => {
+        console.warn("Track failed to load, moving to next track:", track?.title);
+        // Attempt next track in queue smoothly
+        if (queue.length > 1) next();
+      }}
       className="hidden"
     />
   );
