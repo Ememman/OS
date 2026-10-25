@@ -35,6 +35,10 @@ export const GIconGames = (props) => <GravityIcon icon={GIcons.Puzzle || GIcons.
 export const GIconFiles = (props) => <GravityIcon icon={GIcons.FolderOpen || GIcons.Folder} {...props} />;
 export const GIconSettings = (props) => <GravityIcon icon={GIcons.Gear} {...props} />;
 export const GIconResume = (props) => <GravityIcon icon={GIcons.Person || GIcons.FileText} {...props} />;
+export const GIconCalculator = (props) => <GravityIcon icon={GIcons.Calculator} {...props} />;
+export const GIconNotes = (props) => <GravityIcon icon={GIcons.PencilToSquare || GIcons.Pencil} {...props} />;
+export const GIconPlus = (props) => <GravityIcon icon={GIcons.Plus} {...props} />;
+export const GIconPercent = (props) => <GravityIcon icon={GIcons.Percent} {...props} />;
 
 // Window & System Controls
 export const GIconClose = (props) => <GravityIcon icon={GIcons.Xmark} {...props} />;

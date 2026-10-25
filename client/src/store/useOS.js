@@ -1,15 +1,18 @@
 import { create } from "zustand";
+import { soundFx } from "../lib/soundFx";
 
 export const APPS = {
   library: { title: "Library", w: 860, h: 580 },
   music: { title: "Music", w: 760, h: 520 },
   terminal: { title: "Terminal", w: 740, h: 480 },
+  calculator: { title: "Calculator", w: 320, h: 480 },
+  notes: { title: "Notes", w: 740, h: 520 },
   updates: { title: "Updates", w: 620, h: 640 },
   chats: { title: "Chats", w: 420, h: 620 },
   gallery: { title: "Gallery", w: 880, h: 600 },
   games: { title: "Games", w: 560, h: 700 },
   files: { title: "Files", w: 780, h: 540 },
-  settings: { title: "Settings", w: 640, h: 500 },
+  settings: { title: "Settings", w: 640, h: 520 },
   resume: { title: "Resume", w: 720, h: 640 },
 };
 
@@ -59,6 +62,26 @@ export const useOS = create((set, get) => ({
     localStorage.setItem("os_chat_sound", next ? "on" : "off");
     set({ chatSound: next });
   },
+
+  systemSounds: localStorage.getItem("os_system_sounds") !== "off",
+  toggleSystemSounds: () => {
+    const next = !get().systemSounds;
+    localStorage.setItem("os_system_sounds", next ? "on" : "off");
+    set({ systemSounds: next });
+  },
+
+  notification: null,
+  notify: (title, message) => {
+    const id = Date.now();
+    set({ notification: { id, title, message } });
+    if (get().systemSounds) soundFx.playNotification();
+    setTimeout(() => {
+      if (get().notification?.id === id) {
+        set({ notification: null });
+      }
+    }, 4200);
+  },
+  dismissNotification: () => set({ notification: null }),
 
   chatBg: localStorage.getItem("os_chat_bg") || "halftone", // "halftone" | "notebook" | "ink" | "plain"
   setChatBg: (id) => {
@@ -132,6 +155,7 @@ export const useOS = create((set, get) => ({
   },
 
   openApp: (app) => {
+    if (get().systemSounds) soundFx.playOpen();
     const existing = get().windows.find((w) => w.app === app);
     if (existing) {
       get().focusWindow(existing.id);
@@ -143,6 +167,7 @@ export const useOS = create((set, get) => ({
       return;
     }
     const meta = APPS[app];
+    if (!meta) return;
     const count = get().windows.length;
     const id = `${app}-${Date.now()}`;
     z += 1;
@@ -161,8 +186,10 @@ export const useOS = create((set, get) => ({
     set({ windows: [...get().windows, win] });
   },
 
-  closeWindow: (id) =>
-    set({ windows: get().windows.filter((w) => w.id !== id) }),
+  closeWindow: (id) => {
+    if (get().systemSounds) soundFx.playClose();
+    set({ windows: get().windows.filter((w) => w.id !== id) });
+  },
 
   focusWindow: (id) => {
     z += 1;
@@ -172,12 +199,14 @@ export const useOS = create((set, get) => ({
     });
   },
 
-  minimizeWindow: (id) =>
+  minimizeWindow: (id) => {
+    if (get().systemSounds) soundFx.playMinimize();
     set({
       windows: get().windows.map((w) =>
         w.id === id ? { ...w, minimized: true } : w,
       ),
-    }),
+    });
+  },
 
   toggleMaximize: (id) =>
     set({

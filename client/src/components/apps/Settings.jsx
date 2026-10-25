@@ -9,6 +9,8 @@ import {
   GIconTrash,
   GIconTerminal,
   GIconSearch,
+  GIconNotes,
+  GIconCalculator,
 } from "../icons/GravityIcons";
 
 // Preview images for the wallpaper selector — served from /public/wallpapers
@@ -74,6 +76,8 @@ export default function Settings() {
     setWeatherLoc,
     chatSound,
     toggleChatSound,
+    systemSounds,
+    toggleSystemSounds,
     compact,
     toggleCompact,
     glassAlpha,
@@ -147,7 +151,7 @@ export default function Settings() {
       </div>
 
       {/* ============ APPEARANCE ============ */}
-      <GroupHeader icon={Palette} label="Appearance" />
+      <GroupHeader icon={GIconSliders} label="Appearance" />
 
       <section className="space-y-2">
         <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Desktop style</h3>
@@ -333,6 +337,42 @@ export default function Settings() {
               Open
             </button>
           </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-white/10">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <GIconNotes size={16} />
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-white">Notes & Scratchpad</h4>
+                <p className="text-[10px] text-white/45">Markdown editor with auto-save & word counts</p>
+              </div>
+            </div>
+            <button
+              onClick={() => openApp("notes")}
+              className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-amber-500 hover:text-black font-medium transition-colors text-white"
+            >
+              Open
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-white/10">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                <GIconCalculator size={16} />
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-white">Interactive Calculator</h4>
+                <p className="text-[10px] text-white/45">Standard & formula history with keyboard typing</p>
+              </div>
+            </div>
+            <button
+              onClick={() => openApp("calculator")}
+              className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-cyan-500 hover:text-black font-medium transition-colors text-white"
+            >
+              Open
+            </button>
+          </div>
         </div>
       </section>
 
@@ -372,6 +412,9 @@ export default function Settings() {
       {/* ============ SOUND & MOTION ============ */}
       <GroupHeader icon={GIconVolume} label="Sound & Motion" />
 
+      <section className="space-y-2">
+        <ToggleRow label="System sound effects (window chimes, pops & clicks)" checked={systemSounds} onToggle={toggleSystemSounds} />
+      </section>
       <section className="space-y-2">
         <ToggleRow label="Reduce motion (pause ambient animations)" checked={reduceMotion} onToggle={toggleMotion} />
       </section>
