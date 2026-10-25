@@ -68,6 +68,8 @@ export default function Settings() {
     accents,
     reduceMotion,
     toggleMotion,
+    particlesEnabled,
+    toggleParticles,
     osMode,
     setOsMode,
     dockPosition,
@@ -412,6 +414,9 @@ export default function Settings() {
       {/* ============ SOUND & MOTION ============ */}
       <GroupHeader icon={GIconVolume} label="Sound & Motion" />
 
+      <section className="space-y-2">
+        <ToggleRow label="Desktop starfield & constellation particles" checked={particlesEnabled} onToggle={toggleParticles} />
+      </section>
       <section className="space-y-2">
         <ToggleRow label="System sound effects (window chimes, pops & clicks)" checked={systemSounds} onToggle={toggleSystemSounds} />
       </section>

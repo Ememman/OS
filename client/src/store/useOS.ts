@@ -113,6 +113,71 @@ export const useOS = create((set, get) => ({
   },
   reopenPicker: () => set({ osChosen: false }),
 
+  // Desktop celestial starfield & particles animation
+  particlesEnabled: localStorage.getItem("os_particles") !== "off",
+  toggleParticles: () => {
+    const next = !get().particlesEnabled;
+    localStorage.setItem("os_particles", next ? "on" : "off");
+    set({ particlesEnabled: next });
+  },
+
+  // Window snap layout engine
+  snapWindow: (id, layout) => {
+    if (get().systemSounds) soundFx.playPop();
+    const innerW = window.innerWidth;
+    const innerH = window.innerHeight;
+    const isWin = get().osMode === "win";
+    const topBar = isWin ? 6 : 32;
+    const bottomBar = isWin ? 54 : (get().dockPosition === "bottom" ? 76 : 12);
+    const leftBar = (!isWin && get().dockPosition === "left") ? 78 : 10;
+    const rightBar = (!isWin && get().dockPosition === "right") ? 78 : 10;
+    const usableW = Math.max(400, innerW - leftBar - rightBar);
+    const usableH = Math.max(300, innerH - topBar - bottomBar);
+
+    if (layout === "fullscreen") {
+      set({
+        windows: get().windows.map((w) => (w.id === id ? { ...w, maximized: true } : w)),
+      });
+      return;
+    }
+
+    let bounds = { x: 80, y: 60, w: 760, h: 520 };
+    if (layout === "left") {
+      bounds = { x: leftBar, y: topBar, w: Math.floor(usableW / 2) - 5, h: usableH };
+    } else if (layout === "right") {
+      bounds = { x: leftBar + Math.floor(usableW / 2) + 5, y: topBar, w: Math.floor(usableW / 2) - 5, h: usableH };
+    } else if (layout === "top") {
+      bounds = { x: leftBar, y: topBar, w: usableW, h: Math.floor(usableH / 2) - 5 };
+    } else if (layout === "center") {
+      const cw = Math.min(880, Math.floor(usableW * 0.82));
+      const ch = Math.min(640, Math.floor(usableH * 0.86));
+      bounds = {
+        x: leftBar + Math.floor((usableW - cw) / 2),
+        y: topBar + Math.floor((usableH - ch) / 2),
+        w: cw,
+        h: ch,
+      };
+    }
+
+    set({
+      windows: get().windows.map((w) =>
+        w.id === id ? { ...w, maximized: false, ...bounds } : w
+      ),
+    });
+  },
+
+  closeAllWindows: () => {
+    if (get().systemSounds) soundFx.playClose();
+    set({ windows: [] });
+  },
+
+  minimizeAllWindows: () => {
+    if (get().systemSounds) soundFx.playMinimize();
+    set({
+      windows: get().windows.map((w) => ({ ...w, minimized: true })),
+    });
+  },
+
   // System-wide Spotlight / Search
   spotlightOpen: false,
   openSpotlight: () => set({ spotlightOpen: true }),

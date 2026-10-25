@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useOS } from "./store/useOS";
 import { useIsMobile } from "./lib/useMediaQuery";
 import Wallpaper from "./components/Wallpaper";
@@ -13,6 +13,7 @@ import BootScreen from "./components/BootScreen";
 import OsPicker from "./components/OsPicker";
 import SpotlightSearch from "./components/SpotlightSearch";
 import NotificationToast from "./components/NotificationToast";
+import DesktopContextMenu from "./components/DesktopContextMenu";
 import PhotoWidget from "./components/widgets/PhotoWidget";
 import WeatherWidget from "./components/widgets/WeatherWidget";
 import ClockWidget from "./components/widgets/ClockWidget";
@@ -76,6 +77,13 @@ export default function App() {
   const macDockLeft = !isWin && !isMobile && dockPosition === "left";
   const macDockRight = !isWin && !isMobile && dockPosition === "right";
   const welcomed = useRef(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const handleDesktopContextMenu = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest(".glass, input, textarea, button, a")) return;
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
 
   useEffect(() => {
     document.documentElement.style.setProperty("--accent", accent);
@@ -114,7 +122,10 @@ export default function App() {
   if (!osChosen) return <OsPicker />;
 
   return (
-    <div className={`relative w-screen h-screen overflow-hidden ${reduceMotion ? "reduced-motion" : ""}`}>
+    <div
+      onContextMenu={handleDesktopContextMenu}
+      className={`relative w-screen h-screen overflow-hidden ${reduceMotion ? "reduced-motion" : ""}`}
+    >
       <Wallpaper />
       <GlobalAudioPlayer />
       {!isWin && <MenuBar />}
@@ -195,6 +206,13 @@ export default function App() {
       <MiniPlayer />
       <SpotlightSearch />
       <NotificationToast />
+      {contextMenu && (
+        <DesktopContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </div>
   );
 }
