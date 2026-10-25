@@ -209,7 +209,7 @@ export default function Terminal() {
         if (!args[0]) {
           output = (
             <p className="text-amber-400">
-              Usage: open &lt;app&gt; (e.g. open music, open library, open games, open settings, open files, open chats, open updates, open gallery, open resume)
+              Usage: open &lt;app&gt; (e.g. open notes, open calculator, open music, open library, open games, open settings, open files, open chats)
             </p>
           );
         } else {

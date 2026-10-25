@@ -14,6 +14,8 @@ import {
   GIconFiles,
   GIconSettings,
   GIconResume,
+  GIconNotes,
+  GIconCalculator,
   GIconSparkles,
   GIconSliders,
   GIconTrash,
@@ -22,6 +24,8 @@ import {
 
 const APP_META = [
   { id: "terminal", title: "Terminal", desc: "Interactive command-line shell & system tools", icon: GIconTerminal, color: "#22c55e", category: "Applications" },
+  { id: "notes", title: "Notes", desc: "Markdown scratchpad & document editor", icon: GIconNotes, color: "#f59e0b", category: "Applications" },
+  { id: "calculator", title: "Calculator", desc: "Standard & arithmetic math calculator", icon: GIconCalculator, color: "#06b6d4", category: "Applications" },
   { id: "library", title: "Library", desc: "Case studies & portfolio projects", icon: GIconLibrary, color: "#5BB8B0", category: "Applications" },
   { id: "music", title: "Music", desc: "Lo-Fi, ambient beats & song search", icon: GIconMusic, color: "#D9678C", category: "Applications" },
   { id: "chats", title: "Chats", desc: "Comic-book styled live guest room", icon: GIconChats, color: "#8E7BE0", category: "Applications" },

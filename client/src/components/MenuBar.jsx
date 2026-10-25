@@ -196,11 +196,26 @@ export default function MenuBar() {
           <MenuDropdown label="File" {...m("file")}>
             <MenuItem
               onClick={() => {
+                openApp("notes");
+                setOpenMenu(null);
+              }}
+              shortcut="⌘N">
+              New Note
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
                 openApp("terminal");
                 setOpenMenu(null);
               }}
               shortcut="⌘T">
               New Terminal
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                openApp("calculator");
+                setOpenMenu(null);
+              }}>
+              Calculator
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -395,6 +410,20 @@ export default function MenuBar() {
                 setMobileSheetOpen(false);
               }}>
               Terminal
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                openApp("notes");
+                setMobileSheetOpen(false);
+              }}>
+              Notes
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                openApp("calculator");
+                setMobileSheetOpen(false);
+              }}>
+              Calculator
             </MenuItem>
             <MenuItem
               onClick={() => {

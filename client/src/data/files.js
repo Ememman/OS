@@ -34,6 +34,16 @@ export const fileTree = {
       app: "terminal"
     },
     {
+      name: "Notes.app",
+      type: "app-link",
+      app: "notes"
+    },
+    {
+      name: "Calculator.app",
+      type: "app-link",
+      app: "calculator"
+    },
+    {
       name: "Music",
       type: "folder",
       children: [{ name: "Now Playing.link", type: "app-link", app: "music" }]

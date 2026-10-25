@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useOS } from "./store/useOS";
 import { useIsMobile } from "./lib/useMediaQuery";
 import Wallpaper from "./components/Wallpaper";
@@ -12,6 +12,7 @@ import MiniPlayer from "./components/MiniPlayer";
 import BootScreen from "./components/BootScreen";
 import OsPicker from "./components/OsPicker";
 import SpotlightSearch from "./components/SpotlightSearch";
+import NotificationToast from "./components/NotificationToast";
 import PhotoWidget from "./components/widgets/PhotoWidget";
 import WeatherWidget from "./components/widgets/WeatherWidget";
 import ClockWidget from "./components/widgets/ClockWidget";
@@ -29,8 +30,16 @@ import Files from "./components/apps/Files";
 import Settings from "./components/apps/Settings";
 import Resume from "./components/apps/Resume";
 import Terminal from "./components/apps/Terminal";
+import Calculator from "./components/apps/Calculator";
+import Notes from "./components/apps/Notes";
 
-import { GIconResume, GIconGames, GIconTerminal } from "./components/icons/GravityIcons";
+import {
+  GIconResume,
+  GIconGames,
+  GIconTerminal,
+  GIconCalculator,
+  GIconNotes,
+} from "./components/icons/GravityIcons";
 
 const APP_COMPONENTS = {
   library: Library,
@@ -43,6 +52,8 @@ const APP_COMPONENTS = {
   settings: Settings,
   resume: Resume,
   terminal: Terminal,
+  calculator: Calculator,
+  notes: Notes,
 };
 
 export default function App() {
@@ -57,12 +68,14 @@ export default function App() {
     dockPosition,
     glassAlpha,
     toggleSpotlight,
+    notify,
   } = useOS();
 
   const isWin = osMode === "win";
   const isMobile = useIsMobile();
   const macDockLeft = !isWin && !isMobile && dockPosition === "left";
   const macDockRight = !isWin && !isMobile && dockPosition === "right";
+  const welcomed = useRef(false);
 
   useEffect(() => {
     document.documentElement.style.setProperty("--accent", accent);
@@ -83,6 +96,19 @@ export default function App() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleSpotlight]);
+
+  // Welcome toast notification on start
+  useEffect(() => {
+    if (booted && osChosen && !welcomed.current) {
+      welcomed.current = true;
+      setTimeout(() => {
+        notify(
+          "Welcome to Portfolio OS",
+          "Enhanced with Gravity UI, Terminal CLI, & Spotlight (⌘K)."
+        );
+      }, 600);
+    }
+  }, [booted, osChosen, notify]);
 
   if (!booted) return <BootScreen />;
   if (!osChosen) return <OsPicker />;
@@ -111,6 +137,18 @@ export default function App() {
         style={{ animationDelay: "130ms" }}
       >
         <DesktopIcon icon={GIconTerminal} label="Terminal" color="#22c55e" onOpen={() => openApp("terminal")} />
+      </div>
+      <div
+        className={`absolute ${isWin ? "top-4" : "top-11"} ${macDockLeft ? "left-[340px]" : "left-64 sm:left-72"} reveal`}
+        style={{ animationDelay: "170ms" }}
+      >
+        <DesktopIcon icon={GIconNotes} label="Notes" color="#f59e0b" onOpen={() => openApp("notes")} />
+      </div>
+      <div
+        className={`absolute ${isWin ? "top-4" : "top-11"} ${macDockLeft ? "left-[420px]" : "left-[330px] sm:left-[364px]"} reveal`}
+        style={{ animationDelay: "210ms" }}
+      >
+        <DesktopIcon icon={GIconCalculator} label="Calculator" color="#06b6d4" onOpen={() => openApp("calculator")} />
       </div>
 
       {/* Widget stack — macOS style only */}
@@ -156,6 +194,7 @@ export default function App() {
       {isWin ? <WinTaskbar /> : <Dock />}
       <MiniPlayer />
       <SpotlightSearch />
+      <NotificationToast />
     </div>
   );
 }

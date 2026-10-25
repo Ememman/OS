@@ -4,6 +4,8 @@ import {
   GIconLibrary,
   GIconMusic,
   GIconTerminal,
+  GIconNotes,
+  GIconCalculator,
   GIconUpdates,
   GIconChats,
   GIconGallery,
@@ -16,6 +18,8 @@ import {
 
 const DOCK_ITEMS = [
   { app: "terminal", label: "Terminal", icon: GIconTerminal, color: "#22c55e" },
+  { app: "notes", label: "Notes", icon: GIconNotes, color: "#f59e0b" },
+  { app: "calculator", label: "Calculator", icon: GIconCalculator, color: "#06b6d4" },
   { app: "library", label: "Library", icon: GIconLibrary, color: "#5BB8B0" },
   { app: "music", label: "Music", icon: GIconMusic, color: "#D9678C" },
   { app: "updates", label: "Updates", icon: GIconUpdates, color: "#5FBF7C" },

@@ -152,6 +152,7 @@ export default function Window({ win, children }) {
           isFocused ? "" : "opacity-80"
         }`}
         onPointerDown={onDragStart}
+        onDoubleClick={() => !isMobile && toggleMaximize(win.id)}
         style={{ touchAction: "none" }}
       >
         {isWin ? (
