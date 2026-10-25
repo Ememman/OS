@@ -629,61 +629,64 @@ export default function Music() {
       </div>
 
       {/* Bottom Transport Controls */}
-      <div className="border-t border-white/10 p-3 flex items-center gap-3 bg-black/35">
-        <div
-          className={`relative w-12 h-12 shrink-0 rounded-xl overflow-hidden shadow-lg ${
-            playing ? "ring-2 ring-accent" : ""
-          } transition-all`}
-        >
-          <img
-            src={track?.cover || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300"}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        </div>
-
-        <div className="min-w-0 w-32 shrink-0">
-          <div className="flex items-center gap-1.5">
-            <div className="text-xs font-semibold truncate text-white">
-              {track?.title || "Ready to play"}
-            </div>
-            {playing && <EqualizerBars className="shrink-0" />}
+      <div className="border-t border-white/10 p-2.5 sm:p-3 bg-black/45 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+        {/* Track Info & Transport Buttons */}
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <div
+            className={`relative w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl overflow-hidden shadow-lg ${
+              playing ? "ring-2 ring-accent" : ""
+            } transition-all`}
+          >
+            <img
+              src={track?.cover || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300"}
+              alt=""
+              className="w-full h-full object-cover"
+            />
           </div>
-          <div className="text-[10px] text-white/40 truncate">{track?.artist || "Select a song"}</div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <div className="text-xs font-semibold truncate text-white">
+                {track?.title || "Ready to play"}
+              </div>
+              {playing && <EqualizerBars className="shrink-0" />}
+            </div>
+            <div className="text-[10px] text-white/40 truncate">{track?.artist || "Select a song"}</div>
+          </div>
+
+          {/* Playback Buttons */}
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <button
+              onClick={prev}
+              disabled={!queue.length}
+              className="p-1.5 sm:p-2 hover:bg-white/10 rounded-full transition-colors disabled:opacity-30 text-white/80 hover:text-white"
+              title="Previous"
+            >
+              <GIconBackward size={14} />
+            </button>
+
+            <button
+              onClick={handleTogglePlay}
+              className="p-2 sm:p-2.5 bg-accent rounded-full hover:brightness-110 active:scale-95 transition text-white shadow-lg shadow-accent/30"
+              title={playing ? "Pause" : "Play"}
+            >
+              {playing ? <GIconPause size={14} /> : <GIconPlay size={14} />}
+            </button>
+
+            <button
+              onClick={next}
+              disabled={!queue.length}
+              className="p-1.5 sm:p-2 hover:bg-white/10 rounded-full transition-colors disabled:opacity-30 text-white/80 hover:text-white"
+              title="Next"
+            >
+              <GIconForward size={14} />
+            </button>
+          </div>
         </div>
 
-        {/* Playback Buttons */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button
-            onClick={prev}
-            disabled={!queue.length}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors disabled:opacity-30 text-white/80 hover:text-white"
-            title="Previous"
-          >
-            <GIconBackward size={15} />
-          </button>
-
-          <button
-            onClick={handleTogglePlay}
-            className="p-2.5 bg-accent rounded-full hover:brightness-110 active:scale-95 transition text-white shadow-lg shadow-accent/30"
-            title={playing ? "Pause" : "Play"}
-          >
-            {playing ? <GIconPause size={15} /> : <GIconPlay size={15} />}
-          </button>
-
-          <button
-            onClick={next}
-            disabled={!queue.length}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors disabled:opacity-30 text-white/80 hover:text-white"
-            title="Next"
-          >
-            <GIconForward size={15} />
-          </button>
-        </div>
-
-        {/* Scrubber / Progress Bar */}
-        <div className="flex-1 flex items-center gap-2 text-[10px] text-white/50 min-w-0">
-          <span className="font-mono">{fmt(progress)}</span>
+        {/* Scrubber / Progress Bar & Volume */}
+        <div className="flex items-center gap-2 text-[10px] text-white/50 w-full sm:flex-1 sm:max-w-xs md:max-w-md">
+          <span className="font-mono text-[9px] sm:text-[10px]">{fmt(progress)}</span>
           <input
             type="range"
             min={0}
@@ -692,26 +695,26 @@ export default function Music() {
             onChange={(e) => seek(Number(e.target.value))}
             className="flex-1 accent-[rgb(var(--accent))] cursor-pointer h-1.5 bg-white/15 rounded-lg"
           />
-          <span className="font-mono">{fmt(duration || track?.duration || 0)}</span>
-        </div>
+          <span className="font-mono text-[9px] sm:text-[10px]">{fmt(duration || track?.duration || 0)}</span>
 
-        {/* Volume Slider */}
-        <div className="hidden sm:flex items-center gap-1.5 shrink-0">
-          <button
-            onClick={() => setVolume(volume > 0 ? 0 : 0.7)}
-            className="text-white/50 hover:text-white transition-colors"
-          >
-            {volume === 0 ? <GIconVolumeMute size={15} /> : <GIconVolume size={15} />}
-          </button>
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            value={volume}
-            onChange={(e) => setVolume(Number(e.target.value))}
-            className="w-16 accent-[rgb(var(--accent))] cursor-pointer h-1.5 bg-white/15 rounded-lg"
-          />
+          {/* Volume Slider */}
+          <div className="hidden md:flex items-center gap-1.5 shrink-0 ml-1">
+            <button
+              onClick={() => setVolume(volume > 0 ? 0 : 0.7)}
+              className="text-white/50 hover:text-white transition-colors"
+            >
+              {volume === 0 ? <GIconVolumeMute size={14} /> : <GIconVolume size={14} />}
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={volume}
+              onChange={(e) => setVolume(Number(e.target.value))}
+              className="w-16 accent-[rgb(var(--accent))] cursor-pointer h-1.5 bg-white/15 rounded-lg"
+            />
+          </div>
         </div>
       </div>
     </div>

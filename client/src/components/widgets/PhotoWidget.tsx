@@ -14,7 +14,7 @@ export default function PhotoWidget() {
       />
       {!photoUrl && (
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-2">
-          <span className="text-[10px] text-white/80">Placeholder — set yours in Settings → Photo</span>
+          <span className="text-[10px] text-white/80">Placeholder - set yours in Settings &gt; Photo</span>
         </div>
       )}
     </div>

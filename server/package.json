@@ -8,6 +8,7 @@
     "node": ">=18"
   },
   "scripts": {
+    "build": "tsc",
     "start": "node index.js",
     "dev": "node --watch index.js",
     "dev:nest": "tsx watch --tsconfig tsconfig.json src/main.ts",

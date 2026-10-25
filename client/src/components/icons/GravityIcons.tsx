@@ -131,6 +131,7 @@ export const GIconWrench = (props: any) => <GravityIcon icon={GIcons.Wrench} {..
 export const GIconList = (props: any) => <GravityIcon icon={GIcons.LayoutList || GIcons.SquareListUl} {...props} />;
 export const GIconLoader = (props: any) => <GravityIcon icon={GIcons.CircleDashed || GIcons.ArrowsRotateRight} className={`animate-spin ${props.className || ""}`} {...props} />;
 export const GIconSliders = (props: any) => <GravityIcon icon={GIcons.Sliders} {...props} />;
+export const GIconBars = (props: any) => <GravityIcon icon={GIcons.Bars} {...props} />;
 export const GIconSignal = (props: any) => <GravityIcon icon={GIcons.Signal || GIcons.AntennaSignal} {...props} />;
 export const GIconPower = (props: any) => <GravityIcon icon={GIcons.Power || GIcons.PlugConnection} {...props} />;
 

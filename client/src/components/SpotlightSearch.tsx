@@ -20,6 +20,8 @@ import {
   GIconSliders,
   GIconTrash,
   GIconClose,
+  GIconChevronUp,
+  GIconChevronDown,
 } from "./icons/GravityIcons";
 
 const APP_META = [
@@ -313,8 +315,12 @@ export default function SpotlightSearch() {
         {/* Footer Info */}
         <div className="px-4 py-2 border-t border-white/8 bg-black/20 flex items-center justify-between text-[11px] text-white/35">
           <div className="flex items-center gap-3">
-            <span>↑↓ to navigate</span>
-            <span>↵ to select</span>
+            <span className="flex items-center gap-0.5">
+              <GIconChevronUp size={11} />
+              <GIconChevronDown size={11} />
+              <span className="ml-0.5">Navigate</span>
+            </span>
+            <span>Enter to open</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />

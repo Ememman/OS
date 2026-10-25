@@ -148,11 +148,19 @@ export default function Window({ win, children }) {
   const macRight = !isWin && dockPosition === "right" && !isMobile ? dockClearance : 8;
   const baseStyle = forceFull
     ? isMobile
-      ? { top: isWin ? 4 : 32, left: 4, right: 4, bottom: isWin ? 60 : 4, width: "auto", height: "auto", zIndex: win.z }
+      ? { top: isWin ? 6 : 34, left: 6, right: 6, bottom: isWin ? 56 : 72, width: "auto", height: "auto", zIndex: win.z }
       : isWin
         ? { top: 8, left: 8, right: 8, bottom: 64, width: "auto", height: "auto", zIndex: win.z }
         : { top: 30, left: macLeft, right: macRight, bottom: 8, width: "auto", height: "auto", zIndex: win.z }
-    : { top: win.y, left: win.x, width: win.w, height: win.h, zIndex: win.z };
+    : {
+        top: Math.min(win.y, window.innerHeight - 120),
+        left: Math.min(win.x, window.innerWidth - 120),
+        width: Math.min(win.w, window.innerWidth - 20),
+        height: Math.min(win.h, window.innerHeight - (isWin ? 68 : 84)),
+        maxWidth: "calc(100vw - 16px)",
+        maxHeight: "calc(100vh - 64px)",
+        zIndex: win.z,
+      };
 
   // compute transform/opacity for each phase
   let transform = "scale(1) translate(0,0)";

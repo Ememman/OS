@@ -440,22 +440,23 @@ export default function Terminal() {
         {history.map((item, idx) => {
           if (item.type === "banner") {
             return (
-              <pre key={idx} className="text-[10px] sm:text-[11px] leading-tight text-emerald-400/90 whitespace-pre overflow-x-auto select-none">
+              <pre key={idx} className="text-[8px] xs:text-[10px] sm:text-[11px] leading-tight text-emerald-400/90 whitespace-pre overflow-x-auto select-none no-scrollbar">
                 {item.content}
               </pre>
             );
           }
           if (item.type === "system") {
             return (
-              <div key={idx} className="text-[11px] text-white/50">
+              <div key={idx} className="text-[10px] sm:text-[11px] text-white/50">
                 {item.content}
               </div>
             );
           }
           if (item.type === "prompt") {
             return (
-              <div key={idx} className="flex items-start gap-2 text-[12px] pt-1">
-                <span className="text-accent font-semibold shrink-0">bron@portfolio-os:~$</span>
+              <div key={idx} className="flex items-start gap-1.5 sm:gap-2 text-[11px] sm:text-[12px] pt-1">
+                <span className="text-accent font-semibold shrink-0 hidden sm:inline">bron@portfolio-os:~$</span>
+                <span className="text-accent font-semibold shrink-0 sm:hidden">os:~$</span>
                 <span className="text-white font-medium">{item.cmd}</span>
               </div>
             );
@@ -471,8 +472,9 @@ export default function Terminal() {
         })}
 
         {/* Current prompt line */}
-        <div className="flex items-center gap-2 pt-1">
-          <span className="text-accent font-semibold shrink-0">bron@portfolio-os:~$</span>
+        <div className="flex items-center gap-1.5 sm:gap-2 pt-1">
+          <span className="text-accent font-semibold shrink-0 hidden sm:inline">bron@portfolio-os:~$</span>
+          <span className="text-accent font-semibold shrink-0 sm:hidden">os:~$</span>
           <input
             ref={inputRef}
             type="text"
@@ -482,7 +484,7 @@ export default function Terminal() {
             autoFocus
             spellCheck="false"
             autoComplete="off"
-            className="flex-1 bg-transparent text-white outline-none font-mono text-[12px] caret-emerald-400"
+            className="flex-1 min-w-0 bg-transparent text-white outline-none font-mono text-[12px] caret-emerald-400"
           />
         </div>
 
