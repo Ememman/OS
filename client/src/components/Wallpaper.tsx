@@ -73,6 +73,13 @@ export default function Wallpaper() {
   return (
     <div className="absolute inset-0 overflow-hidden">
       {scene}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(110deg, rgba(6, 10, 21, 0.18), transparent 58%, rgba(65, 49, 111, 0.12)), linear-gradient(0deg, rgba(5, 9, 18, 0.2), transparent 34%)",
+        }}
+      />
       <StarfieldCanvas />
     </div>
   );
