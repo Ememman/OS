@@ -120,6 +120,12 @@ export const useOS = create((set, get) => ({
     localStorage.setItem("os_particles", next ? "on" : "off");
     set({ particlesEnabled: next });
   },
+  widgetsVisible: localStorage.getItem("os_widgets") !== "off",
+  toggleWidgets: () => {
+    const next = !get().widgetsVisible;
+    localStorage.setItem("os_widgets", next ? "on" : "off");
+    set({ widgetsVisible: next });
+  },
 
   // Window snap layout engine
   snapWindow: (id, layout) => {
@@ -185,7 +191,7 @@ export const useOS = create((set, get) => ({
   toggleSpotlight: () => set((s) => ({ spotlightOpen: !s.spotlightOpen })),
 
   resetDefaults: () => {
-    ["os_accent", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha"].forEach((k) =>
+    ["os_accent", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale"].forEach((k) =>
       localStorage.removeItem(k)
     );
     window.location.reload();

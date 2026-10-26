@@ -32,6 +32,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly MAX_HISTORY = 100;
   private onlineCount = 0;
 
+  getOnlineCount() {
+    return this.onlineCount;
+  }
+
   handleConnection(client: Socket) {
     const guestName = randomName();
     (client as any).guestName = guestName;
@@ -83,4 +87,3 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.broadcast.emit("chat:typing", { name });
   }
 }
-
