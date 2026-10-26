@@ -116,6 +116,111 @@ body {
   animation: bubblePop 260ms cubic-bezier(.34,1.56,.64,1) both;
 }
 
+/* Friendly, high-contrast chat themes. */
+.chat-surface {
+  --chat-bg: #f3f5f7;
+  --chat-panel: #ffffff;
+  --chat-text: #17212b;
+  --chat-muted: #4b5967;
+  --chat-border: #cbd3dc;
+  --chat-incoming: #ffffff;
+  --chat-own: #d8f3e8;
+  --chat-own-text: #173d30;
+  --chat-accent: #176b55;
+  --chat-error: #a12622;
+  background: var(--chat-bg);
+  color: var(--chat-text);
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+.chat-theme--halftone { --chat-bg: #f3f5f7; --chat-panel: #fff; }
+.chat-theme--notebook { --chat-bg: #edf3f8; --chat-panel: #f9fcff; --chat-own: #dceafb; --chat-own-text: #1e3a5f; --chat-accent: #245c91; }
+.chat-theme--plain { --chat-bg: #f4f0e8; --chat-panel: #fffdf8; --chat-own: #e8e1f5; --chat-own-text: #35284f; --chat-accent: #5e438b; }
+.chat-theme--ink,
+.chat-theme--action {
+  --chat-bg: #141c25;
+  --chat-panel: #1f2a36;
+  --chat-text: #f4f7fa;
+  --chat-muted: #c0cbd6;
+  --chat-border: #526170;
+  --chat-incoming: #293644;
+  --chat-own: #17543f;
+  --chat-own-text: #f3fff9;
+  --chat-accent: #73d6b0;
+  --chat-error: #ffb4ab;
+}
+.chat-header,
+.chat-identity,
+.chat-composer { background: var(--chat-panel); border-color: var(--chat-border); }
+.chat-header { min-height: 68px; }
+.chat-thread { color: var(--chat-text); }
+.chat-muted,
+.chat-meta,
+.chat-meta time { color: var(--chat-muted); }
+.chat-typing-dots span { background: var(--chat-muted); }
+.chat-count { color: var(--chat-text); background: var(--chat-bg); }
+.chat-icon-button,
+.chat-text-size-button {
+  display: inline-flex;
+  min-width: 40px;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--chat-border);
+  border-radius: 10px;
+  color: var(--chat-text);
+  background: var(--chat-panel);
+}
+.chat-icon-button:hover,
+.chat-text-size-button:hover:not(:disabled) { background: var(--chat-bg); }
+.chat-text-size-button { min-width: 36px; min-height: 36px; font-size: 14px; font-weight: 600; }
+.chat-text-size-button:disabled { opacity: 0.5; cursor: not-allowed; }
+.chat-link { color: var(--chat-accent); text-decoration: underline; text-underline-offset: 2px; }
+.chat-empty-state { color: var(--chat-text); background: var(--chat-panel); border: 1px solid var(--chat-border); }
+.chat-bubble {
+  overflow-wrap: anywhere;
+  color: var(--chat-text);
+  background: var(--chat-incoming);
+  border: 1px solid var(--chat-border);
+  border-radius: 16px 16px 16px 4px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  user-select: text;
+}
+.chat-bubble-self {
+  color: var(--chat-own-text);
+  background: var(--chat-own);
+  border-color: transparent;
+  border-radius: 16px 16px 4px 16px;
+}
+.chat-bubble-pending { opacity: 0.75; }
+.chat-bubble-failed { border: 2px solid var(--chat-error); }
+.chat-error-link { color: var(--chat-error); text-decoration: underline; text-underline-offset: 2px; }
+.chat-input {
+  color: var(--chat-text);
+  background: var(--chat-panel);
+  border: 1px solid var(--chat-border);
+  user-select: text;
+}
+.chat-input::placeholder { color: var(--chat-muted); opacity: 1; }
+.chat-send-button { color: #fff; background: #155c49; }
+.chat-theme--notebook .chat-send-button { background: #214f7c; }
+.chat-theme--plain .chat-send-button { background: #514074; }
+.chat-theme--ink .chat-send-button,
+.chat-theme--action .chat-send-button { color: #10231c; background: #73d6b0; }
+.chat-theme-picker {
+  color: #17212b;
+  background: #fff;
+  border: 1px solid #aab5c0;
+}
+.chat-surface[data-theme="dark"] .chat-theme-picker { color: #f4f7fa; background: #1f2a36; border-color: #526170; }
+.chat-surface :focus-visible {
+  outline: 3px solid #155caa;
+  outline-offset: 2px;
+}
+.chat-surface[data-theme="dark"] :focus-visible { outline-color: #9ac8ff; }
+.chat-surface button:disabled { cursor: not-allowed; }
+.chat-surface button { touch-action: manipulation; }
+.chat-message-in { animation: riseIn 180ms ease-out both; }
+
 .accent { color: rgb(var(--accent)); }
 .bg-accent { background-color: rgb(var(--accent)); }
 .border-accent { border-color: rgb(var(--accent)); }
