@@ -119,7 +119,7 @@ export default function OsPicker() {
 
         <button
           onClick={confirm}
-          className="group relative mt-6 sm:mt-7 px-6 py-3 rounded-xl text-white text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden w-full sm:w-auto bg-gradient-to-r from-accent to-[rgb(var(--accent)/0.78)] border border-white/20 shadow-lg shadow-accent/20 hover:shadow-xl hover:shadow-accent/30 hover:-translate-y-0.5 active:translate-y-0">
+          className="group relative mt-6 sm:mt-7 px-6 py-3 rounded-xl text-white text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden w-full sm:w-auto bg-gradient-to-r from-white/15 via-white/10 to-white/5 backdrop-blur-xl border border-white/25 shadow-lg shadow-black/25 hover:from-white/20 hover:via-white/15 hover:to-white/10 hover:border-white/35 hover:shadow-xl hover:shadow-black/30 hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080d19]">
           <span className="flex items-center justify-center gap-2">
             Continue with {selected === "mac" ? "macOS" : "Windows 11"}
             <GIconChevronRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
