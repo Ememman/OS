@@ -37,7 +37,16 @@ app.post("/api/updates/:id/react", (req, res) => {
 });
 app.get("/api/updates/reactions", (req, res) => res.json(reactionCounts));
 
-app.get("/api/health", (req, res) => res.json({ ok: true }));
+app.get("/api/health", (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({
+    ok: true,
+    service: "Portfolio OS API",
+    timestamp: Date.now(),
+    uptimeSeconds: Math.floor(process.uptime()),
+    realtime: { connectedClients: io.engine.clientsCount }
+  });
+});
 
 // A realistic, current-looking browser User-Agent. Deliberately NOT a
 // custom string identifying this app — some corporate/ISP-level filters and

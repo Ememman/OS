@@ -1,4 +1,35 @@
 import { create } from "zustand";
+import type { MusicTrack } from "../data/music";
+
+declare global {
+  interface Window {
+    webkitAudioContext?: typeof AudioContext;
+  }
+}
+
+interface PlayerState {
+  queue: MusicTrack[];
+  queueIdx: number;
+  playing: boolean;
+  progress: number;
+  duration: number;
+  volume: number;
+  audioEl: HTMLAudioElement | null;
+  analyser: AnalyserNode | null;
+  visualizerLive: boolean;
+  _audioCtx: AudioContext | null;
+  registerAudioEl: (el: HTMLAudioElement | null) => void;
+  ensureVisualizer: () => void;
+  playQueueAt: (queue: MusicTrack[], idx: number) => void;
+  togglePlay: () => void;
+  pause: () => void;
+  next: () => void;
+  prev: () => void;
+  seek: (t: number) => void;
+  setVolume: (v: number) => void;
+  setProgress: (p: number) => void;
+  setDuration: (d: number) => void;
+}
 
 // Playback state lives here instead of inside the Music app component, so
 // the actual <audio> element (rendered once in App.jsx, outside any window)
@@ -6,7 +37,7 @@ import { create } from "zustand";
 // closed, whatever. Only an explicit pause/stop, or the track ending, stops
 // it. This is the same model Spotify/Apple Music use: the window is just a
 // view into playback state that lives independently of it.
-export const usePlayer = create((set, get) => ({
+export const usePlayer = create<PlayerState>((set, get) => ({
   queue: [],
   queueIdx: 0,
   playing: false,
@@ -16,6 +47,7 @@ export const usePlayer = create((set, get) => ({
   audioEl: null, // set once by GlobalAudioPlayer on mount
   analyser: null,
   visualizerLive: false,
+  _audioCtx: null,
 
   registerAudioEl: (el) => set({ audioEl: el }),
 

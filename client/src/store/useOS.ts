@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { soundFx } from "../lib/soundFx";
 import type {
   AccentColor,
+  AppMetadata,
   DockPosition,
   OSMode,
   SnapLayout,
@@ -42,6 +43,8 @@ interface OSState {
   reopenPicker: () => void;
   particlesEnabled: boolean;
   toggleParticles: () => void;
+  widgetsVisible: boolean;
+  toggleWidgets: () => void;
   snapWindow: (id: string, layout: SnapLayout) => void;
   closeAllWindows: () => void;
   minimizeAllWindows: () => void;
@@ -66,7 +69,7 @@ interface OSState {
   resizeWindow: (id: string, w: number, h: number) => void;
 }
 
-export const APPS = {
+export const APPS: Record<string, AppMetadata> = {
   library: { title: "Library", w: 860, h: 580 },
   music: { title: "Music", w: 760, h: 520 },
   terminal: { title: "Terminal", w: 740, h: 480 },
@@ -100,9 +103,15 @@ const WALLPAPERS = [
   { id: "aurora", name: "Aurora Coast" },
 ];
 
+const savedDockPosition = localStorage.getItem("os_dock_position");
+const dockPosition: DockPosition =
+  savedDockPosition === "left" || savedDockPosition === "right"
+    ? savedDockPosition
+    : "bottom";
+
 let z = 10;
 
-export const useOS = create<OSState>()((set, get) => ({
+export const useOS = create<OSState>((set, get) => ({
   windows: [], // { id, app, x, y, w, h, minimized, maximized, z }
   accent: localStorage.getItem("os_accent") || ACCENTS[0].value,
   wallpaper: localStorage.getItem("os_wallpaper") || "bg1", // Changed default to bg1
@@ -185,6 +194,12 @@ export const useOS = create<OSState>()((set, get) => ({
     localStorage.setItem("os_particles", next ? "on" : "off");
     set({ particlesEnabled: next });
   },
+  widgetsVisible: localStorage.getItem("os_widgets") !== "off",
+  toggleWidgets: () => {
+    const next = !get().widgetsVisible;
+    localStorage.setItem("os_widgets", next ? "on" : "off");
+    set({ widgetsVisible: next });
+  },
 
   // Window snap layout engine
   snapWindow: (id, layout) => {
@@ -250,7 +265,7 @@ export const useOS = create<OSState>()((set, get) => ({
   toggleSpotlight: () => set((s) => ({ spotlightOpen: !s.spotlightOpen })),
 
   resetDefaults: () => {
-    ["os_accent", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha"].forEach((k) =>
+    ["os_accent", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale"].forEach((k) =>
       localStorage.removeItem(k)
     );
     window.location.reload();
@@ -263,10 +278,7 @@ export const useOS = create<OSState>()((set, get) => ({
     set({ compact: next });
   },
 
-  dockPosition: (() => {
-    const savedPosition = localStorage.getItem("os_dock_position");
-    return savedPosition === "left" || savedPosition === "right" ? savedPosition : "bottom";
-  })(),
+  dockPosition,
   setDockPosition: (pos) => {
     localStorage.setItem("os_dock_position", pos);
     set({ dockPosition: pos });

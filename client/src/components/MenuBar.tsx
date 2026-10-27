@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useOS } from "../store/useOS";
 import { useOutsideClick as useOutsideClose } from "../lib/useOutsideClick";
 import LiveBadge from "./LiveBadge";
@@ -12,8 +12,16 @@ import {
   GIconBars,
 } from "./icons/GravityIcons";
 
-function MenuDropdown({ label, isOpen, onToggle, onClose, children }) {
-  const ref = useRef(null);
+interface MenuDropdownProps {
+  label: ReactNode;
+  isOpen: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  children: ReactNode;
+}
+
+function MenuDropdown({ label, isOpen, onToggle, onClose, children }: MenuDropdownProps) {
+  const ref = useRef<HTMLDivElement>(null);
   useOutsideClose(ref, onClose);
   return (
     <div ref={ref} className="relative">
@@ -24,7 +32,7 @@ function MenuDropdown({ label, isOpen, onToggle, onClose, children }) {
       </button>
       {isOpen && (
         <div
-          className="absolute top-full left-0 mt-1.5 min-w-[240px] glass rounded-lg border border-white/10 shadow-2xl py-1.5 z-[1300] origin-top-left"
+          className="absolute top-full left-0 mt-1.5 min-w-\[240px] glass rounded-lg border border-white/10 shadow-2xl py-1.5 z-\[1300] origin-top-left"
           style={{ animation: "menuOpen 130ms cubic-bezier(.16,1,.3,1) both" }}>
           {children}
         </div>
@@ -33,7 +41,15 @@ function MenuDropdown({ label, isOpen, onToggle, onClose, children }) {
   );
 }
 
-function MenuItem({ children, onClick, disabled, checked, shortcut }) {
+interface MenuItemProps {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  checked?: boolean;
+  shortcut?: string;
+}
+
+function MenuItem({ children, onClick, disabled, checked, shortcut }: MenuItemProps) {
   return (
     <button
       onClick={disabled ? undefined : onClick}
@@ -56,10 +72,16 @@ function MenuSeparator() {
   return <div className="h-px bg-white/10 my-2" />;
 }
 
-function InfoModal({ title, onClose, children }) {
+interface InfoModalProps {
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+}
+
+function InfoModal({ title, onClose, children }: InfoModalProps) {
   return (
     <div
-      className="fixed inset-0 z-[2000] bg-black/60 flex items-center justify-center p-6"
+      className="fixed inset-0 z-\[2000] bg-black/60 flex items-center justify-center p-6"
       onClick={onClose}>
       <div
         className="glass rounded-2xl max-w-sm w-full p-5 border border-white/10"
@@ -91,8 +113,8 @@ export default function MenuBar() {
     reopenPicker,
   } = useOS();
   const [now, setNow] = useState(new Date());
-  const [openMenu, setOpenMenu] = useState(null);
-  const [modal, setModal] = useState(null); // "about" | "shortcuts" | null
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [modal, setModal] = useState<"about" | "shortcuts" | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
 
@@ -126,14 +148,14 @@ export default function MenuBar() {
     day: "numeric",
   });
 
-  const m = (name) => ({
+  const m = (name: string) => ({
     isOpen: openMenu === name,
     onToggle: () => setOpenMenu((o) => (o === name ? null : name)),
     onClose: () => setOpenMenu((o) => (o === name ? null : o)),
   });
 
   return (
-    <div className="absolute top-0 left-0 right-0 h-8 z-[999] glass flex items-center justify-between px-3 sm:px-4 text-[14px] text-white/80 select-none">
+    <div className="absolute top-0 left-0 right-0 h-8 z-\[999] glass flex items-center justify-between px-3 sm:px-4 text-[14px] text-white/80 select-none">
       <div className="flex items-center gap-3 sm:gap-4 min-w-0">
         {/* Apple-style OS Logo using Gravity UI */}
         <MenuDropdown
@@ -376,7 +398,7 @@ export default function MenuBar() {
 
       {mobileSheetOpen && (
         <div
-          className="fixed inset-0 z-[2000] bg-black/60 flex items-end sm:items-center justify-center"
+          className="fixed inset-0 z-\[2000] bg-black/60 flex items-end sm:items-center justify-center"
           onClick={() => setMobileSheetOpen(false)}>
           <div
             className="glass rounded-t-2xl sm:rounded-2xl w-full sm:w-80 max-h-[75vh] overflow-y-auto thin-scroll border border-white/10 p-2"

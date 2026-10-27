@@ -14,7 +14,7 @@ export default function NotificationToast() {
   return (
     <div
       onClick={dismissNotification}
-      className={`fixed ${positionClass} z-[2500] max-w-sm w-[calc(100vw-32px)] glass rounded-2xl border border-white/20 shadow-2xl p-3 sm:p-3.5 flex items-start gap-3 cursor-pointer hover:border-white/35 transition-all select-none animate-in fade-in`}
+      className={`fixed ${positionClass} z-2500 max-w-sm w-[calc(100vw-32px)] glass rounded-2xl border border-white/20 shadow-2xl p-3 sm:p-3.5 flex items-start gap-3 cursor-pointer hover:border-white/35 transition-all select-none animate-in fade-in`}
       style={{ animation: "menuOpen 180ms cubic-bezier(.16,1,.3,1) both" }}
     >
       <div className="w-8 h-8 rounded-xl bg-accent/25 border border-accent/40 flex items-center justify-center shrink-0 text-accent">
@@ -42,4 +42,3 @@ export default function NotificationToast() {
     </div>
   );
 }
-

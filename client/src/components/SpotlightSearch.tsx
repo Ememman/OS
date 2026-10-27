@@ -218,7 +218,7 @@ export default function SpotlightSearch() {
   return (
     <div
       onClick={closeSpotlight}
-      className="fixed inset-0 z-[3000] bg-black/60 backdrop-blur-md flex items-start justify-center pt-[12vh] sm:pt-[15vh] px-4 animate-in fade-in duration-150"
+      className="fixed inset-0 z-3000 bg-black/60 backdrop-blur-md flex items-start justify-center pt-[12vh] sm:pt-[15vh] px-4 animate-in fade-in duration-150"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -254,7 +254,7 @@ export default function SpotlightSearch() {
         </div>
 
         {/* Search Results List */}
-        <div ref={listRef} className="max-h-[360px] overflow-y-auto thin-scroll p-2 space-y-1">
+        <div ref={listRef} className="max-h-90 overflow-y-auto thin-scroll p-2 space-y-1">
           {filtered.length === 0 ? (
             <div className="py-12 text-center text-white/40 text-xs">
               No results found for "{query}"

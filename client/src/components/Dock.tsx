@@ -56,7 +56,7 @@ export default function Dock() {
   const emptyTrash = () => windows.forEach((w) => closeWindow(w.id));
 
   return (
-    <div className={`absolute z-[900] reveal-fade ${POSITION_CLASSES[position]}`}>
+    <div className={`absolute z-\[900] reveal-fade ${POSITION_CLASSES[position]}`}>
       <div
         className={`glass rounded-2xl shadow-2xl border border-white/10 ${
           vertical
