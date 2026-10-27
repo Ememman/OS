@@ -1,6 +1,14 @@
-import { useState, useRef } from "react";
+import { useRef, useState, type ComponentType, type CSSProperties } from "react";
 
-export default function DesktopIcon({ icon: Icon, label, onOpen, style, color }) {
+interface DesktopIconProps {
+  icon: ComponentType<{ size?: number; className?: string; color?: string }>;
+  label: string;
+  onOpen: () => void;
+  style?: CSSProperties;
+  color?: string;
+}
+
+export default function DesktopIcon({ icon: Icon, label, onOpen, style, color }: DesktopIconProps) {
   const [selected, setSelected] = useState(false);
   const lastTap = useRef(0);
 
