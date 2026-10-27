@@ -46,11 +46,11 @@ function ToggleRow({ label, checked, onToggle }) {
       <span className="text-xs sm:text-sm text-white/80">{label}</span>
       <button
         onClick={onToggle}
-        className={`w-10 sm:w-11 h-6 rounded-full relative transition-all duration-300 flex-shrink-0 ${checked ? "bg-accent" : "bg-white/20"}`}
+        className={`w-10 sm:w-11 h-6 rounded-full relative transition-all duration-300 shrink-0 ${checked ? "bg-accent" : "bg-white/20"}`}
       >
         <span
           className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all duration-300 shadow-md ${
-            checked ? "left-[18px] sm:left-[22px]" : "left-0.5"
+            checked ? "left-\[18px] sm:left-\[22px]" : "left-0.5"
           }`}
         />
       </button>
@@ -158,7 +158,7 @@ export default function Settings() {
       <section className="space-y-2">
         <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Desktop style</h3>
         <div className="grid grid-cols-2 gap-2 sm:gap-3">
-          {[{ id: "mac", label: "macOS" }, { id: "win", label: "Windows 11" }].map((o) => (
+          {([{ id: "mac", label: "macOS" }, { id: "win", label: "Windows 11" }] as const).map((o) => (
             <button
               key={o.id}
               onClick={() => setOsMode(o.id)}
@@ -168,7 +168,7 @@ export default function Settings() {
                   : "border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-white/20 hover:bg-white/10"
               }`}>
               <span className="font-medium">{o.label}</span>
-              {osMode === o.id && <GIconCheck size={14} className="text-accent flex-shrink-0" />}
+              {osMode === o.id && <GIconCheck size={14} className="text-accent shrink-0" />}
             </button>
           ))}
         </div>
@@ -181,7 +181,7 @@ export default function Settings() {
             Move the Dock to the bottom, left, or right of the screen. Always sits at the bottom on phones, where there's less room to spare.
           </p>
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            {[{ id: "bottom", label: "Bottom" }, { id: "left", label: "Left" }, { id: "right", label: "Right" }].map((o) => (
+            {([{ id: "bottom", label: "Bottom" }, { id: "left", label: "Left" }, { id: "right", label: "Right" }] as const).map((o) => (
               <button
                 key={o.id}
                 onClick={() => setDockPosition(o.id)}
@@ -226,7 +226,7 @@ export default function Settings() {
                     <div className="w-full h-full" style={{ background: PREVIEW_FALLBACK[w.id] || "#0a0a0f" }} />
                   )}
                   <div
-                    className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-300 ${
+                    className={`absolute inset-0 bg-gradient-to- from-black/60 via-transparent to-transparent transition-opacity duration-300 ${
                       isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-60"
                     }`}
                   />
