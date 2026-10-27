@@ -25,7 +25,7 @@ export default function MiniPlayer() {
   return (
     <button
       onClick={() => openApp("music")}
-      className={`absolute ${bottomClearance} left-1/2 -translate-x-1/2 z-[850] glass rounded-2xl border border-white/10 shadow-2xl pl-2 pr-3 py-2 flex items-center gap-2.5 hover:border-white/25 transition-colors reveal-fade max-w-[calc(100vw-24px)]`}
+      className={`absolute ${bottomClearance} left-1/2 -translate-x-1/2 z-850 glass rounded-2xl border border-white/10 shadow-2xl pl-2 pr-3 py-2 flex items-center gap-2.5 hover:border-white/25 transition-colors reveal-fade max-w-[calc(100vw-24px)]`}
       title="Reopen Music"
     >
       <div className={`w-8 h-8 rounded-lg overflow-hidden bg-white/5 shrink-0 relative ${playing ? "ring-2 ring-accent/60" : ""}`}>
@@ -37,7 +37,7 @@ export default function MiniPlayer() {
           </div>
         )}
       </div>
-      <div className="text-left min-w-0 max-w-[120px] sm:max-w-[160px]">
+      <div className="text-left min-w-0 max-w-30 sm:max-w-40">
         <div className="flex items-center gap-1.5">
           <div className="text-[11px] font-medium truncate">{track.title}</div>
           {playing && <EqualizerBars className="shrink-0" />}

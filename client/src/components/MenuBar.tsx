@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useOS } from "../store/useOS";
 import { useOutsideClick as useOutsideClose } from "../lib/useOutsideClick";
 import LiveBadge from "./LiveBadge";
@@ -12,8 +12,16 @@ import {
   GIconBars,
 } from "./icons/GravityIcons";
 
-function MenuDropdown({ label, isOpen, onToggle, onClose, children }) {
-  const ref = useRef(null);
+interface MenuDropdownProps {
+  label: ReactNode;
+  isOpen: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  children: ReactNode;
+}
+
+function MenuDropdown({ label, isOpen, onToggle, onClose, children }: MenuDropdownProps) {
+  const ref = useRef<HTMLDivElement>(null);
   useOutsideClose(ref, onClose);
   return (
     <div ref={ref} className="relative">
@@ -33,7 +41,15 @@ function MenuDropdown({ label, isOpen, onToggle, onClose, children }) {
   );
 }
 
-function MenuItem({ children, onClick, disabled, checked, shortcut }) {
+interface MenuItemProps {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  checked?: boolean;
+  shortcut?: string;
+}
+
+function MenuItem({ children, onClick, disabled, checked, shortcut }: MenuItemProps) {
   return (
     <button
       onClick={disabled ? undefined : onClick}
@@ -56,7 +72,13 @@ function MenuSeparator() {
   return <div className="h-px bg-white/10 my-2" />;
 }
 
-function InfoModal({ title, onClose, children }) {
+interface InfoModalProps {
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+}
+
+function InfoModal({ title, onClose, children }: InfoModalProps) {
   return (
     <div
       className="fixed inset-0 z-[2000] bg-black/60 flex items-center justify-center p-6"
@@ -91,8 +113,8 @@ export default function MenuBar() {
     reopenPicker,
   } = useOS();
   const [now, setNow] = useState(new Date());
-  const [openMenu, setOpenMenu] = useState(null);
-  const [modal, setModal] = useState(null); // "about" | "shortcuts" | null
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [modal, setModal] = useState<"about" | "shortcuts" | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
 
@@ -126,7 +148,7 @@ export default function MenuBar() {
     day: "numeric",
   });
 
-  const m = (name) => ({
+  const m = (name: string) => ({
     isOpen: openMenu === name,
     onToggle: () => setOpenMenu((o) => (o === name ? null : name)),
     onClose: () => setOpenMenu((o) => (o === name ? null : o)),
