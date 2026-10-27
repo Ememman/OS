@@ -203,7 +203,7 @@ export const useOS = create<OSState>((set, get) => ({
 
   // Window snap layout engine
   snapWindow: (id, layout) => {
-    if (get().systemSounds) soundFx.playPop();
+    if (get().systemSounds) soundFx.playClick();
     const innerW = window.innerWidth;
     const innerH = window.innerHeight;
     const isWin = get().osMode === "win";

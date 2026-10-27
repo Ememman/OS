@@ -133,7 +133,7 @@ export default function Files() {
                   title="Double-click to open"
                 >
                   <Icon item={item} />
-                  <span className="text-[10px] text-white/80 leading-tight wrpa-break-word line-clamp-2">{item.name}</span>
+                  <span className="text-[10px] text-white/80 leading-tight break-word line-clamp-2">{item.name}</span>
                 </button>
               ))}
             </div>

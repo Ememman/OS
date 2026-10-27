@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useOS } from "../../store/useOS";
+import type { DockPosition, OSMode } from "../../types/os";
 import Wallpaper from "../Wallpaper";
 import {
   GIconCheck,
@@ -30,6 +31,17 @@ const PREVIEW_FALLBACK = {
   aurora: "linear-gradient(120deg,#0a1a1f,#123027,#0a1a1f)",
 };
 
+const OS_MODE_OPTIONS: { id: OSMode; label: string }[] = [
+  { id: "mac", label: "macOS" },
+  { id: "win", label: "Windows 11" },
+];
+
+const DOCK_POSITION_OPTIONS: { id: DockPosition; label: string }[] = [
+  { id: "bottom", label: "Bottom" },
+  { id: "left", label: "Left" },
+  { id: "right", label: "Right" },
+];
+
 function GroupHeader({ icon: Icon, label }) {
   return (
     <div className="flex items-center gap-2 pt-1 pb-0.5">
@@ -50,7 +62,7 @@ function ToggleRow({ label, checked, onToggle }) {
       >
         <span
           className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all duration-300 shadow-md ${
-            checked ? "left-\[18px] sm:left-\[22px]" : "left-0.5"
+            checked ? "left-\[18px] sm:left-5.5" : "left-0.5"
           }`}
         />
       </button>
@@ -158,7 +170,7 @@ export default function Settings() {
       <section className="space-y-2">
         <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Desktop style</h3>
         <div className="grid grid-cols-2 gap-2 sm:gap-3">
-          {([{ id: "mac", label: "macOS" }, { id: "win", label: "Windows 11" }] as const).map((o) => (
+          {OS_MODE_OPTIONS.map((o) => (
             <button
               key={o.id}
               onClick={() => setOsMode(o.id)}
@@ -181,7 +193,7 @@ export default function Settings() {
             Move the Dock to the bottom, left, or right of the screen. Always sits at the bottom on phones, where there's less room to spare.
           </p>
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            {([{ id: "bottom", label: "Bottom" }, { id: "left", label: "Left" }, { id: "right", label: "Right" }] as const).map((o) => (
+            {DOCK_POSITION_OPTIONS.map((o) => (
               <button
                 key={o.id}
                 onClick={() => setDockPosition(o.id)}
