@@ -9,15 +9,17 @@ import {
   GIconPower,
   GIconClose,
   GIconMinus,
+  GIconLayoutCells,
 } from "./icons/GravityIcons";
 
 interface ContextMenuProps {
   x: number;
   y: number;
   onClose: () => void;
+  widgetsVisible: boolean;
 }
 
-export default function DesktopContextMenu({ x, y, onClose }: ContextMenuProps) {
+export default function DesktopContextMenu({ x, y, onClose, widgetsVisible }: ContextMenuProps) {
   const {
     openApp,
     openSpotlight,
@@ -25,6 +27,7 @@ export default function DesktopContextMenu({ x, y, onClose }: ContextMenuProps) 
     setOsMode,
     particlesEnabled,
     toggleParticles,
+    toggleWidgets,
     closeAllWindows,
     minimizeAllWindows,
     notify,
@@ -52,14 +55,14 @@ export default function DesktopContextMenu({ x, y, onClose }: ContextMenuProps) 
 
   // Constrain position within window boundaries
   const menuW = 210;
-  const menuH = 290;
-  const clampedX = Math.min(x, window.innerWidth - menuW - 10);
-  const clampedY = Math.min(y, window.innerHeight - menuH - 10);
+  const menuH = 330;
+  const clampedX = Math.max(10, Math.min(x, window.innerWidth - menuW - 10));
+  const clampedY = Math.max(10, Math.min(y, window.innerHeight - menuH - 10));
 
   return (
     <div
       ref={menuRef}
-      className="fixed z-[9999] w-[210px] rounded-xl bg-[#141417]/95 backdrop-blur-2xl border border-white/15 p-1.5 shadow-2xl text-xs select-none"
+      className="fixed z-\[9999] w-\[210px] max-h-[calc(100vh-20px)] overflow-y-auto thin-scroll rounded-xl bg-[#141417]/95 backdrop-blur-2xl border border-white/15 p-1.5 shadow-2xl text-xs select-none"
       style={{ left: clampedX, top: clampedY }}
       onContextMenu={(e) => e.preventDefault()}
     >
@@ -116,6 +119,20 @@ export default function DesktopContextMenu({ x, y, onClose }: ContextMenuProps) 
 
       <button
         onClick={() => {
+          toggleWidgets();
+          notify("Desktop Widgets", widgetsVisible ? "Widgets hidden" : "Widgets shown");
+          onClose();
+        }}
+        className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors text-left"
+      >
+        <GIconLayoutCells size={14} className="text-sky-400" />
+        <span className="flex-1 font-medium">
+          {widgetsVisible ? "Hide Desktop Widgets" : "Show Desktop Widgets"}
+        </span>
+      </button>
+
+      <button
+        onClick={() => {
           toggleParticles();
           notify("Starfield Animation", particlesEnabled ? "Particles paused" : "Particles active");
           onClose();
@@ -169,4 +186,3 @@ export default function DesktopContextMenu({ x, y, onClose }: ContextMenuProps) 
     </div>
   );
 }
-

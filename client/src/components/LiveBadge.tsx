@@ -1,21 +1,44 @@
 import { usePresence } from "../lib/usePresence";
 
 export default function LiveBadge({ compact = false }) {
-  const { online, connected } = usePresence();
+  const { online, connected, apiStatus } = usePresence();
 
-  if (!connected || online === null) return null;
+  const isLive = connected && online !== null;
+  const label = isLive
+    ? `${online} visitor${online === 1 ? "" : "s"} online right now. API is available.`
+    : apiStatus === "available"
+      ? "API is available. Live visitor updates are reconnecting."
+      : apiStatus === "checking"
+        ? "Checking Portfolio OS service status."
+        : "Portfolio OS API is unavailable. Live updates are offline.";
+  const compactLabel = isLive
+    ? online
+    : apiStatus === "checking"
+      ? "…"
+      : apiStatus === "available"
+        ? "API"
+        : "Offline";
+  const indicatorColor = isLive || apiStatus === "available"
+    ? "bg-emerald-400"
+    : apiStatus === "unavailable"
+      ? "bg-rose-400"
+      : "bg-amber-400";
 
   return (
     <div
-      className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/8 border border-white/10"
-      title={`${online} visitor${online === 1 ? "" : "s"} online right now`}
+      role="status"
+      aria-label={label}
+      title={label}
+      className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/8 border border-white/10 text-white/80"
     >
-      <span className="relative flex h-1.5 w-1.5">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+      <span className="relative flex h-2 w-2 shrink-0">
+        {isLive && <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${indicatorColor} opacity-50`} />}
+        <span className={`relative inline-flex rounded-full h-2 w-2 ${indicatorColor}`} />
       </span>
-      {!compact && <span className="text-[10px] text-white/60">Live</span>}
-      <span className="text-[10px] font-mono text-white/80">{online}</span>
+      {!compact && <span className="text-[10px]">{isLive ? "Live" : apiStatus === "available" ? "Reconnecting" : apiStatus === "checking" ? "Checking" : "Offline"}</span>}
+      <span className={`text-[10px] ${isLive ? "font-mono" : "font-medium"}`}>
+        {compact ? compactLabel : isLive ? online : apiStatus === "available" ? "API ready" : ""}
+      </span>
     </div>
   );
 }

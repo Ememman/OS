@@ -135,17 +135,20 @@ export const soundFx = {
       const ctx = getAudioContext();
       if (!ctx) return;
       const now = ctx.currentTime;
+
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
       osc.type = "sine";
       osc.frequency.setValueAtTime(880, now);
       osc.frequency.exponentialRampToValueAtTime(440, now + 0.08);
+
       gain.gain.setValueAtTime(0.06, now);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
+
       osc.start(now);
       osc.stop(now + 0.08);
     } catch {}

@@ -1,5 +1,8 @@
 import React from "react";
+import { Dice5, Megaphone } from "@gravity-ui/icons";
 import * as GIcons from "@gravity-ui/icons";
+
+type GravityIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
 
 /**
  * Universal wrapper for Gravity UI Icons.
@@ -13,13 +16,11 @@ export function GravityIcon({
   style,
   ...props
 }: {
-  icon: any;
+  icon: GravityIconComponent;
   size?: number;
   className?: string;
   color?: string;
-  style?: React.CSSProperties;
-  [key: string]: any;
-}) {
+} & Omit<React.SVGProps<SVGSVGElement>, "color">) {
   if (!IconComponent) return null;
 
   const customStyle: React.CSSProperties = {
@@ -42,10 +43,10 @@ export function GravityIcon({
 export const GIconTerminal = (props: any) => <GravityIcon icon={GIcons.Terminal} {...props} />;
 export const GIconLibrary = (props: any) => <GravityIcon icon={GIcons.Books || GIcons.BookOpen} {...props} />;
 export const GIconMusic = (props: any) => <GravityIcon icon={GIcons.MusicNote} {...props} />;
-export const GIconUpdates = (props: any) => <GravityIcon icon={GIcons.Bell} {...props} />;
+export const GIconUpdates = (props: any) => <GravityIcon icon={Megaphone} {...props} />;
 export const GIconChats = (props: any) => <GravityIcon icon={GIcons.Comment} {...props} />;
 export const GIconGallery = (props: any) => <GravityIcon icon={GIcons.Picture} {...props} />;
-export const GIconGames = (props: any) => <GravityIcon icon={GIcons.Puzzle || GIcons.Cube} {...props} />;
+export const GIconGames = (props: any) => <GravityIcon icon={Dice5} {...props} />;
 export const GIconFiles = (props: any) => <GravityIcon icon={GIcons.FolderOpen || GIcons.Folder} {...props} />;
 export const GIconSettings = (props: any) => <GravityIcon icon={GIcons.Gear} {...props} />;
 export const GIconResume = (props: any) => <GravityIcon icon={GIcons.Person || GIcons.FileText} {...props} />;

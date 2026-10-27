@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useOS } from "./store/useOS";
-import { useIsMobile } from "./lib/useMediaQuery";
+import { useIsMobile, useIsTablet } from "./lib/useMediaQuery";
 import Wallpaper from "./components/Wallpaper";
 import MenuBar from "./components/MenuBar";
 import Dock from "./components/Dock";
@@ -68,12 +68,14 @@ export default function App() {
     osMode,
     dockPosition,
     glassAlpha,
+    widgetsVisible,
     toggleSpotlight,
     notify,
   } = useOS();
 
   const isWin = osMode === "win";
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   const macDockLeft = !isWin && !isMobile && dockPosition === "left";
   const macDockRight = !isWin && !isMobile && dockPosition === "right";
   const welcomed = useRef(false);
@@ -134,7 +136,7 @@ export default function App() {
       <div
         className={`absolute ${isWin ? "top-3" : "top-10 sm:top-12"} ${
           macDockLeft ? "left-20 sm:left-24" : "left-3 sm:left-6"
-        } flex flex-wrap items-center gap-2 sm:gap-4 max-w-[calc(100vw-24px)] z-10 pointer-events-auto reveal`}
+        } flex flex-wrap items-center gap-2 sm:gap-3 max-w-[calc(100vw-24px)] z-10 pointer-events-auto reveal`}
         style={{ animationDelay: "50ms" }}
       >
         <DesktopIcon icon={GIconResume} label="Resume" color="#4B5A73" onOpen={() => openApp("resume")} />
@@ -145,9 +147,9 @@ export default function App() {
       </div>
 
       {/* Widget stack — macOS style only */}
-      {!isWin && (
-        isMobile ? (
-          <div className="absolute top-48 xs:top-52 left-0 right-0 bottom-24 flex flex-col items-center gap-4 overflow-y-auto thin-scroll px-4 pb-8">
+      {!isWin && widgetsVisible && (
+        isTablet ? (
+          <div className={`absolute ${isMobile ? "top-60 min-[456px]:top-36" : "top-36"} left-0 right-0 bottom-24 flex flex-col items-center gap-4 overflow-y-auto thin-scroll px-4 pb-8`}>
             <div className="reveal w-full flex justify-center" style={{ animationDelay: "120ms" }}><PhotoWidget /></div>
             <div className="reveal w-full flex justify-center" style={{ animationDelay: "150ms" }}><WeatherWidget /></div>
             <div className="reveal w-full flex justify-center" style={{ animationDelay: "180ms" }}><ClockWidget /></div>
@@ -158,14 +160,14 @@ export default function App() {
         ) : (
           <>
             {/* Left column: photo, shortcuts below it, then note */}
-            <div className={`absolute top-32 ${macDockLeft ? "left-24" : "left-6"} flex flex-col gap-5`}>
+            <div className={`absolute top-36 ${macDockLeft ? "left-24" : "left-6"} flex flex-col gap-4`}>
               <div className="reveal" style={{ animationDelay: "140ms" }}><PhotoWidget /></div>
               <div className="reveal" style={{ animationDelay: "190ms" }}><ShortcutTiles /></div>
               <div className="reveal" style={{ animationDelay: "240ms" }}><NoteWidget /></div>
             </div>
 
             {/* Right column: weather, clock, calendar */}
-            <div className={`absolute top-11 ${macDockRight ? "right-24" : "right-6"} flex flex-col gap-5 items-end`}>
+            <div className={`absolute top-12 ${macDockRight ? "right-24" : "right-6"} flex flex-col gap-4 items-end`}>
               <div className="reveal" style={{ animationDelay: "170ms" }}><WeatherWidget /></div>
               <div className="reveal" style={{ animationDelay: "220ms" }}><ClockWidget /></div>
               <div className="reveal" style={{ animationDelay: "270ms" }}><AgendaWidget /></div>
@@ -193,6 +195,7 @@ export default function App() {
           x={contextMenu.x}
           y={contextMenu.y}
           onClose={() => setContextMenu(null)}
+          widgetsVisible={widgetsVisible}
         />
       )}
     </div>

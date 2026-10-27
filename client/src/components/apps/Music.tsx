@@ -317,7 +317,7 @@ export default function Music() {
           size={16}
           className={`shrink-0 transition-colors ${playing ? "text-accent" : "text-white/30"}`}
         />
-        <canvas ref={canvasRef} width={600} height={46} className="w-full h-[46px]" />
+        <canvas ref={canvasRef} width={600} height={46} className="w-full h-\[46px]" />
       </div>
 
       <div className="flex flex-1 min-h-0">

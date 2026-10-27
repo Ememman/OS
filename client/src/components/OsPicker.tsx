@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { LogoApple, LogoWindows } from "@gravity-ui/icons";
 import Wallpaper from "./Wallpaper";
 import { useOS } from "../store/useOS";
 import type { OSMode } from "../types/os";
 import { GIconCheck, GIconChevronRight, GIconSparkles } from "./icons/GravityIcons";
+import macPreview from "../assets/macos.png";
+import windowsPreview from "../assets/windows.png";
 
 export default function OsPicker() {
   const { osMode, chooseOs } = useOS();
@@ -14,134 +17,107 @@ export default function OsPicker() {
     setTimeout(() => chooseOs(selected), 260);
   };
 
-  const OPTIONS: { id: OSMode; name: string; desc: string; img: string }[] = [
+  const OPTIONS: {
+    id: OSMode;
+    name: string;
+    desc: string;
+    img: string;
+    Icon: typeof LogoApple;
+  }[] = [
     {
       id: "mac",
       name: "macOS Style",
       desc: "Top menu bar, dock at the bottom, traffic-light windows.",
-      img: "/src/assets/macos.png",
+      img: macPreview,
+      Icon: LogoApple,
     },
     {
       id: "win",
       name: "Windows 11 Style",
       desc: "Taskbar with search, system tray, and squared window controls.",
-      img: "/src/assets/windows.png",
+      img: windowsPreview,
+      Icon: LogoWindows,
     },
   ];
 
   return (
     <div
-      className={`fixed inset-0 z-[1500] flex items-center justify-center transition-opacity duration-300 p-4 sm:p-6 ${entering ? "opacity-0" : "opacity-100"}`}>
+      className={`fixed inset-0 z-1500 flex items-center justify-center transition-opacity duration-300 p-4 sm:p-6 ${entering ? "opacity-0" : "opacity-100"}`}>
       <div className="absolute inset-0">
         <Wallpaper />
-        <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/70 backdrop-blur-md" />
+        <div className="absolute inset-0 bg-linear-to-br from-black/70 via-black/50 to-black/70 backdrop-blur-md" />
       </div>
 
-      <div className="relative z-10 text-center px-3 sm:px-4 max-w-5xl mx-auto w-full">
-        <div className="mb-8 sm:mb-10 space-y-2 sm:space-y-3">
-          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent">
+      <div className="relative z-10 text-center px-5 py-6 sm:px-8 sm:py-8 max-w-4xl max-h-full mx-auto w-full overflow-y-auto thin-scroll rounded-[28px] border border-white/10 bg-[#080d19]/45 backdrop-blur-xl shadow-[0_32px_100px_rgba(0,0,0,0.42)]">
+        <div className="mb-6 sm:mb-8 space-y-2">
+          <p className="text-[10px] sm:text-xs uppercase tracking-[0.24em] font-semibold text-accent/90">
+            Portfolio OS
+          </p>
+          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight bg-linear-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent">
             Choose Your Experience
           </h1>
-          <p className="text-xs sm:text-sm text-white/40 font-light tracking-wider">
-            Select your preferred interface style • You can change this anytime
-            from Settings
+          <p className="max-w-xl mx-auto text-xs sm:text-sm text-white/55 leading-relaxed">
+            Pick a desktop style to explore. You can switch interfaces any time in Settings.
           </p>
-          <div className="w-12 h-0.5 bg-gradient-to-r from-accent/60 to-accent/20 mx-auto rounded-full" />
+          <div className="w-12 h-0.5 bg-linear-to-r from-accent/60 to-accent/20 mx-auto rounded-full" />
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 md:gap-6 justify-center items-stretch">
-          {OPTIONS.map(({ id, name, desc, img }) => (
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 justify-center items-stretch">
+          {OPTIONS.map(({ id, name, desc, img, Icon }) => (
             <button
               key={id}
               onClick={() => setSelected(id)}
-              className={`group relative w-full sm:w-64 md:w-72 rounded-2xl p-0.5 text-left transition-all duration-300 ${
+              aria-pressed={selected === id}
+              className={`group relative w-full sm:flex-1 sm:max-w-87.5 rounded-2xl p-px text-left transition-all duration-300 ${
                 selected === id
-                  ? "bg-gradient-to-br from-accent/60 via-accent/30 to-transparent shadow-2xl shadow-accent/20"
-                  : "bg-gradient-to-br from-white/10 to-transparent hover:from-white/20 hover:to-white/5"
+                  ? "bg-linear-to-br from-accent/80 via-accent/30 to-white/10 shadow-xl shadow-accent/15"
+                  : "bg-linear-to-br from-white/15 to-white/5 hover:from-white/25 hover:to-white/10"
               }`}>
               <div
-                className={`relative rounded-2xl p-4 sm:p-5 md:p-6 transition-all duration-300 border ${
+                className={`relative h-full rounded-[15px] p-3.5 sm:p-4 transition-all duration-300 border ${
                   selected === id
-                    ? "bg-[#0a0a0f]/95 backdrop-blur-xl border-accent/50 shadow-[inset_0_0_30px_rgba(99,102,241,0.05)]"
-                    : "bg-[#0a0a0f]/80 backdrop-blur-lg border-white/10 hover:border-white/20 hover:bg-[#0a0a0f]/90"
+                    ? "bg-[#0a0f1b]/95 backdrop-blur-xl border-white/15"
+                    : "bg-[#0a0f1b]/80 backdrop-blur-lg border-white/10 hover:border-white/20 hover:bg-[#0a0f1b]/90"
                 }`}>
-                {/* Image Container */}
-                <div className="relative overflow-hidden rounded-xl bg-[#12121a] border border-white/5">
+                <div className="relative overflow-hidden rounded-xl bg-[#121a2a] border border-white/10">
                   <img
                     src={img}
                     alt={name}
-                    className={`w-full h-auto aspect-video object-cover transition-all duration-500 ${
-                      selected === id ? "scale-105" : "group-hover:scale-105"
+                    className={`w-full aspect-video object-cover transition-all duration-500 ${
+                      selected === id ? "scale-[1.025]" : "group-hover:scale-[1.025]"
                     }`}
                   />
-                  {/* Overlay gradient for polish */}
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent to-transparent transition-opacity duration-300 ${
-                      selected === id
-                        ? "opacity-100"
-                        : "opacity-0 group-hover:opacity-60"
-                    }`}
-                  />
-
-                  {/* Glow effect on selection */}
+                  <div className="absolute inset-0 bg-linear-to-t from-[#080d19]/40 via-transparent to-transparent" />
                   {selected === id && (
-                    <div className="absolute inset-0 bg-gradient-to-tr from-accent/20 via-transparent to-transparent" />
-                  )}
-
-                  {/* Selection indicator */}
-                  {selected === id && (
-                    <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
-                      <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-accent flex items-center justify-center shadow-lg shadow-accent/50 animate-pulse border-2 border-white/20 text-white">
+                    <div className="absolute top-2.5 right-2.5">
+                      <div className="w-7 h-7 rounded-full bg-accent flex items-center justify-center shadow-lg shadow-accent/40 border border-white/25 text-white">
                         <GIconCheck size={14} />
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="mt-3 sm:mt-4 space-y-1 sm:space-y-1.5">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <h3
-                      className={`text-sm sm:text-base font-semibold transition-colors duration-300 ${
-                        selected === id
-                          ? "text-white"
-                          : "text-white/70 group-hover:text-white"
+                <div className="mt-4 flex items-start gap-3">
+                  <div className={`mt-0.5 w-9 h-9 rounded-xl flex items-center justify-center border transition-colors ${
+                    selected === id ? "bg-accent/15 text-white border-accent/25" : "bg-white/5 text-white/70 border-white/10"
+                  }`}>
+                    <Icon width={17} height={17} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className={`text-sm sm:text-base font-semibold transition-colors duration-300 ${
+                        selected === id ? "text-white" : "text-white/75 group-hover:text-white"
                       }`}>
-                      {name}
-                    </h3>
+                        {name}
+                      </h3>
                     {selected === id && (
-                      <span className="text-[9px] sm:text-[10px] font-medium text-accent bg-accent/20 px-2 py-0.5 rounded-full border border-accent/20 whitespace-nowrap">
+                      <span className="text-[9px] sm:text-[10px] font-semibold text-accent bg-accent/15 px-2 py-0.5 rounded-full border border-accent/20 whitespace-nowrap">
                         Selected
                       </span>
                     )}
+                    </div>
+                    <p className="mt-1 text-[11px] sm:text-xs text-white/50 leading-relaxed">{desc}</p>
                   </div>
-                  <p
-                    className={`text-[10px] sm:text-[11px] transition-colors duration-300 leading-relaxed ${
-                      selected === id
-                        ? "text-white/60"
-                        : "text-white/30 group-hover:text-white/50"
-                    }`}>
-                    {desc}
-                  </p>
-                </div>
-
-                {/* Hover glow effect */}
-                <div
-                  className={`absolute -inset-0.5 rounded-2xl transition-opacity duration-300 pointer-events-none ${
-                    selected === id
-                      ? "opacity-100"
-                      : "opacity-0 group-hover:opacity-100"
-                  }`}>
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-accent/5 via-transparent to-accent/5 blur-xl" />
-                </div>
-
-                {/* Friendly border glow on hover */}
-                <div
-                  className={`absolute inset-0 rounded-2xl transition-opacity duration-300 pointer-events-none ${
-                    selected === id
-                      ? "opacity-100"
-                      : "opacity-0 group-hover:opacity-100"
-                  }`}>
-                  <div className="absolute inset-0 rounded-2xl border border-white/10" />
                 </div>
               </div>
             </button>
@@ -150,40 +126,26 @@ export default function OsPicker() {
 
         <button
           onClick={confirm}
-          className="group relative mt-8 sm:mt-10 px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl text-white text-xs sm:text-sm font-medium transition-all duration-300 overflow-hidden w-full sm:w-auto">
-          {/* Button background with gradient */}
-          <div className="absolute inset-0 bg-gradient-to-r from-accent via-accent/90 to-accent rounded-xl transition-all duration-300 group-hover:shadow-2xl group-hover:shadow-accent/40 group-hover:scale-105" />
-
-          {/* Button border */}
-          <div className="absolute inset-0 rounded-xl border border-white/20" />
-
-          {/* Button shine effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-
-          {/* Button border glow */}
-          <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-accent/50 to-accent/20 blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-          <span className="relative flex items-center justify-center gap-2">
+          className="group relative mt-6 sm:mt-7 px-6 py-3 rounded-xl text-white text-xs sm:text-sm font-semibold transition-all duration-300 overflow-hidden w-full sm:w-auto bg-linear-to-r from-white/15 via-white/10 to-white/5 backdrop-blur-xl border border-white/25 shadow-lg shadow-black/25 hover:from-white/20 hover:via-white/15 hover:to-white/10 hover:border-white/35 hover:shadow-xl hover:shadow-black/30 hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080d19]">
+          <span className="flex items-center justify-center gap-2">
             Continue with {selected === "mac" ? "macOS" : "Windows 11"}
             <GIconChevronRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
           </span>
         </button>
 
-        {/* Feature highlight badges */}
         <div className="mt-5 flex items-center justify-center gap-2 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] text-white/60">
-            <GIconSparkles size={12} className="text-amber-400" /> Gravity UI Iconography
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/4.5 border border-white/10 text-[10px] sm:text-[11px] text-white/55">
+            <GIconSparkles size={12} className="text-amber-300" /> Gravity UI iconography
           </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] text-white/60">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/4.5 border border-white/10 text-[10px] sm:text-[11px] text-white/55">
             ⌘K Spotlight Search
           </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] text-white/60">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/4.5 border border-white/10 text-[10px] sm:text-[11px] text-white/55">
             UNIX Terminal Shell
           </span>
         </div>
 
-        {/* Friendly footer text */}
-        <p className="mt-4 text-[10px] sm:text-xs text-white/30 font-light tracking-wide">
+        <p className="mt-4 text-[10px] sm:text-xs text-white/35 font-light">
           Both styles offer the same full feature set — pick what feels right for you
         </p>
       </div>
