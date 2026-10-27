@@ -49,7 +49,7 @@ export default function AgendaWidget() {
       </button>
 
       {expanded && (
-        <div className="absolute top-0 right-0 z-[850]">
+        <div className="absolute top-0 right-0 z-\[850]">
           <CalendarWidget onBack={() => setExpanded(false)} />
         </div>
       )}

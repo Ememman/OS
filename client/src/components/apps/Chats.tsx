@@ -53,7 +53,7 @@ function BgPicker({ current, onPick, onClose }) {
   const ref = useRef(null);
   useOutsideClick(ref, onClose);
   return (
-    <div ref={ref} role="group" aria-label="Chat color theme" className="absolute top-full right-3 mt-1.5 z-[1200] chat-theme-picker rounded-xl p-2 shadow-2xl" style={{ animation: "menuOpen 140ms cubic-bezier(.16,1,.3,1) both" }}>
+    <div ref={ref} role="group" aria-label="Chat color theme" className="absolute top-full right-3 mt-1.5 z-\[1200] chat-theme-picker rounded-xl p-2 shadow-2xl" style={{ animation: "menuOpen 140ms cubic-bezier(.16,1,.3,1) both" }}>
       <div className="text-xs font-semibold px-1 pb-1.5">Chat theme</div>
       <div className="grid grid-cols-3 gap-1.5">
         {BG_OPTIONS.map((o) => (

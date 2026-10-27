@@ -48,7 +48,7 @@ export default function Gallery() {
         </div>
       </div>
 
-      <div className="[column-fill:_balance] sm:columns-3 columns-2 gap-2 space-y-2">
+      <div className="[column-fill:balance] sm:columns-3 columns-2 gap-2 space-y-2">
         {shown.map((g, i) => (
           <button key={g.id} onClick={() => setOpenIdx(i)} className="relative rounded-lg overflow-hidden group block w-full break-inside-avoid">
             <img
@@ -61,7 +61,7 @@ export default function Gallery() {
                 <GIconPlay size={28} className="text-white/90" />
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-2">
+            <div className="absolute inset-0 bg-gradient-to- from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-2">
               <span className="text-[10px] text-white">{g.caption}</span>
             </div>
           </button>
