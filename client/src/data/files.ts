@@ -1,7 +1,15 @@
 // A lightweight virtual filesystem powering the Files app.
 // Folders contain children; files either show inline text or deep-link to another app.
 
-export const fileTree = {
+export interface FileSystemNode {
+  name: string;
+  type: "folder" | "app-link" | "text";
+  children?: FileSystemNode[];
+  app?: string;
+  content?: string;
+}
+
+export const fileTree: FileSystemNode = {
   name: "Root",
   type: "folder",
   children: [

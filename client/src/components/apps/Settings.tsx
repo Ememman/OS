@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useOS } from "../../store/useOS";
+import type { DockPosition, OSMode } from "../../types/os";
 import Wallpaper from "../Wallpaper";
 import {
   GIconCheck,
@@ -158,7 +159,7 @@ export default function Settings() {
       <section className="space-y-2">
         <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Desktop style</h3>
         <div className="grid grid-cols-2 gap-2 sm:gap-3">
-          {[{ id: "mac", label: "macOS" }, { id: "win", label: "Windows 11" }].map((o) => (
+          {([{ id: "mac", label: "macOS" }, { id: "win", label: "Windows 11" }] satisfies { id: OSMode; label: string }[]).map((o) => (
             <button
               key={o.id}
               onClick={() => setOsMode(o.id)}
@@ -181,7 +182,7 @@ export default function Settings() {
             Move the Dock to the bottom, left, or right of the screen. Always sits at the bottom on phones, where there's less room to spare.
           </p>
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            {[{ id: "bottom", label: "Bottom" }, { id: "left", label: "Left" }, { id: "right", label: "Right" }].map((o) => (
+            {([{ id: "bottom", label: "Bottom" }, { id: "left", label: "Left" }, { id: "right", label: "Right" }] satisfies { id: DockPosition; label: string }[]).map((o) => (
               <button
                 key={o.id}
                 onClick={() => setDockPosition(o.id)}

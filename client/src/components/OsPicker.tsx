@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Wallpaper from "./Wallpaper";
 import { useOS } from "../store/useOS";
+import type { OSMode } from "../types/os";
 import { GIconCheck, GIconChevronRight, GIconSparkles } from "./icons/GravityIcons";
 
 export default function OsPicker() {
@@ -13,7 +14,7 @@ export default function OsPicker() {
     setTimeout(() => chooseOs(selected), 260);
   };
 
-  const OPTIONS = [
+  const OPTIONS: { id: OSMode; name: string; desc: string; img: string }[] = [
     {
       id: "mac",
       name: "macOS Style",

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { useOS, APPS } from "../../store/useOS";
 import { fallbackProjects } from "../../data/projects";
 import { fileTree } from "../../data/files";
@@ -19,9 +19,14 @@ const COMMANDS = [
   "ls", "cat", "open", "theme", "date", "uptime", "history", "matrix", "sudo"
 ];
 
+type TerminalEntry =
+  | { type: "prompt"; cmd: string }
+  | { type: "banner" | "system"; content: string }
+  | { type: "output"; content: ReactNode };
+
 export default function Terminal() {
   const { openApp, accents, setAccent, wallpapers, setWallpaper, osMode } = useOS();
-  const [history, setHistory] = useState([
+  const [history, setHistory] = useState<TerminalEntry[]>([
     { type: "banner", content: BANNER },
     { type: "system", content: "Portfolio OS Kernel v2.4.0 (Gravity Edition) initialized." },
     { type: "system", content: "Logged in as bron@portfolio-os. Type 'help' to start." },
