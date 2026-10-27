@@ -62,7 +62,7 @@ export default function DesktopContextMenu({ x, y, onClose, widgetsVisible }: Co
   return (
     <div
       ref={menuRef}
-      className="fixed z-[9999] w-[210px] max-h-[calc(100vh-20px)] overflow-y-auto thin-scroll rounded-xl bg-[#141417]/95 backdrop-blur-2xl border border-white/15 p-1.5 shadow-2xl text-xs select-none"
+      className="fixed z-\[9999] w-\[210px] max-h-[calc(100vh-20px)] overflow-y-auto thin-scroll rounded-xl bg-[#141417]/95 backdrop-blur-2xl border border-white/15 p-1.5 shadow-2xl text-xs select-none"
       style={{ left: clampedX, top: clampedY }}
       onContextMenu={(e) => e.preventDefault()}
     >

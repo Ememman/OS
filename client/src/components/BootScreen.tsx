@@ -36,11 +36,11 @@ export default function BootScreen() {
 
   return (
     <div
-      className={`fixed inset-0 z-[2000] flex flex-col items-center justify-center transition-opacity duration-300 p-4 ${
+      className={`fixed inset-0 z-\[2000] flex flex-col items-center justify-center transition-opacity duration-300 p-4 ${
         leaving ? "opacity-0" : "opacity-100"
       }`}>
       {/* Background with dark theme */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#05070c] via-[#0a0a0f] to-[#05070c]" />
+      <div className="absolute inset-0 bg-gradient-to- from-[#05070c] via-[#0a0a0f] to-[#05070c]" />
 
       {/* Subtle glow effect */}
       <div className="absolute inset-0 flex items-center justify-center">
@@ -54,7 +54,7 @@ export default function BootScreen() {
           <div className="absolute -inset-4 bg-accent/20 rounded-3xl blur-2xl animate-pulse" />
 
           {/* Icon container with gradient border */}
-          <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl p-0.5 bg-gradient-to-br from-accent/60 via-accent/30 to-transparent shadow-2xl shadow-accent/25">
+          <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl p-0.5 bg-gradient-to- from-accent/60 via-accent/30 to-transparent shadow-2xl shadow-accent/25">
             <div className="w-full h-full rounded-2xl bg-[#0a0a0f]/95 backdrop-blur-xl border border-white/10 flex items-center justify-center overflow-hidden">
               <GIconCode size={36} className="text-white drop-shadow-[0_0_12px_rgba(255,255,255,0.4)]" />
             </div>
@@ -63,20 +63,20 @@ export default function BootScreen() {
 
         {/* Title with gradient - matching OS Picker */}
         <div className="mt-6 sm:mt-8 space-y-2 text-center">
-          <h1 className="font-display text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent">
+          <h1 className="font-display text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to- from-white via-white/90 to-white/70 bg-clip-text text-transparent">
             Portfolio OS
           </h1>
-          <div className="w-12 h-0.5 bg-gradient-to-r from-accent/60 to-accent/20 mx-auto rounded-full" />
+          <div className="w-12 h-0.5 bg-gradient-to- from-accent/60 to-accent/20 mx-auto rounded-full" />
         </div>
 
         {/* Progress bar with visible loading effect */}
         <div className="mt-6 sm:mt-8 w-full max-w-xs">
           <div className="relative h-2 rounded-full bg-white/10 overflow-hidden border border-white/5">
             <div
-              className="h-full bg-gradient-to-r from-accent/60 via-accent to-accent/60 rounded-full transition-all duration-100 relative"
+              className="h-full bg-gradient-to- from-accent/60 via-accent to-accent/60 rounded-full transition-all duration-100 relative"
               style={{ width: `${progress}%` }}>
               {/* Shimmer animation on progress bar */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+              <div className="absolute inset-0 bg-gradient-to- from-transparent via-white/30 to-transparent animate-shimmer" />
             </div>
           </div>
         </div>
