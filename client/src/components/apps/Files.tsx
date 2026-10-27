@@ -12,7 +12,7 @@ import {
   GIconNotes,
   GIconCalculator,
 } from "../icons/GravityIcons";
-import { fileTree } from "../../data/files";
+import { fileTree, type FolderNode } from "../../data/files";
 import { useOS } from "../../store/useOS";
 
 const FAVORITES = [
@@ -26,11 +26,12 @@ const FAVORITES = [
   { label: "Gallery", path: ["Gallery"] }
 ];
 
-function resolvePath(path) {
+function resolvePath(path: string[]): FolderNode {
   let node = fileTree;
   for (const seg of path) {
-    node = node.children?.find((c) => c.name === seg);
-    if (!node) return fileTree;
+    const child = node.children.find((c) => c.name === seg);
+    if (!child || child.type !== "folder") return fileTree;
+    node = child;
   }
   return node;
 }
@@ -132,7 +133,7 @@ export default function Files() {
                   title="Double-click to open"
                 >
                   <Icon item={item} />
-                  <span className="text-[10px] text-white/80 leading-tight break-words line-clamp-2">{item.name}</span>
+                  <span className="text-[10px] text-white/80 leading-tight break-word line-clamp-2">{item.name}</span>
                 </button>
               ))}
             </div>

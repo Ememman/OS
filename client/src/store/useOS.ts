@@ -1,5 +1,70 @@
 import { create } from "zustand";
 import { soundFx } from "../lib/soundFx";
+import type {
+  AccentColor,
+  DockPosition,
+  OSMode,
+  SnapLayout,
+  SystemNotification,
+  WallpaperOption,
+  WeatherLocation,
+  WindowState,
+} from "../types/os";
+
+interface OSState {
+  windows: WindowState[];
+  accent: string;
+  wallpaper: string;
+  reduceMotion: boolean;
+  photoUrl: string;
+  setPhotoUrl: (url: string) => void;
+  weatherLoc: WeatherLocation;
+  setWeatherLoc: (loc: WeatherLocation) => void;
+  chatSound: boolean;
+  toggleChatSound: () => void;
+  systemSounds: boolean;
+  toggleSystemSounds: () => void;
+  notification: SystemNotification | null;
+  notify: (title: string, message: string) => void;
+  dismissNotification: () => void;
+  chatBg: string;
+  setChatBg: (id: string) => void;
+  glassAlpha: number;
+  setGlassAlpha: (value: number) => void;
+  accents: AccentColor[];
+  wallpapers: WallpaperOption[];
+  booted: boolean;
+  osChosen: boolean;
+  osMode: OSMode;
+  finishBoot: () => void;
+  chooseOs: (mode: OSMode) => void;
+  setOsMode: (mode: OSMode) => void;
+  reopenPicker: () => void;
+  particlesEnabled: boolean;
+  toggleParticles: () => void;
+  snapWindow: (id: string, layout: SnapLayout) => void;
+  closeAllWindows: () => void;
+  minimizeAllWindows: () => void;
+  spotlightOpen: boolean;
+  openSpotlight: () => void;
+  closeSpotlight: () => void;
+  toggleSpotlight: () => void;
+  resetDefaults: () => void;
+  compact: boolean;
+  toggleCompact: () => void;
+  dockPosition: DockPosition;
+  setDockPosition: (pos: DockPosition) => void;
+  setAccent: (value: string) => void;
+  setWallpaper: (id: string) => void;
+  toggleMotion: () => void;
+  openApp: (app: string) => void;
+  closeWindow: (id: string) => void;
+  focusWindow: (id: string) => void;
+  minimizeWindow: (id: string) => void;
+  toggleMaximize: (id: string) => void;
+  moveWindow: (id: string, x: number, y: number) => void;
+  resizeWindow: (id: string, w: number, h: number) => void;
+}
 
 export const APPS = {
   library: { title: "Library", w: 860, h: 580 },
@@ -37,7 +102,7 @@ const WALLPAPERS = [
 
 let z = 10;
 
-export const useOS = create((set, get) => ({
+export const useOS = create<OSState>()((set, get) => ({
   windows: [], // { id, app, x, y, w, h, minimized, maximized, z }
   accent: localStorage.getItem("os_accent") || ACCENTS[0].value,
   wallpaper: localStorage.getItem("os_wallpaper") || "bg1", // Changed default to bg1
@@ -101,7 +166,7 @@ export const useOS = create((set, get) => ({
   // boot / OS style flow
   booted: false,
   osChosen: false,
-  osMode: localStorage.getItem("os_mode") || "mac", // "mac" | "win"
+  osMode: localStorage.getItem("os_mode") === "win" ? "win" : "mac",
   finishBoot: () => set({ booted: true }),
   chooseOs: (mode) => {
     localStorage.setItem("os_mode", mode);
@@ -123,7 +188,7 @@ export const useOS = create((set, get) => ({
 
   // Window snap layout engine
   snapWindow: (id, layout) => {
-    if (get().systemSounds) soundFx.playPop();
+    if (get().systemSounds) soundFx.playClick();
     const innerW = window.innerWidth;
     const innerH = window.innerHeight;
     const isWin = get().osMode === "win";
@@ -198,7 +263,10 @@ export const useOS = create((set, get) => ({
     set({ compact: next });
   },
 
-  dockPosition: localStorage.getItem("os_dock_position") || "bottom", // "bottom" | "left" | "right" (macOS only)
+  dockPosition: (() => {
+    const savedPosition = localStorage.getItem("os_dock_position");
+    return savedPosition === "left" || savedPosition === "right" ? savedPosition : "bottom";
+  })(),
   setDockPosition: (pos) => {
     localStorage.setItem("os_dock_position", pos);
     set({ dockPosition: pos });
