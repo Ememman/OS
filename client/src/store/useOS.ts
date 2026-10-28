@@ -75,6 +75,8 @@ export const APPS: Record<string, AppMetadata> = {
   terminal: { title: "Terminal", w: 740, h: 480 },
   calculator: { title: "Calculator", w: 320, h: 480 },
   notes: { title: "Notes", w: 740, h: 520 },
+  activity: { title: "Activity Monitor", w: 760, h: 520 },
+  guestbook: { title: "Guestbook", w: 780, h: 540 },
   updates: { title: "Updates", w: 620, h: 640 },
   chats: { title: "Chats", w: 420, h: 620 },
   gallery: { title: "Gallery", w: 880, h: 600 },
@@ -316,10 +318,11 @@ export const useOS = create<OSState>((set, get) => ({
     const count = get().windows.length;
     const id = `${app}-${Date.now()}`;
     z += 1;
+    const title = app === "activity" ? (get().osMode === "win" ? "Task Manager" : "Activity Monitor") : meta.title;
     const win = {
       id,
       app,
-      title: meta.title,
+      title,
       x: 80 + count * 26,
       y: 60 + count * 22,
       w: meta.w,

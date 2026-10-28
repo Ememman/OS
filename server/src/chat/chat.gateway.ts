@@ -21,6 +21,7 @@ export interface ChatMessage {
   name: string;
   text: string;
   ts: number;
+  reactions?: Record<string, number>;
 }
 
 @WebSocketGateway({ cors: { origin: "*" } })
@@ -34,6 +35,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   getOnlineCount() {
     return this.onlineCount;
+  }
+
+  broadcast(event: string, data: any) {
+    if (this.server) {
+      this.server.emit(event, data);
+    }
   }
 
   handleConnection(client: Socket) {
@@ -69,7 +76,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name,
       text: clean,
-      ts: Date.now()
+      ts: Date.now(),
+      reactions: {}
     };
 
     this.chatHistory.push(msg);
@@ -79,6 +87,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.server.emit("chat:message", msg);
     return { ok: true, message: msg };
+  }
+
+  @SubscribeMessage("chat:react")
+  handleReact(@MessageBody() payload: { id: string; emoji: string }) {
+    const validEmojis = ["❤️", "👍", "🔥", "🚀", "😂"];
+    if (!payload?.id || !validEmojis.includes(payload.emoji)) return;
+    const msg = this.chatHistory.find((m) => m.id === payload.id);
+    if (msg) {
+      if (!msg.reactions) msg.reactions = {};
+      msg.reactions[payload.emoji] = (msg.reactions[payload.emoji] || 0) + 1;
+      this.server.emit("chat:reacted", { id: payload.id, emoji: payload.emoji, reactions: msg.reactions });
+    }
   }
 
   @SubscribeMessage("chat:typing")

@@ -27,12 +27,16 @@ import {
   GIconSliders,
   GIconNotes,
   GIconCalculator,
+  GIconActivity,
+  GIconBookOpen,
 } from "../icons/GravityIcons";
 
 const TASKBAR_ITEMS = [
   { app: "terminal", label: "Terminal", icon: GIconTerminal, color: "#22c55e" },
   { app: "notes", label: "Notes", icon: GIconNotes, color: "#f59e0b" },
   { app: "calculator", label: "Calculator", icon: GIconCalculator, color: "#06b6d4" },
+  { app: "activity", label: "Task Manager", icon: GIconActivity, color: "#10b981" },
+  { app: "guestbook", label: "Guestbook", icon: GIconBookOpen, color: "#8b5cf6" },
   { app: "library", label: "Library", icon: GIconLibrary, color: "#5BB8B0" },
   { app: "music", label: "Music", icon: GIconMusic, color: "#D9678C" },
   { app: "updates", label: "Updates", icon: GIconUpdates, color: "#5FBF7C" },
@@ -46,8 +50,8 @@ const TASKBAR_ITEMS = [
 
 const POP_ANIM = { animation: "menuOpen 150ms cubic-bezier(.16,1,.3,1) both" };
 
-function StartMenu({ onClose }) {
-  const ref = useRef(null);
+function StartMenu({ onClose }: { onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
   const { openApp } = useOS();
   const [query, setQuery] = useState("");
   useOutsideClick(ref, onClose);
@@ -99,135 +103,178 @@ function StartMenu({ onClose }) {
         </div>
       )}
 
-      <div className="mt-4 pt-3 border-t border-white/10 flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-accent/30 flex items-center justify-center text-[11px] font-semibold text-white border border-accent/40">B</div>
-        <div className="flex flex-col">
-          <span className="text-xs text-white/80 font-medium">Bron Mendoza</span>
-          <span className="text-[10px] text-white/40">Portfolio OS Administrator</span>
+      <div className="border-t border-white/10 mt-4 pt-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-full bg-accent/40 flex items-center justify-center text-xs font-semibold">B</div>
+          <span className="text-xs font-medium">Bron Mendoza</span>
         </div>
+        <button
+          onClick={() => { useOS.getState().openApp("settings"); onClose(); }}
+          className="p-1.5 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition"
+          title="Settings"
+        >
+          <GIconSliders size={14} />
+        </button>
       </div>
     </div>
   );
 }
 
-function TrayFlyout({ onClose }) {
-  const ref = useRef(null);
+function TrayFlyout({ onClose }: { onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { openApp, reopenPicker } = useOS();
   useOutsideClick(ref, onClose);
-  const items = [
-    { label: "Bluetooth", Icon: GIconSliders, sub: "Ready to pair" },
-    { label: "Battery", Icon: GIconPower, sub: "100% Fully Charged" },
-    { label: "Focus / Do Not Disturb", Icon: GIconMoon, sub: "Off" },
-  ];
   return (
-    <div ref={ref} className="absolute bottom-16 right-2 sm:right-3 w-56 glass rounded-2xl border border-white/10 shadow-2xl p-2 z-[1200] origin-bottom-right" style={POP_ANIM}>
-      {items.map((i) => (
-        <div key={i.label} className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-white/10 transition-colors cursor-pointer">
-          <i.Icon size={16} className="text-white/75" />
-          <div className="text-xs">
-            <div className="text-white/90 font-medium">{i.label}</div>
-            <div className="text-white/45 text-[10px]">{i.sub}</div>
-          </div>
-        </div>
-      ))}
+    <div
+      ref={ref}
+      className="absolute bottom-16 right-3 w-56 glass rounded-2xl border border-white/10 shadow-2xl p-3 z-[1200] origin-bottom-right"
+      style={POP_ANIM}
+    >
+      <div className="text-[10px] uppercase font-semibold text-white/40 tracking-wider px-1 pb-1">Quick Actions</div>
+      <button
+        onClick={() => { openApp("activity"); onClose(); }}
+        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-xs hover:bg-white/10 text-left text-white/85"
+      >
+        <GIconActivity size={14} className="text-emerald-400" /> Task Manager
+      </button>
+      <button
+        onClick={() => { openApp("guestbook"); onClose(); }}
+        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-xs hover:bg-white/10 text-left text-white/85"
+      >
+        <GIconBookOpen size={14} className="text-violet-400" /> Guestbook & Ledger
+      </button>
+      <button
+        onClick={() => { openApp("settings"); onClose(); }}
+        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-xs hover:bg-white/10 text-left text-white/85"
+      >
+        <GIconSliders size={14} className="text-amber-400" /> System Settings
+      </button>
+      <button
+        onClick={() => { reopenPicker(); onClose(); }}
+        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-xs hover:bg-white/10 text-left text-white/85"
+      >
+        <GIconMoon size={14} className="text-sky-400" /> Switch OS Style
+      </button>
+      <div className="h-px bg-white/10 my-1" />
+      <div className="px-2 py-1 flex items-center justify-between text-[10px] text-white/40">
+        <span>Portfolio OS</span>
+        <span className="font-mono">v2.4</span>
+      </div>
     </div>
   );
 }
 
-function DateFlyout({ onClose }) {
-  const ref = useRef(null);
+function WeatherFlyout({ onClose }: { onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
   useOutsideClick(ref, onClose);
   return (
-    <div ref={ref} className="absolute bottom-16 right-2 sm:right-3 z-[1200] origin-bottom-right max-w-[calc(100vw-16px)]" style={POP_ANIM}>
-      <CalendarWidget />
-    </div>
-  );
-}
-
-function WeatherFlyout({ onClose }) {
-  const ref = useRef(null);
-  useOutsideClick(ref, onClose);
-  return (
-    <div ref={ref} className="absolute bottom-16 left-2 sm:left-3 z-[1200] origin-bottom-left max-w-[calc(100vw-16px)]" style={POP_ANIM}>
+    <div
+      ref={ref}
+      className="absolute bottom-16 left-3 w-72 glass rounded-2xl border border-white/10 shadow-2xl p-2 z-[1200] origin-bottom-left"
+      style={POP_ANIM}
+    >
       <WeatherWidget />
     </div>
   );
 }
 
+function DateFlyout({ onClose }: { onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useOutsideClick(ref, onClose);
+  return (
+    <div
+      ref={ref}
+      className="absolute bottom-16 right-3 w-72 glass rounded-2xl border border-white/10 shadow-2xl p-2 z-[1200] origin-bottom-right"
+      style={POP_ANIM}
+    >
+      <CalendarWidget />
+    </div>
+  );
+}
+
 export default function WinTaskbar() {
-  const { openApp, windows, compact, openSpotlight } = useOS();
+  const { openApp, windows, focusWindow, toggleSpotlight } = useOS();
+  const [panel, setPanel] = useState<"start" | "tray" | "weather" | "date" | null>(null);
   const isMobile = useIsMobile();
-  const effectiveCompact = compact || isMobile;
-  const [now, setNow] = useState(new Date());
-  const [panel, setPanel] = useState(null); // "start" | "tray" | "date" | "weather" | null
-  const openApps = new Set(windows.map((w) => w.app));
-  const btnSize = effectiveCompact ? "w-8 h-8" : "w-9 h-9";
-  const iconSize = effectiveCompact ? 15 : 18;
+  const [time, setTime] = useState("");
+  const [date, setDate] = useState("");
 
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
+    const update = () => {
+      const d = new Date();
+      setTime(d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }));
+      setDate(d.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" }));
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  const toggle = (name) => setPanel((p) => (p === name ? null : name));
+  const toggle = (which: "start" | "tray" | "weather" | "date") =>
+    setPanel((p) => (p === which ? null : which));
 
-  const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  const date = now.toLocaleDateString([], { month: "numeric", day: "numeric", year: "numeric" });
+  const openAppIds = new Set(windows.map((w) => w.app));
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 h-14 z-[900] glass border-t border-white/10 flex items-center justify-between px-1.5 sm:px-3 shadow-[0_-4px_20px_rgba(0,0,0,0.25)] reveal-fade gap-1">
+    <div className="absolute bottom-0 left-0 right-0 h-12 bg-black/65 backdrop-blur-2xl border-t border-white/10 flex items-center justify-between px-2 sm:px-3 z-[900] select-none">
       <div className="flex items-center flex-1 min-w-0 basis-0">
-        <button onClick={() => toggle("weather")} className="rounded-xl shrink-0 hover:bg-white/5 active:bg-white/10 transition-colors">
-          <WeatherChip compact={isMobile} />
+        <button
+          onClick={() => toggle("weather")}
+          className="hover:bg-white/10 active:bg-white/15 px-2 py-1 rounded-xl transition-colors shrink-0"
+        >
+          <WeatherChip />
         </button>
       </div>
 
-      <div className="flex items-center gap-1 glass rounded-2xl px-1.5 py-1.5 border border-white/10 shadow-lg relative overflow-x-auto no-scrollbar max-w-[70vw] sm:max-w-none">
-        {/* Windows 11 Start logo */}
+      <div className="flex items-center gap-1 sm:gap-1.5 max-w-[calc(100vw-180px)] overflow-x-auto no-scrollbar shrink-0 px-1">
         <button
           onClick={() => toggle("start")}
           title="Start"
-          className={`flex items-center justify-center ${btnSize} rounded-xl transition-colors active:scale-95 shrink-0 ${panel === "start" ? "bg-white/15" : "hover:bg-white/10"}`}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+            panel === "start" ? "bg-white/20 scale-95" : "hover:bg-white/10 active:scale-95"
+          }`}
         >
-          <div className="grid grid-cols-2 gap-0.5 p-1">
-            <span className="w-1.5 h-1.5 rounded-[1px] bg-sky-400" />
-            <span className="w-1.5 h-1.5 rounded-[1px] bg-sky-400" />
-            <span className="w-1.5 h-1.5 rounded-[1px] bg-sky-400" />
-            <span className="w-1.5 h-1.5 rounded-[1px] bg-sky-400" />
+          <div className="grid grid-cols-2 gap-0.5 w-4 h-4">
+            <span className="bg-sky-400 rounded-[2px]" />
+            <span className="bg-sky-400 rounded-[2px]" />
+            <span className="bg-sky-400 rounded-[2px]" />
+            <span className="bg-sky-400 rounded-[2px]" />
           </div>
         </button>
 
-        {/* Global Spotlight / Quick Search */}
         <button
-          onClick={openSpotlight}
-          className="hidden md:flex items-center gap-2 bg-white/8 hover:bg-white/12 border border-white/10 rounded-xl px-3 h-9 w-32 lg:w-56 mx-0.5 shrink-0 transition-colors text-left"
+          onClick={toggleSpotlight}
+          title="Search (Ctrl+K)"
+          className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all"
         >
-          <GIconSearch size={14} className="text-white/40 shrink-0" />
-          <span className="text-xs text-white/35 flex-1">Search apps, files (⌘K)</span>
+          <GIconSearch size={16} className="text-white/70" />
         </button>
 
-        <div className="w-px h-6 bg-white/10 mx-1 shrink-0" />
-
-        {/* Pinned / Active Taskbar Apps */}
-        <div className="flex items-center gap-0.5 shrink-0">
-          {TASKBAR_ITEMS.filter((i) => i.app !== "resume").map(({ app, label, icon: Icon, color }) => (
+        {TASKBAR_ITEMS.map(({ app, label, icon: Icon, color }) => {
+          const isOpen = openAppIds.has(app);
+          const activeWin = windows.find((w) => w.app === app);
+          return (
             <button
               key={app}
-              onClick={() => openApp(app)}
+              onClick={() => {
+                if (isOpen && activeWin) {
+                  focusWindow(activeWin.id);
+                } else {
+                  openApp(app);
+                }
+              }}
               title={label}
-              className={`relative flex items-center justify-center shrink-0 ${btnSize} rounded-xl hover:bg-white/10 active:bg-white/15 active:scale-95 transition`}
+              className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all shrink-0 hover:bg-white/10 active:scale-95 ${
+                isOpen ? "bg-white/8" : ""
+              }`}
             >
-              <Icon size={iconSize} color={color} />
-              {openApps.has(app) && <span className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-white/80" />}
+              <Icon size={18} color={color} />
+              {isOpen && (
+                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-accent" />
+              )}
             </button>
-          ))}
-        </div>
-
-        <div className="w-px h-6 bg-white/10 mx-1 shrink-0" />
-
-        <button onClick={() => openApp("resume")} title="Resume" className={`relative flex items-center justify-center shrink-0 ${btnSize} rounded-xl hover:bg-white/10 active:bg-white/15 active:scale-95 transition`}>
-          <GIconResume size={iconSize} color="#4B5A73" />
-          {openApps.has("resume") && <span className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-white/80" />}
-        </button>
+          );
+        })}
       </div>
 
       <div className="flex items-center justify-end flex-1 min-w-0 basis-0 relative gap-1.5">

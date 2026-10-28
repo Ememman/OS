@@ -1,5 +1,6 @@
 import "dotenv/config";
 import dns from "node:dns";
+import os from "node:os";
 import express from "express";
 import cors from "cors";
 import http from "http";
@@ -7,6 +8,7 @@ import { Server } from "socket.io";
 import { customAlphabet } from "nanoid";
 import { projects } from "./data/projects.js";
 import { updates } from "./data/updates.js";
+import { initialGuestbook } from "./data/guestbook.js";
 
 // A genuinely common cause of Node's fetch() throwing a bare "fetch failed"
 // on Windows: the OS reports IPv6 as available even when there's no real
@@ -48,10 +50,234 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// A realistic, current-looking browser User-Agent. Deliberately NOT a
-// custom string identifying this app — some corporate/ISP-level filters and
-// WAFs are more likely to flag an unusual, obviously-non-browser UA as bot
-// traffic than to reject a normal one, which is the opposite of what we want.
+// ---------- System Diagnostics & Metrics ----------
+app.get("/api/system/info", (req, res) => {
+  const mem = process.memoryUsage();
+  const cpus = os.cpus();
+  const totalMem = os.totalmem();
+  const freeMem = os.freemem();
+
+  res.json({
+    ok: true,
+    service: "Portfolio OS System Diagnostics",
+    timestamp: Date.now(),
+    os: {
+      platform: os.platform(),
+      arch: os.arch(),
+      release: os.release(),
+      uptime: os.uptime(),
+      hostname: os.hostname(),
+    },
+    node: {
+      version: process.version,
+      pid: process.pid,
+      uptimeSeconds: Math.floor(process.uptime()),
+    },
+    cpu: {
+      model: cpus[0]?.model || "Modern Multi-core CPU",
+      cores: cpus.length,
+      speedMHz: cpus[0]?.speed || 2400,
+      loadAvg: os.loadavg(),
+    },
+    memory: {
+      heapUsedMb: Math.round((mem.heapUsed / 1024 / 1024) * 10) / 10,
+      heapTotalMb: Math.round((mem.heapTotal / 1024 / 1024) * 10) / 10,
+      rssMb: Math.round((mem.rss / 1024 / 1024) * 10) / 10,
+      systemTotalMb: Math.round(totalMem / 1024 / 1024),
+      systemFreeMb: Math.round(freeMem / 1024 / 1024),
+      systemUsedMb: Math.round((totalMem - freeMem) / 1024 / 1024),
+      usagePercent: Math.round(((totalMem - freeMem) / totalMem) * 100),
+    },
+    realtime: {
+      connectedClients: io.engine.clientsCount || 1,
+    }
+  });
+});
+
+// Fast Ping endpoint for round-trip latency checks
+app.get("/api/system/ping", (req, res) => {
+  res.json({ pong: true, time: Date.now() });
+});
+
+// Metric history generator for charts
+app.get("/api/system/metrics", (req, res) => {
+  const mem = process.memoryUsage();
+  const totalMem = os.totalmem();
+  const freeMem = os.freemem();
+  const usedPercent = Math.round(((totalMem - freeMem) / totalMem) * 100);
+
+  // Return a small history array for charts
+  const count = 15;
+  const now = Date.now();
+  const points = [];
+  for (let i = count - 1; i >= 0; i--) {
+    // Generate slight realistic variance around current values
+    const jitter = Math.sin(i * 0.7) * 4;
+    points.push({
+      time: now - i * 2000,
+      cpuPercent: Math.min(100, Math.max(5, Math.round(18 + jitter + (i === 0 ? 3 : 0)))),
+      memoryMb: Math.round((mem.heapUsed / 1024 / 1024) + jitter * 0.5),
+      systemPercent: Math.min(100, Math.max(10, Math.round(usedPercent + (jitter * 0.4))))
+    });
+  }
+
+  res.json({
+    timestamp: now,
+    current: {
+      cpuPercent: points[points.length - 1].cpuPercent,
+      memoryMb: Math.round(mem.heapUsed / 1024 / 1024 * 10) / 10,
+      systemPercent: usedPercent,
+    },
+    history: points
+  });
+});
+
+// ---------- Guestbook Feature ----------
+let guestbookEntries = [...initialGuestbook];
+
+app.get("/api/guestbook", (req, res) => {
+  res.json(guestbookEntries);
+});
+
+app.post("/api/guestbook", (req, res) => {
+  const { name, role, avatar, message } = req.body || {};
+  const cleanName = String(name || "").trim().slice(0, 30);
+  const cleanRole = String(role || "Visitor").trim().slice(0, 30);
+  const cleanAvatar = String(avatar || "👋").trim().slice(0, 8);
+  const cleanMsg = String(message || "").trim().slice(0, 400);
+
+  if (!cleanName || !cleanMsg) {
+    return res.status(400).json({ error: "Name and message are required" });
+  }
+
+  const newEntry = {
+    id: `gb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    name: cleanName,
+    role: cleanRole,
+    avatar: cleanAvatar,
+    message: cleanMsg,
+    ts: Date.now(),
+    reactions: 0
+  };
+
+  guestbookEntries.unshift(newEntry);
+  if (guestbookEntries.length > 100) {
+    guestbookEntries = guestbookEntries.slice(0, 100);
+  }
+
+  // Real-time broadcast to all connected clients
+  io.emit("guestbook:entry", newEntry);
+  res.status(201).json(newEntry);
+});
+
+app.post("/api/guestbook/:id/react", (req, res) => {
+  const { id } = req.params;
+  const entry = guestbookEntries.find((e) => e.id === id);
+  if (!entry) return res.status(404).json({ error: "Entry not found" });
+
+  entry.reactions = (entry.reactions || 0) + 1;
+  io.emit("guestbook:reacted", { id, reactions: entry.reactions });
+  res.json({ id, reactions: entry.reactions });
+});
+
+// ---------- Interactive Terminal Backend Execution ----------
+const DEV_QUOTES = [
+  "“Simplicity is prerequisite for reliability.” — Edsger W. Dijkstra",
+  "“Make it work, make it right, make it fast.” — Kent Beck",
+  "“First, solve the problem. Then, write the code.” — John Johnson",
+  "“Any fool can write code that a computer can understand. Good programmers write code that humans can understand.” — Martin Fowler",
+  "“Talk is cheap. Show me the code.” — Linus Torvalds"
+];
+
+const DEV_JOKES = [
+  "There are 10 types of people in the world: those who understand binary, and those who don't.",
+  "Why do programmers prefer dark mode? Because light attracts bugs.",
+  "A SQL query walks into a bar, walks up to two tables and asks: 'Can I join you?'",
+  "Why do Java programmers have to wear glasses? Because they don't C#.",
+  "To understand recursion, you must first understand recursion."
+];
+
+app.post("/api/terminal/exec", (req, res) => {
+  const { command } = req.body || {};
+  const trimmed = String(command || "").trim();
+  const [cmd, ...args] = trimmed.split(/\s+/);
+  const lower = (cmd || "").toLowerCase();
+
+  switch (lower) {
+    case "sysinfo":
+    case "server": {
+      const mem = process.memoryUsage();
+      const uptime = Math.floor(process.uptime());
+      const hours = Math.floor(uptime / 3600);
+      const mins = Math.floor((uptime % 3600) / 60);
+      const secs = uptime % 60;
+      return res.json({
+        ok: true,
+        output: [
+          `Server Host: ${os.hostname()} (${os.platform()} ${os.arch()})`,
+          `Node Version: ${process.version}`,
+          `Process Uptime: ${hours}h ${mins}m ${secs}s`,
+          `Heap Memory: ${Math.round(mem.heapUsed / 1024 / 1024)}MB / ${Math.round(mem.heapTotal / 1024 / 1024)}MB`,
+          `RSS Memory: ${Math.round(mem.rss / 1024 / 1024)}MB`,
+          `Active Socket Clients: ${io.engine.clientsCount}`,
+          `System Cores: ${os.cpus().length} @ ${os.cpus()[0]?.speed || 0}MHz`
+        ].join("\n")
+      });
+    }
+
+    case "ping": {
+      const host = args[0] || "localhost:4000";
+      return res.json({
+        ok: true,
+        output: `PING ${host}: 64 bytes from server, seq=1 time=0.42ms, TTL=64 (status 200 OK)`
+      });
+    }
+
+    case "quote": {
+      const q = DEV_QUOTES[Math.floor(Math.random() * DEV_QUOTES.length)];
+      return res.json({ ok: true, output: q });
+    }
+
+    case "joke": {
+      const j = DEV_JOKES[Math.floor(Math.random() * DEV_JOKES.length)];
+      return res.json({ ok: true, output: j });
+    }
+
+    case "curl": {
+      const target = args[0] || "/api/health";
+      if (target === "/api/health" || target === "api/health") {
+        return res.json({
+          ok: true,
+          output: JSON.stringify({
+            ok: true,
+            service: "Portfolio OS API",
+            timestamp: Date.now(),
+            uptimeSeconds: Math.floor(process.uptime()),
+            realtime: { connectedClients: io.engine.clientsCount }
+          }, null, 2)
+        });
+      }
+      if (target.includes("project")) {
+        return res.json({
+          ok: true,
+          output: `HTTP/1.1 200 OK\nContent-Type: application/json\n[ ${projects.length} portfolio projects loaded ]`
+        });
+      }
+      return res.json({
+        ok: true,
+        output: `HTTP/1.1 200 OK\nFetched resource from ${target}`
+      });
+    }
+
+    default:
+      return res.status(400).json({
+        ok: false,
+        error: `Unknown server command: '${lower}'. Try 'sysinfo', 'ping', 'quote', 'joke', or 'curl'.`
+      });
+  }
+});
+
+// A realistic, current-looking browser User-Agent
 const BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
@@ -61,17 +287,12 @@ async function fetchWithRetry(url, options = {}, retries = 1) {
       return await fetch(url, options);
     } catch (err) {
       if (attempt === retries) throw err;
-      // Transient blips (a dropped packet, a slow DNS lookup) are common
-      // enough that one quiet retry before surfacing an error is worth it.
       await new Promise((r) => setTimeout(r, 400));
     }
   }
 }
 
 // ---------- Music search (real songs, 30-second previews) ----------
-// Proxied server-side rather than called directly from the browser because
-// the iTunes Search API doesn't reliably send CORS headers for cross-origin
-// fetch() calls — routing it through our own backend sidesteps that entirely.
 app.get("/api/music/search", async (req, res) => {
   const q = String(req.query.q || "").trim();
   if (!q) return res.json({ results: [] });
@@ -104,10 +325,6 @@ app.get("/api/music/search", async (req, res) => {
     res.json({ results });
   } catch (err) {
     clearTimeout(timeoutId);
-    // Node's fetch (undici) wraps the real problem in `err.cause` and just
-    // says "fetch failed" at the top level — logging the cause is the only
-    // way to actually tell DNS failure vs. connection refused vs. a
-    // corporate proxy/firewall blocking outbound HTTPS apart.
     const isTimeout = err.name === "AbortError";
     const cause = err.cause ? ` — cause: ${err.cause.code || err.cause.message || err.cause}` : "";
     console.error(`Music search failed: ${isTimeout ? "request timed out" : err.message}${cause}`);
@@ -115,20 +332,12 @@ app.get("/api/music/search", async (req, res) => {
       results: [],
       error: isTimeout
         ? "Search timed out — the network this server is running on may be slow or blocking outbound requests."
-        : "Couldn't reach itunes.apple.com from this server. This is almost always a network/firewall issue on the machine running the backend (corporate network, VPN, or no internet access), not a bug in the app — check the server terminal for the exact cause logged there."
+        : "Couldn't reach itunes.apple.com from this server."
     });
   }
 });
 
 // ---------- Full-song search (YouTube) ----------
-// The old "listType=search" embed trick (searching directly inside the
-// iframe player with no API key) has been locked down by YouTube for most
-// videos and mostly returns "this video is unavailable" now. The reliable
-// way to get full-length playback is: look up real video IDs via the
-// official YouTube Data API, then embed each one by its specific ID —
-// specific-video embeds always work; search-as-a-playlist embeds don't
-// anymore. The Data API needs a free API key from Google Cloud Console,
-// set as YOUTUBE_API_KEY — see server/.env.example.
 app.get("/api/music/youtube-search", async (req, res) => {
   const q = String(req.query.q || "").trim();
   if (!q) return res.json({ results: [], configured: !!process.env.YOUTUBE_API_KEY });
@@ -159,7 +368,7 @@ app.get("/api/music/youtube-search", async (req, res) => {
     clearTimeout(timeoutId);
     const cause = err.cause ? ` — cause: ${err.cause.code || err.cause.message || err.cause}` : "";
     console.error(`YouTube search failed: ${err.message}${cause}`);
-    res.status(502).json({ results: [], configured: true, error: "YouTube search request failed — check the server terminal for details." });
+    res.status(502).json({ results: [], configured: true, error: "YouTube search request failed." });
   }
 });
 
@@ -197,15 +406,25 @@ io.on("connection", (socket) => {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name: socket.data.name,
       text: clean,
-      ts: Date.now()
+      ts: Date.now(),
+      reactions: {} // emoji -> count
     };
     chatHistory.push(msg);
     if (chatHistory.length > MAX_HISTORY) chatHistory = chatHistory.slice(-MAX_HISTORY);
     io.emit("chat:message", msg);
-    // Acknowledge back to the sender specifically, so the client can confirm
-    // delivery (and swap out its optimistic local echo) instead of just
-    // hoping the broadcast round-trip arrives.
     if (typeof ack === "function") ack({ ok: true, message: msg });
+  });
+
+  // Chat message emoji reaction
+  socket.on("chat:react", ({ id, emoji }) => {
+    const validEmojis = ["❤️", "👍", "🔥", "🚀", "😂"];
+    if (!id || !validEmojis.includes(emoji)) return;
+    const msg = chatHistory.find((m) => m.id === id);
+    if (msg) {
+      if (!msg.reactions) msg.reactions = {};
+      msg.reactions[emoji] = (msg.reactions[emoji] || 0) + 1;
+      io.emit("chat:reacted", { id, emoji, reactions: msg.reactions });
+    }
   });
 
   socket.on("chat:typing", () => {
