@@ -21,11 +21,13 @@ const BG_OPTIONS = [
   { id: "action", label: "Evening", swatch: "#272331" }
 ];
 
+const EMOJI_REACTIONS = ["❤️", "👍", "🔥", "🚀", "😂"];
+
 const ACK_TIMEOUT_MS = 6000;
 
 function playPing() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = "sine";
@@ -42,15 +44,15 @@ function playPing() {
 }
 
 // A short, stable-per-name hash so each guest gets a consistent "character" color.
-function nameColor(name) {
+function nameColor(name: string) {
   const palette = ["#7F1D1D", "#14532D", "#1E3A8A", "#6B21A8", "#9A3412", "#0F766E"];
   let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % palette.length;
+  for (let i = 0; i < (name || "").length; i++) hash = (hash * 31 + name.charCodeAt(i)) % palette.length;
   return palette[Math.abs(hash) % palette.length];
 }
 
-function BgPicker({ current, onPick, onClose }) {
-  const ref = useRef(null);
+function BgPicker({ current, onPick, onClose }: any) {
+  const ref = useRef<HTMLDivElement>(null);
   useOutsideClick(ref, onClose);
   return (
     <div ref={ref} role="group" aria-label="Chat color theme" className="absolute top-full right-3 mt-1.5 z-[1200] chat-theme-picker rounded-xl p-2 shadow-2xl" style={{ animation: "menuOpen 140ms cubic-bezier(.16,1,.3,1) both" }}>
@@ -83,18 +85,16 @@ export default function Chats() {
   const [name, setName] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState("");
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<any[]>([]);
   const [online, setOnline] = useState(0);
   const [text, setText] = useState("");
-  const [typingName, setTypingName] = useState(null);
+  const [typingName, setTypingName] = useState<string | null>(null);
   const [bgPickerOpen, setBgPickerOpen] = useState(false);
-  const themeButtonRef = useRef(null);
-  const [textScale, setTextScale] = useState(() => {
-    const saved = Number(localStorage.getItem("os_chat_text_scale"));
-    return Number.isFinite(saved) ? Math.min(1.3, Math.max(1, saved)) : 1;
-  });
-  const listRef = useRef(null);
-  const typingTimeout = useRef(null);
+  const [textScale, setTextScale] = useState(() => Number(localStorage.getItem("os_chat_text_scale") || 1));
+
+  const listRef = useRef<HTMLDivElement>(null);
+  const typingTimeout = useRef<any>(null);
+  const themeButtonRef = useRef<HTMLButtonElement>(null);
   const nameRef = useRef(name);
   nameRef.current = name;
 
@@ -104,15 +104,18 @@ export default function Chats() {
     const onConnect = () => { setConnected(true); setConnecting(false); };
     const onDisconnect = () => setConnected(false);
     const onConnecting = () => setConnecting(true);
-    const onInit = ({ name, history }) => { setName(name); setMessages(history); };
-    const onMessage = (msg) => {
-      // Dedupe: if this message already exists locally (it was our own optimistic
-      // send, already confirmed via the ack callback), don't add it twice.
+    const onInit = ({ name, history }: any) => { setName(name); setMessages(history); };
+    const onMessage = (msg: any) => {
       setMessages((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
       if (chatSound && msg.name !== nameRef.current) playPing();
     };
-    const onPresence = ({ online }) => setOnline(online);
-    const onTyping = ({ name }) => {
+    const onReacted = ({ id, reactions }: any) => {
+      setMessages((m) =>
+        m.map((x) => (x.id === id ? { ...x, reactions } : x))
+      );
+    };
+    const onPresence = ({ online }: any) => setOnline(online);
+    const onTyping = ({ name }: any) => {
       setTypingName(name);
       clearTimeout(typingTimeout.current);
       typingTimeout.current = setTimeout(() => setTypingName(null), 1500);
@@ -123,6 +126,7 @@ export default function Chats() {
     socket.on("reconnect_attempt", onConnecting);
     socket.on("chat:init", onInit);
     socket.on("chat:message", onMessage);
+    socket.on("chat:reacted", onReacted);
     socket.on("chat:presence", onPresence);
     socket.on("chat:typing", onTyping);
 
@@ -134,6 +138,7 @@ export default function Chats() {
       socket.off("reconnect_attempt", onConnecting);
       socket.off("chat:init", onInit);
       socket.off("chat:message", onMessage);
+      socket.off("chat:reacted", onReacted);
       socket.off("chat:presence", onPresence);
       socket.off("chat:typing", onTyping);
     };
@@ -148,7 +153,7 @@ export default function Chats() {
 
   useEffect(() => {
     if (!bgPickerOpen) return;
-    const closeOnEscape = (event) => {
+    const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       setBgPickerOpen(false);
       themeButtonRef.current?.focus();
@@ -157,16 +162,28 @@ export default function Chats() {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [bgPickerOpen]);
 
-  // Sends a message with an optimistic local echo, so you always see it
-  // appear immediately — then confirms (or flags as failed) via a server
-  // acknowledgement instead of silently hoping the round-trip arrives.
-  // When offline, seamlessly falls back to interactive Portfolio Bot!
-  const sendText = (t) => {
+  const reactToMessage = (id: string, emoji: string) => {
+    if (connected) {
+      getSocket().emit("chat:react", { id, emoji });
+    }
+    setMessages((m) =>
+      m.map((x) => {
+        if (x.id === id) {
+          const nextReactions = { ...(x.reactions || {}) };
+          nextReactions[emoji] = (nextReactions[emoji] || 0) + 1;
+          return { ...x, reactions: nextReactions };
+        }
+        return x;
+      })
+    );
+  };
+
+  const sendText = (t: string) => {
     if (!t) return;
     const tempId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
     if (!connected) {
-      const userMsg = { id: tempId, name: name || "You", text: t, ts: Date.now() };
+      const userMsg = { id: tempId, name: name || "You", text: t, ts: Date.now(), reactions: {} };
       setMessages((m) => [...m, userMsg]);
       setTypingName("Portfolio Bot");
       setTimeout(() => {
@@ -183,8 +200,8 @@ export default function Chats() {
           reply = "Check out the Library app to view all featured projects, or open Resume to see work experience!";
         } else if (lower.includes("music") || lower.includes("song")) {
           reply = "Open the Music app from the dock to stream Lo-fi beats, synthwave, or search Apple Music tracks live!";
-        } else if (lower.includes("game") || lower.includes("blast")) {
-          reply = "You can play the Block Blast puzzle game right now by launching the Games app from the dock!";
+        } else if (lower.includes("game") || lower.includes("blast") || lower.includes("2048")) {
+          reply = "You can play Block Blast and 2048 right now by launching the Games app from the dock!";
         }
 
         const botMsg = {
@@ -192,6 +209,7 @@ export default function Chats() {
           name: "Portfolio Bot",
           text: reply,
           ts: Date.now(),
+          reactions: { "❤️": 1 }
         };
         setMessages((m) => [...m, botMsg]);
         if (chatSound) playPing();
@@ -199,7 +217,7 @@ export default function Chats() {
       return;
     }
 
-    const optimistic = { id: tempId, name: name || "you", text: t, ts: Date.now(), pending: true };
+    const optimistic = { id: tempId, name: name || "you", text: t, ts: Date.now(), pending: true, reactions: {} };
     setMessages((m) => [...m, optimistic]);
 
     const socket = getSocket();
@@ -210,7 +228,7 @@ export default function Chats() {
       setMessages((m) => m.map((x) => (x.id === tempId ? { ...x, pending: false, failed: true } : x)));
     }, ACK_TIMEOUT_MS);
 
-    socket.emit("chat:message", t, (res) => {
+    socket.emit("chat:message", t, (res: any) => {
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
@@ -229,7 +247,7 @@ export default function Chats() {
     setText("");
   };
 
-  const retryMessage = (msg) => {
+  const retryMessage = (msg: any) => {
     setMessages((m) => m.filter((x) => x.id !== msg.id));
     sendText(msg.text);
   };
@@ -243,60 +261,77 @@ export default function Chats() {
     setEditingName(false);
   };
 
-  const retryConnection = () => {
-    setConnecting(true);
-    getSocket().connect();
-  };
-
-  const isDark = chatBg === "ink" || chatBg === "action";
-  const changeTextScale = (amount) => {
-    const next = Math.min(1.3, Math.max(1, Math.round((textScale + amount) * 10) / 10));
-    localStorage.setItem("os_chat_text_scale", String(next));
-    setTextScale(next);
+  const changeTextScale = (delta: number) => {
+    setTextScale((prev) => {
+      const next = Math.max(1, Math.min(1.3, Math.round((prev + delta) * 10) / 10));
+      localStorage.setItem("os_chat_text_scale", String(next));
+      return next;
+    });
   };
 
   return (
-    <div className={`chat-surface chat-theme--${chatBg} flex flex-col h-full`} data-theme={isDark ? "dark" : "light"}>
-      <div className="chat-header flex items-center justify-between gap-2 px-4 py-3 border-b">
-        <div className="min-w-0">
-          <h2 className="text-base font-semibold leading-tight">Community chat</h2>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-xs">
-            <span role="status" className="inline-flex items-center gap-1.5">
-              <span aria-hidden="true" className={`w-2 h-2 rounded-full ${connected ? "bg-emerald-600" : connecting ? "bg-amber-500" : "bg-sky-600"}`} />
-              {connected ? "Live chat" : connecting ? "Connecting…" : "Offline · Portfolio Bot is here"}
-            </span>
-            {!connected && !connecting && (
-              <button onClick={retryConnection} className="chat-link inline-flex items-center gap-1 rounded px-1 py-0.5">
-                <GIconRotateRight size={12} /> Try live chat
-              </button>
-            )}
+    <div data-chat-bg={chatBg} className="flex flex-col h-full chat-shell text-foreground">
+      <div className="chat-topbar flex items-center justify-between px-4 py-2.5 border-b">
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <span
+              role="status"
+              aria-label={connected ? "Connected" : connecting ? "Connecting" : "Offline"}
+              className={`block w-2.5 h-2.5 rounded-full ${
+                connected
+                  ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]"
+                  : connecting
+                    ? "bg-amber-400 animate-pulse"
+                    : "bg-zinc-400"
+              }`}
+            />
+          </div>
+          <div>
+            <div className="font-semibold text-xs leading-none">Chats</div>
+            <div className="text-[10px] chat-muted mt-0.5">
+              {connected
+                ? "Live & connected"
+                : connecting
+                  ? "Reconnecting…"
+                  : "Offline mode · Bot active"}
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <span className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs chat-count" aria-label={`${online} ${online === 1 ? "person" : "people"} online`}>
-            <GIconPersons size={14} aria-hidden="true" /> {online}
-          </span>
+
+        <div className="flex items-center gap-1">
+          <div className="chat-badge flex items-center gap-1 text-xs px-2 py-0.5 rounded-full mr-1">
+            <GIconPersons size={12} aria-hidden="true" />
+            <span>{connected ? online : 1}</span>
+            <span className="sr-only">people online</span>
+          </div>
+
           <button
-            type="button"
             onClick={toggleChatSound}
             aria-label={chatSound ? "Mute chat sounds" : "Enable chat sounds"}
-            aria-pressed={chatSound}
+            title={chatSound ? "Mute chat sounds" : "Enable chat sounds"}
             className="chat-icon-button"
           >
-            {chatSound ? <GIconVolume size={16} aria-hidden="true" /> : <GIconVolumeMute size={16} aria-hidden="true" />}
+            {chatSound ? <GIconVolume size={15} /> : <GIconVolumeMute size={15} />}
           </button>
+
           <div className="relative">
             <button
-              type="button"
               ref={themeButtonRef}
               onClick={() => setBgPickerOpen((o) => !o)}
-              aria-label="Choose chat theme"
+              aria-label="Choose chat color theme"
+              aria-haspopup="true"
               aria-expanded={bgPickerOpen}
               className="chat-icon-button"
             >
-              <GIconSliders size={16} aria-hidden="true" />
+              <GIconSliders size={15} />
             </button>
-            {bgPickerOpen && <BgPicker current={chatBg} onPick={setChatBg} onClose={() => setBgPickerOpen(false)} />}
+            {bgPickerOpen && (
+              <BgPicker
+                current={chatBg}
+                onPick={setChatBg}
+                onClose={() => setBgPickerOpen(false)}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -324,7 +359,7 @@ export default function Chats() {
           const isSelf = m.name === name;
           const color = nameColor(m.name);
           return (
-            <div key={m.id} className={`flex items-end gap-2 max-w-[92%] sm:max-w-[86%] chat-message-in ${isSelf ? "ml-auto flex-row-reverse" : ""}`}>
+            <div key={m.id} className={`group flex items-end gap-2 max-w-[92%] sm:max-w-[86%] chat-message-in ${isSelf ? "ml-auto flex-row-reverse" : ""}`}>
               <div
                 aria-hidden="true"
                 className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
@@ -337,11 +372,44 @@ export default function Chats() {
                   {m.name} <time className="font-normal" dateTime={new Date(m.ts).toISOString()}>· {new Date(m.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>
                 </div>
                 <div
-                  className={`chat-bubble ${isSelf ? "chat-bubble-self" : ""} ${m.pending ? "chat-bubble-pending" : ""} ${m.failed ? "chat-bubble-failed" : ""} px-3.5 py-2.5 leading-relaxed`}
+                  className={`chat-bubble ${isSelf ? "chat-bubble-self" : ""} ${m.pending ? "chat-bubble-pending" : ""} ${m.failed ? "chat-bubble-failed" : ""} px-3.5 py-2.5 leading-relaxed relative`}
                   style={{ fontSize: `${15 * textScale}px` }}
                 >
                   {m.text}
                 </div>
+
+                {/* Reaction Badges */}
+                {m.reactions && Object.keys(m.reactions).length > 0 && (
+                  <div className={`flex flex-wrap gap-1 mt-1 ${isSelf ? "justify-end" : "justify-start"}`}>
+                    {Object.entries(m.reactions).map(([emo, count]: any) =>
+                      count > 0 ? (
+                        <button
+                          key={emo}
+                          onClick={() => reactToMessage(m.id, emo)}
+                          className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-full bg-black/10 dark:bg-white/10 hover:scale-105 transition"
+                        >
+                          <span>{emo}</span>
+                          <span className="font-semibold text-[10px]">{count}</span>
+                        </button>
+                      ) : null
+                    )}
+                  </div>
+                )}
+
+                {/* Hover Quick Reaction Bar */}
+                <div className={`opacity-0 group-hover:opacity-100 flex items-center gap-1.5 transition-opacity ${isSelf ? "justify-end" : "justify-start"} mt-0.5 px-1`}>
+                  {EMOJI_REACTIONS.map((emo) => (
+                    <button
+                      key={emo}
+                      onClick={() => reactToMessage(m.id, emo)}
+                      className="hover:scale-125 transition-transform text-xs"
+                      title={`React with ${emo}`}
+                    >
+                      {emo}
+                    </button>
+                  ))}
+                </div>
+
                 {m.pending && <div role="status" className="chat-muted text-xs mt-1">Sending…</div>}
                 {m.failed && (
                   <button onClick={() => retryMessage(m)} className="chat-error-link inline-flex items-center gap-1 text-xs font-semibold mt-1 rounded px-1 py-0.5">

@@ -33,6 +33,8 @@ import Resume from "./components/apps/Resume";
 import Terminal from "./components/apps/Terminal";
 import Calculator from "./components/apps/Calculator";
 import Notes from "./components/apps/Notes";
+import ActivityMonitor from "./components/apps/ActivityMonitor";
+import Guestbook from "./components/apps/Guestbook";
 
 import {
   GIconResume,
@@ -40,9 +42,11 @@ import {
   GIconTerminal,
   GIconCalculator,
   GIconNotes,
+  GIconActivity,
+  GIconBookOpen,
 } from "./components/icons/GravityIcons";
 
-const APP_COMPONENTS = {
+const APP_COMPONENTS: Record<string, any> = {
   library: Library,
   music: Music,
   updates: Updates,
@@ -55,6 +59,8 @@ const APP_COMPONENTS = {
   terminal: Terminal,
   calculator: Calculator,
   notes: Notes,
+  activity: ActivityMonitor,
+  guestbook: Guestbook,
 };
 
 export default function App() {
@@ -97,7 +103,7 @@ export default function App() {
 
   // Global Spotlight Keyboard Shortcut (Cmd+K / Ctrl+K)
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         toggleSpotlight();
@@ -114,7 +120,7 @@ export default function App() {
       setTimeout(() => {
         notify(
           "Welcome to Portfolio OS",
-          "Enhanced with Gravity UI, Terminal CLI, & Spotlight (⌘K)."
+          "Enhanced with Activity Monitor, Live Guestbook, 2048, & Spotlight (⌘K)."
         );
       }, 600);
     }
@@ -140,10 +146,12 @@ export default function App() {
         style={{ animationDelay: "50ms" }}
       >
         <DesktopIcon icon={GIconResume} label="Resume" color="#4B5A73" onOpen={() => openApp("resume")} />
-        <DesktopIcon icon={GIconGames} label="Blast It!" color="#D98A4E" onOpen={() => openApp("games")} />
+        <DesktopIcon icon={GIconGames} label="Games" color="#D98A4E" onOpen={() => openApp("games")} />
         <DesktopIcon icon={GIconTerminal} label="Terminal" color="#22c55e" onOpen={() => openApp("terminal")} />
         <DesktopIcon icon={GIconNotes} label="Notes" color="#f59e0b" onOpen={() => openApp("notes")} />
         <DesktopIcon icon={GIconCalculator} label="Calculator" color="#06b6d4" onOpen={() => openApp("calculator")} />
+        <DesktopIcon icon={GIconActivity} label={isWin ? "Task Manager" : "Activity"} color="#10b981" onOpen={() => openApp("activity")} />
+        <DesktopIcon icon={GIconBookOpen} label="Guestbook" color="#8b5cf6" onOpen={() => openApp("guestbook")} />
       </div>
 
       {/* Widget stack — macOS style only */}
@@ -179,6 +187,7 @@ export default function App() {
       {/* Windows */}
       {windows.map((win) => {
         const Comp = APP_COMPONENTS[win.app];
+        if (!Comp) return null;
         return (
           <Window key={win.id} win={win}>
             <Comp />
