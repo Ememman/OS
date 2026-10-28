@@ -16,6 +16,8 @@ import {
   GIconResume,
   GIconNotes,
   GIconCalculator,
+  GIconActivity,
+  GIconBookOpen,
   GIconSparkles,
   GIconSliders,
   GIconTrash,
@@ -28,11 +30,13 @@ const APP_META = [
   { id: "terminal", title: "Terminal", desc: "Interactive command-line shell & system tools", icon: GIconTerminal, color: "#22c55e", category: "Applications" },
   { id: "notes", title: "Notes", desc: "Markdown scratchpad & document editor", icon: GIconNotes, color: "#f59e0b", category: "Applications" },
   { id: "calculator", title: "Calculator", desc: "Standard & arithmetic math calculator", icon: GIconCalculator, color: "#06b6d4", category: "Applications" },
+  { id: "activity", title: "Activity Monitor", desc: "Real-time CPU/RAM metrics, process manager & ping test", icon: GIconActivity, color: "#10b981", category: "Applications" },
+  { id: "guestbook", title: "Guestbook", desc: "Real-time social visitor ledger & greetings", icon: GIconBookOpen, color: "#8b5cf6", category: "Applications" },
   { id: "library", title: "Library", desc: "Case studies & portfolio projects", icon: GIconLibrary, color: "#5BB8B0", category: "Applications" },
   { id: "music", title: "Music", desc: "Lo-Fi, ambient beats & song search", icon: GIconMusic, color: "#D9678C", category: "Applications" },
   { id: "chats", title: "Chats", desc: "Comic-book styled live guest room", icon: GIconChats, color: "#8E7BE0", category: "Applications" },
   { id: "updates", title: "Updates", desc: "Live activity feed & announcements", icon: GIconUpdates, color: "#5FBF7C", category: "Applications" },
-  { id: "games", title: "Games", desc: "Blast It! 8x8 block puzzle game", icon: GIconGames, color: "#D98A4E", category: "Applications" },
+  { id: "games", title: "Games", desc: "Blast It! & 2048 puzzle games", icon: GIconGames, color: "#D98A4E", category: "Applications" },
   { id: "files", title: "Files", desc: "Virtual filesystem explorer & documents", icon: GIconFiles, color: "#E0B84E", category: "Applications" },
   { id: "gallery", title: "Gallery", desc: "Curated photography & work showcase", icon: GIconGallery, color: "#B8C25A", category: "Applications" },
   { id: "settings", title: "Settings", desc: "Theme, dock, wallpapers & preferences", icon: GIconSettings, color: "#8892A6", category: "Applications" },
@@ -53,8 +57,8 @@ export default function SpotlightSearch() {
 
   const [query, setQuery] = useState("");
   const [selectedIdx, setSelectedIdx] = useState(0);
-  const inputRef = useRef(null);
-  const listRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   // Focus input when opened
   useEffect(() => {
@@ -65,143 +69,136 @@ export default function SpotlightSearch() {
     }
   }, [spotlightOpen]);
 
-  // Build searchable items index
-  const searchItems = useMemo(() => {
-    const items = [];
-
-    // 1. Apps
-    APP_META.forEach((app) => {
-      items.push({
-        id: `app-${app.id}`,
-        title: app.title,
-        desc: app.desc,
-        category: "Applications",
-        icon: app.icon,
-        color: app.color,
-        action: () => openApp(app.id),
-      });
-    });
-
-    // 2. Projects
-    fallbackProjects.forEach((proj) => {
-      items.push({
-        id: `proj-${proj.id}`,
-        title: proj.title,
-        desc: `${proj.category} • ${proj.stack.join(", ")}`,
-        category: "Projects",
-        icon: GIconLibrary,
-        color: "#5BB8B0",
-        action: () => openApp("library"),
-      });
-    });
-
-    // 3. Files
-    fileTree.children.forEach((file) => {
-      items.push({
-        id: `file-${file.name}`,
-        title: file.name,
-        desc: file.type === "folder" ? "Virtual Folder" : file.type === "app-link" ? "App Shortcut" : "Document",
-        category: "Files",
-        icon: GIconFiles,
-        color: "#E0B84E",
-        action: () => {
-          if (file.type === "app-link") {
-            openApp(file.app);
-          } else {
-            openApp("files");
-          }
-        },
-      });
-    });
-
-    // 4. Quick Actions
-    items.push(
+  // System actions available in spotlight
+  const ACTIONS = useMemo(
+    () => [
       {
-        id: "act-win",
-        title: "Switch to Windows 11 style",
-        desc: "Taskbar with centered start menu & squared controls",
-        category: "Actions",
+        id: "act-switch-win",
+        title: "Switch to Windows 11 Fluent",
+        desc: "Change desktop interface to Windows taskbar and start menu",
         icon: GIconSliders,
-        color: "#38bdf8",
+        color: "#0284c7",
+        category: "Preferences",
         action: () => setOsMode("win"),
       },
       {
-        id: "act-mac",
-        title: "Switch to macOS style",
-        desc: "Top menu bar, dock & traffic-light window controls",
-        category: "Actions",
+        id: "act-switch-mac",
+        title: "Switch to macOS Sonoma Glass",
+        desc: "Change desktop interface to top menu bar and floating dock",
         icon: GIconSliders,
-        color: "#a855f7",
+        color: "#f43f5e",
+        category: "Preferences",
         action: () => setOsMode("mac"),
       },
       {
-        id: "act-term",
-        title: "Launch Terminal Shell",
-        desc: "Open CLI shell to inspect developer profile & stats",
-        category: "Actions",
-        icon: GIconTerminal,
-        color: "#22c55e",
-        action: () => openApp("terminal"),
-      },
-      {
-        id: "act-motion",
-        title: "Toggle Reduce Motion",
-        desc: "Enable/disable UI animations for comfort",
-        category: "Actions",
+        id: "act-toggle-motion",
+        title: "Toggle Reduced Motion",
+        desc: "Enable or disable smooth window animations & spring physics",
         icon: GIconSparkles,
-        color: "#f59e0b",
+        color: "#a855f7",
+        category: "System",
         action: toggleMotion,
       },
       {
-        id: "act-sound",
-        title: "Toggle Chat Sound",
-        desc: "Enable/disable real-time chat audio chirps",
-        category: "Actions",
-        icon: GIconSettings,
-        color: "#ec4899",
+        id: "act-toggle-sound",
+        title: "Toggle System & Chat Sounds",
+        desc: "Mute or unmute procedural Web Audio sound effects",
+        icon: GIconSparkles,
+        color: "#eab308",
+        category: "System",
         action: toggleChatSound,
       },
       {
-        id: "act-closeall",
-        title: "Close all open windows",
-        desc: `Clear desktop (${windows.length} windows open)`,
-        category: "Actions",
+        id: "act-close-all",
+        title: "Close All Windows",
+        desc: `Dismiss all ${windows.length} currently open application windows`,
         icon: GIconTrash,
         color: "#ef4444",
+        category: "Window Management",
         action: () => windows.forEach((w) => closeWindow(w.id)),
-      }
-    );
-
-    return items;
-  }, [openApp, setOsMode, toggleMotion, toggleChatSound, windows, closeWindow]);
+      },
+    ],
+    [setOsMode, toggleMotion, toggleChatSound, windows, closeWindow]
+  );
 
   // Filter items
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) {
-      // Default suggested list
-      return searchItems.filter((i) => i.category === "Applications" || i.id === "act-term");
+      return [...APP_META, ...ACTIONS];
     }
-    return searchItems.filter(
-      (item) =>
-        item.title.toLowerCase().includes(q) ||
-        item.desc.toLowerCase().includes(q) ||
-        item.category.toLowerCase().includes(q)
-    );
-  }, [query, searchItems]);
 
-  const executeItem = (item) => {
+    const apps = APP_META.filter(
+      (a) =>
+        a.title.toLowerCase().includes(q) ||
+        a.desc.toLowerCase().includes(q) ||
+        a.id.toLowerCase().includes(q)
+    );
+
+    const actions = ACTIONS.filter(
+      (a) =>
+        a.title.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q)
+    );
+
+    const projects = fallbackProjects
+      .filter(
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          p.summary.toLowerCase().includes(q) ||
+          p.category.toLowerCase().includes(q)
+      )
+      .map((p) => ({
+        id: `proj-${p.id}`,
+        title: p.title,
+        desc: `${p.category} (${p.year}) - ${p.summary}`,
+        icon: GIconLibrary,
+        color: "#5BB8B0",
+        category: "Projects",
+        action: () => openApp("library"),
+      }));
+
+    const files = fileTree.children
+      .filter((f) => f.name.toLowerCase().includes(q))
+      .map((f) => ({
+        id: `file-${f.name}`,
+        title: f.name,
+        desc: f.type === "folder" ? "Directory folder" : "Text document / script",
+        icon: GIconFiles,
+        color: "#E0B84E",
+        category: "Files",
+        action: () => openApp("files"),
+      }));
+
+    return [...apps, ...actions, ...projects, ...files];
+  }, [query, ACTIONS, openApp]);
+
+  // Keep selected index within bounds
+  useEffect(() => {
+    setSelectedIdx((prev) => Math.min(prev, Math.max(0, filtered.length - 1)));
+  }, [filtered.length]);
+
+  // Scroll selected item into view
+  useEffect(() => {
+    const el = listRef.current?.children[selectedIdx] as HTMLElement;
+    el?.scrollIntoView({ block: "nearest" });
+  }, [selectedIdx]);
+
+  const executeItem = (item: any) => {
     closeSpotlight();
-    item.action();
+    if (item.action) {
+      item.action();
+    } else if (item.id) {
+      openApp(item.id);
+    }
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelectedIdx((prev) => (prev < filtered.length - 1 ? prev + 1 : 0));
+      setSelectedIdx((prev) => (prev + 1) % Math.max(1, filtered.length));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setSelectedIdx((prev) => (prev > 0 ? prev - 1 : Math.max(0, filtered.length - 1)));
+      setSelectedIdx((prev) => (prev - 1 + filtered.length) % Math.max(1, filtered.length));
     } else if (e.key === "Enter") {
       e.preventDefault();
       if (filtered[selectedIdx]) {
@@ -217,17 +214,17 @@ export default function SpotlightSearch() {
 
   return (
     <div
+      className="fixed inset-0 z-[1500] bg-black/60 backdrop-blur-md flex items-start justify-center pt-[14vh] sm:pt-[18vh] px-4 animate-fade-in"
       onClick={closeSpotlight}
-      className="fixed inset-0 z-3000 bg-black/60 backdrop-blur-md flex items-start justify-center pt-[12vh] sm:pt-[15vh] px-4 animate-in fade-in duration-150"
     >
       <div
-        onClick={(e) => e.stopPropagation()}
         className="w-full max-w-xl glass rounded-2xl border border-white/15 shadow-2xl overflow-hidden flex flex-col origin-top"
         style={{ animation: "menuOpen 160ms cubic-bezier(.16,1,.3,1) both" }}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Search Input Bar */}
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/10 bg-white/5">
-          <GIconSearch size={18} className="text-white/60 shrink-0" />
+        {/* Search Header */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-white/5">
+          <GIconSearch size={18} className="text-white/40 shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -237,16 +234,16 @@ export default function SpotlightSearch() {
               setSelectedIdx(0);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Search apps, projects, files, actions..."
-            className="flex-1 bg-transparent text-sm sm:text-base text-white outline-none placeholder:text-white/35 font-light"
+            placeholder="Search applications, files, projects, settings (⌘K)..."
+            className="flex-1 bg-transparent text-sm sm:text-base text-white placeholder:text-white/40 outline-none font-sans"
           />
-          <div className="flex items-center gap-2">
-            <span className="hidden sm:inline-block text-[10px] text-white/40 border border-white/15 rounded px-1.5 py-0.5">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="hidden sm:inline text-[10px] text-white/35 font-mono px-1.5 py-0.5 rounded border border-white/10">
               ESC
             </span>
             <button
               onClick={closeSpotlight}
-              className="p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+              className="p-1 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition"
             >
               <GIconClose size={14} />
             </button>
@@ -260,7 +257,7 @@ export default function SpotlightSearch() {
               No results found for "{query}"
             </div>
           ) : (
-            filtered.map((item, idx) => {
+            filtered.map((item: any, idx) => {
               const isSelected = idx === selectedIdx;
               const Icon = item.icon;
               return (

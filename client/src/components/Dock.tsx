@@ -13,6 +13,8 @@ import {
   GIconFiles,
   GIconSettings,
   GIconResume,
+  GIconActivity,
+  GIconBookOpen,
   GIconTrash,
 } from "./icons/GravityIcons";
 
@@ -20,6 +22,8 @@ const DOCK_ITEMS = [
   { app: "terminal", label: "Terminal", icon: GIconTerminal, color: "#22c55e" },
   { app: "notes", label: "Notes", icon: GIconNotes, color: "#f59e0b" },
   { app: "calculator", label: "Calculator", icon: GIconCalculator, color: "#06b6d4" },
+  { app: "activity", label: "Activity Monitor", icon: GIconActivity, color: "#10b981" },
+  { app: "guestbook", label: "Guestbook", icon: GIconBookOpen, color: "#8b5cf6" },
   { app: "library", label: "Library", icon: GIconLibrary, color: "#5BB8B0" },
   { app: "music", label: "Music", icon: GIconMusic, color: "#D9678C" },
   { app: "updates", label: "Updates", icon: GIconUpdates, color: "#5FBF7C" },
@@ -56,7 +60,7 @@ export default function Dock() {
   const emptyTrash = () => windows.forEach((w) => closeWindow(w.id));
 
   return (
-    <div className={`absolute z-\[900] reveal-fade ${POSITION_CLASSES[position]}`}>
+    <div className={`absolute z-[900] reveal-fade ${POSITION_CLASSES[position]}`}>
       <div
         className={`glass rounded-2xl shadow-2xl border border-white/10 ${
           vertical
@@ -98,7 +102,7 @@ export default function Dock() {
         >
           <GIconTrash size={effectiveCompact ? 15 : 20} color="#8892A6" />
           <span className={`pointer-events-none absolute ${tooltipPos} text-[10px] bg-black/85 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap hidden sm:block`}>
-            Close all
+            Empty Trash (Close all)
           </span>
         </button>
       </div>
