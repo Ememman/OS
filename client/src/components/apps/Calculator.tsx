@@ -168,7 +168,7 @@ export default function Calculator() {
   return (
     <div className="flex flex-col h-full bg-[#0a0a0f] p-3 text-white select-none">
       {/* Display */}
-      <div className="flex flex-col items-end justify-end p-3.5 bg-black/40 rounded-xl border border-white/10 mb-3 min-h-[90px]">
+      <div className="flex flex-col items-end justify-end p-3.5 bg-black/40 rounded-xl border border-white/10 mb-3 min-h-\[90px]">
         <div className="text-[11px] font-mono text-white/40 h-4 truncate">
           {historyTape}
         </div>

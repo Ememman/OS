@@ -21,7 +21,7 @@ function buildMonth(year: number, month: number) {
   return cells;
 }
 
-export default function CalendarWidget({ onBack }: { onBack?: () => void } = {}) {
+export default function CalendarWidget({ onBack }: { onBack?: () => void }) {
   const today = new Date();
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [eventDays, setEventDays] = useState<Set<string>>(new Set());
