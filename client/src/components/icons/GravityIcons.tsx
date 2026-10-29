@@ -52,6 +52,8 @@ export const GIconSettings = (props: any) => <GravityIcon icon={GIcons.Gear} {..
 export const GIconResume = (props: any) => <GravityIcon icon={GIcons.Person || GIcons.FileText} {...props} />;
 export const GIconCalculator = (props: any) => <GravityIcon icon={GIcons.Calculator} {...props} />;
 export const GIconNotes = (props: any) => <GravityIcon icon={GIcons.PencilToSquare || GIcons.Pencil} {...props} />;
+export const GIconActivity = (props: any) => <GravityIcon icon={GIcons.DisplayPulse || GIcons.ChartLine || GIcons.HeartPulse} {...props} />;
+export const GIconBookOpen = (props: any) => <GravityIcon icon={GIcons.BookOpen || GIcons.Books} {...props} />;
 
 // Window & Action Controls
 export const GIconClose = (props: any) => <GravityIcon icon={GIcons.Xmark} {...props} />;
@@ -135,5 +137,9 @@ export const GIconSliders = (props: any) => <GravityIcon icon={GIcons.Sliders} {
 export const GIconBars = (props: any) => <GravityIcon icon={GIcons.Bars} {...props} />;
 export const GIconSignal = (props: any) => <GravityIcon icon={GIcons.Signal || GIcons.AntennaSignal} {...props} />;
 export const GIconPower = (props: any) => <GravityIcon icon={GIcons.Power || GIcons.PlugConnection} {...props} />;
+export const GIconCpu = (props: any) => <GravityIcon icon={GIcons.Cpu || GIcons.HardDrive} {...props} />;
+export const GIconChartLine = (props: any) => <GravityIcon icon={GIcons.ChartLine || GIcons.ChartAreaStacked} {...props} />;
+export const GIconHeartPulse = (props: any) => <GravityIcon icon={GIcons.HeartPulse || GIcons.Heart} {...props} />;
+export const GIconSmile = (props: any) => <GravityIcon icon={GIcons.FaceSmile || GIcons.Person} {...props} />;
 
 export default GIcons;

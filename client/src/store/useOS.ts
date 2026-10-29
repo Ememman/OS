@@ -45,6 +45,11 @@ interface OSState {
   toggleParticles: () => void;
   widgetsVisible: boolean;
   toggleWidgets: () => void;
+  nightShift: boolean;
+  toggleNightShift: () => void;
+  controlCenterOpen: boolean;
+  toggleControlCenter: () => void;
+  closeControlCenter: () => void;
   snapWindow: (id: string, layout: SnapLayout) => void;
   closeAllWindows: () => void;
   minimizeAllWindows: () => void;
@@ -75,6 +80,8 @@ export const APPS: Record<string, AppMetadata> = {
   terminal: { title: "Terminal", w: 740, h: 480 },
   calculator: { title: "Calculator", w: 320, h: 480 },
   notes: { title: "Notes", w: 740, h: 520 },
+  activity: { title: "Activity Monitor", w: 760, h: 520 },
+  guestbook: { title: "Guestbook", w: 780, h: 540 },
   updates: { title: "Updates", w: 620, h: 640 },
   chats: { title: "Chats", w: 420, h: 620 },
   gallery: { title: "Gallery", w: 880, h: 600 },
@@ -112,9 +119,9 @@ const dockPosition: DockPosition =
 let z = 10;
 
 export const useOS = create<OSState>((set, get) => ({
-  windows: [], // { id, app, x, y, w, h, minimized, maximized, z }
+  windows: [],
   accent: localStorage.getItem("os_accent") || ACCENTS[0].value,
-  wallpaper: localStorage.getItem("os_wallpaper") || "bg1", // Changed default to bg1
+  wallpaper: localStorage.getItem("os_wallpaper") || "bg1",
   reduceMotion: localStorage.getItem("os_motion") === "off",
   photoUrl: localStorage.getItem("os_photo") || "",
   setPhotoUrl: (url) => {
@@ -157,7 +164,7 @@ export const useOS = create<OSState>((set, get) => ({
   },
   dismissNotification: () => set({ notification: null }),
 
-  chatBg: localStorage.getItem("os_chat_bg") || "halftone", // "halftone" | "notebook" | "ink" | "plain"
+  chatBg: localStorage.getItem("os_chat_bg") || "halftone",
   setChatBg: (id) => {
     localStorage.setItem("os_chat_bg", id);
     set({ chatBg: id });
@@ -200,6 +207,23 @@ export const useOS = create<OSState>((set, get) => ({
     localStorage.setItem("os_widgets", next ? "on" : "off");
     set({ widgetsVisible: next });
   },
+
+  // Night Shift Mode
+  nightShift: localStorage.getItem("os_night_shift") === "on",
+  toggleNightShift: () => {
+    const next = !get().nightShift;
+    localStorage.setItem("os_night_shift", next ? "on" : "off");
+    set({ nightShift: next });
+    get().notify(
+      "Night Shift",
+      next ? "Warm twilight filter enabled" : "Standard color profile active"
+    );
+  },
+
+  // Control Center
+  controlCenterOpen: false,
+  toggleControlCenter: () => set((s) => ({ controlCenterOpen: !s.controlCenterOpen })),
+  closeControlCenter: () => set({ controlCenterOpen: false }),
 
   // Window snap layout engine
   snapWindow: (id, layout) => {
@@ -265,7 +289,7 @@ export const useOS = create<OSState>((set, get) => ({
   toggleSpotlight: () => set((s) => ({ spotlightOpen: !s.spotlightOpen })),
 
   resetDefaults: () => {
-    ["os_accent", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale"].forEach((k) =>
+    ["os_accent", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift"].forEach((k) =>
       localStorage.removeItem(k)
     );
     window.location.reload();
@@ -316,10 +340,11 @@ export const useOS = create<OSState>((set, get) => ({
     const count = get().windows.length;
     const id = `${app}-${Date.now()}`;
     z += 1;
+    const title = app === "activity" ? (get().osMode === "win" ? "Task Manager" : "Activity Monitor") : meta.title;
     const win = {
       id,
       app,
-      title: meta.title,
+      title,
       x: 80 + count * 26,
       y: 60 + count * 22,
       w: meta.w,

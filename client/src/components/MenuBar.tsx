@@ -10,6 +10,7 @@ import {
   GIconCheck,
   GIconClose,
   GIconBars,
+  GIconSliders,
 } from "./icons/GravityIcons";
 
 interface MenuDropdownProps {
@@ -111,6 +112,8 @@ export default function MenuBar() {
     toggleMotion,
     openSpotlight,
     reopenPicker,
+    controlCenterOpen,
+    toggleControlCenter,
   } = useOS();
   const [now, setNow] = useState(new Date());
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -404,7 +407,7 @@ export default function MenuBar() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 sm:gap-4 text-white/70">
+      <div className="flex items-center gap-2.5 sm:gap-3 text-white/70">
         {/* Spotlight Trigger */}
         <button
           onClick={openSpotlight}
@@ -416,6 +419,20 @@ export default function MenuBar() {
         </button>
 
         <LiveBadge compact />
+
+        {/* macOS Control Center Trigger */}
+        <button
+          onClick={toggleControlCenter}
+          title="Control Center"
+          className={`flex items-center justify-center p-1.5 rounded-lg transition-all ${
+            controlCenterOpen
+              ? "bg-accent text-white shadow-md shadow-accent/20"
+              : "hover:bg-white/10 text-white/80 hover:text-white"
+          }`}
+        >
+          <GIconSliders size={15} />
+        </button>
+
         <GIconSignal size={15} className="hidden xs:inline text-white/80" />
         <GIconPower size={16} className="hidden xs:inline text-white/80" />
         <span className="font-mono text-white/85 text-[12px] sm:text-[14px] whitespace-nowrap">
@@ -454,6 +471,13 @@ export default function MenuBar() {
                 setMobileSheetOpen(false);
               }}>
               Spotlight Search (⌘K)
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                toggleControlCenter();
+                setMobileSheetOpen(false);
+              }}>
+              Control Center
             </MenuItem>
             <MenuItem
               onClick={() => {

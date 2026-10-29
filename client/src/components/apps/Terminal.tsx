@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, type ReactNode } from "react";
 import { useOS, APPS } from "../../store/useOS";
 import { fallbackProjects } from "../../data/projects";
 import { fileTree } from "../../data/files";
+import { API_URL } from "../../lib/config";
 import { GIconTerminal, GIconFolder, GIconFileText } from "../icons/GravityIcons";
 
 const BANNER = `
@@ -16,7 +17,8 @@ const BANNER = `
 
 const COMMANDS = [
   "help", "clear", "neofetch", "whoami", "skills", "projects",
-  "ls", "cat", "open", "theme", "date", "uptime", "history", "matrix", "sudo"
+  "ls", "cat", "open", "theme", "date", "uptime", "history", "matrix",
+  "sysinfo", "server", "ping", "quote", "joke", "curl", "guestbook", "sudo"
 ];
 
 type TerminalEntry =
@@ -32,13 +34,13 @@ export default function Terminal() {
     { type: "system", content: "Logged in as bron@portfolio-os. Type 'help' to start." },
   ]);
   const [inputVal, setInputVal] = useState("");
-  const [cmdHistory, setCmdHistory] = useState([]);
+  const [cmdHistory, setCmdHistory] = useState<string[]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
   const [matrixActive, setMatrixActive] = useState(false);
 
-  const endRef = useRef(null);
-  const inputRef = useRef(null);
-  const canvasRef = useRef(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Auto-scroll to bottom of terminal
   useEffect(() => {
@@ -54,8 +56,9 @@ export default function Terminal() {
   useEffect(() => {
     if (!matrixActive) return;
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !canvas.parentElement) return;
     const ctx = canvas.getContext("2d");
+    if (!ctx) return;
     canvas.width = canvas.parentElement.clientWidth;
     canvas.height = canvas.parentElement.clientHeight;
 
@@ -85,7 +88,7 @@ export default function Terminal() {
     return () => clearInterval(interval);
   }, [matrixActive]);
 
-  const handleCommand = (rawCmd) => {
+  const handleCommand = async (rawCmd: string) => {
     const trimmed = rawCmd.trim();
     if (!trimmed) {
       setHistory((prev) => [...prev, { type: "prompt", cmd: "" }]);
@@ -99,7 +102,7 @@ export default function Terminal() {
     const cmd = parts[0].toLowerCase();
     const args = parts.slice(1);
 
-    let output = null;
+    let output: any = null;
 
     switch (cmd) {
       case "help":
@@ -111,12 +114,18 @@ export default function Terminal() {
               <div><span className="text-emerald-400 font-bold">whoami</span> - Developer profile & intro</div>
               <div><span className="text-emerald-400 font-bold">skills</span> - Technical skill stacks</div>
               <div><span className="text-emerald-400 font-bold">projects</span> - Showcase of live projects</div>
-              <div><span className="text-emerald-400 font-bold">open &lt;app&gt;</span> - Launch app (e.g. open music)</div>
-              <div><span className="text-emerald-400 font-bold">ls</span> - List files and directories</div>
+              <div><span className="text-emerald-400 font-bold">sysinfo</span> - Live server CPU, RAM & diagnostics</div>
+              <div><span className="text-emerald-400 font-bold">ping [host]</span> - Test roundtrip response time</div>
+              <div><span className="text-emerald-400 font-bold">quote</span> - Random inspirational tech quote</div>
+              <div><span className="text-emerald-400 font-bold">joke</span> - Programmer humor</div>
+              <div><span className="text-emerald-400 font-bold">curl [url]</span> - Inspect API endpoints</div>
+              <div><span className="text-emerald-400 font-bold">guestbook</span> - Open social guestbook ledger</div>
+              <div><span className="text-emerald-400 font-bold">open &lt;app&gt;</span> - Launch any OS app</div>
+              <div><span className="text-emerald-400 font-bold">ls / dir</span> - List files and directories</div>
               <div><span className="text-emerald-400 font-bold">cat &lt;file&gt;</span> - Read file contents</div>
               <div><span className="text-emerald-400 font-bold">theme &lt;name&gt;</span> - Switch accent color or wallpaper</div>
               <div><span className="text-emerald-400 font-bold">neofetch</span> - System specs & OS stats</div>
-              <div><span className="text-emerald-400 font-bold">matrix</span> - Toggle matrix digital rain effect</div>
+              <div><span className="text-emerald-400 font-bold">matrix</span> - Toggle digital rain effect</div>
               <div><span className="text-emerald-400 font-bold">date</span> - View current system time</div>
               <div><span className="text-emerald-400 font-bold">uptime</span> - Check active session uptime</div>
               <div><span className="text-emerald-400 font-bold">clear</span> - Clear terminal screen</div>
@@ -130,6 +139,34 @@ export default function Terminal() {
       case "cls":
         setHistory([]);
         return;
+
+      case "sysinfo":
+      case "server":
+      case "ping":
+      case "quote":
+      case "joke":
+      case "curl":
+        try {
+          const res = await fetch(`${API_URL}/api/terminal/exec`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ command: trimmed })
+          });
+          const data = await res.json();
+          output = (
+            <pre className="text-xs text-emerald-300 font-mono py-1 whitespace-pre-wrap leading-relaxed">
+              {data.output || data.error}
+            </pre>
+          );
+        } catch {
+          output = <p className="text-rose-400 text-xs">Could not reach backend API at {API_URL}.</p>;
+        }
+        break;
+
+      case "guestbook":
+        openApp("guestbook");
+        output = <p className="text-emerald-300 text-xs">Launching Guestbook & Social Ledger...</p>;
+        break;
 
       case "whoami":
         output = (
@@ -170,9 +207,9 @@ export default function Terminal() {
               </div>
             </div>
             <div>
-              <span className="text-amber-400 font-semibold">Databases & Tools:</span>
+              <span className="text-amber-400 font-semibold">Databases & DevOps:</span>
               <div className="flex flex-wrap gap-1.5 mt-1">
-                {["MongoDB", "MySQL", "Git & GitHub", "Vite", "Gravity UI Icons", "Postman"].map((s) => (
+                {["MongoDB", "MySQL", "Git & GitHub", "Vite", "Docker", "Linux / POSIX"].map((s) => (
                   <span key={s} className="px-2 py-0.5 rounded bg-amber-950/60 border border-amber-800/40 text-amber-200 text-[11px]">
                     {s}
                   </span>
@@ -185,23 +222,22 @@ export default function Terminal() {
 
       case "projects":
         output = (
-          <div className="space-y-2 py-1 text-xs">
-            <p className="text-white/70">Featured Projects (run <code className="text-emerald-400 font-bold">open library</code> to view detailed gallery):</p>
+          <div className="space-y-3 py-1 text-xs">
+            <p className="text-white/80 font-semibold">Featured Shipped Projects:</p>
             <div className="space-y-2">
               {fallbackProjects.map((p) => (
-                <div key={p.id} className="p-2 rounded bg-white/5 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <span className="font-semibold text-white">{p.title}</span>
-                    <span className="ml-2 text-[10px] text-accent px-1.5 py-0.5 rounded bg-accent/15 border border-accent/25">{p.category}</span>
-                    <p className="text-[11px] text-white/50 mt-0.5">{p.summary.slice(0, 90)}…</p>
+                <div key={p.id} className="p-2 rounded bg-white/5 border border-white/10">
+                  <div className="flex items-center justify-between">
+                    <span className="text-emerald-400 font-bold">{p.title}</span>
+                    <span className="text-white/40 text-[11px]">{p.year} · {p.category}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      onClick={() => openApp("library")}
-                      className="px-2 py-1 text-[11px] bg-white/10 hover:bg-accent rounded text-white transition-colors"
-                    >
-                      View in Library
-                    </button>
+                  <p className="text-white/70 text-[11px] mt-1">{p.summary}</p>
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {p.stack.map((s) => (
+                      <span key={s} className="text-[10px] px-1.5 py-0.2 rounded bg-white/10 text-white/60">
+                        {s}
+                      </span>
+                    ))}
                   </div>
                 </div>
               ))}
@@ -214,7 +250,7 @@ export default function Terminal() {
         if (!args[0]) {
           output = (
             <p className="text-amber-400">
-              Usage: open &lt;app&gt; (e.g. open notes, open calculator, open music, open library, open games, open settings, open files, open chats)
+              Usage: open &lt;app&gt; (e.g. open activity, open guestbook, open music, open library, open games, open settings, open files, open chats)
             </p>
           );
         } else {
@@ -251,81 +287,42 @@ export default function Terminal() {
 
       case "cat":
         if (!args[0]) {
-          output = <p className="text-amber-400">Usage: cat &lt;filename&gt; (e.g. cat About_Bron.txt, cat Skills.txt, cat README.md)</p>;
+          output = <p className="text-amber-400">Usage: cat &lt;filename&gt; (e.g. cat About_Bron.txt, cat Skills.txt)</p>;
         } else {
-          const fileName = args[0];
-          const file = fileTree.children.find((f) => f.name.toLowerCase() === fileName.toLowerCase());
-          if (file && file.content) {
+          const targetName = args[0].toLowerCase();
+          const found = fileTree.children.find((f) => f.name.toLowerCase() === targetName);
+          if (found && found.type === "text" && found.content) {
             output = (
-              <pre className="text-white/90 font-mono text-xs whitespace-pre-wrap bg-black/40 p-2.5 rounded border border-white/10">
-                {file.content}
+              <pre className="text-xs text-white/80 font-mono whitespace-pre-wrap leading-relaxed py-1">
+                {found.content}
               </pre>
             );
-          } else if (file && file.type === "folder") {
-            output = <p className="text-amber-400">'{fileName}' is a directory. Use 'ls' to see contents.</p>;
           } else {
-            output = <p className="text-rose-400">File not found: {fileName}</p>;
-          }
-        }
-        break;
-
-      case "theme":
-        if (!args[0]) {
-          output = (
-            <div className="space-y-1 text-xs">
-              <p className="text-amber-400">Usage: theme &lt;accent-name&gt; OR theme wallpaper &lt;id&gt;</p>
-              <p className="text-white/60">Accents: coral, cyan, violet, amber, rose</p>
-              <p className="text-white/60">Wallpapers: bg1, bg2, bg3, ocean, galaxy, aurora</p>
-            </div>
-          );
-        } else if (args[0].toLowerCase() === "wallpaper" && args[1]) {
-          const wp = wallpapers.find((w) => w.id.toLowerCase() === args[1].toLowerCase());
-          if (wp) {
-            setWallpaper(wp.id);
-            output = <p className="text-emerald-400">Wallpaper changed to {wp.name}.</p>;
-          } else {
-            output = <p className="text-rose-400">Wallpaper not found. Available: {wallpapers.map((w) => w.id).join(", ")}</p>;
-          }
-        } else {
-          const name = args[0].toLowerCase();
-          const match = accents.find((a) => a.name.toLowerCase().includes(name));
-          if (match) {
-            setAccent(match.value);
-            output = <p className="text-emerald-400">Accent color set to {match.name}.</p>;
-          } else {
-            output = <p className="text-rose-400">Accent not found. Options: coral, cyan, violet, amber, rose</p>;
+            output = <p className="text-rose-400">cat: {args[0]}: No such text file</p>;
           }
         }
         break;
 
       case "neofetch":
-      case "fastfetch":
         output = (
-          <div className="flex flex-col sm:flex-row gap-4 py-2 font-mono text-xs">
-            <div className="text-accent select-none font-bold leading-none">
-              <pre>{`
-   .---.
-  /     \\
- | () () |   PORTFOLIO OS
-  \\  _  /    Gravity Edition
-   \`---\`
-              `}</pre>
-            </div>
-            <div className="space-y-1">
+          <div className="flex flex-col sm:flex-row gap-4 py-2 text-xs">
+            <pre className="text-accent font-bold leading-tight select-none shrink-0">
+{`   /\_/\  
+  ( o.o ) 
+   > ^ <  
+ Portfolio
+   OS 2.4`}
+            </pre>
+            <div className="space-y-1 text-white/90">
               <p><span className="text-accent font-bold">bron@portfolio-os</span></p>
-              <p className="text-white/40">-------------------</p>
-              <p><span className="text-emerald-400 font-semibold">OS:</span> Portfolio OS 2.5.0 (Next.js & NestJS Ready)</p>
-              <p><span className="text-emerald-400 font-semibold">Style:</span> {osMode === "win" ? "Windows 11 Fluent" : "macOS Sequoia Glass"}</p>
-              <p><span className="text-emerald-400 font-semibold">Icons:</span> Gravity UI Icons (@gravity-ui/icons)</p>
-              <p><span className="text-emerald-400 font-semibold">Stack:</span> Next.js + NestJS + TypeScript + React 19</p>
-              <p><span className="text-emerald-400 font-semibold">Shell:</span> portfolio-sh v1.0.0</p>
-              <p><span className="text-emerald-400 font-semibold">Resolution:</span> {window.innerWidth}x{window.innerHeight}</p>
-              <p><span className="text-emerald-400 font-semibold">Memory:</span> 128MB / 1024MB (Simulated)</p>
-              <div className="flex gap-1.5 pt-2">
-                {["#e8543f", "#57d9c7", "#9478ff", "#f5a642", "#ec6096", "#22c55e", "#38bdf8", "#e2e8f0"].map((c) => (
-                  <span key={c} className="w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: c }} />
-                ))}
-              </div>
+              <p className="text-white/40">-----------------------------</p>
+              <p><span className="text-accent font-semibold">OS:</span> Portfolio OS (Web / React 19)</p>
+              <p><span className="text-accent font-semibold">Host:</span> {osMode === "win" ? "Windows 11 Fluent Edition" : "macOS Sonoma Glass Edition"}</p>
+              <p><span className="text-accent font-semibold">Kernel:</span> 2.4.0-gravity</p>
+              <p><span className="text-accent font-semibold">Uptime:</span> {Math.floor(performance.now() / 60000)} mins</p>
+              <p><span className="text-accent font-semibold">Shell:</span> portfolio-sh 5.2</p>
+              <p><span className="text-accent font-semibold">UI Icons:</span> Gravity UI Icons (@gravity-ui/icons)</p>
+              <p><span className="text-accent font-semibold">Theme:</span> Glassmorphism (Vibrant Accent)</p>
             </div>
           </div>
         );
@@ -333,39 +330,69 @@ export default function Terminal() {
 
       case "matrix":
         setMatrixActive((prev) => !prev);
-        output = <p className="text-emerald-400">{!matrixActive ? "Matrix digital rain enabled. Type 'matrix' to disable." : "Matrix rain disabled."}</p>;
+        output = <p className="text-emerald-400">Matrix digital rain {!matrixActive ? "activated" : "deactivated"}.</p>;
         break;
 
       case "date":
-        output = <p className="text-white/80">{new Date().toString()}</p>;
+        output = <p className="text-white/90">{new Date().toString()}</p>;
         break;
 
       case "uptime":
-        output = <p className="text-white/80">up {Math.floor(performance.now() / 60000)} minutes, 1 user, load average: 0.12, 0.08, 0.05</p>;
+        const totalSecs = Math.floor(performance.now() / 1000);
+        const mins = Math.floor(totalSecs / 60);
+        const secs = totalSecs % 60;
+        output = <p className="text-white/90">Session up {mins} minutes, {secs} seconds.</p>;
+        break;
+
+      case "theme":
+        if (!args[0]) {
+          output = (
+            <div className="space-y-1 text-xs">
+              <p className="text-amber-400">Usage: theme accent &lt;number/name&gt; OR theme wallpaper &lt;name&gt;</p>
+              <p className="text-white/60">Available accents: {accents.map((a) => a.name).join(", ")}</p>
+              <p className="text-white/60">Available wallpapers: {wallpapers.map((w) => w.name).join(", ")}</p>
+            </div>
+          );
+        } else if (args[0] === "accent" && args[1]) {
+          const match = accents.find((a) => a.name.toLowerCase().includes(args[1].toLowerCase()));
+          if (match) {
+            setAccent(match.value);
+            output = <p className="text-emerald-400">Accent set to {match.name}.</p>;
+          } else {
+            output = <p className="text-rose-400">Accent '{args[1]}' not found.</p>;
+          }
+        } else if (args[0] === "wallpaper" && args[1]) {
+          const match = wallpapers.find((w) => w.name.toLowerCase().includes(args[1].toLowerCase()) || w.id === args[1]);
+          if (match) {
+            setWallpaper(match.id);
+            output = <p className="text-emerald-400">Wallpaper set to {match.name}.</p>;
+          } else {
+            output = <p className="text-rose-400">Wallpaper '{args[1]}' not found.</p>;
+          }
+        }
         break;
 
       case "history":
         output = (
-          <div className="space-y-0.5 text-xs text-white/70">
+          <div className="space-y-0.5 text-xs text-white/80">
             {cmdHistory.map((c, i) => (
-              <p key={i}><span className="text-white/30 mr-2">{i + 1}</span>{c}</p>
+              <div key={i} className="flex gap-2">
+                <span className="text-white/40">{i + 1}</span>
+                <span>{c}</span>
+              </div>
             ))}
           </div>
         );
         break;
 
       case "sudo":
-        output = <p className="text-rose-400 font-semibold">Permission denied: You already hold root privileges in this browser session.</p>;
-        break;
-
-      case "echo":
-        output = <p className="text-white/90">{args.join(" ")}</p>;
+        output = <p className="text-rose-400">Permission denied: guest user cannot execute administrative operations.</p>;
         break;
 
       default:
         output = (
           <p className="text-rose-400">
-            command not found: {cmd}. Type <span className="text-emerald-400 font-bold underline cursor-pointer" onClick={() => handleCommand("help")}>help</span> to view available commands.
+            command not found: {cmd}. Type <span className="text-emerald-400 underline cursor-pointer" onClick={() => handleCommand("help")}>help</span> to view available commands.
           </p>
         );
         break;
@@ -378,7 +405,7 @@ export default function Terminal() {
     ]);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
       const val = inputVal;
@@ -499,7 +526,7 @@ export default function Terminal() {
       {/* Quick command buttons for convenience */}
       <div className="relative z-10 px-3 py-1.5 bg-[#05070c]/90 border-t border-white/10 flex items-center gap-1.5 overflow-x-auto no-scrollbar select-none">
         <span className="text-[10px] text-white/40 shrink-0">Quick:</span>
-        {["help", "neofetch", "whoami", "skills", "projects", "matrix", "clear"].map((cmd) => (
+        {["help", "sysinfo", "ping", "quote", "joke", "guestbook", "neofetch", "clear"].map((cmd) => (
           <button
             key={cmd}
             onClick={() => handleCommand(cmd)}

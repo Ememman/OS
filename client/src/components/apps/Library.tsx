@@ -1,93 +1,395 @@
 import { useEffect, useState } from "react";
-import { GIconExternalLink, GIconGithub } from "../icons/GravityIcons";
+import {
+  GIconExternalLink,
+  GIconGithub,
+  GIconSearch,
+  GIconHeart,
+  GIconStar,
+  GIconClose,
+  GIconSparkles,
+} from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
 import { fallbackProjects } from "../../data/projects";
+import { getSocket } from "../../lib/socket";
+import { useOS } from "../../store/useOS";
+import { soundFx } from "../../lib/soundFx";
+
+interface ProjectItem {
+  id: string;
+  title: string;
+  stack: string[];
+  category: string;
+  year: string;
+  cover: string;
+  summary: string;
+  highlights: string[];
+  links: {
+    repo: string;
+    live: string;
+  };
+}
 
 export default function Library() {
-  const [projects, setProjects] = useState(fallbackProjects);
+  const { systemSounds, notify } = useOS();
+  const [projects, setProjects] = useState<ProjectItem[]>(fallbackProjects);
   const [filter, setFilter] = useState("All");
-  const [active, setActive] = useState(null);
+  const [search, setSearch] = useState("");
+  const [active, setActive] = useState<ProjectItem | null>(null);
+  const [modalTab, setModalTab] = useState<"overview" | "highlights" | "stack">("overview");
+
+  const [likes, setLikes] = useState<Record<string, number>>({
+    "sandrealee-customer": 29,
+    "sandrealee-staff": 19,
+    "sandrealee-admin": 36,
+    "straive-ims": 18
+  });
 
   useEffect(() => {
+    // Fetch project list
     fetch(`${API_URL}/api/projects`)
       .then((r) => r.json())
       .then((data) => data.length && setProjects(data))
       .catch(() => {});
+
+    // Fetch initial like counts
+    fetch(`${API_URL}/api/projects/likes`)
+      .then((r) => r.json())
+      .then((data) => setLikes(data))
+      .catch(() => {});
+
+    // Listen for live likes
+    const socket = getSocket();
+    const onLiked = ({ id, count }: { id: string; count: number }) => {
+      setLikes((prev) => ({ ...prev, [id]: count }));
+    };
+    socket.on("project:liked", onLiked);
+    return () => {
+      socket.off("project:liked", onLiked);
+    };
   }, []);
 
+  const handleLike = async (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (systemSounds) soundFx.playPop();
+
+    setLikes((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+
+    try {
+      const res = await fetch(`${API_URL}/api/projects/${id}/like`, { method: "POST" });
+      if (res.ok) {
+        notify("Project Starred!", "Thanks for supporting Bron's engineering work!");
+      }
+    } catch {}
+  };
+
   const categories = ["All", ...new Set(projects.map((p) => p.category))];
-  const shown = filter === "All" ? projects : projects.filter((p) => p.category === filter);
+
+  const shown = projects.filter((p) => {
+    const matchesCategory = filter === "All" || p.category === filter;
+    const q = search.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      p.title.toLowerCase().includes(q) ||
+      p.summary.toLowerCase().includes(q) ||
+      p.stack.some((s) => s.toLowerCase().includes(q));
+    return matchesCategory && matchesSearch;
+  });
+
+  const totalLikes = Object.values(likes).reduce((a, b) => a + b, 0);
 
   return (
-    <div className="p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="font-display text-lg font-semibold">Library</h2>
-          <p className="text-xs text-white/50">Projects, shipped and still-shipping.</p>
+    <div className="flex flex-col h-full bg-black/40 text-white select-none">
+      {/* Top Bar with Search & Filters */}
+      <div className="p-4 sm:p-5 border-b border-white/10 bg-white/[0.02] space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="font-display text-lg sm:text-xl font-bold tracking-tight">
+              Engineering Library & Projects
+            </h2>
+            <p className="text-xs text-white/50">
+              Shipped production apps, enterprise dashboards, and technical architecture.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-white/40 flex items-center gap-1 bg-white/5 border border-white/10 px-2.5 py-1 rounded-xl">
+              <GIconStar size={12} className="text-amber-400" />
+              <span>{totalLikes} Stars Received</span>
+            </span>
+          </div>
         </div>
-        <div className="flex gap-1">
-          {categories.map((c) => (
-            <button
-              key={c}
-              onClick={() => setFilter(c)}
-              className={`text-xs px-2.5 py-1 rounded-full border ${
-                filter === c ? "bg-accent border-accent" : "border-white/15 text-white/60 hover:border-white/30"
-              }`}
-            >
-              {c}
-            </button>
-          ))}
+
+        {/* Search input & category pills */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
+          <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 w-full sm:w-64">
+            <GIconSearch size={14} className="text-white/40 shrink-0" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by title, React, Expo, Mongo..."
+              className="bg-transparent outline-none text-xs text-white placeholder:text-white/35 w-full"
+            />
+          </div>
+
+          <div className="flex gap-1 overflow-x-auto no-scrollbar">
+            {categories.map((c) => (
+              <button
+                key={c}
+                onClick={() => {
+                  setFilter(c);
+                  if (systemSounds) soundFx.playClick();
+                }}
+                className={`text-xs px-3 py-1 rounded-xl border transition-all ${
+                  filter === c
+                    ? "bg-accent border-accent text-white shadow-md shadow-accent/20"
+                    : "border-white/15 text-white/60 hover:text-white hover:border-white/30 hover:bg-white/5"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {shown.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => setActive(p)}
-            className="text-left rounded-xl overflow-hidden border border-white/10 bg-white/5 hover:border-accent/60 transition group"
-          >
-            <div className="h-28 overflow-hidden">
-              <img src={p.cover} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-            <div className="p-3">
-              <div className="text-sm font-medium">{p.title}</div>
-              <div className="text-[11px] text-white/45 mt-0.5">{p.year} · {p.category}</div>
-              <div className="flex flex-wrap gap-1 mt-2">
-                {p.stack.slice(0, 3).map((s) => (
-                  <span key={s} className="text-[10px] px-1.5 py-0.5 rounded bg-white/8 text-white/60">{s}</span>
-                ))}
-              </div>
-            </div>
-          </button>
-        ))}
+      {/* Projects Grid */}
+      <div className="flex-1 overflow-auto thin-scroll p-4 sm:p-5">
+        {shown.length === 0 ? (
+          <div className="text-center py-16 text-white/40">
+            <p className="font-medium text-sm">No projects match "{search}"</p>
+            <p className="text-xs text-white/30 mt-1">Try searching for "React Native", "Expo", or "MongoDB".</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {shown.map((p) => {
+              const projectLikeCount = likes[p.id] || 0;
+              return (
+                <div
+                  key={p.id}
+                  onClick={() => {
+                    setActive(p);
+                    setModalTab("overview");
+                    if (systemSounds) soundFx.playClick();
+                  }}
+                  className="rounded-2xl overflow-hidden border border-white/10 bg-white/5 hover:border-accent/60 transition-all duration-300 group cursor-pointer flex flex-col justify-between hover:shadow-xl hover:shadow-black/40"
+                >
+                  <div className="relative h-36 overflow-hidden">
+                    <img
+                      src={p.cover}
+                      alt={p.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    
+                    <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-black/60 backdrop-blur-md border border-white/15 text-white">
+                      {p.category}
+                    </span>
+
+                    <button
+                      onClick={(e) => handleLike(p.id, e)}
+                      title="Star this project"
+                      className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 hover:border-rose-400/50 hover:bg-rose-500/20 text-white transition text-[11px]"
+                    >
+                      <GIconHeart size={12} className="text-rose-400 group-hover:scale-110 transition-transform" />
+                      <span className="font-semibold text-[10px]">{projectLikeCount}</span>
+                    </button>
+
+                    <div className="absolute bottom-2 left-3 right-3">
+                      <div className="text-sm font-bold text-white group-hover:text-accent transition-colors">
+                        {p.title}
+                      </div>
+                      <div className="text-[10px] text-white/60">{p.year}</div>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 flex flex-col justify-between flex-1 space-y-3">
+                    <p className="text-xs text-white/70 line-clamp-2 leading-relaxed">
+                      {p.summary}
+                    </p>
+
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {p.stack.slice(0, 4).map((s) => (
+                        <span
+                          key={s}
+                          className="text-[10px] px-2 py-0.5 rounded-md bg-white/8 text-white/70 border border-white/5"
+                        >
+                          {s}
+                        </span>
+                      ))}
+                      {p.stack.length > 4 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md text-white/40">
+                          +{p.stack.length - 4} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
+      {/* Interactive Project Inspector Modal */}
       {active && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 sm:p-6" onClick={() => setActive(null)}>
-          <div className="glass rounded-2xl max-w-lg w-full p-5" onClick={(e) => e.stopPropagation()}>
-            <img src={active.cover} alt={active.title} className="w-full h-40 object-cover rounded-lg mb-3" />
-            <h3 className="font-display text-base font-semibold">{active.title}</h3>
-            <p className="text-xs text-white/50 mb-2">{active.year} · {active.category}</p>
-            <p className="text-sm text-white/80 leading-relaxed mb-3">{active.summary}</p>
-            <ul className="text-xs text-white/70 space-y-1 mb-3 list-disc list-inside">
-              {active.highlights.map((h) => <li key={h}>{h}</li>)}
-            </ul>
-            <div className="flex flex-wrap gap-1 mb-3">
-              {active.stack.map((s) => <span key={s} className="text-[10px] px-2 py-0.5 rounded bg-white/8 text-white/60">{s}</span>)}
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 sm:p-6"
+          onClick={() => setActive(null)}
+        >
+          <div
+            className="glass rounded-3xl max-w-xl w-full p-5 sm:p-6 border border-white/15 shadow-2xl overflow-hidden flex flex-col max-h-[88vh]"
+            onClick={(e) => e.stopPropagation()}
+            style={{ animation: "menuOpen 160ms cubic-bezier(.16,1,.3,1) both" }}
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="min-w-0">
+                <span className="inline-block text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-accent/20 text-accent border border-accent/30 mb-1">
+                  {active.category} · {active.year}
+                </span>
+                <h3 className="font-display text-lg sm:text-xl font-bold leading-tight">{active.title}</h3>
+              </div>
+              <button
+                onClick={() => setActive(null)}
+                className="p-1.5 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition shrink-0"
+              >
+                <GIconClose size={16} />
+              </button>
             </div>
-            <div className="flex gap-2">
-              {active.links.live && (
-                <a href={active.links.live} target="_blank" rel="noreferrer" className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-white">
-                  <GIconExternalLink size={12} /> Live
-                </a>
+
+            {/* Modal Image */}
+            <div className="relative h-44 rounded-2xl overflow-hidden mb-3 border border-white/10 shrink-0">
+              <img src={active.cover} alt={active.title} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            </div>
+
+            {/* Modal Tabs */}
+            <div className="flex border-b border-white/10 mb-3 text-xs gap-1 shrink-0">
+              <button
+                onClick={() => setModalTab("overview")}
+                className={`px-3 py-1.5 font-medium border-b-2 transition ${
+                  modalTab === "overview"
+                    ? "border-accent text-white"
+                    : "border-transparent text-white/50 hover:text-white"
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setModalTab("highlights")}
+                className={`px-3 py-1.5 font-medium border-b-2 transition ${
+                  modalTab === "highlights"
+                    ? "border-accent text-white"
+                    : "border-transparent text-white/50 hover:text-white"
+                }`}
+              >
+                Technical Highlights ({active.highlights.length})
+              </button>
+              <button
+                onClick={() => setModalTab("stack")}
+                className={`px-3 py-1.5 font-medium border-b-2 transition ${
+                  modalTab === "stack"
+                    ? "border-accent text-white"
+                    : "border-transparent text-white/50 hover:text-white"
+                }`}
+              >
+                Tech Architecture
+              </button>
+            </div>
+
+            {/* Modal Tab Content */}
+            <div className="overflow-y-auto thin-scroll flex-1 pr-1 space-y-3 text-xs">
+              {modalTab === "overview" && (
+                <div className="space-y-3">
+                  <p className="text-white/80 leading-relaxed sm:text-sm">
+                    {active.summary}
+                  </p>
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                    <span className="text-[10px] text-white/40 uppercase tracking-wide block mb-1">
+                      System Scale
+                    </span>
+                    <span className="text-white/85 text-xs">
+                      Engineered for high concurrency, real-time synchronization, and multi-platform consistency.
+                    </span>
+                  </div>
+                </div>
               )}
-              {active.links.repo && (
-                <a href={active.links.repo} target="_blank" rel="noreferrer" className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/15 text-white/80 hover:text-white">
-                  <GIconGithub size={12} /> Code
-                </a>
+
+              {modalTab === "highlights" && (
+                <div className="space-y-2">
+                  {active.highlights.map((h, i) => (
+                    <div
+                      key={i}
+                      className="p-2.5 rounded-xl bg-white/5 border border-white/5 flex items-start gap-2 text-white/80"
+                    >
+                      <span className="w-5 h-5 rounded-md bg-accent/20 text-accent flex items-center justify-center shrink-0 text-[10px] font-bold">
+                        {i + 1}
+                      </span>
+                      <span className="leading-relaxed">{h}</span>
+                    </div>
+                  ))}
+                </div>
               )}
-              <button onClick={() => setActive(null)} className="ml-auto text-xs px-3 py-1.5 rounded-lg border border-white/15 hover:bg-white/10 text-white">Close</button>
+
+              {modalTab === "stack" && (
+                <div className="space-y-3">
+                  <p className="text-white/60">
+                    Technologies chosen for reliability, performance, and cross-platform flexibility:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {active.stack.map((s) => (
+                      <div
+                        key={s}
+                        className="px-3 py-1.5 rounded-xl bg-white/8 border border-white/10 flex items-center gap-1.5 font-medium text-white/90"
+                      >
+                        <GIconSparkles size={12} className="text-accent" />
+                        <span>{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Action Footer */}
+            <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between gap-2 shrink-0">
+              <button
+                onClick={() => handleLike(active.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-semibold transition"
+              >
+                <GIconHeart size={13} className="text-rose-400" />
+                <span>Star Project ({likes[active.id] || 0})</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                {active.links.live && (
+                  <a
+                    href={active.links.live}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent text-white font-medium hover:brightness-110 shadow-md shadow-accent/20 transition"
+                  >
+                    <GIconExternalLink size={12} /> Live Preview
+                  </a>
+                )}
+                {active.links.repo && (
+                  <a
+                    href={active.links.repo}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/15 text-white hover:bg-white/10 transition"
+                  >
+                    <GIconGithub size={12} /> Source
+                  </a>
+                )}
+                <button
+                  onClick={() => setActive(null)}
+                  className="text-xs px-3 py-1.5 rounded-xl border border-white/15 hover:bg-white/10 text-white transition"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

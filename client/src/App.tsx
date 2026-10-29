@@ -12,6 +12,7 @@ import MiniPlayer from "./components/MiniPlayer";
 import BootScreen from "./components/BootScreen";
 import OsPicker from "./components/OsPicker";
 import SpotlightSearch from "./components/SpotlightSearch";
+import ControlCenter from "./components/ControlCenter";
 import NotificationToast from "./components/NotificationToast";
 import DesktopContextMenu from "./components/DesktopContextMenu";
 import PhotoWidget from "./components/widgets/PhotoWidget";
@@ -76,6 +77,7 @@ export default function App() {
     glassAlpha,
     widgetsVisible,
     toggleSpotlight,
+    nightShift,
     notify,
   } = useOS();
 
@@ -120,7 +122,7 @@ export default function App() {
       setTimeout(() => {
         notify(
           "Welcome to Portfolio OS",
-          "Enhanced with Activity Monitor, Live Guestbook, 2048, & Spotlight (⌘K)."
+          "Enhanced with Control Center, Project Starring, & Spotlight (⌘K)."
         );
       }, 600);
     }
@@ -134,6 +136,11 @@ export default function App() {
       onContextMenu={handleDesktopContextMenu}
       className={`relative w-screen h-screen overflow-hidden ${reduceMotion ? "reduced-motion" : ""}`}
     >
+      {/* Night Shift warm overlay */}
+      {nightShift && (
+        <div className="pointer-events-none fixed inset-0 z-[99999] bg-amber-500/10 mix-blend-multiply transition-opacity duration-500" />
+      )}
+
       <Wallpaper />
       <GlobalAudioPlayer />
       {!isWin && <MenuBar />}
@@ -198,6 +205,7 @@ export default function App() {
       {isWin ? <WinTaskbar /> : <Dock />}
       <MiniPlayer />
       <SpotlightSearch />
+      <ControlCenter />
       <NotificationToast />
       {contextMenu && (
         <DesktopContextMenu
