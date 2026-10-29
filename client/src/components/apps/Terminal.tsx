@@ -18,7 +18,7 @@ const BANNER = `
 const COMMANDS = [
   "help", "clear", "neofetch", "whoami", "skills", "projects",
   "ls", "cat", "open", "theme", "date", "uptime", "history", "matrix",
-  "sysinfo", "server", "ping", "quote", "joke", "curl", "guestbook", "sudo"
+  "sysinfo", "server", "ping", "quote", "joke", "curl", "guestbook", "weather", "analytics", "sudo"
 ];
 
 type TerminalEntry =
@@ -115,6 +115,8 @@ export default function Terminal() {
               <div><span className="text-emerald-400 font-bold">skills</span> - Technical skill stacks</div>
               <div><span className="text-emerald-400 font-bold">projects</span> - Showcase of live projects</div>
               <div><span className="text-emerald-400 font-bold">sysinfo</span> - Live server CPU, RAM & diagnostics</div>
+              <div><span className="text-emerald-400 font-bold">weather</span> - Real-time forecast report</div>
+              <div><span className="text-emerald-400 font-bold">analytics</span> - Live desktop platform telemetry</div>
               <div><span className="text-emerald-400 font-bold">ping [host]</span> - Test roundtrip response time</div>
               <div><span className="text-emerald-400 font-bold">quote</span> - Random inspirational tech quote</div>
               <div><span className="text-emerald-400 font-bold">joke</span> - Programmer humor</div>
