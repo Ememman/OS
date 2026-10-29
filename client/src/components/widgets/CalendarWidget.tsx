@@ -9,7 +9,7 @@ import { API_URL } from "../../lib/config";
 
 const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-function buildMonth(year, month) {
+function buildMonth(year: number, month: number) {
   const first = new Date(year, month, 1);
   const startDay = first.getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -24,13 +24,13 @@ function buildMonth(year, month) {
 export default function CalendarWidget({ onBack }: { onBack?: () => void }) {
   const today = new Date();
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
-  const [eventDays, setEventDays] = useState(new Set());
+  const [eventDays, setEventDays] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch(`${API_URL}/api/updates`)
       .then((r) => r.json())
       .then((data) => {
-        const days = new Set(data.map((u) => new Date(u.date).toDateString()));
+        const days = new Set<string>(data.map((u: any) => new Date(u.date).toDateString()));
         setEventDays(days);
       })
       .catch(() => {});
@@ -39,13 +39,13 @@ export default function CalendarWidget({ onBack }: { onBack?: () => void }) {
   const cells = buildMonth(cursor.getFullYear(), cursor.getMonth());
   const monthLabel = cursor.toLocaleDateString([], { month: "long", year: "numeric" });
 
-  const shift = (n) => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + n, 1));
+  const shift = (n: number) => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + n, 1));
   const goToday = () => setCursor(new Date(today.getFullYear(), today.getMonth(), 1));
 
-  const isToday = (d, muted) =>
+  const isToday = (d: number, muted: boolean) =>
     !muted && d === today.getDate() && cursor.getMonth() === today.getMonth() && cursor.getFullYear() === today.getFullYear();
 
-  const hasEvent = (d, muted) => {
+  const hasEvent = (d: number, muted: boolean) => {
     if (muted) return false;
     const date = new Date(cursor.getFullYear(), cursor.getMonth(), d);
     return eventDays.has(date.toDateString());

@@ -6,6 +6,7 @@ export type FileNode =
   | { name: string; type: "app-link"; app: string }
   | { name: string; type: "text"; content: string };
 
+export type FileItem = FileNode;
 export type FolderNode = Extract<FileNode, { type: "folder" }>;
 
 export const fileTree: FolderNode = {
