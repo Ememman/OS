@@ -141,5 +141,9 @@ export const GIconCpu = (props: any) => <GravityIcon icon={GIcons.Cpu || GIcons.
 export const GIconChartLine = (props: any) => <GravityIcon icon={GIcons.ChartLine || GIcons.ChartAreaStacked} {...props} />;
 export const GIconHeartPulse = (props: any) => <GravityIcon icon={GIcons.HeartPulse || GIcons.Heart} {...props} />;
 export const GIconSmile = (props: any) => <GravityIcon icon={GIcons.FaceSmile || GIcons.Person} {...props} />;
+export const GIconHistory = (props: any) => <GravityIcon icon={GIcons.Clock || GIcons.ArrowsRotateRight} {...props} />;
+export const GIconPin = (props: any) => <GravityIcon icon={GIcons.Pin || GIcons.Star} {...props} />;
+export const GIconEye = (props: any) => <GravityIcon icon={GIcons.Eye || GIcons.Magnifier} {...props} />;
+export const GIconCopy = (props: any) => <GravityIcon icon={GIcons.Copy || GIcons.File} {...props} />;
 
 export default GIcons;
