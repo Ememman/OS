@@ -12,7 +12,10 @@ import {
   GIconSearch,
   GIconNotes,
   GIconCalculator,
+  GIconDownload,
+  GIconHardDrive,
 } from "../icons/GravityIcons";
+import { soundFx } from "../../lib/soundFx";
 
 // Preview images for the wallpaper selector — served from /public/wallpapers
 const PREVIEW_IMAGES = {
@@ -440,6 +443,74 @@ export default function Settings() {
       </section>
       <section className="space-y-2">
         <ToggleRow label="Compact dock / taskbar icons" checked={compact} onToggle={toggleCompact} />
+      </section>
+
+      {/* Sound FX Lab */}
+      <section className="space-y-2">
+        <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Sound Effects Lab</h3>
+        <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
+          Procedural Web Audio synthesis for responsive desktop feedback.
+        </p>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => soundFx.playClick()}
+            className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 active:scale-95 text-xs text-white/80 transition border border-white/10"
+          >
+            Click FX
+          </button>
+          <button
+            onClick={() => soundFx.playPop()}
+            className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 active:scale-95 text-xs text-white/80 transition border border-white/10"
+          >
+            Pop FX
+          </button>
+          <button
+            onClick={() => soundFx.playClose()}
+            className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 active:scale-95 text-xs text-white/80 transition border border-white/10"
+          >
+            Close FX
+          </button>
+          <button
+            onClick={() => soundFx.playNotification()}
+            className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 active:scale-95 text-xs text-white/80 transition border border-white/10"
+          >
+            Chime FX
+          </button>
+        </div>
+      </section>
+
+      {/* ============ BACKUP & STORAGE ============ */}
+      <GroupHeader icon={GIconHardDrive} label="Storage & Backup" />
+      <section className="space-y-2">
+        <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
+          Export your notes, custom files, and appearance configurations to a JSON file.
+        </p>
+        <button
+          onClick={() => {
+            const backup = {
+              notes: localStorage.getItem("os_notes_data"),
+              customFiles: localStorage.getItem("os_custom_files"),
+              calcHistory: localStorage.getItem("os_calc_history"),
+              accent: localStorage.getItem("os_accent"),
+              wallpaper: localStorage.getItem("os_wallpaper"),
+              osMode: localStorage.getItem("os_mode"),
+              exportedAt: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `portfolio-os-backup-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }}
+          className="flex items-center justify-center gap-2 w-full text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 active:scale-95 text-white/85 transition-all"
+        >
+          <GIconDownload size={14} className="text-accent" />
+          <span>Export System Backup (JSON)</span>
+        </button>
       </section>
 
       {/* ============ DANGER ZONE ============ */}
