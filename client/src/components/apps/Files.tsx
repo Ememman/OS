@@ -66,7 +66,7 @@ export default function Files() {
   const { openApp, systemSounds, notify } = useOS();
   const [path, setPath] = useState<string[]>([]);
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [openText, setOpenText] = useState<FileItem | null>(null);
+  const [openText, setOpenText] = useState<{ name: string; content: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [creatingFile, setCreatingFile] = useState(false);
   const [newFileName, setNewFileName] = useState("");
@@ -101,7 +101,7 @@ export default function Files() {
     } else if (item.type === "app-link") {
       openApp(item.app);
     } else if (item.type === "text") {
-      setOpenText(item);
+      setOpenText({ name: item.name, content: item.content });
     }
   };
 
@@ -111,7 +111,9 @@ export default function Files() {
     if (fav.target) {
       const resolved = resolvePath(fav.path, customFiles);
       const target = resolved.children?.find((c) => c.name === fav.target);
-      if (target) setOpenText(target);
+      if (target && target.type === "text") {
+        setOpenText({ name: target.name, content: target.content });
+      }
     }
   };
 

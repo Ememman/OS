@@ -21,9 +21,15 @@ const COMMANDS = [
   "sysinfo", "server", "ping", "quote", "joke", "curl", "guestbook", "sudo"
 ];
 
+type TerminalItem = {
+  type: "banner" | "system" | "prompt" | "output";
+  content?: React.ReactNode;
+  cmd?: string;
+};
+
 export default function Terminal() {
   const { openApp, accents, setAccent, wallpapers, setWallpaper, osMode } = useOS();
-  const [history, setHistory] = useState([
+  const [history, setHistory] = useState<TerminalItem[]>([
     { type: "banner", content: BANNER },
     { type: "system", content: "Portfolio OS Kernel v2.4.0 (Gravity Edition) initialized." },
     { type: "system", content: "Logged in as bron@portfolio-os. Type 'help' to start." },
