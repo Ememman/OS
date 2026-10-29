@@ -208,6 +208,50 @@ app.get("/api/system/metrics", (req, res) => {
   });
 });
 
+
+// ---------- Weather Proxy (Cached & Resilient) ----------
+const weatherCache = new Map();
+app.get("/api/weather", async (req, res) => {
+  const lat = parseFloat(req.query.lat) || 14.5995;
+  const lon = parseFloat(req.query.lon) || 120.9842;
+  const key = `${lat.toFixed(2)},${lon.toFixed(2)}`;
+  const cached = weatherCache.get(key);
+  if (cached && Date.now() - cached.ts < 600000) {
+    return res.json(cached.data);
+  }
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`;
+    const r = await fetch(url);
+    if (r.ok) {
+      const data = await r.json();
+      weatherCache.set(key, { ts: Date.now(), data });
+      return res.json(data);
+    }
+  } catch (e) {}
+  res.json({
+    current: { temperature_2m: 29.2, weather_code: 1, relative_humidity_2m: 68, wind_speed_10m: 11 },
+    hourly: { temperature_2m: [27, 28, 29, 29, 28, 27], weather_code: [1, 1, 2, 1, 0, 0] },
+    daily: { temperature_2m_max: [31], temperature_2m_min: [25] },
+    fallback: true
+  });
+});
+
+let totalVisitorSessions = 1;
+app.get("/api/analytics", (req, res) => {
+  const mem = process.memoryUsage();
+  res.json({
+    ok: true,
+    totalVisits: totalVisitorSessions,
+    activeConnections: io.engine.clientsCount || 1,
+    chatMessagesCount: chatHistory.length,
+    guestbookEntriesCount: guestbookEntries.length,
+    totalProjectStars: Object.values(projectLikes).reduce((a, b) => a + b, 0),
+    serverUptime: Math.floor(process.uptime()),
+    heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024 * 10) / 10,
+    timestamp: Date.now()
+  });
+});
+
 // ---------- Guestbook Feature ----------
 let guestbookEntries = [...initialGuestbook];
 
@@ -307,6 +351,41 @@ app.post("/api/terminal/exec", (req, res) => {
       return res.json({
         ok: true,
         output: `PING ${host}: 64 bytes from server, seq=1 time=0.42ms, TTL=64 (status 200 OK)`
+      });
+    }
+
+    case "weather": {
+      return res.json({
+        ok: true,
+        output: [
+          `🌤️ Weather Report (Manila, Philippines):`,
+          `-----------------------------------------`,
+          `Condition:   Partly Cloudy / Clear Skies`,
+          `Temperature: 29°C (84°F) · Feels like 32°C`,
+          `Humidity:    68% | Wind: 11 km/h ENE`,
+          `Forecast:    Pleasant tropical breeze with sunshine`
+        ].join("\n")
+      });
+    }
+
+    case "analytics": {
+      const mem = process.memoryUsage();
+      const uptime = Math.floor(process.uptime());
+      const hours = Math.floor(uptime / 3600);
+      const mins = Math.floor((uptime % 3600) / 60);
+      return res.json({
+        ok: true,
+        output: [
+          `📊 Portfolio OS Platform Analytics:`,
+          `-------------------------------------------`,
+          `Live Online Clients:   ${io.engine.clientsCount}`,
+          `Active Server Uptime:  ${hours}h ${mins}m`,
+          `Server Memory RSS:     ${Math.round(mem.rss / 1024 / 1024)} MB`,
+          `Chat Messages Sent:    ${chatHistory.length}`,
+          `Guestbook Signatures:  ${guestbookEntries.length}`,
+          `Total Project Stars:   ${Object.values(projectLikes).reduce((a, b) => a + b, 0)}`,
+          `System Status:         100% Operational (Express 5 Active)`
+        ].join("\n")
       });
     }
 
@@ -463,6 +542,7 @@ io.on("connection", (socket) => {
   const guestName = randomName();
   socket.data.name = guestName;
   onlineCount++;
+  totalVisitorSessions++;
 
   socket.emit("chat:init", { name: guestName, history: chatHistory });
   io.emit("chat:presence", { online: onlineCount });
