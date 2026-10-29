@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Inject } from "@nestjs/common";
+import { Controller, Get, Post, Body, Query, Inject } from "@nestjs/common";
 import os from "node:os";
 import { ChatGateway } from "../chat/chat.gateway";
 import { projects } from "../../data/projects.js";
@@ -21,6 +21,9 @@ const DEV_JOKES = [
 
 @Controller("api")
 export class SystemController {
+  private weatherCache = new Map<string, { ts: number; data: any }>();
+  private totalVisits = 1;
+
   constructor(@Inject(ChatGateway) private readonly chatGateway: ChatGateway) {}
 
   @Get("system/info")
@@ -103,6 +106,45 @@ export class SystemController {
     };
   }
 
+  @Get("analytics")
+  getAnalytics() {
+    const mem = process.memoryUsage();
+    return {
+      ok: true,
+      totalVisits: this.totalVisits,
+      activeConnections: this.chatGateway.getOnlineCount(),
+      serverUptime: Math.floor(process.uptime()),
+      heapUsedMb: Math.round((mem.heapUsed / 1024 / 1024) * 10) / 10,
+      timestamp: Date.now()
+    };
+  }
+
+  @Get("weather")
+  async getWeather(@Query("lat") latStr?: string, @Query("lon") lonStr?: string) {
+    const lat = parseFloat(latStr || "14.5995") || 14.5995;
+    const lon = parseFloat(lonStr || "120.9842") || 120.9842;
+    const key = `${lat.toFixed(2)},${lon.toFixed(2)}`;
+    const cached = this.weatherCache.get(key);
+    if (cached && Date.now() - cached.ts < 600000) {
+      return cached.data;
+    }
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        this.weatherCache.set(key, { ts: Date.now(), data });
+        return data;
+      }
+    } catch {}
+    return {
+      current: { temperature_2m: 29.2, weather_code: 1, relative_humidity_2m: 68, wind_speed_10m: 11 },
+      hourly: { temperature_2m: [27, 28, 29, 29, 28, 27], weather_code: [1, 1, 2, 1, 0, 0] },
+      daily: { temperature_2m_max: [31], temperature_2m_min: [25] },
+      fallback: true
+    };
+  }
+
   @Post("terminal/exec")
   execTerminal(@Body("command") command: string) {
     const trimmed = String(command || "").trim();
@@ -149,6 +191,38 @@ export class SystemController {
         return { ok: true, output: j };
       }
 
+      case "weather": {
+        return {
+          ok: true,
+          output: [
+            `🌤️ Weather Report (Manila, Philippines):`,
+            `-----------------------------------------`,
+            `Condition:   Partly Cloudy / Clear Skies`,
+            `Temperature: 29°C (84°F) · Feels like 32°C`,
+            `Humidity:    68% | Wind: 11 km/h ENE`,
+            `Forecast:    Pleasant tropical breeze with sunshine`
+          ].join("\n")
+        };
+      }
+
+      case "analytics": {
+        const mem = process.memoryUsage();
+        const uptime = Math.floor(process.uptime());
+        const hours = Math.floor(uptime / 3600);
+        const mins = Math.floor((uptime % 3600) / 60);
+        return {
+          ok: true,
+          output: [
+            `📊 Portfolio OS Platform Analytics:`,
+            `-------------------------------------------`,
+            `Live Online Clients:   ${this.chatGateway.getOnlineCount()}`,
+            `Active Server Uptime:  ${hours}h ${mins}m`,
+            `Server Memory RSS:     ${Math.round(mem.rss / 1024 / 1024)} MB`,
+            `System Status:         100% Operational (Parity Active)`
+          ].join("\n")
+        };
+      }
+
       case "curl": {
         const target = args[0] || "/api/health";
         if (target.includes("health")) {
@@ -178,7 +252,7 @@ export class SystemController {
       default:
         return {
           ok: false,
-          error: `Unknown server command: '${lower}'. Try 'sysinfo', 'ping', 'quote', 'joke', or 'curl'.`
+          error: `Unknown server command: '${lower}'. Try 'sysinfo', 'ping', 'weather', 'analytics', 'quote', 'joke', or 'curl'.`
         };
     }
   }
