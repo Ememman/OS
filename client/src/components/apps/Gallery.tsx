@@ -4,25 +4,56 @@ import {
   GIconChevronLeft,
   GIconChevronRight,
   GIconPlay,
+  GIconDownload,
+  GIconCopy,
+  GIconCheck,
+  GIconSparkles,
 } from "../icons/GravityIcons";
 import { galleryItems } from "../../data/gallery";
+import { soundFx } from "../../lib/soundFx";
+import { useOS } from "../../store/useOS";
+
+const PHOTO_FILTERS = [
+  { id: "normal", label: "Normal", style: "none" },
+  { id: "noir", label: "Noir", style: "grayscale(100%) contrast(125%)" },
+  { id: "amber", label: "Amber", style: "sepia(50%) saturate(140%) hue-rotate(-15deg)" },
+  { id: "cyber", label: "Cyber", style: "hue-rotate(260deg) saturate(170%) contrast(115%)" },
+  { id: "vivid", label: "Vivid", style: "saturate(160%) contrast(115%)" },
+];
 
 export default function Gallery() {
+  const { systemSounds, notify } = useOS();
   const [tag, setTag] = useState("All");
-  const [openIdx, setOpenIdx] = useState(null);
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const [activeFilter, setActiveFilter] = useState("normal");
+  const [zoomLevel, setZoomLevel] = useState<1 | 1.5 | 2>(1);
+  const [copied, setCopied] = useState(false);
+
   const tags = ["All", ...new Set(galleryItems.map((g) => g.tag))];
-  const counts = tags.reduce((acc, t) => {
+  const counts = tags.reduce((acc: Record<string, number>, t) => {
     acc[t] = t === "All" ? galleryItems.length : galleryItems.filter((g) => g.tag === t).length;
     return acc;
   }, {});
   const shown = tag === "All" ? galleryItems : galleryItems.filter((g) => g.tag === tag);
 
-  const go = useCallback((delta) => setOpenIdx((i) => (i + delta + shown.length) % shown.length), [shown.length]);
-  const close = useCallback(() => setOpenIdx(null), []);
+  const go = useCallback(
+    (delta: number) => {
+      if (systemSounds) soundFx.playClick();
+      setZoomLevel(1);
+      setOpenIdx((i) => (i === null ? 0 : (i + delta + shown.length) % shown.length));
+    },
+    [shown.length, systemSounds]
+  );
+
+  const close = useCallback(() => {
+    if (systemSounds) soundFx.playClose();
+    setOpenIdx(null);
+    setZoomLevel(1);
+  }, [systemSounds]);
 
   useEffect(() => {
     if (openIdx === null) return;
-    const onKey = (e) => {
+    const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
       if (e.key === "ArrowLeft") go(-1);
       if (e.key === "ArrowRight") go(1);
@@ -31,70 +62,215 @@ export default function Gallery() {
     return () => window.removeEventListener("keydown", onKey);
   }, [openIdx, go, close]);
 
+  const currentItem = openIdx !== null ? shown[openIdx] : null;
+
+  const handleCopyLink = () => {
+    if (!currentItem) return;
+    if (systemSounds) soundFx.playPop();
+    navigator.clipboard?.writeText(window.location.origin + currentItem.src);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    notify("Link Copied", "Image link copied to clipboard.");
+  };
+
+  const handleDownload = () => {
+    if (!currentItem) return;
+    if (systemSounds) soundFx.playPop();
+    const a = document.createElement("a");
+    a.href = currentItem.src;
+    a.download = `gallery-${currentItem.id}.jpg`;
+    a.target = "_blank";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    notify("Downloading", `Starting download for ${currentItem.caption}.`);
+  };
+
+  const currentFilterStyle = PHOTO_FILTERS.find((f) => f.id === activeFilter)?.style || "none";
+
   return (
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="font-display text-lg font-semibold">Gallery</h2>
+    <div className="p-4 text-white select-none">
+      <div className="flex items-center justify-between mb-3.5">
+        <div>
+          <h2 className="font-display text-lg font-semibold text-white">Gallery</h2>
+          <p className="text-[11px] text-white/50">Curated showcase and media library</p>
+        </div>
         <div className="flex gap-1 flex-wrap justify-end">
           {tags.map((t) => (
             <button
               key={t}
-              onClick={() => setTag(t)}
-              className={`text-[11px] px-2 py-1 rounded-full border flex items-center gap-1 ${tag === t ? "bg-accent border-accent" : "border-white/15 text-white/60"}`}
+              onClick={() => {
+                if (systemSounds) soundFx.playClick();
+                setTag(t);
+              }}
+              className={`text-[11px] px-2.5 py-1 rounded-full border flex items-center gap-1.5 transition ${
+                tag === t
+                  ? "bg-accent border-accent text-white shadow-sm shadow-accent/20"
+                  : "border-white/15 text-white/60 hover:text-white hover:bg-white/5"
+              }`}
             >
-              {t} <span className="opacity-60">{counts[t]}</span>
+              <span>{t}</span>
+              <span className="opacity-60 text-[10px]">{counts[t]}</span>
             </button>
           ))}
         </div>
       </div>
 
+      {/* Masonry / Grid */}
       <div className="[column-fill:balance] sm:columns-3 columns-2 gap-2 space-y-2">
         {shown.map((g, i) => (
-          <button key={g.id} onClick={() => setOpenIdx(i)} className="relative rounded-lg overflow-hidden group block w-full break-inside-avoid">
+          <button
+            key={g.id}
+            onClick={() => {
+              if (systemSounds) soundFx.playClick();
+              setOpenIdx(i);
+            }}
+            className="relative rounded-xl overflow-hidden group block w-full break-inside-avoid border border-white/5 hover:border-accent/40 transition cursor-pointer"
+          >
             <img
               src={g.type === "video" ? g.poster : g.src}
               alt={g.caption}
               className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500 block"
             />
             {g.type === "video" && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                <GIconPlay size={28} className="text-white/90" />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                <GIconPlay size={32} className="text-white/90 drop-shadow" />
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to- from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-2">
-              <span className="text-[10px] text-white">{g.caption}</span>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-2.5">
+              <span className="text-[11px] text-white font-medium line-clamp-1">{g.caption}</span>
             </div>
           </button>
         ))}
       </div>
 
-      {openIdx !== null && (
-        <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 sm:p-8" onClick={close}>
-          <button onClick={(e) => { e.stopPropagation(); close(); }} className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 hover:bg-white/10 rounded-full z-10 text-white" aria-label="Close">
-            <GIconClose size={18} />
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); go(-1); }} className="absolute left-1 sm:left-4 p-1.5 sm:p-2 hover:bg-white/10 rounded-full z-10 text-white" aria-label="Previous">
-            <GIconChevronLeft size={22} />
-          </button>
-          <div onClick={(e) => e.stopPropagation()} className="max-w-2xl w-full">
-            {shown[openIdx].type === "video" ? (
-              <video
-                src={shown[openIdx].src}
-                poster={shown[openIdx].poster}
-                controls
-                autoPlay
-                muted
-                className="rounded-xl max-h-[70vh] w-full object-contain mx-auto bg-black"
-              />
-            ) : (
-              <img src={shown[openIdx].src} alt="" className="rounded-xl max-h-[70vh] object-contain mx-auto" />
-            )}
-            <p className="text-center text-sm text-white/70 mt-3">{shown[openIdx].caption} · <span className="accent">{shown[openIdx].tag}</span></p>
-            <p className="text-center text-[10px] text-white/30 mt-1">{openIdx + 1} / {shown.length} · ← → to navigate, Esc to close</p>
+      {/* Expanded Lightbox Modal */}
+      {currentItem && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-3 sm:p-6"
+          onClick={close}
+        >
+          {/* Top Bar Controls */}
+          <div
+            className="w-full max-w-4xl flex items-center justify-between z-10 pb-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Filter Pills */}
+            <div className="flex items-center gap-1 bg-white/10 p-1 rounded-xl backdrop-blur-md overflow-x-auto no-scrollbar">
+              <GIconSparkles size={13} className="text-accent ml-1.5 mr-0.5 shrink-0" />
+              {PHOTO_FILTERS.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => {
+                    if (systemSounds) soundFx.playClick();
+                    setActiveFilter(f.id);
+                  }}
+                  className={`text-[10px] px-2 py-0.5 rounded-lg transition ${
+                    activeFilter === f.id
+                      ? "bg-accent text-white font-semibold"
+                      : "text-white/60 hover:text-white"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-1.5">
+              {currentItem.type !== "video" && (
+                <button
+                  onClick={() => setZoomLevel((z) => (z === 1 ? 1.5 : z === 1.5 ? 2 : 1))}
+                  className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs text-white/80 transition font-mono"
+                  title="Toggle Zoom"
+                >
+                  {zoomLevel}x
+                </button>
+              )}
+              <button
+                onClick={handleCopyLink}
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition"
+                title="Copy Image URL"
+              >
+                {copied ? <GIconCheck size={14} className="text-emerald-400" /> : <GIconCopy size={14} />}
+              </button>
+              <button
+                onClick={handleDownload}
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition"
+                title="Download"
+              >
+                <GIconDownload size={14} />
+              </button>
+              <button
+                onClick={close}
+                className="p-1.5 hover:bg-white/20 rounded-lg text-white/80 hover:text-white transition ml-1"
+                aria-label="Close"
+              >
+                <GIconClose size={16} />
+              </button>
+            </div>
           </div>
-          <button onClick={(e) => { e.stopPropagation(); go(1); }} className="absolute right-1 sm:right-4 p-1.5 sm:p-2 hover:bg-white/10 rounded-full z-10 text-white" aria-label="Next">
-            <GIconChevronRight size={22} />
-          </button>
+
+          {/* Center Image/Video with Nav Buttons */}
+          <div className="relative w-full max-w-4xl flex-1 flex items-center justify-center my-2 overflow-hidden">
+            <button
+              onClick={(e) => { e.stopPropagation(); go(-1); }}
+              className="absolute left-1 sm:left-3 p-2 hover:bg-white/20 active:scale-90 rounded-full z-10 text-white/85 transition bg-black/40 backdrop-blur-sm"
+              aria-label="Previous"
+            >
+              <GIconChevronLeft size={24} />
+            </button>
+
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="max-h-[70vh] flex items-center justify-center overflow-auto"
+            >
+              {currentItem.type === "video" ? (
+                <video
+                  src={currentItem.src}
+                  poster={currentItem.poster}
+                  controls
+                  autoPlay
+                  muted
+                  className="rounded-2xl max-h-[68vh] w-full object-contain mx-auto bg-black shadow-2xl"
+                  style={{ filter: currentFilterStyle }}
+                />
+              ) : (
+                <img
+                  src={currentItem.src}
+                  alt={currentItem.caption}
+                  style={{
+                    filter: currentFilterStyle,
+                    transform: `scale(${zoomLevel})`,
+                    transition: "transform 250ms ease, filter 250ms ease"
+                  }}
+                  className="rounded-2xl max-h-[68vh] object-contain mx-auto shadow-2xl cursor-zoom-in"
+                  onClick={() => setZoomLevel((z) => (z === 1 ? 1.5 : z === 1.5 ? 2 : 1))}
+                />
+              )}
+            </div>
+
+            <button
+              onClick={(e) => { e.stopPropagation(); go(1); }}
+              className="absolute right-1 sm:right-3 p-2 hover:bg-white/20 active:scale-90 rounded-full z-10 text-white/85 transition bg-black/40 backdrop-blur-sm"
+              aria-label="Next"
+            >
+              <GIconChevronRight size={24} />
+            </button>
+          </div>
+
+          {/* Bottom Caption & Controls */}
+          <div
+            className="text-center z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-xs sm:text-sm text-white/90 font-medium">
+              {currentItem.caption} · <span className="text-accent">{currentItem.tag}</span>
+            </p>
+            <p className="text-[10px] text-white/40 mt-0.5 font-mono">
+              {(openIdx ?? 0) + 1} of {shown.length} · Arrow keys to navigate · Esc to close
+            </p>
+          </div>
         </div>
       )}
     </div>
