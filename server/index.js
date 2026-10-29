@@ -10,12 +10,7 @@ import { projects } from "./data/projects.js";
 import { updates } from "./data/updates.js";
 import { initialGuestbook } from "./data/guestbook.js";
 
-// A genuinely common cause of Node's fetch() throwing a bare "fetch failed"
-// on Windows: the OS reports IPv6 as available even when there's no real
-// route to the internet over it, and Node's default DNS ordering tries IPv6
-// first. Forcing IPv4-first resolution is the standard fix and is safe
-// everywhere — it doesn't affect requests to hosts that are IPv4-only or
-// dual-stack, only changes which address family gets tried first.
+// Force IPv4-first resolution for Windows networking stability
 dns.setDefaultResultOrder("ipv4first");
 
 const app = express();
@@ -25,19 +20,102 @@ app.use(express.json());
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
+// ---------- Activity Stream & Notifications ----------
+let activityFeed = [
+  { id: "act-1", type: "system", text: "Portfolio OS Kernel initialized and online", ts: Date.now() - 3600000 * 2 },
+  { id: "act-2", type: "guestbook", text: "Alex River signed the guestbook", ts: Date.now() - 3600000 },
+  { id: "act-3", type: "project", text: "SandreaLee Salon Customer App starred by a visitor", ts: Date.now() - 1800000 },
+];
+
+function addActivity(type, text) {
+  const item = {
+    id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    type,
+    text,
+    ts: Date.now()
+  };
+  activityFeed.unshift(item);
+  if (activityFeed.length > 50) activityFeed = activityFeed.slice(0, 50);
+  io.emit("activity:entry", item);
+}
+
+app.get("/api/activity/feed", (req, res) => res.json(activityFeed));
+
 // ---------- REST: projects / updates ----------
 app.get("/api/projects", (req, res) => res.json(projects));
 app.get("/api/updates", (req, res) => res.json(updates));
 
-// simple in-memory reactions on updates (resets on server restart)
+// In-memory project star/like reactions
+const projectLikes = {
+  "sandrealee-customer": 29,
+  "sandrealee-staff": 21,
+  "sandrealee-admin": 36,
+  "straive-ims": 18
+};
+
+app.get("/api/projects/likes", (req, res) => res.json(projectLikes));
+
+app.post("/api/projects/:id/like", (req, res) => {
+  const { id } = req.params;
+  projectLikes[id] = (projectLikes[id] || 0) + 1;
+  io.emit("project:liked", { id, count: projectLikes[id] });
+  const p = projects.find(item => item.id === id);
+  addActivity("project", `Project "${p ? p.title : id}" received a star!`);
+  res.json({ id, count: projectLikes[id] });
+});
+
+app.get("/api/projects/stats", (req, res) => {
+  const totalLikes = Object.values(projectLikes).reduce((a, b) => a + b, 0);
+  const stacks = Array.from(new Set(projects.flatMap(p => p.stack)));
+  res.json({
+    totalProjects: projects.length,
+    totalLikes,
+    categories: Array.from(new Set(projects.map(p => p.category))),
+    techStack: stacks,
+    lastUpdated: "2026"
+  });
+});
+
+// Simple in-memory reactions on updates (resets on server restart)
 const reactionCounts = {}; // { [updateId]: number }
 app.post("/api/updates/:id/react", (req, res) => {
   const { id } = req.params;
   reactionCounts[id] = (reactionCounts[id] || 0) + 1;
   io.emit("update:reacted", { id, count: reactionCounts[id] });
+  addActivity("update", `Update post #${id} received a heart reaction`);
   res.json({ id, count: reactionCounts[id] });
 });
 app.get("/api/updates/reactions", (req, res) => res.json(reactionCounts));
+
+// Contact / Hire Inquiry Endpoint
+const contactInquiries = [];
+app.post("/api/contact", (req, res) => {
+  const { name, email, subject, message } = req.body || {};
+  const cleanName = String(name || "").trim().slice(0, 60);
+  const cleanEmail = String(email || "").trim().slice(0, 100);
+  const cleanSubject = String(subject || "General Inquiry").trim().slice(0, 120);
+  const cleanMsg = String(message || "").trim().slice(0, 1000);
+
+  if (!cleanName || !cleanEmail || !cleanMsg) {
+    return res.status(400).json({ error: "Name, email, and message are required" });
+  }
+
+  const inquiry = {
+    id: `inq-${Date.now()}`,
+    name: cleanName,
+    email: cleanEmail,
+    subject: cleanSubject,
+    message: cleanMsg,
+    ts: Date.now()
+  };
+
+  contactInquiries.unshift(inquiry);
+  addActivity("contact", `Inquiry received from ${cleanName}: "${cleanSubject}"`);
+  res.status(201).json({
+    ok: true,
+    message: `Thank you, ${cleanName}! Your message was recorded. Bron will get back to ${cleanEmail} soon.`
+  });
+});
 
 app.get("/api/health", (req, res) => {
   res.set("Cache-Control", "no-store");
@@ -106,12 +184,10 @@ app.get("/api/system/metrics", (req, res) => {
   const freeMem = os.freemem();
   const usedPercent = Math.round(((totalMem - freeMem) / totalMem) * 100);
 
-  // Return a small history array for charts
   const count = 15;
   const now = Date.now();
   const points = [];
   for (let i = count - 1; i >= 0; i--) {
-    // Generate slight realistic variance around current values
     const jitter = Math.sin(i * 0.7) * 4;
     points.push({
       time: now - i * 2000,
@@ -167,6 +243,7 @@ app.post("/api/guestbook", (req, res) => {
 
   // Real-time broadcast to all connected clients
   io.emit("guestbook:entry", newEntry);
+  addActivity("guestbook", `${cleanName} (${cleanRole}) left a message in Guestbook`);
   res.status(201).json(newEntry);
 });
 
@@ -245,7 +322,7 @@ app.post("/api/terminal/exec", (req, res) => {
 
     case "curl": {
       const target = args[0] || "/api/health";
-      if (target === "/api/health" || target === "api/health") {
+      if (target.includes("health")) {
         return res.json({
           ok: true,
           output: JSON.stringify({
@@ -277,7 +354,6 @@ app.post("/api/terminal/exec", (req, res) => {
   }
 });
 
-// A realistic, current-looking browser User-Agent
 const BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
@@ -390,6 +466,7 @@ io.on("connection", (socket) => {
 
   socket.emit("chat:init", { name: guestName, history: chatHistory });
   io.emit("chat:presence", { online: onlineCount });
+  addActivity("visitor", `Visitor ${guestName} joined the desktop session`);
 
   socket.on("chat:rename", (newName) => {
     const clean = String(newName || "").trim().slice(0, 20);
@@ -407,11 +484,12 @@ io.on("connection", (socket) => {
       name: socket.data.name,
       text: clean,
       ts: Date.now(),
-      reactions: {} // emoji -> count
+      reactions: {}
     };
     chatHistory.push(msg);
     if (chatHistory.length > MAX_HISTORY) chatHistory = chatHistory.slice(-MAX_HISTORY);
     io.emit("chat:message", msg);
+    addActivity("chat", `${socket.data.name} sent a message in Chat`);
     if (typeof ack === "function") ack({ ok: true, message: msg });
   });
 

@@ -122,7 +122,7 @@ function StartMenu({ onClose }: { onClose: () => void }) {
 
 function TrayFlyout({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
-  const { openApp, reopenPicker } = useOS();
+  const { openApp, reopenPicker, toggleControlCenter } = useOS();
   useOutsideClick(ref, onClose);
   return (
     <div
@@ -131,6 +131,12 @@ function TrayFlyout({ onClose }: { onClose: () => void }) {
       style={POP_ANIM}
     >
       <div className="text-[10px] uppercase font-semibold text-white/40 tracking-wider px-1 pb-1">Quick Actions</div>
+      <button
+        onClick={() => { toggleControlCenter(); onClose(); }}
+        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-xs hover:bg-white/10 text-left text-white/85"
+      >
+        <GIconSliders size={14} className="text-sky-400" /> Quick Settings & Display
+      </button>
       <button
         onClick={() => { openApp("activity"); onClose(); }}
         className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-xs hover:bg-white/10 text-left text-white/85"
@@ -193,7 +199,7 @@ function DateFlyout({ onClose }: { onClose: () => void }) {
 }
 
 export default function WinTaskbar() {
-  const { openApp, windows, focusWindow, toggleSpotlight } = useOS();
+  const { openApp, windows, focusWindow, toggleSpotlight, toggleControlCenter, controlCenterOpen } = useOS();
   const [panel, setPanel] = useState<"start" | "tray" | "weather" | "date" | null>(null);
   const isMobile = useIsMobile();
   const [time, setTime] = useState("");
@@ -282,10 +288,18 @@ export default function WinTaskbar() {
         <button onClick={() => toggle("tray")} className="p-1.5 sm:p-2 rounded-xl hover:bg-white/10 active:bg-white/15 transition-colors shrink-0">
           <GIconChevronUp size={14} className={`text-white/50 transition-transform ${panel === "tray" ? "rotate-180" : ""}`} />
         </button>
-        <div className="hidden xs:flex items-center gap-2 sm:gap-3 px-2 sm:px-3 h-10 rounded-xl hover:bg-white/10 transition-colors cursor-default shrink-0">
-          <GIconSignal size={15} className="text-white/70" />
-          <GIconVolume size={15} className="text-white/70" />
-        </div>
+        <button
+          onClick={toggleControlCenter}
+          title="Quick Settings (Volume, Wi-Fi, Display)"
+          className={`hidden xs:flex items-center gap-2 sm:gap-2.5 px-2 sm:px-2.5 h-8 rounded-xl transition-all shrink-0 ${
+            controlCenterOpen
+              ? "bg-white/20 text-accent shadow-sm"
+              : "hover:bg-white/10 text-white/70 active:scale-95"
+          }`}
+        >
+          <GIconSignal size={14} />
+          <GIconVolume size={14} />
+        </button>
         <button onClick={() => toggle("date")} className="text-[10px] sm:text-[11px] leading-tight text-right border-l border-white/10 pl-2 sm:pl-3 pr-1 py-1 rounded-lg hover:bg-white/10 active:bg-white/15 transition-colors shrink-0">
           <div className="font-medium font-mono">{time}</div>
           <div className="text-white/50 hidden sm:block">{date}</div>
