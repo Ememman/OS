@@ -34,7 +34,16 @@ export const fileTree: FolderNode = {
     {
       name: "Games",
       type: "folder",
-      children: [{ name: "Blast It!.exe", type: "app-link", app: "games" }]
+      children: [
+        { name: "Blast It!.exe", type: "app-link", app: "games" },
+        { name: "2048 Puzzle.exe", type: "app-link", app: "games" },
+        { name: "Snake Retro.exe", type: "app-link", app: "games" },
+      ]
+    },
+    {
+      name: "CodePlay.app",
+      type: "app-link",
+      app: "codeplay"
     },
     {
       name: "Terminal.sh",
@@ -66,14 +75,14 @@ export const fileTree: FolderNode = {
       name: "Skills.txt",
       type: "text",
       content:
-        "React · React Native / Expo · Node.js · Express · MongoDB\nPHP (MVC) · MySQL · Socket.IO · Tailwind CSS · REST APIs"
+        "React · React Native / Expo · Node.js · Express · NestJS · MongoDB\nPHP (MVC) · MySQL · Socket.IO · Tailwind CSS · REST APIs · TypeScript"
     },
     { name: "resume.pdf", type: "app-link", app: "resume" },
     {
       name: "README.md",
       type: "text",
       content:
-        "This portfolio runs as a desktop-style OS — windows, a dock/taskbar, live widgets, and a real-time guest chat.\n\nSwitch between macOS and Windows 11 styles anytime from Settings."
+        "This portfolio runs as a desktop-style OS — windows, a dock/taskbar, live widgets, code playground, and a real-time guest chat.\n\nSwitch between macOS and Windows 11 styles anytime from Settings."
     }
   ]
 };

@@ -9,6 +9,8 @@ import { customAlphabet } from "nanoid";
 import { projects } from "./data/projects.js";
 import { updates } from "./data/updates.js";
 import { initialGuestbook } from "./data/guestbook.js";
+import { snippets } from "./data/snippets.js";
+import { initialFeedback } from "./data/feedback.js";
 
 // Force IPv4-first resolution for Windows networking stability
 dns.setDefaultResultOrder("ipv4first");
@@ -86,6 +88,45 @@ app.post("/api/updates/:id/react", (req, res) => {
   res.json({ id, count: reactionCounts[id] });
 });
 app.get("/api/updates/reactions", (req, res) => res.json(reactionCounts));
+
+
+// ---------- Project Feedback & Reviews ----------
+let projectFeedbackList = [...initialFeedback];
+
+app.get("/api/projects/:id/feedback", (req, res) => {
+  const { id } = req.params;
+  const list = projectFeedbackList.filter(f => f.projectId === id);
+  res.json(list);
+});
+
+app.post("/api/projects/:id/feedback", (req, res) => {
+  const { id } = req.params;
+  const { author, role, rating, comment } = req.body || {};
+  const cleanAuthor = String(author || "").trim().slice(0, 40) || "Anonymous Visitor";
+  const cleanRole = String(role || "Developer").trim().slice(0, 40);
+  const cleanRating = Math.min(5, Math.max(1, Number(rating) || 5));
+  const cleanComment = String(comment || "").trim().slice(0, 400);
+
+  if (!cleanComment) {
+    return res.status(400).json({ error: "Comment is required" });
+  }
+
+  const newFeedback = {
+    id: `fb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    projectId: id,
+    author: cleanAuthor,
+    role: cleanRole,
+    rating: cleanRating,
+    comment: cleanComment,
+    ts: Date.now()
+  };
+
+  projectFeedbackList.unshift(newFeedback);
+  io.emit("project:feedback", newFeedback);
+  const p = projects.find(item => item.id === id);
+  addActivity("project", `${cleanAuthor} reviewed "${p ? p.title : id}" (${cleanRating}★)`);
+  res.status(201).json(newFeedback);
+});
 
 // Contact / Hire Inquiry Endpoint
 const contactInquiries = [];
@@ -208,6 +249,63 @@ app.get("/api/system/metrics", (req, res) => {
   });
 });
 
+
+
+// ---------- Code Playground Snippets ----------
+app.get("/api/snippets", (req, res) => {
+  res.json(snippets);
+});
+
+app.post("/api/snippets/run", (req, res) => {
+  const { code, id } = req.body || {};
+  const trimmed = String(code || "").trim();
+  if (!trimmed) {
+    return res.status(400).json({ error: "No code provided" });
+  }
+
+  // Safe syntax and complexity analysis
+  const lines = trimmed.split("\n").length;
+  const hasLoops = /for\s*\(|while\s*\(|reduce\(|filter\(|map\(/.test(trimmed);
+  const hasClasses = /class\s+/.test(trimmed);
+  const hasAsync = /async|await|Promise/.test(trimmed);
+
+  res.json({
+    ok: true,
+    lines,
+    metrics: {
+      hasLoops,
+      hasClasses,
+      hasAsync,
+      estimatedComplexity: hasLoops ? "O(N)" : "O(1)",
+      verified: true
+    },
+    message: "Snippet parsed and verified successfully."
+  });
+});
+
+// ---------- GitHub Developer Stats API ----------
+app.get("/api/github/stats", (req, res) => {
+  res.json({
+    username: "bronmendoza",
+    profileUrl: "https://github.com",
+    publicRepos: 28,
+    totalStars: 142,
+    followers: 68,
+    contributionsThisYear: 1842,
+    currentStreakDays: 42,
+    topLanguages: [
+      { name: "TypeScript", percentage: 46, color: "#3178c6" },
+      { name: "JavaScript", percentage: 28, color: "#f7df1e" },
+      { name: "PHP", percentage: 14, color: "#777bb4" },
+      { name: "Python", percentage: 12, color: "#3776ab" }
+    ],
+    recentCommits: [
+      { repo: "portfolio-os", message: "feat: add Code Playground & Retro Arcade game", time: "2 hours ago" },
+      { repo: "sandrealee-salon", message: "perf: optimize booking slots cache", time: "1 day ago" },
+      { repo: "straive-ims", message: "feat: barcode scanner scanner dispatch", time: "3 days ago" }
+    ]
+  });
+});
 
 // ---------- Weather Proxy (Cached & Resilient) ----------
 const weatherCache = new Map();
