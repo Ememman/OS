@@ -36,6 +36,8 @@ import Calculator from "./components/apps/Calculator";
 import Notes from "./components/apps/Notes";
 import ActivityMonitor from "./components/apps/ActivityMonitor";
 import Guestbook from "./components/apps/Guestbook";
+import CodePlay from "./components/apps/CodePlay";
+import MissionControl from "./components/MissionControl";
 
 import {
   GIconResume,
@@ -45,6 +47,7 @@ import {
   GIconNotes,
   GIconActivity,
   GIconBookOpen,
+  GIconCode,
 } from "./components/icons/GravityIcons";
 
 const APP_COMPONENTS: Record<string, any> = {
@@ -62,6 +65,7 @@ const APP_COMPONENTS: Record<string, any> = {
   notes: Notes,
   activity: ActivityMonitor,
   guestbook: Guestbook,
+  codeplay: CodePlay,
 };
 
 export default function App() {
@@ -77,6 +81,7 @@ export default function App() {
     glassAlpha,
     widgetsVisible,
     toggleSpotlight,
+    toggleMissionControl,
     nightShift,
     notify,
   } = useOS();
@@ -109,11 +114,14 @@ export default function App() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         toggleSpotlight();
+      } else if (e.key === "F3" || ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "m")) {
+        e.preventDefault();
+        toggleMissionControl();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [toggleSpotlight]);
+  }, [toggleSpotlight, toggleMissionControl]);
 
   // Welcome toast notification on start
   useEffect(() => {
@@ -154,6 +162,7 @@ export default function App() {
       >
         <DesktopIcon icon={GIconResume} label="Resume" color="#4B5A73" onOpen={() => openApp("resume")} />
         <DesktopIcon icon={GIconGames} label="Games" color="#D98A4E" onOpen={() => openApp("games")} />
+        <DesktopIcon icon={GIconCode} label="CodePlay" color="#38bdf8" onOpen={() => openApp("codeplay")} />
         <DesktopIcon icon={GIconTerminal} label="Terminal" color="#22c55e" onOpen={() => openApp("terminal")} />
         <DesktopIcon icon={GIconNotes} label="Notes" color="#f59e0b" onOpen={() => openApp("notes")} />
         <DesktopIcon icon={GIconCalculator} label="Calculator" color="#06b6d4" onOpen={() => openApp("calculator")} />
@@ -205,6 +214,7 @@ export default function App() {
       {isWin ? <WinTaskbar /> : <Dock />}
       <MiniPlayer />
       <SpotlightSearch />
+      <MissionControl />
       <ControlCenter />
       <NotificationToast />
       {contextMenu && (
