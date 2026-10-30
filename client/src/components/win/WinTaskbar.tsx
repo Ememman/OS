@@ -29,10 +29,13 @@ import {
   GIconCalculator,
   GIconActivity,
   GIconBookOpen,
+  GIconCode,
+  GIconLayoutCells,
 } from "../icons/GravityIcons";
 
 const TASKBAR_ITEMS = [
   { app: "terminal", label: "Terminal", icon: GIconTerminal, color: "#22c55e" },
+  { app: "codeplay", label: "CodePlay", icon: GIconCode, color: "#38bdf8" },
   { app: "notes", label: "Notes", icon: GIconNotes, color: "#f59e0b" },
   { app: "calculator", label: "Calculator", icon: GIconCalculator, color: "#06b6d4" },
   { app: "activity", label: "Task Manager", icon: GIconActivity, color: "#10b981" },
@@ -199,7 +202,7 @@ function DateFlyout({ onClose }: { onClose: () => void }) {
 }
 
 export default function WinTaskbar() {
-  const { openApp, windows, focusWindow, toggleSpotlight, toggleControlCenter, controlCenterOpen } = useOS();
+  const { openApp, windows, focusWindow, toggleSpotlight, toggleControlCenter, controlCenterOpen, toggleMissionControl, missionControlOpen } = useOS();
   const [panel, setPanel] = useState<"start" | "tray" | "weather" | "date" | null>(null);
   const isMobile = useIsMobile();
   const [time, setTime] = useState("");
@@ -254,6 +257,16 @@ export default function WinTaskbar() {
           className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all"
         >
           <GIconSearch size={16} className="text-white/70" />
+        </button>
+
+        <button
+          onClick={toggleMissionControl}
+          title="Task View (F3 / Alt+Tab)"
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+            missionControlOpen ? "bg-white/20 text-accent shadow-sm" : "hover:bg-white/10 text-white/70 active:scale-95"
+          }`}
+        >
+          <GIconLayoutCells size={16} />
         </button>
 
         {TASKBAR_ITEMS.map(({ app, label, icon: Icon, color }) => {
