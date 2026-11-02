@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useOS } from "./store/useOS";
+import { applyHarmonizedPaletteToDoc } from "./lib/colorHarmonizer";
 import { useIsMobile, useIsTablet } from "./lib/useMediaQuery";
 import Wallpaper from "./components/Wallpaper";
 import MenuBar from "./components/MenuBar";
@@ -72,7 +73,8 @@ export default function App() {
   const {
     windows,
     openApp,
-    accent,
+    themeMode,
+    harmonizedPalette,
     reduceMotion,
     booted,
     osChosen,
@@ -101,8 +103,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    document.documentElement.style.setProperty("--accent", accent);
-  }, [accent]);
+    applyHarmonizedPaletteToDoc(harmonizedPalette, themeMode === "dark");
+  }, [harmonizedPalette, themeMode]);
 
   useEffect(() => {
     document.documentElement.style.setProperty("--glass-alpha", String(glassAlpha));

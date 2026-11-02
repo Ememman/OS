@@ -1,5 +1,7 @@
 export type OSMode = "mac" | "win";
 
+export type ThemeMode = "dark" | "light";
+
 export type DockPosition = "bottom" | "left" | "right";
 
 export type SnapLayout = "left" | "right" | "top" | "center" | "fullscreen";

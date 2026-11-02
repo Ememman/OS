@@ -24,6 +24,8 @@ export default function ControlCenter() {
     closeControlCenter,
     osMode,
     setOsMode,
+    themeMode,
+    setThemeMode,
     accent,
     setAccent,
     accents,
@@ -139,13 +141,36 @@ export default function ControlCenter() {
         </div>
 
         {/* Quick System Action Toggles */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
+          <button
+            onClick={() => {
+              const next = themeMode === "dark" ? "light" : "dark";
+              setThemeMode(next);
+              if (systemSounds) soundFx.playClick();
+            }}
+            className={`p-2 rounded-xl border text-center transition flex flex-col items-center gap-1 ${
+              themeMode === "light"
+                ? "bg-accent/20 border-accent/50 text-white"
+                : "bg-white/5 border-white/10 text-white/60 hover:text-white"
+            }`}
+            title="Toggle Dark / Light Theme"
+          >
+            {themeMode === "dark" ? (
+              <GIconMoon size={14} className="text-white/80" />
+            ) : (
+              <GIconSun size={14} className="text-amber-400" />
+            )}
+            <span className="text-[10px] font-medium leading-tight">
+              {themeMode === "dark" ? "Dark" : "Light"}
+            </span>
+          </button>
+
           <button
             onClick={() => {
               toggleParticles();
               if (systemSounds) soundFx.playClick();
             }}
-            className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center gap-1 ${
+            className={`p-2 rounded-xl border text-center transition flex flex-col items-center gap-1 ${
               particlesEnabled
                 ? "bg-accent/20 border-accent/50 text-white"
                 : "bg-white/5 border-white/10 text-white/60 hover:text-white"
@@ -160,7 +185,7 @@ export default function ControlCenter() {
               toggleWidgets();
               if (systemSounds) soundFx.playClick();
             }}
-            className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center gap-1 ${
+            className={`p-2 rounded-xl border text-center transition flex flex-col items-center gap-1 ${
               widgetsVisible
                 ? "bg-accent/20 border-accent/50 text-white"
                 : "bg-white/5 border-white/10 text-white/60 hover:text-white"
@@ -175,7 +200,7 @@ export default function ControlCenter() {
               toggleMotion();
               if (systemSounds) soundFx.playClick();
             }}
-            className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center gap-1 ${
+            className={`p-2 rounded-xl border text-center transition flex flex-col items-center gap-1 ${
               reduceMotion
                 ? "bg-accent/20 border-accent/50 text-white"
                 : "bg-white/5 border-white/10 text-white/60 hover:text-white"

@@ -763,7 +763,7 @@ export default function Guestbook() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] text-white/50 uppercase tracking-wide block font-mono flex items-center gap-1">
+                  <label className="text-[10px] text-white/50 uppercase tracking-wide block font-mono items-center gap-1">
                     <GIconMapPin size={10} />
                     <span>Location / Company</span>
                   </label>
