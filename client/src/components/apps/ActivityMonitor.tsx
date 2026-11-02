@@ -115,7 +115,6 @@ export default function ActivityMonitor() {
       if (res.ok) {
         const roundtrip = Math.round(performance.now() - start);
         setPingLatency(roundtrip);
-        notify("Ping Test Completed", `API Server round-trip response time: ${roundtrip}ms`);
       } else {
         setPingLatency(-1);
       }

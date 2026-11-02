@@ -183,10 +183,7 @@ export default function Settings() {
           {OS_MODE_OPTIONS.map((o) => (
             <button
               key={o.id}
-              onClick={() => {
-              setOsMode(o.id);
-              notify("Desktop Style", `Switched to ${o.label} mode.`, "update", 3000);
-            }}
+              onClick={() => setOsMode(o.id)}
               className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm transition-all duration-200 ${
                 osMode === o.id
                   ? "border-accent bg-accent/15 text-white shadow-lg shadow-accent/10"
@@ -207,10 +204,7 @@ export default function Settings() {
         </p>
         <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <button
-            onClick={() => {
-              setThemeMode("dark");
-              notify("Dark Mode", "Applied dark theme and calibrated accent.", "update", 3000);
-            }}
+            onClick={() => setThemeMode("dark")}
             className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm transition-all duration-200 ${
               themeMode === "dark"
                 ? "border-accent bg-accent/15 text-white shadow-lg shadow-accent/10"
@@ -224,10 +218,7 @@ export default function Settings() {
             {themeMode === "dark" && <GIconCheck size={14} className="text-accent shrink-0" />}
           </button>
           <button
-            onClick={() => {
-              setThemeMode("light");
-              notify("Light Mode", "Applied light theme and calibrated accent.", "update", 3000);
-            }}
+            onClick={() => setThemeMode("light")}
             className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm transition-all duration-200 ${
               themeMode === "light"
                 ? "border-accent bg-accent/15 text-white shadow-lg shadow-accent/10"
@@ -253,10 +244,7 @@ export default function Settings() {
             {DOCK_POSITION_OPTIONS.map((o) => (
               <button
                 key={o.id}
-                onClick={() => {
-                  setDockPosition(o.id);
-                  notify("Dock Position", `Moved dock to ${o.label.toLowerCase()}.`, "update", 2500);
-                }}
+                onClick={() => setDockPosition(o.id)}
                 className={`flex flex-col items-center gap-1.5 px-2 py-2.5 sm:py-3 rounded-xl border text-xs transition-all duration-200 ${
                   dockPosition === o.id
                     ? "border-accent bg-accent/15 text-white shadow-lg shadow-accent/10"
@@ -287,10 +275,7 @@ export default function Settings() {
             const imageUrl = PREVIEW_IMAGES[w.id];
             const hasError = imageErrors[w.id];
             return (
-              <button key={w.id} onClick={() => {
-                setWallpaper(w.id);
-                notify("Wallpaper Changed", `Applied "${info.name}" background.`, "update", 3000);
-              }} className="group text-left">
+              <button key={w.id} onClick={() => setWallpaper(w.id)} className="group text-left">
                 <div
                   className={`relative aspect-video rounded-lg border-2 overflow-hidden transition-all duration-200 ${
                     isSelected ? "border-accent shadow-lg shadow-accent/20 scale-[1.02]" : "border-white/10 group-hover:border-white/30 group-hover:scale-[1.02]"
@@ -341,10 +326,7 @@ export default function Settings() {
             return (
               <button
                 key={a.value}
-                onClick={() => {
-                  setAccent(a.value);
-                  notify("Accent Updated", `Applied "${a.name}" accent.`, "update", 3000);
-                }}
+                onClick={() => setAccent(a.value)}
                 title={a.name}
                 className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border-2 transition-all duration-200 hover:scale-110 ${
                   isSelected ? "border-white scale-110 shadow-lg shadow-white/20" : "border-transparent hover:border-white/30"
@@ -364,11 +346,7 @@ export default function Settings() {
             <input
               type="color"
               value={harmonizedPalette?.hex || "#e8543f"}
-              onChange={(e) => {
-                const hex = e.target.value;
-                setAccent(hex);
-                notify("Custom Accent", `Harmonized custom color ${hex}.`, "update", 3000);
-              }}
+              onChange={(e) => setAccent(e.target.value)}
               className="absolute inset-0 opacity-0 cursor-pointer"
             />
             <span className="text-white/60 text-xs font-bold select-none">+</span>

@@ -70,7 +70,6 @@ export default function Gallery() {
     navigator.clipboard?.writeText(window.location.origin + currentItem.src);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    notify("Link Copied", "Image link copied to clipboard.", "update", 2200);
   };
 
   const handleDownload = () => {

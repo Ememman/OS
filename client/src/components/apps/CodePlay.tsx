@@ -185,7 +185,6 @@ export default function CodePlay() {
     setOutputLogs([]);
     setExecTime(null);
     setSqlResult(null);
-    notify("Editor Reset", `Restored "${activeTemplate.title}" to default template.`);
   };
 
   // Get current active editor code string
@@ -314,7 +313,6 @@ export default function CodePlay() {
     navigator.clipboard?.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    notify("Copied", `${selectedLang.toUpperCase()} code copied to clipboard.`);
   };
 
   // Download / Export snippet

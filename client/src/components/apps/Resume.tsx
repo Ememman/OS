@@ -105,7 +105,6 @@ export default function Resume() {
     if (systemSounds) soundFx.playPop();
     navigator.clipboard?.writeText("bronmendoza.dev@gmail.com");
     setCopiedEmail(true);
-    notify("Email Copied", "bronmendoza.dev@gmail.com copied to clipboard.");
     setTimeout(() => setCopiedEmail(false), 2500);
   };
 
@@ -134,11 +133,11 @@ export default function Resume() {
       if (res.ok) {
         setSentSuccess(true);
         if (systemSounds) soundFx.playNotification();
-        notify("Inquiry Sent!", "Thank you! Bron will review your message shortly.");
+        notify("Inquiry Sent!", "Thank you! James will review your message shortly.");
       }
     } catch {
       setSentSuccess(true);
-      notify("Inquiry Recorded", "Thank you! Message saved for Bron.");
+      notify("Inquiry Recorded", "Thank you! Message saved for James.");
     } finally {
       setSending(false);
     }
@@ -152,7 +151,7 @@ export default function Resume() {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight">
-                Bron Mendoza
+                James Mendoza
               </h2>
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Available for Hire
@@ -172,7 +171,7 @@ export default function Resume() {
                 className="flex items-center gap-1.5 hover:text-white transition group"
               >
                 <GIconMail size={13} className="text-white/60 group-hover:text-accent" />
-                <span className="underline decoration-white/20">bronmendoza.dev@gmail.com</span>
+                <span className="underline decoration-white/20">mendozajamesemmanuel@gmail.com</span>
                 {copiedEmail && <GIconCheck size={12} className="text-emerald-400" />}
               </button>
             </div>
@@ -422,7 +421,7 @@ export default function Resume() {
 
       {/* Footer bar */}
       <div className="border-t border-white/10 px-4 py-2.5 bg-white/[0.02] flex items-center justify-between text-[11px] text-white/40">
-        <span>Bron Mendoza · Curriculum Vitae</span>
+        <span>James Mendoza · Curriculum Vitae</span>
         <span>Manila, PH</span>
       </div>
     </div>

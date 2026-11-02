@@ -150,5 +150,7 @@ export const GIconCamera = (props: any) => <GravityIcon icon={(GIcons as any).Ca
 export const GIconGlobe = (props: any) => <GravityIcon icon={(GIcons as any).Globe} {...props} />;
 export const GIconLink = (props: any) => <GravityIcon icon={(GIcons as any).Link || (GIcons as any).ArrowUpRightFromSquare} {...props} />;
 export const GIconUpload = (props: any) => <GravityIcon icon={(GIcons as any).ArrowUpFromLine || (GIcons as any).ArrowUpFromSquare} {...props} />;
+export const GIconCircleInfo = (props: any) => <GravityIcon icon={GIcons.CircleInfo} {...props} />;
+export const GIconBell = (props: any) => <GravityIcon icon={GIcons.Bell} {...props} />;
 
 export default GIcons;

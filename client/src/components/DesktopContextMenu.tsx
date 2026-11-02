@@ -34,7 +34,6 @@ export default function DesktopContextMenu({ x, y, onClose, widgetsVisible }: Co
     closeAllWindows,
     minimizeAllWindows,
     toggleMissionControl,
-    notify,
   } = useOS();
 
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -167,7 +166,6 @@ export default function DesktopContextMenu({ x, y, onClose, widgetsVisible }: Co
       <button
         onClick={() => {
           toggleWidgets();
-          notify("Desktop Widgets", widgetsVisible ? "Widgets hidden" : "Widgets shown");
           onClose();
         }}
         className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors text-left"
@@ -181,7 +179,6 @@ export default function DesktopContextMenu({ x, y, onClose, widgetsVisible }: Co
       <button
         onClick={() => {
           toggleParticles();
-          notify("Starfield Animation", particlesEnabled ? "Particles paused" : "Particles active");
           onClose();
         }}
         className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors text-left"
@@ -196,7 +193,6 @@ export default function DesktopContextMenu({ x, y, onClose, widgetsVisible }: Co
         onClick={() => {
           const next = osMode === "win" ? "mac" : "win";
           setOsMode(next);
-          notify("OS Switched", next === "win" ? "Windows 11 Mode" : "macOS Sequoia Mode");
           onClose();
         }}
         className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors text-left"

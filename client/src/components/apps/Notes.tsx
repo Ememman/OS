@@ -111,7 +111,6 @@ export default function Notes() {
     setNotes((prev) =>
       prev.map((n) => (n.id === id ? { ...n, pinned: !n.pinned } : n))
     );
-    notify(willPin ? "Note Pinned" : "Note Unpinned", `"${target?.title || "Note"}" ${willPin ? "pinned to top" : "unpinned"}.`, "update", 2200);
   };
 
   const deleteNote = (id: string) => {
@@ -135,7 +134,6 @@ export default function Notes() {
       navigator.clipboard?.writeText(activeNote.content);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      notify("Note Copied", `Copied "${activeNote.title}" markdown to clipboard.`, "update", 2200);
     }
   };
 

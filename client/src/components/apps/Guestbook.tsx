@@ -363,7 +363,6 @@ export default function Guestbook() {
         item.id === id ? { ...item, reactions: (item.reactions || 0) + 1 } : item
       )
     );
-    notify("Appreciation Sent", "Hearted signature note.", "update", 2000);
 
     try {
       await fetch(`${API_URL}/api/guestbook/${id}/react`, { method: "POST" });
@@ -391,7 +390,6 @@ export default function Guestbook() {
     navigator.clipboard?.writeText(textToCopy);
     setCopiedId(item.id);
     setTimeout(() => setCopiedId(null), 2000);
-    notify("Copied", "Guestbook message copied to clipboard.", "update", 2000);
   };
 
   // Filtered and sorted entries
@@ -670,10 +668,7 @@ export default function Guestbook() {
                     {photoUrl && (
                       <button
                         type="button"
-                        onClick={() => {
-                          setCustomPhoto(photoUrl);
-                          notify("Applied OS Photo", "Using your desktop user photo.", "update", 2000);
-                        }}
+                        onClick={() => setCustomPhoto(photoUrl)}
                         className="px-2.5 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.08] text-white/70 hover:text-white text-[11px] transition cursor-pointer"
                         title="Use desktop profile photo"
                       >

@@ -125,45 +125,6 @@ export default function Library() {
     setSubmittingReview(false);
   };
 
-
-
-  useEffect(() => {
-    if (!active) {
-      setReviews([]);
-      return;
-    }
-    fetch(`${API_URL}/api/projects/${active.id}/feedback`)
-      .then((r) => r.json())
-      .then((data) => Array.isArray(data) && setReviews(data))
-      .catch(() => {});
-  }, [active]);
-
-  const handleReviewSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!active || !reviewComment.trim()) return;
-    setSubmittingReview(true);
-    try {
-      const res = await fetch(`${API_URL}/api/projects/${active.id}/feedback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          author: reviewAuthor.trim() || "Anonymous Visitor",
-          role: reviewRole,
-          rating: reviewRating,
-          comment: reviewComment.trim(),
-        }),
-      });
-      if (res.ok) {
-        const item = await res.json();
-        setReviews((prev) => [item, ...prev]);
-        setReviewComment("");
-        if (systemSounds) soundFx.playNotification();
-        notify("Review Posted!", "Thank you for reviewing this project!");
-      }
-    } catch {}
-    setSubmittingReview(false);
-  };
-
   const handleLike = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (systemSounds) soundFx.playPop();
