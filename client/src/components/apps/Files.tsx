@@ -9,6 +9,7 @@ import {
   GIconStar,
   GIconChevronRight,
   GIconTerminal,
+  GIconCode,
   GIconNotes,
   GIconCalculator,
   GIconPlus,
@@ -26,6 +27,7 @@ const FAVORITES = [
   { label: "Skills", path: [], target: "Skills.txt" },
   { label: "Terminal", path: [], target: "Terminal.sh" },
   { label: "Notes", path: [], target: "Notes.app" },
+  { label: "CodePlay", path: [], target: "CodePlay.app" },
   { label: "Calculator", path: [], target: "Calculator.app" },
   { label: "Projects", path: ["Projects"] },
   { label: "Gallery", path: ["Gallery"] }
@@ -48,6 +50,9 @@ function resolvePath(path: string[], customFiles: FileItem[]): FolderNode {
 }
 
 function Icon({ item }: { item: any }) {
+  if (item.name?.toLowerCase().includes("codeplay") || item.app === "codeplay") {
+    return <GIconCode size={item._size || 32} className="text-sky-400" />;
+  }
   if (item.name?.toLowerCase().includes("terminal") || item.app === "terminal") {
     return <GIconTerminal size={item._size || 32} className="text-emerald-400" />;
   }

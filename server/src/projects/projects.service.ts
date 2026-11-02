@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { projects } from "../../data/projects.js";
+import { initialFeedback } from "../../data/feedback.js";
 
 export interface Project {
   id: string;
@@ -13,15 +14,26 @@ export interface Project {
   links: { repo: string; live: string };
 }
 
+export interface ProjectFeedback {
+  id: string;
+  projectId: string;
+  author: string;
+  role: string;
+  rating: number;
+  comment: string;
+  ts: number;
+}
+
 @Injectable()
 export class ProjectsService {
   private readonly projectList: Project[] = projects as Project[];
   private readonly likes: Record<string, number> = {
     "sandrealee-customer": 29,
-    "sandrealee-staff": 19,
+    "sandrealee-staff": 21,
     "sandrealee-admin": 36,
     "straive-ims": 18
   };
+  private readonly feedbackList: ProjectFeedback[] = [...initialFeedback] as ProjectFeedback[];
 
   findAll(): Project[] {
     return this.projectList;
@@ -50,5 +62,32 @@ export class ProjectsService {
       techStack: stacks,
       lastUpdated: "2026"
     };
+  }
+
+  getFeedback(projectId: string): ProjectFeedback[] {
+    return this.feedbackList.filter((f) => f.projectId === projectId);
+  }
+
+  addFeedback(
+    projectId: string,
+    data: { author?: string; role?: string; rating?: number; comment: string }
+  ): ProjectFeedback {
+    const cleanAuthor = String(data.author || "").trim().slice(0, 40) || "Anonymous Visitor";
+    const cleanRole = String(data.role || "Developer").trim().slice(0, 40);
+    const cleanRating = Math.min(5, Math.max(1, Number(data.rating) || 5));
+    const cleanComment = String(data.comment || "").trim().slice(0, 400);
+
+    const newFeedback: ProjectFeedback = {
+      id: `fb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      projectId,
+      author: cleanAuthor,
+      role: cleanRole,
+      rating: cleanRating,
+      comment: cleanComment,
+      ts: Date.now()
+    };
+
+    this.feedbackList.unshift(newFeedback);
+    return newFeedback;
   }
 }

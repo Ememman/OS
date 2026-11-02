@@ -43,6 +43,7 @@ export default function ControlCenter() {
     toggleSystemSounds,
     chatSound,
     toggleChatSound,
+    toggleMissionControl,
   } = useOS();
 
   const { queue, queueIdx, playing, togglePlay, volume, setVolume } = usePlayer();
@@ -144,29 +145,6 @@ export default function ControlCenter() {
         <div className="grid grid-cols-4 gap-2">
           <button
             onClick={() => {
-              const next = themeMode === "dark" ? "light" : "dark";
-              setThemeMode(next);
-              if (systemSounds) soundFx.playClick();
-            }}
-            className={`p-2 rounded-xl border text-center transition flex flex-col items-center gap-1 ${
-              themeMode === "light"
-                ? "bg-accent/20 border-accent/50 text-white"
-                : "bg-white/5 border-white/10 text-white/60 hover:text-white"
-            }`}
-            title="Toggle Dark / Light Theme"
-          >
-            {themeMode === "dark" ? (
-              <GIconMoon size={14} className="text-white/80" />
-            ) : (
-              <GIconSun size={14} className="text-amber-400" />
-            )}
-            <span className="text-[10px] font-medium leading-tight">
-              {themeMode === "dark" ? "Dark" : "Light"}
-            </span>
-          </button>
-
-          <button
-            onClick={() => {
               toggleParticles();
               if (systemSounds) soundFx.playClick();
             }}
@@ -208,6 +186,16 @@ export default function ControlCenter() {
           >
             <GIconSliders size={14} />
             <span className="text-[10px] font-medium leading-tight">No Motion</span>
+          </button>
+          <button
+            onClick={() => {
+              toggleMissionControl();
+              if (systemSounds) soundFx.playClick();
+            }}
+            className="p-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-center transition flex flex-col items-center gap-1"
+          >
+            <GIconLayoutCells size={14} />
+            <span className="text-[10px] font-medium leading-tight">Task View</span>
           </button>
         </div>
 

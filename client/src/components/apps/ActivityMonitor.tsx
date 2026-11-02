@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useOS } from "../../store/useOS";
 import { soundFx } from "../../lib/soundFx";
 import { API_URL } from "../../lib/config";
-import { getSocket } from "../../lib/socket";
 import {
   GIconActivity,
   GIconCpu,
@@ -101,59 +100,10 @@ export default function ActivityMonitor() {
     }
   };
 
-    useEffect(() => {
+  useEffect(() => {
     fetchDiagnostics();
-
-    const socket = getSocket();
-    const onTelemetry = (data: {
-      time: number;
-      cpuPercent: number;
-      memoryMb: number;
-      systemPercent: number;
-      connectedClients: number;
-      uptimeSeconds: number;
-    }) => {
-      setMetrics((prev) => {
-        const point = {
-          time: data.time,
-          cpuPercent: data.cpuPercent,
-          memoryMb: data.memoryMb,
-          systemPercent: data.systemPercent,
-        };
-        return [...prev.slice(-14), point];
-      });
-
-      setSysInfo((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          memory: prev.memory ? {
-            ...prev.memory,
-            heapUsedMb: data.memoryMb,
-            usagePercent: data.systemPercent,
-          } : prev.memory,
-          realtime: {
-            connectedClients: data.connectedClients,
-          },
-          node: prev.node ? {
-            ...prev.node,
-            uptimeSeconds: data.uptimeSeconds,
-          } : prev.node,
-        };
-      });
-    };
-
-    socket.on("system:telemetry", onTelemetry);
-
-    // Fallback polling only when socket is disconnected
-    const interval = setInterval(() => {
-      if (!socket.connected) fetchDiagnostics();
-    }, 5000);
-
-    return () => {
-      socket.off("system:telemetry", onTelemetry);
-      clearInterval(interval);
-    };
+    const interval = setInterval(fetchDiagnostics, 2500);
+    return () => clearInterval(interval);
   }, []);
 
   const runPingTest = async () => {
