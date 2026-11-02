@@ -26,8 +26,19 @@ export default function Window({ win, children }) {
   const isWin = osMode === "win";
   const isMobile = useIsMobile();
   const isFocused = win.z === Math.max(...windows.map((w) => w.z));
-  const dragRef = useRef(null);
-  const resizeStart = useRef(null);
+  const windowRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
+  const resizeStart = useRef<{ startX: number; startY: number; w: number; h: number } | null>(null);
+  const rafId = useRef<number | null>(null);
+  const [isInteracting, setIsInteracting] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    };
+  }, []);
 
   // Snap layout menu state
   const [showSnapMenu, setShowSnapMenu] = useState(false);
@@ -93,50 +104,146 @@ export default function Window({ win, children }) {
   const requestClose = () => runExit("closing", () => closeWindow(win.id));
   const requestMinimize = () => runExit("minimizing", () => minimizeWindow(win.id));
 
-  const onDragStart = useCallback(
-    (e) => {
+    const onDragStart = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if ((e.target as HTMLElement).closest("button, a, input, select, textarea")) return;
       if (win.maximized || isMobile) return;
       focusWindow(win.id);
+
+      const el = windowRef.current;
+      if (!el) return;
+
       const startX = e.clientX;
       const startY = e.clientY;
       const originX = win.x;
       const originY = win.y;
       dragRef.current = { startX, startY, originX, originY };
 
-      const onMove = (ev) => {
+      let latestX = originX;
+      let latestY = originY;
+
+      el.style.transition = "none";
+      el.style.willChange = "left, top";
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "grabbing";
+      setIsInteracting(true);
+
+      const onMove = (ev: PointerEvent) => {
+        if (!dragRef.current) return;
         const dx = ev.clientX - dragRef.current.startX;
         const dy = ev.clientY - dragRef.current.startY;
-        moveWindow(win.id, Math.max(0, dragRef.current.originX + dx), Math.max(28, dragRef.current.originY + dy));
+        latestX = Math.max(0, Math.min(window.innerWidth - 80, dragRef.current.originX + dx));
+        latestY = Math.max(28, Math.min(window.innerHeight - 60, dragRef.current.originY + dy));
+
+        if (!rafId.current) {
+          rafId.current = requestAnimationFrame(() => {
+            if (windowRef.current) {
+              windowRef.current.style.left = `${latestX}px`;
+              windowRef.current.style.top = `${latestY}px`;
+            }
+            rafId.current = null;
+          });
+        }
       };
+
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onUp);
+
+        if (rafId.current) {
+          cancelAnimationFrame(rafId.current);
+          rafId.current = null;
+        }
+
+        if (windowRef.current) {
+          windowRef.current.style.transition = "";
+          windowRef.current.style.willChange = "auto";
+        }
+        document.body.style.userSelect = "";
+        document.body.style.cursor = "";
+        setIsInteracting(false);
+        dragRef.current = null;
+
+        moveWindow(win.id, latestX, latestY);
       };
-      window.addEventListener("pointermove", onMove);
+
+      window.addEventListener("pointermove", onMove, { passive: true });
       window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onUp);
     },
-    [win, moveWindow, focusWindow, isMobile]
+    [win.id, win.x, win.y, win.maximized, isMobile, focusWindow, moveWindow]
   );
 
   const onResizeStart = useCallback(
-    (e) => {
+    (e: React.PointerEvent<HTMLDivElement>) => {
       e.stopPropagation();
+      if (win.maximized || isMobile) return;
+      focusWindow(win.id);
+
+      const el = windowRef.current;
+      if (!el) return;
+
       const startX = e.clientX;
       const startY = e.clientY;
-      resizeStart.current = { startX, startY, w: win.w, h: win.h };
-      const onMove = (ev) => {
+      const startW = win.w;
+      const startH = win.h;
+      resizeStart.current = { startX, startY, w: startW, h: startH };
+
+      let latestW = startW;
+      let latestH = startH;
+
+      el.style.transition = "none";
+      el.style.willChange = "width, height";
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "se-resize";
+      setIsInteracting(true);
+
+      const onMove = (ev: PointerEvent) => {
+        if (!resizeStart.current) return;
         const dx = ev.clientX - resizeStart.current.startX;
         const dy = ev.clientY - resizeStart.current.startY;
-        resizeWindow(win.id, Math.max(320, resizeStart.current.w + dx), Math.max(260, resizeStart.current.h + dy));
+        latestW = Math.max(320, Math.min(window.innerWidth - 20, resizeStart.current.w + dx));
+        latestH = Math.max(260, Math.min(window.innerHeight - 60, resizeStart.current.h + dy));
+
+        if (!rafId.current) {
+          rafId.current = requestAnimationFrame(() => {
+            if (windowRef.current) {
+              windowRef.current.style.width = `${latestW}px`;
+              windowRef.current.style.height = `${latestH}px`;
+            }
+            rafId.current = null;
+          });
+        }
       };
+
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onUp);
+
+        if (rafId.current) {
+          cancelAnimationFrame(rafId.current);
+          rafId.current = null;
+        }
+
+        if (windowRef.current) {
+          windowRef.current.style.transition = "";
+          windowRef.current.style.willChange = "auto";
+        }
+        document.body.style.userSelect = "";
+        document.body.style.cursor = "";
+        setIsInteracting(false);
+        resizeStart.current = null;
+
+        resizeWindow(win.id, latestW, latestH);
       };
-      window.addEventListener("pointermove", onMove);
+
+      window.addEventListener("pointermove", onMove, { passive: true });
       window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onUp);
     },
-    [win, resizeWindow]
+    [win.id, win.w, win.h, win.maximized, isMobile, focusWindow, resizeWindow]
   );
 
   if (win.minimized) return null;
@@ -186,8 +293,9 @@ export default function Window({ win, children }) {
     ...baseStyle,
     transform,
     opacity,
-    transition:
-      "left 240ms cubic-bezier(.16, 1, 0.3, 1), top 240ms cubic-bezier(.16, 1, 0.3, 1), width 240ms cubic-bezier(.16, 1, 0.3, 1), height 240ms cubic-bezier(.16, 1, 0.3, 1), transform 220ms cubic-bezier(.4,0,.2,1), opacity 200ms ease, box-shadow 180ms ease",
+    transition: isInteracting
+      ? "none"
+      : "left 240ms cubic-bezier(.16, 1, 0.3, 1), top 240ms cubic-bezier(.16, 1, 0.3, 1), width 240ms cubic-bezier(.16, 1, 0.3, 1), height 240ms cubic-bezier(.16, 1, 0.3, 1), transform 220ms cubic-bezier(.4,0,.2,1), opacity 200ms ease, box-shadow 180ms ease",
   };
 
   const renderSnapFlyout = () => {
@@ -267,6 +375,7 @@ export default function Window({ win, children }) {
 
   return (
     <div
+      ref={windowRef}
       className={`absolute glass shadow-2xl flex flex-col overflow-hidden transition-shadow ${isWin ? "rounded-lg" : "rounded-2xl"} ${
         isFocused ? "ring-1 ring-white/15" : "brightness-[0.82] saturate-[0.85]"
       }`}
@@ -334,7 +443,7 @@ export default function Window({ win, children }) {
         )}
       </div>
       {renderSnapFlyout()}
-      <div className="flex-1 min-h-0 thin-scroll overflow-auto allow-select">{children}</div>
+      <div className={`flex-1 min-h-0 thin-scroll overflow-auto allow-select ${isInteracting ? "pointer-events-none select-none" : ""}`}>{children}</div>
       {!win.maximized && !isMobile && (
         <div
           onPointerDown={onResizeStart}

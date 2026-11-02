@@ -50,6 +50,9 @@ interface OSState {
   controlCenterOpen: boolean;
   toggleControlCenter: () => void;
   closeControlCenter: () => void;
+  missionControlOpen: boolean;
+  toggleMissionControl: () => void;
+  closeMissionControl: () => void;
   snapWindow: (id: string, layout: SnapLayout) => void;
   closeAllWindows: () => void;
   minimizeAllWindows: () => void;
@@ -82,6 +85,7 @@ export const APPS: Record<string, AppMetadata> = {
   notes: { title: "Notes", w: 740, h: 520 },
   activity: { title: "Activity Monitor", w: 760, h: 520 },
   guestbook: { title: "Guestbook", w: 780, h: 540 },
+  codeplay: { title: "CodePlay Sandbox", w: 840, h: 560 },
   updates: { title: "Updates", w: 620, h: 640 },
   chats: { title: "Chats", w: 420, h: 620 },
   gallery: { title: "Gallery", w: 880, h: 600 },
@@ -224,6 +228,14 @@ export const useOS = create<OSState>((set, get) => ({
   controlCenterOpen: false,
   toggleControlCenter: () => set((s) => ({ controlCenterOpen: !s.controlCenterOpen })),
   closeControlCenter: () => set({ controlCenterOpen: false }),
+
+  // Mission Control / Exposé Overview
+  missionControlOpen: false,
+  toggleMissionControl: () => {
+    if (get().systemSounds) soundFx.playPop();
+    set((s) => ({ missionControlOpen: !s.missionControlOpen }));
+  },
+  closeMissionControl: () => set({ missionControlOpen: false }),
 
   // Window snap layout engine
   snapWindow: (id, layout) => {
