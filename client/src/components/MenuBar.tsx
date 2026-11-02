@@ -420,7 +420,20 @@ export default function MenuBar() {
       </div>
 
       <div className="flex items-center gap-2.5 sm:gap-3 text-white/70">
-        {/* Spotlight Trigger */}
+                {/* Mission Control Button */}
+        <button
+          onClick={toggleMissionControl}
+          title="Mission Control (F3)"
+          className={`flex items-center justify-center p-1.5 rounded-lg transition-all ${
+            missionControlOpen
+              ? "bg-accent text-white shadow-md shadow-accent/20"
+              : "hover:bg-white/10 text-white/80 hover:text-white"
+          }`}
+        >
+          <GIconLayoutCells size={15} />
+        </button>
+
+{/* Spotlight Trigger */}
         <button
           onClick={openSpotlight}
           title="Spotlight Search (⌘K)"

@@ -532,7 +532,7 @@ export default function Terminal() {
       {/* Quick command buttons for convenience */}
       <div className="relative z-10 px-3 py-1.5 bg-[#05070c]/90 border-t border-white/10 flex items-center gap-1.5 overflow-x-auto no-scrollbar select-none">
         <span className="text-[10px] text-white/40 shrink-0">Quick:</span>
-        {["help", "sysinfo", "ping", "quote", "joke", "guestbook", "neofetch", "clear"].map((cmd) => (
+        {["help", "sysinfo", "codeplay", "snake", "github", "mission", "ping", "guestbook", "neofetch", "clear"].map((cmd) => (
           <button
             key={cmd}
             onClick={() => handleCommand(cmd)}
