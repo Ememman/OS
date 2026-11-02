@@ -372,11 +372,13 @@ app.get("/api/guestbook", (req, res) => {
 });
 
 app.post("/api/guestbook", (req, res) => {
-  const { name, role, avatar, message } = req.body || {};
-  const cleanName = String(name || "").trim().slice(0, 30);
+  const { name, role, avatar, message, link, location } = req.body || {};
+  const cleanName = String(name || "").trim().slice(0, 40);
   const cleanRole = String(role || "Visitor").trim().slice(0, 30);
-  const cleanAvatar = String(avatar || "👋").trim().slice(0, 8);
-  const cleanMsg = String(message || "").trim().slice(0, 400);
+  const cleanAvatar = String(avatar || "lorelei:guest").trim().slice(0, 500000);
+  const cleanMsg = String(message || "").trim().slice(0, 500);
+  const cleanLink = String(link || "").trim().slice(0, 200);
+  const cleanLocation = String(location || "").trim().slice(0, 80);
 
   if (!cleanName || !cleanMsg) {
     return res.status(400).json({ error: "Name and message are required" });
@@ -388,6 +390,8 @@ app.post("/api/guestbook", (req, res) => {
     role: cleanRole,
     avatar: cleanAvatar,
     message: cleanMsg,
+    link: cleanLink || undefined,
+    location: cleanLocation || undefined,
     ts: Date.now(),
     reactions: 0
   };
@@ -411,6 +415,18 @@ app.post("/api/guestbook/:id/react", (req, res) => {
   entry.reactions = (entry.reactions || 0) + 1;
   io.emit("guestbook:reacted", { id, reactions: entry.reactions });
   res.json({ id, reactions: entry.reactions });
+});
+
+app.delete("/api/guestbook/:id", (req, res) => {
+  const { id } = req.params;
+  const initialLen = guestbookEntries.length;
+  guestbookEntries = guestbookEntries.filter((e) => e.id !== id);
+  if (guestbookEntries.length === initialLen) {
+    return res.status(404).json({ error: "Entry not found" });
+  }
+  io.emit("guestbook:deleted", { id });
+  addActivity("guestbook", "A signature was removed from Guestbook");
+  res.json({ success: true, id });
 });
 
 // ---------- Interactive Terminal Backend Execution ----------

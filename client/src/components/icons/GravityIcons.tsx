@@ -146,4 +146,9 @@ export const GIconPin = (props: any) => <GravityIcon icon={GIcons.Pin || GIcons.
 export const GIconEye = (props: any) => <GravityIcon icon={GIcons.Eye || GIcons.Magnifier} {...props} />;
 export const GIconCopy = (props: any) => <GravityIcon icon={GIcons.Copy || GIcons.File} {...props} />;
 
+export const GIconCamera = (props: any) => <GravityIcon icon={(GIcons as any).Camera} {...props} />;
+export const GIconGlobe = (props: any) => <GravityIcon icon={(GIcons as any).Globe} {...props} />;
+export const GIconLink = (props: any) => <GravityIcon icon={(GIcons as any).Link || (GIcons as any).ArrowUpRightFromSquare} {...props} />;
+export const GIconUpload = (props: any) => <GravityIcon icon={(GIcons as any).ArrowUpFromLine || (GIcons as any).ArrowUpFromSquare} {...props} />;
+
 export default GIcons;
