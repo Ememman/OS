@@ -102,6 +102,7 @@ export default function Settings() {
     resetDefaults,
     openApp,
     openSpotlight,
+    notify,
   } = useOS();
 
   const [cityDraft, setCityDraft] = useState(weatherLoc.name);
@@ -119,6 +120,7 @@ export default function Settings() {
       if (hit) {
         setWeatherLoc({ name: hit.name, lat: hit.latitude, lon: hit.longitude });
         setGeoStatus(`Set to ${hit.name}${hit.country ? ", " + hit.country : ""}`);
+        notify("Location Updated", `Weather set to ${hit.name}.`, "update", 3000);
       } else {
         setGeoStatus("City not found");
       }
@@ -176,7 +178,10 @@ export default function Settings() {
           {OS_MODE_OPTIONS.map((o) => (
             <button
               key={o.id}
-              onClick={() => setOsMode(o.id)}
+              onClick={() => {
+              setOsMode(o.id);
+              notify("Desktop Style", `Switched to ${o.label} mode.`, "update", 3000);
+            }}
               className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm transition-all duration-200 ${
                 osMode === o.id
                   ? "border-accent bg-accent/15 text-white shadow-lg shadow-accent/10"
@@ -199,7 +204,10 @@ export default function Settings() {
             {DOCK_POSITION_OPTIONS.map((o) => (
               <button
                 key={o.id}
-                onClick={() => setDockPosition(o.id)}
+                onClick={() => {
+                  setDockPosition(o.id);
+                  notify("Dock Position", `Moved dock to ${o.label.toLowerCase()}.`, "update", 2500);
+                }}
                 className={`flex flex-col items-center gap-1.5 px-2 py-2.5 sm:py-3 rounded-xl border text-xs transition-all duration-200 ${
                   dockPosition === o.id
                     ? "border-accent bg-accent/15 text-white shadow-lg shadow-accent/10"
@@ -230,7 +238,10 @@ export default function Settings() {
             const imageUrl = PREVIEW_IMAGES[w.id];
             const hasError = imageErrors[w.id];
             return (
-              <button key={w.id} onClick={() => setWallpaper(w.id)} className="group text-left">
+              <button key={w.id} onClick={() => {
+                setWallpaper(w.id);
+                notify("Wallpaper Changed", `Applied "${info.name}" background.`, "update", 3000);
+              }} className="group text-left">
                 <div
                   className={`relative aspect-video rounded-lg border-2 overflow-hidden transition-all duration-200 ${
                     isSelected ? "border-accent shadow-lg shadow-accent/20 scale-[1.02]" : "border-white/10 group-hover:border-white/30 group-hover:scale-[1.02]"
@@ -268,7 +279,10 @@ export default function Settings() {
           {accents.map((a) => (
             <button
               key={a.value}
-              onClick={() => setAccent(a.value)}
+              onClick={() => {
+                setAccent(a.value);
+                notify("Accent Updated", `Applied "${a.name}" accent.`, "update", 3000);
+              }}
               title={a.name}
               className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border-2 transition-all duration-200 hover:scale-110 ${
                 accent === a.value ? "border-white scale-110" : "border-transparent hover:border-white/30"
@@ -287,6 +301,7 @@ export default function Settings() {
                 const g = parseInt(hex.slice(3, 5), 16);
                 const b = parseInt(hex.slice(5, 7), 16);
                 setAccent(`${r} ${g} ${b}`);
+                notify("Custom Accent", `Applied custom accent (${r}, ${g}, ${b}).`, "update", 3000);
               }}
               className="absolute inset-0 opacity-0 cursor-pointer"
             />
@@ -505,6 +520,7 @@ export default function Settings() {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            notify("Backup Exported", "System settings saved to JSON file.", "update", 3000);
           }}
           className="flex items-center justify-center gap-2 w-full text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 active:scale-95 text-white/85 transition-all"
         >
@@ -520,6 +536,7 @@ export default function Settings() {
           onClick={() => {
             if (confirm("Reset all desktop settings to defaults? This clears saved wallpaper, accent, photo, weather location, and tasks.")) {
               resetDefaults();
+              notify("Settings Reset", "Restored desktop settings to defaults.", "delete", 4000);
             }
           }}
           className="w-full text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20 transition-all"

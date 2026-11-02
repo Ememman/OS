@@ -88,6 +88,20 @@ app.post("/api/updates/:id/react", (req, res) => {
   res.json({ id, count: reactionCounts[id] });
 });
 app.get("/api/updates/reactions", (req, res) => res.json(reactionCounts));
+// Real-time update deletion
+app.delete("/api/updates/:id", (req, res) => {
+  const { id } = req.params;
+  const index = liveUpdates.findIndex((u) => u.id === id);
+  if (index !== -1) {
+    const deleted = liveUpdates.splice(index, 1)[0];
+    delete reactionCounts[id];
+    io.emit("update:deleted", { id });
+    addActivity("update", `Update entry "${deleted.title}" was removed`);
+    return res.json({ ok: true, id });
+  }
+  res.status(404).json({ error: "Update not found" });
+});
+
 
 
 // ---------- Project Feedback & Reviews ----------

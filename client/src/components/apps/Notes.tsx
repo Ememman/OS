@@ -100,21 +100,26 @@ export default function Notes() {
     setNotes((prev) => [newNote, ...prev]);
     setActiveId(newNote.id);
     setMode("edit");
-    notify("New Note", "Created a new scratchpad note.");
+    notify("Note Created", `Added "${newNote.title}" to notepad.`, "add");
   };
 
   const togglePin = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (systemSounds) soundFx.playClick();
+    const target = notes.find((n) => n.id === id);
+    const willPin = !target?.pinned;
     setNotes((prev) =>
       prev.map((n) => (n.id === id ? { ...n, pinned: !n.pinned } : n))
     );
+    notify(willPin ? "Note Pinned" : "Note Unpinned", `"${target?.title || "Note"}" ${willPin ? "pinned to top" : "unpinned"}.`, "update", 2200);
   };
 
   const deleteNote = (id: string) => {
     if (systemSounds) soundFx.playClose();
+    const target = notes.find((n) => n.id === id);
     if (notes.length <= 1) {
       updateActiveNote({ title: "Untitled Note", content: "" });
+      notify("Note Cleared", "Scratchpad content was reset.", "delete");
       return;
     }
     const filtered = notes.filter((n) => n.id !== id);
@@ -122,6 +127,7 @@ export default function Notes() {
     if (activeId === id) {
       setActiveId(filtered[0].id);
     }
+    notify("Note Deleted", `"${target?.title || "Note"}" was removed.`, "delete");
   };
 
   const copyNote = () => {
@@ -129,6 +135,7 @@ export default function Notes() {
       navigator.clipboard?.writeText(activeNote.content);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      notify("Note Copied", `Copied "${activeNote.title}" markdown to clipboard.`, "update", 2200);
     }
   };
 
@@ -144,7 +151,7 @@ export default function Notes() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    notify("Exported Note", `Saved "${activeNote.title}.md" to Downloads.`);
+    notify("Note Exported", `Saved "${activeNote.title}.md" to Downloads.`, "update");
   };
 
   // Insert markdown snippet at cursor or append

@@ -70,7 +70,7 @@ export default function Gallery() {
     navigator.clipboard?.writeText(window.location.origin + currentItem.src);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    notify("Link Copied", "Image link copied to clipboard.");
+    notify("Link Copied", "Image link copied to clipboard.", "update", 2200);
   };
 
   const handleDownload = () => {
@@ -83,7 +83,7 @@ export default function Gallery() {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    notify("Downloading", `Starting download for ${currentItem.caption}.`);
+    notify("Downloading Image", `Saving "${currentItem.caption}" to Downloads.`, "update", 2500);
   };
 
   const currentFilterStyle = PHOTO_FILTERS.find((f) => f.id === activeFilter)?.style || "none";

@@ -40,10 +40,16 @@ export interface WeatherLocation {
   lon: number;
 }
 
+export type ToastVariant = "add" | "delete" | "update" | "success" | "info" | "warning";
+
 export interface SystemNotification {
-  id: number;
+  id: number | string;
   title: string;
   message: string;
+  variant?: ToastVariant;
+  durationMs?: number;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
 export interface ProjectItem {

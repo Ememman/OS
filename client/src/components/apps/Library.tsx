@@ -173,7 +173,7 @@ export default function Library() {
     try {
       const res = await fetch(`${API_URL}/api/projects/${id}/like`, { method: "POST" });
       if (res.ok) {
-        notify("Project Starred!", "Thanks for supporting Bron's engineering work!");
+        notify("Project Starred!", "Thanks for supporting Bron's engineering work!", "add");
       }
     } catch {}
   };
