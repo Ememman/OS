@@ -323,6 +323,15 @@ export default function MenuBar() {
           <MenuDropdown label="View" {...m("view")}>
             <MenuItem
               onClick={() => {
+                toggleMissionControl();
+                setOpenMenu(null);
+              }}
+              shortcut="F3">
+              Mission Control
+            </MenuItem>
+            <MenuSeparator />
+            <MenuItem
+              onClick={() => {
                 toggleFullscreen();
                 setOpenMenu(null);
               }}>

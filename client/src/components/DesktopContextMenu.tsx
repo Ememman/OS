@@ -12,6 +12,7 @@ import {
   GIconLayoutCells,
   GIconActivity,
   GIconBookOpen,
+  GIconCode,
 } from "./icons/GravityIcons";
 
 interface ContextMenuProps {
@@ -117,6 +118,16 @@ export default function DesktopContextMenu({ x, y, onClose, widgetsVisible }: Co
         <GIconTerminal size={14} className="text-green-400" />
         <span className="flex-1 font-medium">Open Terminal</span>
       </button>
+      <button
+        onClick={() => {
+          openApp("codeplay");
+          onClose();
+        }}
+        className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors text-left"
+      >
+        <GIconCode size={14} className="text-sky-400" />
+        <span className="flex-1 font-medium">CodePlay Sandbox</span>
+      </button>
 
       <button
         onClick={() => {
@@ -151,8 +162,7 @@ export default function DesktopContextMenu({ x, y, onClose, widgetsVisible }: Co
         <GIconLayoutCells size={14} className="text-accent" />
         <span className="flex-1 font-medium">{osMode === "win" ? "Task View (F3)" : "Mission Control (F3)"}</span>
       </button>
-
-      <div className="my-1 border-t border-white/10" />
+<div className="my-1 border-t border-white/10" />
 
       <button
         onClick={() => {

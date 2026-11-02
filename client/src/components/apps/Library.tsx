@@ -40,7 +40,6 @@ export interface FeedbackItem {
   comment: string;
   ts: number;
 }
-
 export default function Library() {
   const { systemSounds, notify } = useOS();
   const [projects, setProjects] = useState<ProjectItem[]>(fallbackProjects);
@@ -80,11 +79,53 @@ export default function Library() {
     const onLiked = ({ id, count }: { id: string; count: number }) => {
       setLikes((prev) => ({ ...prev, [id]: count }));
     };
+    const onFeedback = (item: FeedbackItem) => {
+      setReviews((prev) => (prev.some((f) => f.id === item.id) ? prev : [item, ...prev]));
+    };
     socket.on("project:liked", onLiked);
+    socket.on("project:feedback", onFeedback);
     return () => {
       socket.off("project:liked", onLiked);
+      socket.off("project:feedback", onFeedback);
     };
-  }, []);
+  }, []);  useEffect(() => {
+    if (!active) {
+      setReviews([]);
+      return;
+    }
+    fetch(`${API_URL}/api/projects/${active.id}/feedback`)
+      .then((r) => r.json())
+      .then((data) => Array.isArray(data) && setReviews(data))
+      .catch(() => {});
+  }, [active]);
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!active || !reviewComment.trim()) return;
+    setSubmittingReview(true);
+    try {
+      const res = await fetch(`${API_URL}/api/projects/${active.id}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          author: reviewAuthor.trim() || "Anonymous Visitor",
+          role: reviewRole,
+          rating: reviewRating,
+          comment: reviewComment.trim(),
+        }),
+      });
+      if (res.ok) {
+        const item = await res.json();
+        setReviews((prev) => [item, ...prev]);
+        setReviewComment("");
+        if (systemSounds) soundFx.playNotification();
+        notify("Review Posted!", "Thank you for reviewing this project!");
+      }
+    } catch {}
+    setSubmittingReview(false);
+  };
+
+
 
   useEffect(() => {
     if (!active) {

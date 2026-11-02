@@ -54,6 +54,7 @@ export default function SpotlightSearch() {
     setOsMode,
     toggleMotion,
     toggleChatSound,
+    toggleMissionControl,
     windows,
     closeWindow,
   } = useOS();
@@ -110,7 +111,16 @@ export default function SpotlightSearch() {
         color: "#eab308",
         category: "System",
         action: toggleChatSound,
+      },      {
+        id: "act-mission-control",
+        title: "Mission Control / Task View",
+        desc: "Show visual overview grid of all active windows (F3)",
+        icon: GIconLayoutCells,
+        color: "#38bdf8",
+        category: "Window Management",
+        action: toggleMissionControl,
       },
+
       {
         id: "act-close-all",
         title: "Close All Windows",
