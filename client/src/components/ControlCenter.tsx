@@ -112,31 +112,35 @@ export default function ControlCenter() {
             </div>
           </div>
 
-          {/* Night Shift Toggle */}
+          {/* Theme Mode Toggle (Dark / Light) */}
           <button
             onClick={() => {
-              toggleNightShift();
+              const next = themeMode === "dark" ? "light" : "dark";
+              setThemeMode(next);
               if (systemSounds) soundFx.playClick();
             }}
             className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between ${
-              nightShift
-                ? "bg-amber-500/20 border-amber-500/50 shadow-md shadow-amber-500/20"
+              themeMode === "light"
+                ? "bg-accent/20 border-accent/50 shadow-md shadow-accent/20"
                 : "bg-white/5 border-white/10 hover:bg-white/10"
             }`}
+            title="Toggle Dark / Light Theme"
           >
             <div className="flex items-center justify-between">
               <div
                 className={`w-7 h-7 rounded-full flex items-center justify-center ${
-                  nightShift ? "bg-amber-500 text-white" : "bg-white/10 text-white/70"
+                  themeMode === "light" ? "bg-accent text-white" : "bg-white/10 text-white/70"
                 }`}
               >
-                <GIconMoon size={14} />
+                {themeMode === "dark" ? <GIconMoon size={14} /> : <GIconSun size={14} className="text-amber-300" />}
               </div>
-              {nightShift && <span className="text-[10px] text-amber-300 font-bold">ON</span>}
+              <span className="text-[10px] text-accent font-bold uppercase">{themeMode}</span>
             </div>
             <div className="mt-2">
-              <div className="font-semibold text-white/90 text-[11px]">Night Shift</div>
-              <div className="text-[10px] text-white/40">Warm amber filter</div>
+              <div className="font-semibold text-white/90 text-[11px]">
+                {themeMode === "dark" ? "Dark Theme" : "Light Theme"}
+              </div>
+              <div className="text-[10px] text-white/40">Adaptive Color Blend</div>
             </div>
           </button>
         </div>

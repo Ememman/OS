@@ -85,7 +85,6 @@ export default function App() {
     toggleSpotlight,
     toggleMissionControl,
     nightShift,
-    notify,
   } = useOS();
 
   const isWin = osMode === "win";
@@ -93,7 +92,6 @@ export default function App() {
   const isTablet = useIsTablet();
   const macDockLeft = !isWin && !isMobile && dockPosition === "left";
   const macDockRight = !isWin && !isMobile && dockPosition === "right";
-  const welcomed = useRef(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   const handleDesktopContextMenu = (e: React.MouseEvent) => {
@@ -124,19 +122,6 @@ export default function App() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleSpotlight, toggleMissionControl]);
-
-  // Welcome toast notification on start
-  useEffect(() => {
-    if (booted && osChosen && !welcomed.current) {
-      welcomed.current = true;
-      setTimeout(() => {
-        notify(
-          "Welcome to Portfolio OS",
-          "Enhanced with Control Center, Project Starring, & Spotlight (⌘K)."
-        );
-      }, 600);
-    }
-  }, [booted, osChosen, notify]);
 
   if (!booted) return <BootScreen />;
   if (!osChosen) return <OsPicker />;

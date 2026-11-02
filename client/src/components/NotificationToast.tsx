@@ -1,6 +1,6 @@
 import { useOS } from "../store/useOS";
 import {
-  GIconSparkles,
+  GIconCircleInfo,
   GIconClose,
   GIconCheck,
   GIconTrash,
@@ -62,11 +62,11 @@ const VARIANT_CONFIG: Record<
     progressColor: "bg-amber-400",
   },
   info: {
-    icon: GIconSparkles,
+    icon: GIconCircleInfo,
     accentColor: "#8b5cf6",
     border: "border-violet-500/35",
     badgeBg: "bg-violet-500/20 text-violet-300",
-    label: "SYSTEM",
+    label: "NOTICE",
     progressColor: "bg-violet-400",
   },
 };
