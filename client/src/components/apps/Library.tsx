@@ -7,6 +7,7 @@ import {
   GIconStar,
   GIconClose,
   GIconSparkles,
+  GIconPaperPlane,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
 import { fallbackProjects } from "../../data/projects";
@@ -29,13 +30,30 @@ interface ProjectItem {
   };
 }
 
+
+export interface FeedbackItem {
+  id: string;
+  projectId: string;
+  author: string;
+  role: string;
+  rating: number;
+  comment: string;
+  ts: number;
+}
+
 export default function Library() {
   const { systemSounds, notify } = useOS();
   const [projects, setProjects] = useState<ProjectItem[]>(fallbackProjects);
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [active, setActive] = useState<ProjectItem | null>(null);
-  const [modalTab, setModalTab] = useState<"overview" | "highlights" | "stack">("overview");
+  const [modalTab, setModalTab] = useState<"overview" | "highlights" | "stack" | "reviews">("overview");
+  const [reviews, setReviews] = useState<FeedbackItem[]>([]);
+  const [reviewAuthor, setReviewAuthor] = useState("");
+  const [reviewRole, setReviewRole] = useState("Developer");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   const [likes, setLikes] = useState<Record<string, number>>({
     "sandrealee-customer": 29,
@@ -67,6 +85,43 @@ export default function Library() {
       socket.off("project:liked", onLiked);
     };
   }, []);
+
+  useEffect(() => {
+    if (!active) {
+      setReviews([]);
+      return;
+    }
+    fetch(`${API_URL}/api/projects/${active.id}/feedback`)
+      .then((r) => r.json())
+      .then((data) => Array.isArray(data) && setReviews(data))
+      .catch(() => {});
+  }, [active]);
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!active || !reviewComment.trim()) return;
+    setSubmittingReview(true);
+    try {
+      const res = await fetch(`${API_URL}/api/projects/${active.id}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          author: reviewAuthor.trim() || "Anonymous Visitor",
+          role: reviewRole,
+          rating: reviewRating,
+          comment: reviewComment.trim(),
+        }),
+      });
+      if (res.ok) {
+        const item = await res.json();
+        setReviews((prev) => [item, ...prev]);
+        setReviewComment("");
+        if (systemSounds) soundFx.playNotification();
+        notify("Review Posted!", "Thank you for reviewing this project!");
+      }
+    } catch {}
+    setSubmittingReview(false);
+  };
 
   const handleLike = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -296,6 +351,17 @@ export default function Library() {
               >
                 Tech Architecture
               </button>
+              <button
+                onClick={() => setModalTab("reviews")}
+                className={`px-3 py-1.5 font-medium border-b-2 transition flex items-center gap-1.5 ${
+                  modalTab === "reviews"
+                    ? "border-accent text-white"
+                    : "border-transparent text-white/50 hover:text-white"
+                }`}
+              >
+                <GIconStar size={12} className={modalTab === "reviews" ? "text-accent" : "text-white/40"} />
+                <span>Reviews ({reviews.length})</span>
+              </button>
             </div>
 
             {/* Modal Tab Content */}
@@ -347,6 +413,106 @@ export default function Library() {
                         <span>{s}</span>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {modalTab === "reviews" && (
+                <div className="space-y-4">
+                  <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-xs text-white/90">Add Project Review / Endorsement</span>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setReviewRating(s)}
+                            className={`p-0.5 transition hover:scale-125 ${
+                              s <= reviewRating ? "text-amber-400" : "text-white/20"
+                            }`}
+                          >
+                            <GIconStar size={14} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <form onSubmit={handleReviewSubmit} className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          placeholder="Your Name / Handle"
+                          value={reviewAuthor}
+                          onChange={(e) => setReviewAuthor(e.target.value)}
+                          className="px-2.5 py-1.5 rounded-xl bg-black/40 border border-white/10 text-xs focus:outline-none focus:border-accent text-white"
+                        />
+                        <select
+                          value={reviewRole}
+                          onChange={(e) => setReviewRole(e.target.value)}
+                          className="px-2.5 py-1.5 rounded-xl bg-black/40 border border-white/10 text-xs focus:outline-none focus:border-accent text-white/80"
+                        >
+                          <option value="Engineer">Software Engineer</option>
+                          <option value="Architect">Tech Lead / Architect</option>
+                          <option value="Product Manager">Product Manager</option>
+                          <option value="Recruiter">Recruiter / Talent Partner</option>
+                          <option value="Visitor">Community Member</option>
+                        </select>
+                      </div>
+                      <textarea
+                        rows={2}
+                        placeholder="Write constructive technical review or feedback..."
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-black/40 border border-white/10 text-xs focus:outline-none focus:border-accent resize-none placeholder:text-white/30 text-white"
+                      />
+                      <div className="flex justify-end">
+                        <button
+                          type="submit"
+                          disabled={submittingReview || !reviewComment.trim()}
+                          className="px-3 py-1.5 rounded-xl bg-accent hover:brightness-110 disabled:opacity-50 text-white font-medium text-xs shadow-md shadow-accent/20 transition flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <GIconPaperPlane size={11} />
+                          {submittingReview ? "Submitting..." : "Submit Review"}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {reviews.length === 0 ? (
+                      <p className="text-center py-6 text-white/40 text-xs">
+                        No reviews yet for this project. Be the first to share feedback!
+                      </p>
+                    ) : (
+                      reviews.map((rev) => (
+                        <div
+                          key={rev.id}
+                          className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1.5"
+                        >
+                          <div className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-white/90">{rev.author}</span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">
+                                {rev.role}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-0.5 text-amber-400">
+                              {Array.from({ length: rev.rating }).map((_, i) => (
+                                <GIconStar key={i} size={11} />
+                              ))}
+                            </div>
+                          </div>
+                          <p className="text-white/75 text-xs leading-relaxed">{rev.comment}</p>
+                          <span className="text-[10px] text-white/30 block">
+                            {new Date(rev.ts).toLocaleDateString([], {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}

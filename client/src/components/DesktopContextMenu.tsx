@@ -32,6 +32,7 @@ export default function DesktopContextMenu({ x, y, onClose, widgetsVisible }: Co
     toggleWidgets,
     closeAllWindows,
     minimizeAllWindows,
+    toggleMissionControl,
     notify,
   } = useOS();
 
@@ -137,6 +138,18 @@ export default function DesktopContextMenu({ x, y, onClose, widgetsVisible }: Co
       >
         <GIconSliders size={14} className="text-violet-400" />
         <span className="flex-1 font-medium">Settings</span>
+      </button>
+
+      
+      <button
+        onClick={() => {
+          toggleMissionControl();
+          onClose();
+        }}
+        className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors text-left"
+      >
+        <GIconLayoutCells size={14} className="text-accent" />
+        <span className="flex-1 font-medium">{osMode === "win" ? "Task View (F3)" : "Mission Control (F3)"}</span>
       </button>
 
       <div className="my-1 border-t border-white/10" />
