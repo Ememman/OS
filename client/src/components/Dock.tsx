@@ -16,10 +16,13 @@ import {
   GIconActivity,
   GIconBookOpen,
   GIconTrash,
+  GIconCode,
+  GIconLayoutCells,
 } from "./icons/GravityIcons";
 
 const DOCK_ITEMS = [
   { app: "terminal", label: "Terminal", icon: GIconTerminal, color: "#22c55e" },
+  { app: "codeplay", label: "CodePlay", icon: GIconCode, color: "#38bdf8" },
   { app: "notes", label: "Notes", icon: GIconNotes, color: "#f59e0b" },
   { app: "calculator", label: "Calculator", icon: GIconCalculator, color: "#06b6d4" },
   { app: "activity", label: "Activity Monitor", icon: GIconActivity, color: "#10b981" },
@@ -42,9 +45,8 @@ const POSITION_CLASSES = {
 };
 
 export default function Dock() {
-  const { openApp, windows, closeWindow, compact, dockPosition } = useOS();
+  const { openApp, windows, closeWindow, compact, dockPosition, toggleMissionControl, missionControlOpen } = useOS();
   const isMobile = useIsMobile();
-  // Vertical dock placement only makes sense with real screen width to spare — force bottom on phones.
   const position = isMobile ? "bottom" : dockPosition;
   const vertical = position === "left" || position === "right";
   const effectiveCompact = compact || isMobile;
@@ -68,6 +70,23 @@ export default function Dock() {
             : "flex items-end gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-2 max-w-full overflow-x-auto no-scrollbar"
         }`}
       >
+        {/* Mission Control button */}
+        <button
+          onClick={toggleMissionControl}
+          title="Mission Control (F3)"
+          className={`group relative flex flex-col items-center justify-center shrink-0 ${size} rounded-2xl transition-all duration-150 hover:scale-110 active:scale-95 ${
+            missionControlOpen ? "bg-accent/40 border border-accent shadow-lg shadow-accent/20" : "hover:bg-white/10"
+          } ${vertical ? "hover:translate-x-1" : "hover:-translate-y-2"}`}
+          style={{ background: "linear-gradient(160deg, #38bdf833, #38bdf818)", border: "1px solid #38bdf830" }}
+        >
+          <GIconLayoutCells size={iconSize} color="#38bdf8" />
+          <span className={`pointer-events-none absolute ${tooltipPos} text-[10px] bg-black/85 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap hidden sm:block`}>
+            Mission Control (F3)
+          </span>
+        </button>
+
+        <div className={vertical ? "h-px w-8 bg-white/10 my-1 shrink-0" : "w-px h-8 bg-white/10 mx-1 self-center shrink-0"} />
+
         {DOCK_ITEMS.map(({ app, label, icon: Icon, color }) => (
           <button
             key={app}
@@ -91,7 +110,9 @@ export default function Dock() {
             )}
           </button>
         ))}
+
         <div className={vertical ? "h-px w-8 bg-white/10 my-1 shrink-0" : "w-px h-8 bg-white/10 mx-1 self-center shrink-0"} />
+
         <button
           onClick={emptyTrash}
           title="Close all windows"

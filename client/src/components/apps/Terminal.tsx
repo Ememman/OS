@@ -18,7 +18,7 @@ const BANNER = `
 const COMMANDS = [
   "help", "clear", "neofetch", "whoami", "skills", "projects",
   "ls", "cat", "open", "theme", "date", "uptime", "history", "matrix",
-  "sysinfo", "server", "ping", "quote", "joke", "curl", "guestbook", "weather", "analytics", "sudo"
+  "sysinfo", "server", "ping", "quote", "joke", "curl", "guestbook", "weather", "analytics", "codeplay", "snake", "github", "mission", "sudo"
 ];
 
 type TerminalEntry =
@@ -27,7 +27,7 @@ type TerminalEntry =
   | { type: "output"; content: ReactNode };
 
 export default function Terminal() {
-  const { openApp, accents, setAccent, wallpapers, setWallpaper, osMode } = useOS();
+  const { openApp, accents, setAccent, wallpapers, setWallpaper, osMode, toggleMissionControl } = useOS();
   const [history, setHistory] = useState<TerminalEntry[]>([
     { type: "banner", content: BANNER },
     { type: "system", content: "Portfolio OS Kernel v2.4.0 (Gravity Edition) initialized." },
@@ -121,6 +121,10 @@ export default function Terminal() {
               <div><span className="text-emerald-400 font-bold">quote</span> - Random inspirational tech quote</div>
               <div><span className="text-emerald-400 font-bold">joke</span> - Programmer humor</div>
               <div><span className="text-emerald-400 font-bold">curl [url]</span> - Inspect API endpoints</div>
+              <div><span className="text-emerald-400 font-bold">codeplay</span> - Open interactive CodePlay Sandbox</div>
+              <div><span className="text-emerald-400 font-bold">snake</span> - Launch retro Nokia Snake Arcade</div>
+              <div><span className="text-emerald-400 font-bold">github</span> - Live GitHub repo & contribution stats</div>
+              <div><span className="text-emerald-400 font-bold">mission</span> - Open Mission Control window overview</div>
               <div><span className="text-emerald-400 font-bold">guestbook</span> - Open social guestbook ledger</div>
               <div><span className="text-emerald-400 font-bold">open &lt;app&gt;</span> - Launch any OS app</div>
               <div><span className="text-emerald-400 font-bold">ls / dir</span> - List files and directories</div>
@@ -528,7 +532,7 @@ export default function Terminal() {
       {/* Quick command buttons for convenience */}
       <div className="relative z-10 px-3 py-1.5 bg-[#05070c]/90 border-t border-white/10 flex items-center gap-1.5 overflow-x-auto no-scrollbar select-none">
         <span className="text-[10px] text-white/40 shrink-0">Quick:</span>
-        {["help", "sysinfo", "ping", "quote", "joke", "guestbook", "neofetch", "clear"].map((cmd) => (
+        {["help", "sysinfo", "codeplay", "snake", "github", "mission", "ping", "guestbook", "neofetch", "clear"].map((cmd) => (
           <button
             key={cmd}
             onClick={() => handleCommand(cmd)}

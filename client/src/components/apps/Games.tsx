@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { GIconArrowLeft, GIconPuzzle, GIconLock, GIconTrophy } from "../icons/GravityIcons";
+import { GIconArrowLeft, GIconPuzzle, GIconLock, GIconTrophy, GIconPlay } from "../icons/GravityIcons";
 import BlockBlast from "./games/BlockBlast";
 import Game2048 from "./games/Game2048";
+import SnakeRetro from "./games/SnakeRetro";
 
 const UPCOMING_GAMES = [
   { name: "Sudoku Mini", desc: "5-minute daily logic puzzles." },
-  { name: "Snake Retro", desc: "The Nokia classic with coral skin." }
+  { name: "Minesweeper Retro", desc: "Classic flag and grid sweeper." }
 ];
 
 export default function Games() {
@@ -19,17 +20,26 @@ export default function Games() {
             <button
               onClick={() => setOpen(null)}
               className="p-1 hover:bg-white/10 rounded text-white/70 hover:text-white transition"
+              title="Back to Arcade Menu"
             >
               <GIconArrowLeft size={14} />
             </button>
-            <span className="text-xs font-medium">Block Blast</span>
+            <span className="text-xs font-semibold text-white">Block Blast</span>
           </div>
-          <button
-            onClick={() => setOpen("2048")}
-            className="text-[11px] text-accent hover:underline flex items-center gap-1"
-          >
-            Switch to 2048 →
-          </button>
+          <div className="flex items-center gap-2 text-[11px]">
+            <button
+              onClick={() => setOpen("2048")}
+              className="text-white/60 hover:text-white px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              2048
+            </button>
+            <button
+              onClick={() => setOpen("snake")}
+              className="text-accent hover:underline px-2 py-0.5 rounded bg-accent/10 border border-accent/20 transition"
+            >
+              Snake Retro →
+            </button>
+          </div>
         </div>
         <div className="flex-1 overflow-auto thin-scroll">
           <BlockBlast />
@@ -46,17 +56,26 @@ export default function Games() {
             <button
               onClick={() => setOpen(null)}
               className="p-1 hover:bg-white/10 rounded text-white/70 hover:text-white transition"
+              title="Back to Arcade Menu"
             >
               <GIconArrowLeft size={14} />
             </button>
-            <span className="text-xs font-medium">2048 Puzzle</span>
+            <span className="text-xs font-semibold text-white">2048 Puzzle</span>
           </div>
-          <button
-            onClick={() => setOpen("blockblast")}
-            className="text-[11px] text-accent hover:underline flex items-center gap-1"
-          >
-            Switch to Block Blast →
-          </button>
+          <div className="flex items-center gap-2 text-[11px]">
+            <button
+              onClick={() => setOpen("blockblast")}
+              className="text-white/60 hover:text-white px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              Block Blast
+            </button>
+            <button
+              onClick={() => setOpen("snake")}
+              className="text-accent hover:underline px-2 py-0.5 rounded bg-accent/10 border border-accent/20 transition"
+            >
+              Snake Retro →
+            </button>
+          </div>
         </div>
         <div className="flex-1 overflow-auto thin-scroll">
           <Game2048 />
@@ -65,17 +84,53 @@ export default function Games() {
     );
   }
 
+  if (open === "snake") {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setOpen(null)}
+              className="p-1 hover:bg-white/10 rounded text-white/70 hover:text-white transition"
+              title="Back to Arcade Menu"
+            >
+              <GIconArrowLeft size={14} />
+            </button>
+            <span className="text-xs font-semibold text-white">Snake Retro</span>
+          </div>
+          <div className="flex items-center gap-2 text-[11px]">
+            <button
+              onClick={() => setOpen("blockblast")}
+              className="text-white/60 hover:text-white px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition"
+            >
+              Block Blast
+            </button>
+            <button
+              onClick={() => setOpen("2048")}
+              className="text-amber-400 hover:underline px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 transition"
+            >
+              2048 →
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-auto thin-scroll">
+          <SnakeRetro />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 text-white select-none">
       <div>
-        <h2 className="font-display text-lg font-semibold mb-1">Arcade & Games</h2>
+        <h2 className="font-display text-lg font-semibold text-white mb-1">Arcade & Games</h2>
         <p className="text-xs text-white/50">Take a break with responsive minigames built for Portfolio OS.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <button
           onClick={() => setOpen("blockblast")}
-          className="flex items-start gap-3 p-3.5 rounded-2xl border border-accent/40 bg-accent/10 hover:bg-accent/15 transition-all text-left group"
+          className="flex flex-col items-start gap-2.5 p-3.5 rounded-2xl border border-accent/40 bg-accent/10 hover:bg-accent/15 transition-all text-left group"
         >
           <div className="w-10 h-10 rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
             <GIconPuzzle className="accent" size={22} />
@@ -89,7 +144,7 @@ export default function Games() {
 
         <button
           onClick={() => setOpen("2048")}
-          className="flex items-start gap-3 p-3.5 rounded-2xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/15 transition-all text-left group"
+          className="flex flex-col items-start gap-2.5 p-3.5 rounded-2xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/15 transition-all text-left group"
         >
           <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
             <GIconTrophy className="text-amber-400" size={20} />
@@ -100,11 +155,25 @@ export default function Games() {
             <span className="inline-block mt-2 text-[10px] text-emerald-400 font-medium">● Play Now</span>
           </div>
         </button>
+
+        <button
+          onClick={() => setOpen("snake")}
+          className="flex flex-col items-start gap-2.5 p-3.5 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/15 transition-all text-left group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <GIconPlay className="text-emerald-400" size={20} />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-white">Snake Retro</div>
+            <div className="text-[11px] text-white/50 mt-0.5">Classic arcade snake with speeds, high score & touch D-pad.</div>
+            <span className="inline-block mt-2 text-[10px] text-emerald-400 font-medium">● Play Now</span>
+          </div>
+        </button>
       </div>
 
       <div className="pt-2">
         <div className="text-[11px] text-white/40 uppercase tracking-wide mb-2 font-medium">Coming Soon</div>
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {UPCOMING_GAMES.map((g) => (
             <div
               key={g.name}

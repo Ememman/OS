@@ -41,6 +41,7 @@ export default function ControlCenter() {
     toggleSystemSounds,
     chatSound,
     toggleChatSound,
+    toggleMissionControl,
   } = useOS();
 
   const { queue, queueIdx, playing, togglePlay, volume, setVolume } = usePlayer();
@@ -139,7 +140,7 @@ export default function ControlCenter() {
         </div>
 
         {/* Quick System Action Toggles */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           <button
             onClick={() => {
               toggleParticles();
@@ -183,6 +184,16 @@ export default function ControlCenter() {
           >
             <GIconSliders size={14} />
             <span className="text-[10px] font-medium leading-tight">No Motion</span>
+          </button>
+          <button
+            onClick={() => {
+              toggleMissionControl();
+              if (systemSounds) soundFx.playClick();
+            }}
+            className="p-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-center transition flex flex-col items-center gap-1"
+          >
+            <GIconLayoutCells size={14} />
+            <span className="text-[10px] font-medium leading-tight">Task View</span>
           </button>
         </div>
 
