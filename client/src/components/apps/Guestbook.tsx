@@ -82,6 +82,7 @@ export default function Guestbook() {
         return [entry, ...prev];
       });
       if (systemSounds) soundFx.playNotification();
+      notify("New Guestbook Signature", `${entry.name} signed the guestbook.`, "info", 3500);
     };
 
     const onReacted = ({ id, reactions }: { id: string; reactions: number }) => {
@@ -97,7 +98,7 @@ export default function Guestbook() {
       socket.off("guestbook:entry", onNewEntry);
       socket.off("guestbook:reacted", onReacted);
     };
-  }, [systemSounds]);
+  }, [systemSounds, notify]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +126,7 @@ export default function Guestbook() {
         setEntries((prev) => [created, ...prev.filter((e) => e.id !== created.id)]);
         setMessage("");
         if (systemSounds) soundFx.playPop();
-        notify("Guestbook Signed!", "Your message has been posted to the live guestbook.");
+        notify("Guestbook Signed!", "Your message has been posted to the live guestbook.", "add");
       }
     } catch {
       // Local optimistic fallback
@@ -140,7 +141,7 @@ export default function Guestbook() {
       };
       setEntries((prev) => [localEntry, ...prev]);
       setMessage("");
-      notify("Note Posted Locally", "Your message is saved for this session.");
+      notify("Note Posted Locally", "Your message is saved for this session.", "add");
     } finally {
       setSubmitting(false);
     }
@@ -151,6 +152,7 @@ export default function Guestbook() {
     setEntries((prev) =>
       prev.map((e) => (e.id === id ? { ...e, reactions: e.reactions + 1 } : e))
     );
+    notify("Reaction Sent", "Sent a reaction to the guestbook entry.", "update", 2200);
 
     try {
       await fetch(`${API_URL}/api/guestbook/${id}/react`, { method: "POST" });

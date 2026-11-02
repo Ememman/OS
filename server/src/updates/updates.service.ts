@@ -40,6 +40,16 @@ export class UpdatesService {
     return entry;
   }
 
+  remove(id: string): { ok: boolean; id: string } {
+    const idx = this.updateList.findIndex((u) => u.id === id);
+    if (idx !== -1) {
+      this.updateList.splice(idx, 1);
+      delete this.reactions[id];
+      return { ok: true, id };
+    }
+    return { ok: false, id };
+  }
+
   react(id: string, emoji = "❤️"): { id: string; emoji: string; counts: Record<string, number>; total: number } {
     const validEmojis = ["❤️", "🚀", "🔥", "👍"];
     const cleanEmoji = validEmojis.includes(emoji) ? emoji : "❤️";

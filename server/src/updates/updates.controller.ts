@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Inject } from "@nestjs/common";
+import { Controller, Get, Post, Delete, Body, Param, Inject } from "@nestjs/common";
 import { UpdatesService, Update } from "./updates.service";
 import { ChatGateway } from "../chat/chat.gateway";
 
@@ -19,6 +19,13 @@ export class UpdatesController {
     const created = this.updatesService.create(body);
     this.chatGateway.broadcast("update:new", created);
     return created;
+  }
+
+  @Delete(":id")
+  remove(@Param("id") id: string) {
+    const result = this.updatesService.remove(id);
+    this.chatGateway.broadcast("update:deleted", { id });
+    return result;
   }
 
   @Get("reactions")

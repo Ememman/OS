@@ -12,6 +12,7 @@ import {
   GIconPaperPlane,
   GIconLoader,
   GIconClock,
+  GIconTrash,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
 import { getSocket } from "../../lib/socket";
@@ -107,13 +108,21 @@ export default function Updates() {
       setActivityFeed((prev) => [entry, ...prev].slice(0, 60));
     };
 
+    const onUpdateDeleted = ({ id }: { id: string }) => {
+      setUpdates((prev) => prev.filter((u) => u.id !== id));
+      if (systemSounds) soundFx.playClose();
+      notify("Update Removed", "A system update was deleted.", "delete");
+    };
+
     socket.on("update:new", onNewUpdate);
     socket.on("update:reacted", onUpdateReacted);
+    socket.on("update:deleted", onUpdateDeleted);
     socket.on("activity:entry", onActivityEntry);
 
     return () => {
       socket.off("update:new", onNewUpdate);
       socket.off("update:reacted", onUpdateReacted);
+      socket.off("update:deleted", onUpdateDeleted);
       socket.off("activity:entry", onActivityEntry);
     };
   }, [systemSounds, notify]);
@@ -134,6 +143,7 @@ export default function Updates() {
       };
     });
 
+    notify("Reaction Added", `Reacted with ${emoji}`, "update", 2200);
     try {
       await fetch(`${API_URL}/api/updates/${id}/react`, {
         method: "POST",
@@ -141,6 +151,22 @@ export default function Updates() {
         body: JSON.stringify({ emoji })
       });
     } catch {}
+  };
+
+  // Delete update handler
+  const handleDeleteUpdate = async (id: string, title: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (systemSounds) soundFx.playClose();
+    setUpdates((prev) => prev.filter((u) => u.id !== id));
+    notify("Update Deleted", `"${title}" was removed.`, "delete");
+
+    try {
+      await fetch(`${API_URL}/api/updates/${id}`, {
+        method: "DELETE"
+      });
+    } catch {
+      notify("Delete Failed", "Could not remove update from server.", "warning");
+    }
   };
 
   // Publish new real-time update
@@ -170,10 +196,10 @@ export default function Updates() {
         setNewBody("");
         setComposerOpen(false);
         if (systemSounds) soundFx.playNotification();
-        notify("Update Published!", "Your release note was broadcast to all connected users.");
+        notify("Update Published!", "Your release note was broadcast to all connected users.", "add");
       }
     } catch {
-      notify("Publishing Failed", "Could not connect to API server.");
+      notify("Publishing Failed", "Could not connect to API server.", "warning");
     } finally {
       setIsSubmitting(false);
     }
@@ -426,14 +452,23 @@ export default function Updates() {
                         )}
                       </div>
 
-                      <span className="text-[10px] text-white/40 font-mono flex items-center gap-1">
-                        <GIconClock size={11} />
-                        {new Date(u.date).toLocaleDateString([], {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric"
-                        })}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-white/40 font-mono flex items-center gap-1">
+                          <GIconClock size={11} />
+                          {new Date(u.date).toLocaleDateString([], {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric"
+                          })}
+                        </span>
+                        <button
+                          onClick={(e) => handleDeleteUpdate(u.id, u.title, e)}
+                          title="Delete update"
+                          className="p-1 rounded-lg text-white/40 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                        >
+                          <GIconTrash size={12} />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Title & Body */}

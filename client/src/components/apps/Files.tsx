@@ -136,7 +136,7 @@ export default function Files() {
     setNewFileName("");
     setNewFileContent("");
     if (systemSounds) soundFx.playPop();
-    notify("File Created", `Created "${formattedName}" successfully.`);
+    notify("File Created", `Created "${formattedName}" in filesystem.`, "add");
   };
 
   const handleDeleteCustomFile = (name: string, e: React.MouseEvent) => {
@@ -144,7 +144,7 @@ export default function Files() {
     if (systemSounds) soundFx.playClose();
     setCustomFiles((prev) => prev.filter((f) => f.name !== name));
     if (openText?.name === name) setOpenText(null);
-    notify("File Removed", `Deleted "${name}".`);
+    notify("File Deleted", `Deleted "${name}" from storage.`, "delete");
   };
 
   return (

@@ -7,6 +7,7 @@ import type {
   OSMode,
   SnapLayout,
   SystemNotification,
+  ToastVariant,
   WallpaperOption,
   WeatherLocation,
   WindowState,
@@ -25,9 +26,10 @@ interface OSState {
   toggleChatSound: () => void;
   systemSounds: boolean;
   toggleSystemSounds: () => void;
-  notification: SystemNotification | null;
-  notify: (title: string, message: string) => void;
-  dismissNotification: () => void;
+    notification: SystemNotification | null;
+  notifications: SystemNotification[];
+  notify: (title: string, message: string, variant?: ToastVariant, durationMs?: number) => void;
+  dismissNotification: (id?: number | string) => void;
   chatBg: string;
   setChatBg: (id: string) => void;
   glassAlpha: number;
@@ -155,18 +157,40 @@ export const useOS = create<OSState>((set, get) => ({
     set({ systemSounds: next });
   },
 
-  notification: null,
-  notify: (title, message) => {
-    const id = Date.now();
-    set({ notification: { id, title, message } });
-    if (get().systemSounds) soundFx.playNotification();
+    notification: null,
+  notifications: [],
+  notify: (title, message, variant = "info", durationMs = 3800) => {
+    const id = Date.now() + Math.floor(Math.random() * 1000);
+    const item: SystemNotification = { id, title, message, variant, durationMs };
+
+    if (get().systemSounds) {
+      if (variant === "delete") soundFx.playClose();
+      else if (variant === "add") soundFx.playPop();
+      else soundFx.playNotification();
+    }
+
+    set((state) => ({
+      notification: item,
+      notifications: [item, ...state.notifications].slice(0, 5),
+    }));
+
     setTimeout(() => {
-      if (get().notification?.id === id) {
-        set({ notification: null });
-      }
-    }, 4200);
+      set((state) => ({
+        notifications: state.notifications.filter((n) => n.id !== id),
+        notification: state.notification?.id === id ? state.notifications.find((n) => n.id !== id) || null : state.notification,
+      }));
+    }, durationMs);
   },
-  dismissNotification: () => set({ notification: null }),
+  dismissNotification: (id) => {
+    if (id !== undefined) {
+      set((state) => ({
+        notifications: state.notifications.filter((n) => n.id !== id),
+        notification: state.notification?.id === id ? state.notifications.find((n) => n.id !== id) || null : state.notification,
+      }));
+    } else {
+      set({ notifications: [], notification: null });
+    }
+  },
 
   chatBg: localStorage.getItem("os_chat_bg") || "halftone",
   setChatBg: (id) => {

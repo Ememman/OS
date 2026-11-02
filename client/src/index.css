@@ -329,6 +329,11 @@ body {
   animation: shakeSm 180ms ease-in-out;
 }
 
+@keyframes shrinkWidth {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
