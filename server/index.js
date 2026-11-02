@@ -45,41 +45,7 @@ app.get("/api/activity/feed", (req, res) => res.json(activityFeed));
 
 // ---------- REST: projects / updates ----------
 app.get("/api/projects", (req, res) => res.json(projects));
-// Dynamic in-memory live updates store
-let liveUpdates = [...updates];
-
-app.get("/api/updates", (req, res) => res.json(liveUpdates));
-
-// Real-time update publishing
-app.post("/api/updates", (req, res) => {
-  const { title, body, tag, author } = req.body || {};
-  const cleanTitle = String(title || "").trim();
-  const cleanBody = String(body || "").trim();
-  if (!cleanTitle || !cleanBody) {
-    return res.status(400).json({ error: "Title and body are required." });
-  }
-
-  const validTags = ["feature", "fix", "launch", "perf", "announcement"];
-  const cleanTag = validTags.includes(String(tag || "").toLowerCase()) ? String(tag).toLowerCase() : "feature";
-  const cleanAuthor = String(author || "Bron Mendoza").trim().slice(0, 40);
-
-  const newEntry = {
-    id: `u-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    date: new Date().toISOString(),
-    tag: cleanTag,
-    title: cleanTitle,
-    body: cleanBody,
-    author: cleanAuthor,
-  };
-
-  liveUpdates.unshift(newEntry);
-  if (liveUpdates.length > 100) liveUpdates = liveUpdates.slice(0, 100);
-
-  io.emit("update:new", newEntry);
-  addActivity("update", `New ${cleanTag} published: "${cleanTitle}" by ${cleanAuthor}`);
-
-  res.status(201).json(newEntry);
-});
+app.get("/api/updates", (req, res) => res.json(updates));
 
 // In-memory project star/like reactions
 const projectLikes = {
@@ -726,25 +692,6 @@ io.on("connection", (socket) => {
     io.emit("chat:presence", { online: onlineCount });
   });
 });
-
-// Live system telemetry heartbeat (streams real OS & process metrics every 2s)
-setInterval(() => {
-  if (io && io.engine && io.engine.clientsCount > 0) {
-    const mem = process.memoryUsage();
-    const totalMem = os.totalmem();
-    const freeMem = os.freemem();
-    const usedPercent = Math.round(((totalMem - freeMem) / totalMem) * 100);
-    const load = os.loadavg();
-    io.emit("system:telemetry", {
-      time: Date.now(),
-      cpuPercent: Math.min(100, Math.max(5, Math.round((load[0] || 0.15) * 20))),
-      memoryMb: Math.round((mem.heapUsed / 1024 / 1024) * 10) / 10,
-      systemPercent: usedPercent,
-      connectedClients: io.engine.clientsCount,
-      uptimeSeconds: Math.floor(process.uptime()),
-    });
-  }
-}, 2000);
 
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => console.log(`Portfolio OS API + chat running on :${PORT}`));
