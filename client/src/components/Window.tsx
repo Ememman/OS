@@ -1,8 +1,6 @@
 import { useRef, useCallback, useState, useEffect } from "react";
 import {
-  GIconMinus,
   GIconSquare,
-  GIconClose,
   GIconLayoutColumns,
   GIconLayoutHeader,
   GIconLayoutCells,
@@ -392,53 +390,129 @@ export default function Window({ win, children }) {
       >
         {isWin ? (
           <>
-            <div className="flex-1 text-xs text-white/70 font-medium select-none">{win.title}</div>
-            <button onClick={requestMinimize} className="w-11 h-9 flex items-center justify-center hover:bg-white/10 text-white/70 hover:text-white transition-colors" aria-label="Minimize window">
-              <GIconMinus size={13} />
-            </button>
-            {!isMobile && (
+            <div className="flex-1 text-xs text-white/70 font-medium select-none truncate pr-2">{win.title}</div>
+            
+            {/* Windows 11 Titlebar Controls */}
+            <div className="flex items-center h-full shrink-0">
+              {/* Minimize */}
               <button
-                onClick={() => toggleMaximize(win.id)}
-                onMouseEnter={handleSnapEnter}
-                onMouseLeave={handleSnapLeave}
-                className="w-11 h-9 flex items-center justify-center hover:bg-white/10 text-white/70 hover:text-white transition-colors relative"
-                aria-label="Maximize window or hover for snap layouts"
+                onClick={requestMinimize}
+                className="w-11 h-9 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors cursor-pointer"
+                aria-label="Minimize window"
+                title="Minimize"
               >
-                <GIconSquare size={11} />
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1">
+                  <line x1="0.5" y1="5.5" x2="9.5" y2="5.5" />
+                </svg>
               </button>
-            )}
-            <button onClick={requestClose} className="w-11 h-9 flex items-center justify-center hover:bg-[#e81123] text-white/70 hover:text-white transition-colors" aria-label="Close window">
-              <GIconClose size={13} />
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="group/controls flex items-center gap-2">
-              <button onClick={requestClose} className="w-3 h-3 rounded-full bg-[#ff5f57] hover:brightness-90 flex items-center justify-center text-black/70 opacity-90 transition-all" aria-label="Close window">
-                <span className="opacity-0 group-hover/controls:opacity-100 transition-opacity">
-                  <GIconClose size={8} />
-                </span>
-              </button>
-              <button onClick={requestMinimize} className="w-3 h-3 rounded-full bg-[#febc2e] hover:brightness-90 flex items-center justify-center text-black/70 opacity-90 transition-all" aria-label="Minimize window">
-                <span className="opacity-0 group-hover/controls:opacity-100 transition-opacity">
-                  <GIconMinus size={8} />
-                </span>
-              </button>
+
+              {/* Maximize / Restore */}
               {!isMobile && (
                 <button
                   onClick={() => toggleMaximize(win.id)}
                   onMouseEnter={handleSnapEnter}
                   onMouseLeave={handleSnapLeave}
-                  className="w-3 h-3 rounded-full bg-[#28c840] hover:brightness-90 flex items-center justify-center text-black/70 opacity-90 transition-all"
-                  aria-label="Maximize window or hover for snap layouts"
+                  className="w-11 h-9 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors relative cursor-pointer"
+                  aria-label={win.maximized ? "Restore window" : "Maximize window"}
+                  title={win.maximized ? "Restore" : "Maximize"}
                 >
-                  <span className="opacity-0 group-hover/controls:opacity-100 transition-opacity">
-                    <GIconSquare size={7} />
-                  </span>
+                  {win.maximized ? (
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1">
+                      <path d="M 2.5 0.5 L 9.5 0.5 L 9.5 7.5" />
+                      <rect x="0.5" y="2.5" width="7" height="7" />
+                    </svg>
+                  ) : (
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1">
+                      <rect x="0.5" y="0.5" width="9" height="9" />
+                    </svg>
+                  )}
+                </button>
+              )}
+
+              {/* Close */}
+              <button
+                onClick={requestClose}
+                className="w-11 h-9 flex items-center justify-center text-white/70 hover:text-white hover:bg-[#e81123] active:bg-[#c4101e] transition-colors cursor-pointer rounded-tr-lg"
+                aria-label="Close window"
+                title="Close"
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.1">
+                  <line x1="0.5" y1="0.5" x2="9.5" y2="9.5" />
+                  <line x1="9.5" y1="0.5" x2="0.5" y2="9.5" />
+                </svg>
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* macOS Window Controls (Traffic Lights) */}
+            <div className="group/controls flex items-center gap-2">
+              {/* Close (Red) */}
+              <button
+                onClick={requestClose}
+                className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e]/80 hover:brightness-95 active:brightness-90 flex items-center justify-center transition-all cursor-pointer shadow-sm"
+                aria-label="Close window"
+                title="Close"
+              >
+                <svg
+                  width="7"
+                  height="7"
+                  viewBox="0 0 10 10"
+                  fill="none"
+                  stroke="#4a0002"
+                  strokeWidth="1.3"
+                  strokeLinecap="round"
+                  className="opacity-75 group-hover/controls:opacity-100 transition-opacity"
+                >
+                  <line x1="2" y1="2" x2="8" y2="8" />
+                  <line x1="8" y1="2" x2="2" y2="8" />
+                </svg>
+              </button>
+
+              {/* Minimize (Yellow) */}
+              <button
+                onClick={requestMinimize}
+                className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123]/80 hover:brightness-95 active:brightness-90 flex items-center justify-center transition-all cursor-pointer shadow-sm"
+                aria-label="Minimize window"
+                title="Minimize"
+              >
+                <svg
+                  width="7"
+                  height="7"
+                  viewBox="0 0 10 10"
+                  fill="none"
+                  stroke="#613600"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  className="opacity-75 group-hover/controls:opacity-100 transition-opacity"
+                >
+                  <line x1="1.5" y1="5" x2="8.5" y2="5" />
+                </svg>
+              </button>
+
+              {/* Maximize / Fullscreen (Green) */}
+              {!isMobile && (
+                <button
+                  onClick={() => toggleMaximize(win.id)}
+                  onMouseEnter={handleSnapEnter}
+                  onMouseLeave={handleSnapLeave}
+                  className="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29]/80 hover:brightness-95 active:brightness-90 flex items-center justify-center transition-all cursor-pointer shadow-sm relative"
+                  aria-label="Maximize window or hover for snap layouts"
+                  title="Maximize"
+                >
+                  <svg
+                    width="7"
+                    height="7"
+                    viewBox="0 0 10 10"
+                    fill="#004800"
+                    className="opacity-75 group-hover/controls:opacity-100 transition-opacity"
+                  >
+                    <path d="M 2 3.8 L 2 8 L 6.2 8 Z M 3.8 2 L 8 2 L 8 6.2 Z" />
+                  </svg>
                 </button>
               )}
             </div>
-            <div className="flex-1 text-center text-xs text-white/60 font-medium select-none pr-10">{win.title}</div>
+            <div className="flex-1 text-center text-xs text-white/60 font-medium select-none pr-10 truncate">{win.title}</div>
           </>
         )}
       </div>
