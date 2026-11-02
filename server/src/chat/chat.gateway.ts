@@ -4,11 +4,13 @@ import {
   SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   MessageBody,
   ConnectedSocket
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { customAlphabet } from "nanoid";
+import os from "node:os";
 
 const ADJECTIVES = ["Swift", "Quiet", "Amber", "Cosmic", "Lucky", "Nimble", "Gentle", "Bright", "Wandering", "Velvet"];
 const ANIMALS = ["Falcon", "Otter", "Lynx", "Comet", "Heron", "Fox", "Whale", "Sparrow", "Marlin", "Wren"];
@@ -25,13 +27,34 @@ export interface ChatMessage {
 }
 
 @WebSocketGateway({ cors: { origin: "*" } })
-export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
   @WebSocketServer()
   server: Server;
 
   private chatHistory: ChatMessage[] = [];
   private readonly MAX_HISTORY = 100;
   private onlineCount = 0;
+
+  afterInit(server: Server) {
+    // Real-time system telemetry streaming to all connected clients
+    setInterval(() => {
+      if (this.onlineCount > 0 && this.server) {
+        const mem = process.memoryUsage();
+        const totalMem = os.totalmem();
+        const freeMem = os.freemem();
+        const usedPercent = Math.round(((totalMem - freeMem) / totalMem) * 100);
+        const load = os.loadavg();
+        this.server.emit("system:telemetry", {
+          time: Date.now(),
+          cpuPercent: Math.min(100, Math.max(5, Math.round((load[0] || 0.15) * 20))),
+          memoryMb: Math.round((mem.heapUsed / 1024 / 1024) * 10) / 10,
+          systemPercent: usedPercent,
+          connectedClients: this.onlineCount,
+          uptimeSeconds: Math.floor(process.uptime()),
+        });
+      }
+    }, 2000);
+  }
 
   getOnlineCount() {
     return this.onlineCount;
@@ -71,10 +94,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const clean = String(text || "").trim().slice(0, 500);
     if (!clean) return { ok: false, error: "empty" };
 
-    const name = (client as any).guestName || "Anonymous";
     const msg: ChatMessage = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      name,
+      name: (client as any).guestName || "Guest",
       text: clean,
       ts: Date.now(),
       reactions: {}
@@ -90,20 +112,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage("chat:react")
-  handleReact(@MessageBody() payload: { id: string; emoji: string }) {
+  handleReact(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { id: string; emoji: string }
+  ) {
+    const { id, emoji } = payload || {};
     const validEmojis = ["❤️", "👍", "🔥", "🚀", "😂"];
-    if (!payload?.id || !validEmojis.includes(payload.emoji)) return;
-    const msg = this.chatHistory.find((m) => m.id === payload.id);
+    if (!id || !validEmojis.includes(emoji)) return;
+
+    const msg = this.chatHistory.find((m) => m.id === id);
     if (msg) {
       if (!msg.reactions) msg.reactions = {};
-      msg.reactions[payload.emoji] = (msg.reactions[payload.emoji] || 0) + 1;
-      this.server.emit("chat:reacted", { id: payload.id, emoji: payload.emoji, reactions: msg.reactions });
+      msg.reactions[emoji] = (msg.reactions[emoji] || 0) + 1;
+      this.server.emit("chat:reacted", { id, emoji, reactions: msg.reactions });
     }
   }
 
   @SubscribeMessage("chat:typing")
   handleTyping(@ConnectedSocket() client: Socket) {
-    const name = (client as any).guestName || "Someone";
-    client.broadcast.emit("chat:typing", { name });
+    client.broadcast.emit("chat:typing", {
+      name: (client as any).guestName || "Guest"
+    });
   }
 }
