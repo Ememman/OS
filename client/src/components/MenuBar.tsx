@@ -11,6 +11,7 @@ import {
   GIconClose,
   GIconBars,
   GIconSliders,
+  GIconLayoutCells,
 } from "./icons/GravityIcons";
 
 interface MenuDropdownProps {
@@ -114,6 +115,8 @@ export default function MenuBar() {
     reopenPicker,
     controlCenterOpen,
     toggleControlCenter,
+    missionControlOpen,
+    toggleMissionControl,
   } = useOS();
   const [now, setNow] = useState(new Date());
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -318,6 +321,15 @@ export default function MenuBar() {
           </MenuDropdown>
 
           <MenuDropdown label="View" {...m("view")}>
+            <MenuItem
+              onClick={() => {
+                toggleMissionControl();
+                setOpenMenu(null);
+              }}
+              shortcut="F3">
+              Mission Control
+            </MenuItem>
+            <MenuSeparator />
             <MenuItem
               onClick={() => {
                 toggleFullscreen();

@@ -18,6 +18,8 @@ import {
   GIconCalculator,
   GIconActivity,
   GIconBookOpen,
+  GIconCode,
+  GIconLayoutCells,
   GIconSparkles,
   GIconSliders,
   GIconTrash,
@@ -32,6 +34,7 @@ const APP_META = [
   { id: "calculator", title: "Calculator", desc: "Standard & arithmetic math calculator", icon: GIconCalculator, color: "#06b6d4", category: "Applications" },
   { id: "activity", title: "Activity Monitor", desc: "Real-time CPU/RAM metrics, process manager & ping test", icon: GIconActivity, color: "#10b981", category: "Applications" },
   { id: "guestbook", title: "Guestbook", desc: "Real-time social visitor ledger & greetings", icon: GIconBookOpen, color: "#8b5cf6", category: "Applications" },
+  { id: "codeplay", title: "CodePlay Sandbox", desc: "Interactive developer code runner & algorithm testbench", icon: GIconCode, color: "#38bdf8", category: "Applications" },
   { id: "library", title: "Library", desc: "Case studies & portfolio projects", icon: GIconLibrary, color: "#5BB8B0", category: "Applications" },
   { id: "music", title: "Music", desc: "Lo-Fi, ambient beats & song search", icon: GIconMusic, color: "#D9678C", category: "Applications" },
   { id: "chats", title: "Chats", desc: "Comic-book styled live guest room", icon: GIconChats, color: "#8E7BE0", category: "Applications" },
@@ -51,6 +54,7 @@ export default function SpotlightSearch() {
     setOsMode,
     toggleMotion,
     toggleChatSound,
+    toggleMissionControl,
     windows,
     closeWindow,
   } = useOS();
@@ -107,7 +111,16 @@ export default function SpotlightSearch() {
         color: "#eab308",
         category: "System",
         action: toggleChatSound,
+      },      {
+        id: "act-mission-control",
+        title: "Mission Control / Task View",
+        desc: "Show visual overview grid of all active windows (F3)",
+        icon: GIconLayoutCells,
+        color: "#38bdf8",
+        category: "Window Management",
+        action: toggleMissionControl,
       },
+
       {
         id: "act-close-all",
         title: "Close All Windows",
