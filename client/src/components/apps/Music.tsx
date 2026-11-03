@@ -558,7 +558,7 @@ export default function Music() {
                       <button
                         onClick={() => toggleMix(r)}
                         title={inMix(t.id) ? "Remove from My Mix" : "Add to My Mix"}
-                        className={`p-2 rounded-full shrink-0 transition-colors ${
+                        className={`w-7 h-7 aspect-square shrink-0 rounded-full flex items-center justify-center transition-colors ${
                           inMix(t.id)
                             ? "bg-accent text-white"
                             : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
@@ -573,7 +573,7 @@ export default function Music() {
                           target="_blank"
                           rel="noreferrer"
                           title="Open full album"
-                          className="p-2 rounded-full shrink-0 text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+                          className="w-7 h-7 aspect-square shrink-0 rounded-full flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors"
                         >
                           <GIconExternalLink size={12} />
                         </a>
@@ -655,11 +655,11 @@ export default function Music() {
           </div>
 
           {/* Playback Buttons */}
-          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               onClick={prev}
               disabled={!queue.length}
-              className="p-1.5 sm:p-2 hover:bg-white/10 rounded-full transition-colors disabled:opacity-30 text-white/80 hover:text-white"
+              className="w-8 h-8 aspect-square shrink-0 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-30 text-white/80 hover:text-white"
               title="Previous"
             >
               <GIconBackward size={14} />
@@ -667,16 +667,16 @@ export default function Music() {
 
             <button
               onClick={handleTogglePlay}
-              className="p-2 sm:p-2.5 bg-accent rounded-full hover:brightness-110 active:scale-95 transition text-white shadow-lg shadow-accent/30"
+              className="w-9 h-9 sm:w-10 sm:h-10 aspect-square shrink-0 rounded-full flex items-center justify-center bg-accent hover:brightness-110 active:scale-95 transition text-white shadow-lg shadow-accent/30"
               title={playing ? "Pause" : "Play"}
             >
-              {playing ? <GIconPause size={14} /> : <GIconPlay size={14} />}
+              {playing ? <GIconPause size={14} /> : <GIconPlay size={14} className="ml-0.5" />}
             </button>
 
             <button
               onClick={next}
               disabled={!queue.length}
-              className="p-1.5 sm:p-2 hover:bg-white/10 rounded-full transition-colors disabled:opacity-30 text-white/80 hover:text-white"
+              className="w-8 h-8 aspect-square shrink-0 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-30 text-white/80 hover:text-white"
               title="Next"
             >
               <GIconForward size={14} />
@@ -701,7 +701,8 @@ export default function Music() {
           <div className="hidden md:flex items-center gap-1.5 shrink-0 ml-1">
             <button
               onClick={() => setVolume(volume > 0 ? 0 : 0.7)}
-              className="text-white/50 hover:text-white transition-colors"
+              className="w-6 h-6 aspect-square shrink-0 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+              title={volume === 0 ? "Unmute" : "Mute"}
             >
               {volume === 0 ? <GIconVolumeMute size={14} /> : <GIconVolume size={14} />}
             </button>

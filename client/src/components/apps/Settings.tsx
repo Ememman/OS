@@ -66,7 +66,7 @@ function ToggleRow({ label, checked, onToggle }) {
         className={`w-10 sm:w-11 h-6 rounded-full relative transition-all duration-300 shrink-0 ${checked ? "bg-accent" : "bg-white/20"}`}
       >
         <span
-          className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all duration-300 shadow-md ${
+          className={`absolute top-0.5 w-5 h-5 aspect-square shrink-0 rounded-full bg-white transition-all duration-300 shadow-md ${
             checked ? "left-\[18px] sm:left-5.5" : "left-0.5"
           }`}
         />
@@ -291,8 +291,8 @@ export default function Settings() {
                     }`}
                   />
                   {isSelected && (
-                    <span className="absolute top-1.5 right-1.5 bg-accent rounded-full p-1 shadow-lg shadow-accent/40">
-                      <GIconCheck size={10} className="text-white" />
+                    <span className="absolute top-1.5 right-1.5 w-5 h-5 aspect-square shrink-0 rounded-full bg-accent flex items-center justify-center shadow-lg shadow-accent/40 z-10">
+                      <GIconCheck size={11} className="text-white" />
                     </span>
                   )}
                 </div>
@@ -328,7 +328,7 @@ export default function Settings() {
                 key={a.value}
                 onClick={() => setAccent(a.value)}
                 title={a.name}
-                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border-2 transition-all duration-200 hover:scale-110 ${
+                className={`w-8 h-8 sm:w-9 sm:h-9 aspect-square shrink-0 rounded-full flex items-center justify-center border-2 transition-all duration-200 hover:scale-110 ${
                   isSelected ? "border-white scale-110 shadow-lg shadow-white/20" : "border-transparent hover:border-white/30"
                 }`}
                 style={{ background: `rgb(${a.value})` }}
@@ -340,7 +340,7 @@ export default function Settings() {
 
           {/* Custom Color Native Picker (+) */}
           <label
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border-2 border-dashed border-white/30 cursor-pointer hover:border-white/60 hover:scale-110 transition relative overflow-hidden"
+            className="w-8 h-8 sm:w-9 sm:h-9 aspect-square shrink-0 rounded-full flex items-center justify-center border-2 border-dashed border-white/30 cursor-pointer hover:border-white/60 hover:scale-110 transition relative overflow-hidden"
             title="Pick any custom color"
           >
             <input
@@ -358,7 +358,7 @@ export default function Settings() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span
-                className="w-3.5 h-3.5 rounded-full border border-white/20 shadow-sm"
+                className="w-3.5 h-3.5 aspect-square shrink-0 rounded-full border border-white/20 shadow-sm"
                 style={{ background: `rgb(${harmonizedPalette?.rgb || accent})` }}
               />
               <span className="text-xs font-semibold text-white">

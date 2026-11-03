@@ -450,7 +450,7 @@ export default function Window({ win, children }) {
               {/* Close (Red) */}
               <button
                 onClick={requestClose}
-                className="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e]/80 hover:brightness-95 active:brightness-90 flex items-center justify-center transition-all cursor-pointer shadow-sm"
+                className="w-3 h-3 aspect-square shrink-0 rounded-full bg-[#ff5f56] border border-[#e0443e]/80 hover:brightness-95 active:brightness-90 flex items-center justify-center transition-all cursor-pointer shadow-sm"
                 aria-label="Close window"
                 title="Close"
               >
@@ -472,7 +472,7 @@ export default function Window({ win, children }) {
               {/* Minimize (Yellow) */}
               <button
                 onClick={requestMinimize}
-                className="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123]/80 hover:brightness-95 active:brightness-90 flex items-center justify-center transition-all cursor-pointer shadow-sm"
+                className="w-3 h-3 aspect-square shrink-0 rounded-full bg-[#ffbd2e] border border-[#dea123]/80 hover:brightness-95 active:brightness-90 flex items-center justify-center transition-all cursor-pointer shadow-sm"
                 aria-label="Minimize window"
                 title="Minimize"
               >
@@ -496,7 +496,7 @@ export default function Window({ win, children }) {
                   onClick={() => toggleMaximize(win.id)}
                   onMouseEnter={handleSnapEnter}
                   onMouseLeave={handleSnapLeave}
-                  className="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29]/80 hover:brightness-95 active:brightness-90 flex items-center justify-center transition-all cursor-pointer shadow-sm relative"
+                  className="w-3 h-3 aspect-square shrink-0 rounded-full bg-[#27c93f] border border-[#1aab29]/80 hover:brightness-95 active:brightness-90 flex items-center justify-center transition-all cursor-pointer shadow-sm relative"
                   aria-label="Maximize window or hover for snap layouts"
                   title="Maximize"
                 >

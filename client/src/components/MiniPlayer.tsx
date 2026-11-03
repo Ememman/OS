@@ -23,9 +23,17 @@ export default function MiniPlayer() {
   const bottomClearance = osMode === "win" ? "bottom-[76px]" : "bottom-20 sm:bottom-20";
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => openApp("music")}
-      className={`absolute ${bottomClearance} left-1/2 -translate-x-1/2 z-850 glass rounded-2xl border border-white/10 shadow-2xl pl-2 pr-3 py-2 flex items-center gap-2.5 hover:border-white/25 transition-colors reveal-fade max-w-[calc(100vw-24px)]`}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openApp("music");
+        }
+      }}
+      className={`absolute ${bottomClearance} left-1/2 -translate-x-1/2 z-850 glass rounded-2xl border border-white/10 shadow-2xl pl-2 pr-3 py-2 flex items-center gap-2.5 hover:border-white/25 transition-colors reveal-fade max-w-[calc(100vw-24px)] cursor-pointer select-none`}
       title="Reopen Music"
     >
       <div className={`w-8 h-8 rounded-lg overflow-hidden bg-white/5 shrink-0 relative ${playing ? "ring-2 ring-accent/60" : ""}`}>
@@ -44,17 +52,29 @@ export default function MiniPlayer() {
         </div>
         <div className="text-[9px] text-white/45 truncate">{track.artist}</div>
       </div>
-      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-        <button onClick={prev} className="p-1 hover:bg-white/10 rounded-full transition-colors text-white/70 hover:text-white" title="Previous">
+      <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={prev}
+          className="w-6 h-6 aspect-square shrink-0 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors text-white/70 hover:text-white"
+          title="Previous"
+        >
           <GIconBackward size={12} />
         </button>
-        <button onClick={togglePlay} className="p-1.5 bg-accent rounded-full hover:brightness-110 active:scale-95 transition text-white" title={playing ? "Pause" : "Play"}>
-          {playing ? <GIconPause size={12} /> : <GIconPlay size={12} />}
+        <button
+          onClick={togglePlay}
+          className="w-7 h-7 aspect-square shrink-0 rounded-full flex items-center justify-center bg-accent hover:brightness-110 active:scale-95 transition text-white shadow-md shadow-accent/30"
+          title={playing ? "Pause" : "Play"}
+        >
+          {playing ? <GIconPause size={12} /> : <GIconPlay size={12} className="ml-0.5" />}
         </button>
-        <button onClick={next} className="p-1 hover:bg-white/10 rounded-full transition-colors text-white/70 hover:text-white" title="Next">
+        <button
+          onClick={next}
+          className="w-6 h-6 aspect-square shrink-0 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors text-white/70 hover:text-white"
+          title="Next"
+        >
           <GIconForward size={12} />
         </button>
       </div>
-    </button>
+    </div>
   );
 }

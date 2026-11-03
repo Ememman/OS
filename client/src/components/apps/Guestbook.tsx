@@ -516,7 +516,7 @@ export default function Guestbook() {
                     }
                   }}
                   title={profileMode === "avatar" ? "Click to roll new seed" : "Click to upload image"}
-                  className="relative w-14 h-14 rounded-2xl border border-white/10 bg-black/40 p-1 shrink-0 overflow-hidden shadow-inner group cursor-pointer hover:border-white/30 transition"
+                  className="relative w-14 h-14 aspect-square rounded-2xl border border-white/10 bg-black/40 p-1 shrink-0 overflow-hidden shadow-inner group cursor-pointer hover:border-white/30 transition"
                 >
                   <img
                     src={activePreviewSrc}
@@ -944,7 +944,7 @@ export default function Guestbook() {
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2.5 min-w-0">
                         {/* Profile Picture / Avatar */}
-                        <div className="w-10 h-10 rounded-xl border border-white/10 bg-black/40 p-0.5 shrink-0 overflow-hidden shadow-sm">
+                        <div className="w-10 h-10 aspect-square rounded-xl border border-white/10 bg-black/40 p-0.5 shrink-0 overflow-hidden shadow-sm">
                           <img
                             src={avatarSrc}
                             alt={item.name}

@@ -108,7 +108,7 @@ function StartMenu({ onClose }: { onClose: () => void }) {
 
       <div className="border-t border-white/10 mt-4 pt-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-accent/40 flex items-center justify-center text-xs font-semibold">B</div>
+          <div className="w-7 h-7 aspect-square shrink-0 rounded-full bg-accent/40 flex items-center justify-center text-xs font-semibold">B</div>
           <span className="text-xs font-medium">Bron Mendoza</span>
         </div>
         <button

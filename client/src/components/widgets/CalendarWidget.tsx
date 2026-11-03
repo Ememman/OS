@@ -78,13 +78,13 @@ export default function CalendarWidget({ onBack }: { onBack?: () => void }) {
         {cells.map((c, i) => (
           <div key={i} className="flex flex-col items-center gap-1">
             <div
-              className={`w-6 h-6 flex items-center justify-center rounded-full ${
+              className={`w-6 h-6 aspect-square shrink-0 flex items-center justify-center rounded-full ${
                 isToday(c.d, c.muted) ? "bg-accent text-white font-semibold" : c.muted ? "text-white/25" : "text-white/85"
               }`}
             >
               {c.d}
             </div>
-            <span className={`w-1 h-1 rounded-full ${hasEvent(c.d, c.muted) ? "bg-accent" : "bg-transparent"}`} />
+            <span className={`w-1 h-1 aspect-square shrink-0 rounded-full ${hasEvent(c.d, c.muted) ? "bg-accent" : "bg-transparent"}`} />
           </div>
         ))}
       </div>
