@@ -90,7 +90,7 @@ export default function OsPicker() {
                   <div className="absolute inset-0 bg-linear-to-t from-[#080d19]/40 via-transparent to-transparent" />
                   {selected === id && (
                     <div className="absolute top-2.5 right-2.5">
-                      <div className="w-7 h-7 rounded-full bg-accent flex items-center justify-center shadow-lg shadow-accent/40 border border-white/25 text-white">
+                      <div className="w-7 h-7 aspect-square shrink-0 rounded-full bg-accent flex items-center justify-center shadow-lg shadow-accent/40 border border-white/25 text-white">
                         <GIconCheck size={14} />
                       </div>
                     </div>

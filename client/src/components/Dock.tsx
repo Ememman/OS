@@ -103,7 +103,7 @@ export default function Dock() {
             </span>
             {openApps.has(app) && (
               <span
-                className={`absolute rounded-full bg-white/80 ${
+                className={`absolute rounded-full aspect-square shrink-0 bg-white/80 ${
                   vertical ? "w-1 h-1 left-0.5 top-1/2 -translate-y-1/2" : "w-1 h-1 -bottom-1"
                 }`}
               />

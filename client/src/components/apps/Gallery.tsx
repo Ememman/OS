@@ -214,10 +214,10 @@ export default function Gallery() {
           <div className="relative w-full max-w-4xl flex-1 flex items-center justify-center my-2 overflow-hidden">
             <button
               onClick={(e) => { e.stopPropagation(); go(-1); }}
-              className="absolute left-1 sm:left-3 p-2 hover:bg-white/20 active:scale-90 rounded-full z-10 text-white/85 transition bg-black/40 backdrop-blur-sm"
+              className="absolute left-1 sm:left-3 w-10 h-10 aspect-square shrink-0 flex items-center justify-center hover:bg-white/20 active:scale-90 rounded-full z-10 text-white/85 transition bg-black/40 backdrop-blur-sm"
               aria-label="Previous"
             >
-              <GIconChevronLeft size={24} />
+              <GIconChevronLeft size={20} />
             </button>
 
             <div
@@ -251,10 +251,10 @@ export default function Gallery() {
 
             <button
               onClick={(e) => { e.stopPropagation(); go(1); }}
-              className="absolute right-1 sm:right-3 p-2 hover:bg-white/20 active:scale-90 rounded-full z-10 text-white/85 transition bg-black/40 backdrop-blur-sm"
+              className="absolute right-1 sm:right-3 w-10 h-10 aspect-square shrink-0 flex items-center justify-center hover:bg-white/20 active:scale-90 rounded-full z-10 text-white/85 transition bg-black/40 backdrop-blur-sm"
               aria-label="Next"
             >
-              <GIconChevronRight size={24} />
+              <GIconChevronRight size={20} />
             </button>
           </div>
 

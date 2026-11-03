@@ -101,10 +101,10 @@ export default function ControlCenter() {
           {/* API & Network Status */}
           <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+              <div className="w-7 h-7 aspect-square shrink-0 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
                 <GIconSignal size={14} />
               </div>
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="w-2 h-2 aspect-square shrink-0 rounded-full bg-emerald-400 animate-pulse" />
             </div>
             <div className="mt-2">
               <div className="font-semibold text-white/90 text-[11px]">API Gateway</div>
@@ -128,7 +128,7 @@ export default function ControlCenter() {
           >
             <div className="flex items-center justify-between">
               <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center ${
+                className={`w-7 h-7 aspect-square shrink-0 rounded-full flex items-center justify-center ${
                   themeMode === "light" ? "bg-accent text-white" : "bg-white/10 text-white/70"
                 }`}
               >
@@ -273,7 +273,7 @@ export default function ControlCenter() {
                 togglePlay();
                 if (systemSounds) soundFx.playClick();
               }}
-              className="w-8 h-8 rounded-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center shrink-0 shadow-lg shadow-accent/20 transition-transform active:scale-95"
+              className="w-8 h-8 aspect-square shrink-0 rounded-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center shadow-lg shadow-accent/20 transition-transform active:scale-95"
             >
               {playing ? <GIconPause size={13} /> : <GIconPlay size={13} className="ml-0.5" />}
             </button>
@@ -296,7 +296,7 @@ export default function ControlCenter() {
                     if (systemSounds) soundFx.playClick();
                   }}
                   title={a.name}
-                  className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                  className={`w-7 h-7 aspect-square shrink-0 rounded-full flex items-center justify-center transition-all ${
                     isSelected ? "ring-2 ring-white scale-110 shadow-lg" : "hover:scale-105 opacity-80 hover:opacity-100"
                   }`}
                   style={{ background: `rgb(${a.value})` }}

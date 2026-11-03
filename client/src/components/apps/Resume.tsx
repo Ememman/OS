@@ -320,7 +320,7 @@ export default function Resume() {
                   "RESTful API & Database Optimization Best Practices"
                 ].map((c, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs text-white/80">
-                    <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">
+                    <span className="w-4 h-4 aspect-square shrink-0 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">
                       ✓
                     </span>
                     <span>{c}</span>
@@ -342,7 +342,7 @@ export default function Resume() {
 
             {sentSuccess ? (
               <div className="text-center py-8 space-y-2">
-                <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mx-auto">
+                <div className="w-12 h-12 aspect-square shrink-0 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mx-auto">
                   ✓
                 </div>
                 <h4 className="font-display font-semibold text-sm text-white">Message Dispatched!</h4>
