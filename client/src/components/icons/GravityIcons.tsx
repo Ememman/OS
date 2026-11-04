@@ -153,4 +153,20 @@ export const GIconUpload = (props: any) => <GravityIcon icon={(GIcons as any).Ar
 export const GIconCircleInfo = (props: any) => <GravityIcon icon={GIcons.CircleInfo} {...props} />;
 export const GIconBell = (props: any) => <GravityIcon icon={GIcons.Bell} {...props} />;
 
+// Text Formatting & Editor
+export const GIconBold = (props: any) => <GravityIcon icon={(GIcons as any).Bold} {...props} />;
+export const GIconItalic = (props: any) => <GravityIcon icon={(GIcons as any).Italic} {...props} />;
+export const GIconUnderline = (props: any) => <GravityIcon icon={(GIcons as any).Underline || (GIcons as any).LetterAUnderline} {...props} />;
+export const GIconStrikethrough = (props: any) => <GravityIcon icon={(GIcons as any).Strikethrough} {...props} />;
+export const GIconHeading1 = (props: any) => <GravityIcon icon={(GIcons as any).Heading1 || (GIcons as any).Heading} {...props} />;
+export const GIconHeading2 = (props: any) => <GravityIcon icon={(GIcons as any).Heading2 || (GIcons as any).Heading} {...props} />;
+export const GIconHeading3 = (props: any) => <GravityIcon icon={(GIcons as any).Heading3 || (GIcons as any).Heading} {...props} />;
+export const GIconListUl = (props: any) => <GravityIcon icon={(GIcons as any).ListUl || (GIcons as any).SquareListUl} {...props} />;
+export const GIconListOl = (props: any) => <GravityIcon icon={(GIcons as any).ListOl || (GIcons as any).LayoutList} {...props} />;
+export const GIconListCheck = (props: any) => <GravityIcon icon={(GIcons as any).ListCheck || (GIcons as any).SquareCheck} {...props} />;
+export const GIconQuote = (props: any) => <GravityIcon icon={(GIcons as any).QuoteOpen || (GIcons as any).QuoteClose} {...props} />;
+export const GIconUndo = (props: any) => <GravityIcon icon={(GIcons as any).ArrowRotateLeft || (GIcons as any).ArrowsRotateLeft} {...props} />;
+export const GIconRedo = (props: any) => <GravityIcon icon={(GIcons as any).ArrowRotateRight || (GIcons as any).ArrowsRotateRight} {...props} />;
+export const GIconFontCursor = (props: any) => <GravityIcon icon={(GIcons as any).FontCursor || (GIcons as any).Font} {...props} />;
+
 export default GIcons;
