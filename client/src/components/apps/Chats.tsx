@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   GIconPaperPlane,
   GIconPersons,
@@ -20,11 +21,41 @@ import { soundFx } from "../../lib/soundFx";
 import { API_URL } from "../../lib/config";
 
 const BG_OPTIONS = [
-  { id: "halftone", label: "Soft paper", swatch: "#f7f4ee" },
-  { id: "notebook", label: "Notebook", swatch: "#f5f7fa" },
-  { id: "ink", label: "Midnight", swatch: "#18212b" },
-  { id: "plain", label: "Warm neutral", swatch: "#f2eee7" },
-  { id: "action", label: "Evening", swatch: "#272331" },
+  {
+    id: "ink",
+    label: "Midnight Dark",
+    desc: "Deep OLED dark mode",
+    swatch: "#141c25",
+    border: "border-slate-700",
+  },
+  {
+    id: "action",
+    label: "Evening Slate",
+    desc: "Manga ink & dark graphite tone",
+    swatch: "#1f2a36",
+    border: "border-slate-600",
+  },
+  {
+    id: "halftone",
+    label: "Soft Paper",
+    desc: "Vintage newsprint halftone texture",
+    swatch: "#f4f1ea",
+    border: "border-amber-200/50",
+  },
+  {
+    id: "notebook",
+    label: "Notebook",
+    desc: "Lined legal blue rules",
+    swatch: "#edf3f8",
+    border: "border-sky-200/50",
+  },
+  {
+    id: "plain",
+    label: "Warm Neutral",
+    desc: "Creamy editorial paper tone",
+    swatch: "#f4f0e8",
+    border: "border-stone-200/50",
+  },
 ];
 
 const EMOJI_REACTIONS = ["❤️", "👍", "🔥", "🚀", "😂", "🎉"];
@@ -60,35 +91,86 @@ function nameColor(name: string) {
 
 function BgPicker({ current, onPick, onClose }: any) {
   const ref = useRef<HTMLDivElement>(null);
+  const { systemSounds } = useOS();
   useOutsideClick(ref, onClose);
+
   return (
-    <div
+    <motion.div
       ref={ref}
+      initial={{ opacity: 0, scale: 0.94, y: -6 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.94, y: -6 }}
+      transition={{ type: "spring", stiffness: 450, damping: 28 }}
       role="group"
       aria-label="Chat color theme"
-      className="absolute top-full right-3 mt-1.5 z-[1200] chat-theme-picker rounded-xl p-2 shadow-2xl"
-      style={{ animation: "menuOpen 140ms cubic-bezier(.16,1,.3,1) both" }}
+      className="absolute top-full right-0 mt-2 w-64 sm:w-72 z-[1300] bg-[#101524]/95 backdrop-blur-2xl rounded-2xl p-3 border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.7)] text-white select-none"
+      onClick={(e) => e.stopPropagation()}
     >
-      <div className="text-xs font-semibold px-1 pb-1.5">Chat theme</div>
-      <div className="grid grid-cols-3 gap-1.5">
-        {BG_OPTIONS.map((o) => (
-          <button
-            key={o.id}
-            onClick={() => {
-              onPick(o.id);
-              onClose();
-            }}
-            aria-pressed={current === o.id}
-            className={`flex flex-col items-center gap-1 p-1.5 rounded-lg transition ${
-              current === o.id ? "ring-2 ring-accent" : "hover:bg-black/5 dark:hover:bg-white/10"
-            }`}
-          >
-            <span aria-hidden="true" className="w-8 h-8 rounded-md border border-black/15" style={{ background: o.swatch }} />
-            <span className="text-xs">{o.label}</span>
-          </button>
-        ))}
+      {/* Header */}
+      <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
+        <div className="flex items-center gap-1.5">
+          <GIconSliders size={13} className="text-accent" />
+          <span className="text-xs font-semibold text-white/90">Chat Theme</span>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition cursor-pointer"
+          title="Close"
+        >
+          <GIconClose size={12} />
+        </button>
       </div>
-    </div>
+
+      {/* Theme List */}
+      <div className="space-y-1">
+        {BG_OPTIONS.map((o) => {
+          const isSelected = current === o.id;
+          return (
+            <motion.button
+              key={o.id}
+              whileHover={{ x: 2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                if (systemSounds) soundFx.playClick();
+                onPick(o.id);
+                onClose();
+              }}
+              aria-pressed={isSelected}
+              className={`w-full flex items-center gap-2.5 p-2 rounded-xl transition-all cursor-pointer text-left ${
+                isSelected
+                  ? "bg-white/12 border border-white/20 shadow-sm"
+                  : "hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              {/* Swatch Preview Pill */}
+              <div
+                className={`w-7 h-7 rounded-lg border ${o.border} shadow-sm shrink-0 flex items-center justify-center`}
+                style={{ background: o.swatch }}
+              >
+                {isSelected && (
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      o.id === "ink" || o.id === "action" ? "bg-white" : "bg-black"
+                    }`}
+                  />
+                )}
+              </div>
+
+              {/* Label & Description */}
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium text-white/95 flex items-center justify-between">
+                  <span>{o.label}</span>
+                  {isSelected && <GIconCheck size={12} className="text-accent shrink-0 ml-1" />}
+                </div>
+                <div className="text-[10px] text-white/50 truncate leading-tight mt-0.5">
+                  {o.desc}
+                </div>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+    </motion.div>
   );
 }
 
@@ -400,34 +482,40 @@ export default function Chats() {
             </button>
 
             {/* Active Users Dropdown */}
-            {showUsersModal && (
-              <div
-                ref={usersModalRef}
-                className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-slate-900 border border-white/15 p-2 shadow-2xl z-50 text-xs text-white"
-              >
-                <div className="font-semibold text-[11px] text-white/50 px-1 pb-1 border-b border-white/10 mb-1">
-                  Online Visitors ({activeUsers.length || 1})
-                </div>
-                <div className="max-h-36 overflow-y-auto thin-scroll space-y-1">
-                  {activeUsers.length > 0 ? (
-                    activeUsers.map((u, i) => (
-                      <div key={i} className="flex items-center gap-2 px-1.5 py-1 rounded bg-white/5">
-                        <span
-                          className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
-                          style={{ background: nameColor(u.name) }}
-                        >
-                          {u.name?.[0]?.toUpperCase()}
-                        </span>
-                        <span className="truncate text-white/80">{u.name}</span>
-                        {u.name === name && <span className="text-[9px] text-accent ml-auto">(you)</span>}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-white/40 text-[10px] p-1">1 active session</div>
-                  )}
-                </div>
-              </div>
-            )}
+            <AnimatePresence>
+              {showUsersModal && (
+                <motion.div
+                  ref={usersModalRef}
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-slate-900 border border-white/15 p-2 shadow-2xl z-50 text-xs text-white"
+                >
+                  <div className="font-semibold text-[11px] text-white/50 px-1 pb-1 border-b border-white/10 mb-1">
+                    Online Visitors ({activeUsers.length || 1})
+                  </div>
+                  <div className="max-h-36 overflow-y-auto thin-scroll space-y-1">
+                    {activeUsers.length > 0 ? (
+                      activeUsers.map((u, i) => (
+                        <div key={i} className="flex items-center gap-2 px-1.5 py-1 rounded bg-white/5">
+                          <span
+                            className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
+                            style={{ background: nameColor(u.name) }}
+                          >
+                            {u.name?.[0]?.toUpperCase()}
+                          </span>
+                          <span className="truncate text-white/80">{u.name}</span>
+                          {u.name === name && <span className="text-[9px] text-accent ml-auto">(you)</span>}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-white/40 text-[10px] p-1">1 active session</div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Search Toggle */}
@@ -464,9 +552,11 @@ export default function Chats() {
             >
               <GIconSliders size={14} />
             </button>
-            {bgPickerOpen && (
-              <BgPicker current={chatBg} onPick={setChatBg} onClose={() => setBgPickerOpen(false)} />
-            )}
+            <AnimatePresence>
+              {bgPickerOpen && (
+                <BgPicker current={chatBg} onPick={setChatBg} onClose={() => setBgPickerOpen(false)} />
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
