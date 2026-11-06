@@ -76,7 +76,6 @@ export default function App() {
   const {
     windows,
     openApp,
-    themeMode,
     harmonizedPalette,
     reduceMotion,
     booted,
@@ -108,8 +107,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    applyHarmonizedPaletteToDoc(harmonizedPalette, themeMode === "night");
-  }, [harmonizedPalette, themeMode]);
+    applyHarmonizedPaletteToDoc(harmonizedPalette, true);
+  }, [harmonizedPalette]);
 
   useEffect(() => {
     document.documentElement.style.setProperty("--glass-alpha", String(glassAlpha));

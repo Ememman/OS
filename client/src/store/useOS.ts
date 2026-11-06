@@ -139,13 +139,20 @@ const dockPosition: DockPosition =
     ? savedDockPosition
     : "bottom";
 
-const rawSavedTheme = localStorage.getItem("os_theme_mode");
-const savedThemeMode: ThemeMode = rawSavedTheme === "light" ? "light" : "night";
+if (typeof window !== "undefined") {
+  localStorage.removeItem("os_theme_mode");
+  localStorage.removeItem("os_accent");
+}
+
+const savedThemeMode: ThemeMode = "night";
 const initialAccentValue = DEFAULT_ACCENT;
-const initialPalette = harmonizeAccentColor(initialAccentValue, savedThemeMode === "night");
+const initialPalette = harmonizeAccentColor(initialAccentValue, true);
 
 if (typeof document !== "undefined") {
-  applyHarmonizedPaletteToDoc(initialPalette, savedThemeMode === "night");
+  document.documentElement.removeAttribute("data-theme");
+  document.documentElement.classList.remove("light-theme");
+  document.documentElement.classList.add("dark-theme");
+  applyHarmonizedPaletteToDoc(initialPalette, true);
 }
 
 let z = 10;
@@ -420,12 +427,10 @@ export const useOS = create<OSState>((set, get) => ({
     set({ dockPosition: pos });
   },
 
-  setThemeMode: (mode) => {
-    localStorage.setItem("os_theme_mode", mode);
-    const isNight = mode === "night";
-    const palette = harmonizeAccentColor(DEFAULT_ACCENT, isNight);
-    applyHarmonizedPaletteToDoc(palette, isNight);
-    set({ themeMode: mode, harmonizedPalette: palette });
+  setThemeMode: () => {
+    const palette = harmonizeAccentColor(DEFAULT_ACCENT, true);
+    applyHarmonizedPaletteToDoc(palette, true);
+    set({ themeMode: "night", harmonizedPalette: palette });
   },
 
   setAccent: (value) => {

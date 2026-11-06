@@ -311,14 +311,8 @@ export function applyHarmonizedPaletteToDoc(palette: HarmonizedPalette, isNight:
   root.style.setProperty("--accent-glow", palette.glow);
   root.style.setProperty("--accent-gradient", palette.gradient);
 
-  // Set theme attributes on html
-  if (isNight) {
-    root.setAttribute("data-theme", "night");
-    root.classList.remove("light-theme");
-    root.classList.add("night-theme", "dark-theme");
-  } else {
-    root.setAttribute("data-theme", "light");
-    root.classList.remove("night-theme", "dark-theme");
-    root.classList.add("light-theme");
-  }
+  // Default to native dark-theme
+  root.removeAttribute("data-theme");
+  root.classList.remove("light-theme");
+  root.classList.add("dark-theme");
 }

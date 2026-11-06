@@ -80,8 +80,6 @@ export default function Settings() {
     wallpaper,
     setWallpaper,
     wallpapers,
-    themeMode,
-    setThemeMode,
     harmonizedPalette,
     reduceMotion,
     toggleMotion,
@@ -190,44 +188,6 @@ export default function Settings() {
               {osMode === o.id && <GIconCheck size={14} className="text-accent shrink-0" />}
             </button>
           ))}
-        </div>
-      </section>
-
-      {/* Color Theme (Night Mode / Light Mode) */}
-      <section className="space-y-2">
-        <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Color theme</h3>
-        <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
-          Switch between night glassmorphism and light frosted aesthetics.
-        </p>
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
-          <button
-            onClick={() => setThemeMode("night")}
-            className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm transition-all duration-200 cursor-pointer ${
-              themeMode === "night"
-                ? "border-accent bg-accent/15 text-white shadow-lg shadow-accent/10"
-                : "border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-white/20 hover:bg-white/10"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <GIconMoon size={14} className={themeMode === "night" ? "text-accent" : "text-white/60"} />
-              <span className="font-medium">Night Mode</span>
-            </div>
-            {themeMode === "night" && <GIconCheck size={14} className="text-accent shrink-0" />}
-          </button>
-          <button
-            onClick={() => setThemeMode("light")}
-            className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm transition-all duration-200 cursor-pointer ${
-              themeMode === "light"
-                ? "border-accent bg-accent/15 text-white shadow-lg shadow-accent/10"
-                : "border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-white/20 hover:bg-white/10"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <GIconSun size={14} className={themeMode === "light" ? "text-accent" : "text-white/60"} />
-              <span className="font-medium">Light Mode</span>
-            </div>
-            {themeMode === "light" && <GIconCheck size={14} className="text-accent shrink-0" />}
-          </button>
         </div>
       </section>
 
