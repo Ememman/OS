@@ -24,7 +24,7 @@ const BG_OPTIONS = [
   {
     id: "ink",
     label: "Midnight Dark",
-    desc: "Deep OLED dark mode",
+    desc: "Deep OLED night mode",
     swatch: "#0d1117",
     border: "border-slate-700",
   },

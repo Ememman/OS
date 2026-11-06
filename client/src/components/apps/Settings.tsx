@@ -78,6 +78,7 @@ export default function Settings() {
     wallpaper,
     setWallpaper,
     wallpapers,
+    harmonizedPalette,
     reduceMotion,
     toggleMotion,
     particlesEnabled,
@@ -188,7 +189,6 @@ export default function Settings() {
         </div>
       </section>
 
-
       {osMode === "mac" && (
         <section className="space-y-2">
           <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Dock position</h3>
@@ -258,94 +258,6 @@ export default function Settings() {
               </button>
             );
           })}
-        </div>
-      </section>
-
-      {/* System Interactive Palette */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Interactive Palette & States</h3>
-            <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
-              Standardized system interactive color scheme for buttons, window controls, hover glows, and active clicks.
-            </p>
-          </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-accent/20 border border-accent/40 text-accent font-semibold">
-            #3b82f6 · Electric Blue
-          </span>
-        </div>
-
-        {/* State Color Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
-            <span className="w-6 h-6 rounded-lg bg-[#3b82f6] shadow-md shadow-blue-500/30 shrink-0" />
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-white">Default / Rest</div>
-              <div className="text-[10px] text-white/40 font-mono">#3b82f6 · rgb(59, 130, 246)</div>
-            </div>
-          </div>
-
-          <div className="p-3 rounded-xl bg-white/5 border border-[#60a5fa]/40 flex items-center gap-3 shadow-sm shadow-[#60a5fa]/10">
-            <span className="w-6 h-6 rounded-lg bg-[#60a5fa] shadow-md shadow-blue-400/30 shrink-0" />
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-white">Hover State</div>
-              <div className="text-[10px] text-[#60a5fa] font-mono">#60a5fa · High Saturation</div>
-            </div>
-          </div>
-
-          <div className="p-3 rounded-xl bg-white/5 border border-[#1d4ed8]/40 flex items-center gap-3 shadow-sm shadow-[#1d4ed8]/10">
-            <span className="w-6 h-6 rounded-lg bg-[#1d4ed8] shadow-md shadow-blue-700/30 shrink-0" />
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-white">Active / Click</div>
-              <div className="text-[10px] text-blue-300 font-mono">#1d4ed8 · Tactile Feedback</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Interactive Component Previews */}
-        <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-white/90">Live Interactive Components</span>
-            <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-              Native Dark Glass
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
-            {/* Primary Action Button */}
-            <div className="p-3 rounded-xl bg-black/20 border border-white/5 flex flex-col items-center justify-center gap-2">
-              <span className="text-[9px] uppercase font-mono text-white/40">Interactive Button</span>
-              <button
-                type="button"
-                className="w-full py-2 px-3 rounded-lg bg-accent hover:bg-[rgb(var(--accent-hover))] active:bg-[rgb(var(--accent-active))] text-white text-xs font-semibold transition-all duration-150 active:scale-95 shadow-md shadow-accent/25 flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <GIconSparkles size={12} />
-                <span>Hover & Click Me</span>
-              </button>
-            </div>
-
-            {/* Translucent Surface Badge */}
-            <div className="p-3 rounded-xl bg-black/20 border border-white/5 flex flex-col items-center justify-center gap-2">
-              <span className="text-[9px] uppercase font-mono text-white/40">Glass Surface</span>
-              <button
-                type="button"
-                className="w-full py-2 px-3 rounded-lg text-center text-xs font-medium border border-accent/40 bg-accent/15 hover:bg-accent/25 hover:border-accent active:bg-accent/35 active:scale-95 text-blue-200 transition-all duration-150 cursor-pointer"
-              >
-                Interactive Badge
-              </button>
-            </div>
-
-            {/* Focus Ring / Selection */}
-            <div className="p-3 rounded-xl bg-black/20 border border-white/5 flex flex-col items-center justify-center gap-2">
-              <span className="text-[9px] uppercase font-mono text-white/40">Focused Field</span>
-              <input
-                type="text"
-                readOnly
-                value="Click to focus ring"
-                className="w-full py-1.5 px-2.5 rounded-lg bg-white/5 text-center text-xs text-white/90 border border-white/10 focus:border-accent focus:ring-2 focus:ring-accent/40 outline-none transition-all cursor-pointer"
-              />
-            </div>
-          </div>
         </div>
       </section>
 

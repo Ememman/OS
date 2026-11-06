@@ -5,19 +5,20 @@
 }
 
 :root {
-  --accent: 59 130 246; /* Standard System Electric Blue */
+  --accent: 59 130 246;
+  --accent-hex: #3b82f6;
+  --accent-hover: 96 165 250;
+  --accent-active: 37 99 235;
   --accent-contrast: #ffffff;
-  --accent-hover: 96 165 250; /* Hover state: #60a5fa */
-  --accent-active: 29 78 216; /* Clicking/Active state: #1d4ed8 */
-  --accent-subtle: rgba(59, 130, 246, 0.15);
-  --accent-border: rgba(59, 130, 246, 0.35);
-  --accent-glow: 0 0 20px rgba(59, 130, 246, 0.35);
+  --accent-subtle: rgba(59, 130, 246, 0.16);
+  --accent-border: rgba(59, 130, 246, 0.36);
+  --accent-glow: 0 0 24px rgba(59, 130, 246, 0.42);
   --accent-gradient: linear-gradient(135deg, rgb(59, 130, 246), rgb(96, 165, 250));
   --glass: 12 18 32;
   --glass-alpha: 0.72;
   --radius-window: 16px;
   --surface-border: rgba(255, 255, 255, 0.12);
-  --surface-shadow: 0 24px 72px rgba(0, 0, 0, 0.34);
+  --surface-shadow: 0 24px 72px rgba(0, 0, 0, 0.45);
 }
 
 * { box-sizing: border-box; }
@@ -338,47 +339,47 @@ body {
   background: #fff;
   border: 1px solid #aab5c0;
 }
+.chat-surface[data-theme="night"] .chat-theme-picker,
 .chat-surface[data-theme="dark"] .chat-theme-picker { color: #f4f7fa; background: #1f2a36; border-color: #526170; }
 .chat-surface :focus-visible {
   outline: 3px solid #155caa;
   outline-offset: 2px;
 }
+.chat-surface[data-theme="night"] :focus-visible,
 .chat-surface[data-theme="dark"] :focus-visible { outline-color: #9ac8ff; }
 .chat-surface button:disabled { cursor: not-allowed; }
 .chat-surface button { touch-action: manipulation; }
 .chat-message-in { animation: riseIn 180ms ease-out both; }
 
 .accent { color: rgb(var(--accent)); }
-.bg-accent { background-color: rgb(var(--accent)); color: var(--accent-contrast, #ffffff); }
+.text-accent { color: rgb(var(--accent)); }
+.bg-accent {
+  background-color: rgb(var(--accent));
+  color: var(--accent-contrast, #ffffff);
+  transition: background-color 0.15s ease, transform 0.12s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+.bg-accent:hover {
+  background-color: rgb(var(--accent-hover));
+  box-shadow: var(--accent-glow);
+}
+.bg-accent:active {
+  background-color: rgb(var(--accent-active));
+  transform: scale(0.97);
+}
 .border-accent { border-color: rgb(var(--accent)); }
 .ring-accent { --tw-ring-color: rgb(var(--accent)); }
 .text-accent-contrast { color: var(--accent-contrast, #ffffff); }
-.bg-accent-subtle { background-color: var(--accent-subtle); }
+.bg-accent-subtle {
+  background-color: var(--accent-subtle);
+  transition: background-color 0.15s ease;
+}
+.bg-accent-subtle:hover {
+  background-color: rgba(var(--accent), 0.22);
+}
+.bg-accent-subtle:active {
+  background-color: rgba(var(--accent), 0.28);
+}
 .border-accent-subtle { border-color: var(--accent-border); }
-
-/* Standardized Interactive States (Hover, Active, Clicking) */
-.hover-accent {
-  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
-}
-.hover-accent:hover {
-  background-color: rgba(59, 130, 246, 0.18) !important;
-  border-color: rgba(59, 130, 246, 0.45) !important;
-  color: #ffffff !important;
-}
-.active-accent {
-  transition: transform 100ms ease, background-color 100ms ease;
-}
-.active-accent:active {
-  background-color: rgb(29 78 216) !important;
-  border-color: rgb(29 78 216) !important;
-  transform: scale(0.98);
-}
-.active-accent-state {
-  background-color: rgb(59 130 246) !important;
-  border-color: rgba(96, 165, 250, 0.5) !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
-}
 
 .glass {
   background:

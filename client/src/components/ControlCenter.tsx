@@ -105,36 +105,19 @@ export default function ControlCenter() {
             </div>
           </div>
 
-          {/* System Sounds Toggle */}
-          <button
-            onClick={() => {
-              toggleSystemSounds();
-              soundFx.playClick();
-            }}
-            className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between ${
-              systemSounds
-                ? "bg-accent/20 border-accent/50 shadow-md shadow-accent/20"
-                : "bg-white/5 border-white/10 hover:bg-white/10"
-            }`}
-            title="Toggle System Audio Effects"
-          >
+          {/* Wi-Fi Network Tile */}
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <div
-                className={`w-7 h-7 aspect-square shrink-0 rounded-full flex items-center justify-center ${
-                  systemSounds ? "bg-accent text-white" : "bg-white/10 text-white/70"
-                }`}
-              >
-                {systemSounds ? <GIconVolume size={14} /> : <GIconVolumeMute size={14} />}
+              <div className="w-7 h-7 aspect-square shrink-0 rounded-full bg-accent/20 text-accent flex items-center justify-center">
+                <GIconSignal size={14} />
               </div>
-              <span className={`text-[10px] font-bold uppercase ${systemSounds ? "text-accent" : "text-white/40"}`}>
-                {systemSounds ? "ON" : "OFF"}
-              </span>
+              <span className="text-[10px] text-accent font-semibold">5 GHz</span>
             </div>
             <div className="mt-2">
-              <div className="font-semibold text-white/90 text-[11px]">System Sounds</div>
-              <div className="text-[10px] text-white/40">UI Click & Alert Chimes</div>
+              <div className="font-semibold text-white/90 text-[11px] truncate">Portfolio-Fiber</div>
+              <div className="text-[10px] text-white/40 font-medium">Wi-Fi Connected</div>
             </div>
-          </button>
+          </div>
         </div>
 
         {/* Quick System Action Toggles */}

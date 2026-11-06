@@ -116,10 +116,10 @@ export const APPS: Record<string, AppMetadata> = {
   resume: { title: "Resume", w: 720, h: 640 },
 };
 
-export const DEFAULT_ACCENT = "59 130 246";
+const DEFAULT_ACCENT = "59 130 246"; // System Electric Blue calibrated for active, click, and hover
 
-const ACCENTS: AccentColor[] = [
-  { name: "System Electric Blue", value: DEFAULT_ACCENT },
+const ACCENTS = [
+  { name: "System Blue", value: "59 130 246" },
 ];
 
 const WALLPAPERS = [
@@ -139,9 +139,19 @@ const dockPosition: DockPosition =
     ? savedDockPosition
     : "bottom";
 
-const initialPalette = harmonizeAccentColor(DEFAULT_ACCENT, true);
+if (typeof window !== "undefined") {
+  localStorage.removeItem("os_theme_mode");
+  localStorage.removeItem("os_accent");
+}
+
+const savedThemeMode: ThemeMode = "night";
+const initialAccentValue = DEFAULT_ACCENT;
+const initialPalette = harmonizeAccentColor(initialAccentValue, true);
 
 if (typeof document !== "undefined") {
+  document.documentElement.removeAttribute("data-theme");
+  document.documentElement.classList.remove("light-theme");
+  document.documentElement.classList.add("dark-theme");
   applyHarmonizedPaletteToDoc(initialPalette, true);
 }
 
@@ -410,15 +420,17 @@ export const useOS = create<OSState>((set, get) => ({
   },
 
   setThemeMode: () => {
-    // Theme is locked to native dark glass
-    set({ themeMode: "dark" });
-  },
-
-  setAccent: (_value) => {
-    // Locked to default Electric Blue for consistent hover/active/clicking states
     const palette = harmonizeAccentColor(DEFAULT_ACCENT, true);
     applyHarmonizedPaletteToDoc(palette, true);
-    set({ accent: DEFAULT_ACCENT, harmonizedPalette: palette });
+    set({ themeMode: "night", harmonizedPalette: palette });
+  },
+
+  setAccent: (value) => {
+    localStorage.setItem("os_accent", value);
+    const isNight = get().themeMode === "night";
+    const palette = harmonizeAccentColor(value, isNight);
+    applyHarmonizedPaletteToDoc(palette, isNight);
+    set({ accent: value, harmonizedPalette: palette });
   },
   setWallpaper: (id) => {
     localStorage.setItem("os_wallpaper", id);

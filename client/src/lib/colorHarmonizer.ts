@@ -29,7 +29,7 @@ export interface HarmonizedPalette {
   glow: string;
   gradient: string;
   wcagContrast: string; // e.g. "6.8:1"
-  mode: "dark" | "light";
+  mode: "night" | "light";
 }
 
 /**
@@ -180,7 +180,7 @@ export function getContrastRatio(l1: number, l2: number): number {
  */
 export function harmonizeAccentColor(
   rawInput: string,
-  isDark: boolean = true
+  isNight: boolean = true
 ): HarmonizedPalette {
   const rawRgb = parseColor(rawInput);
   const hsl = rgbToHsl(rawRgb);
@@ -195,30 +195,29 @@ export function harmonizeAccentColor(
     targetS = 58; // Give subtle vibrancy to washed out muddy tones
   }
 
-  // 2. Calibrate Lightness based on Hue & Theme Mode
+  // 2. Calibrate Lightness based on Hue & Theme Mode (Night vs Light)
   // Certain hues (Yellow/Lime, 50-95 deg) have naturally high luminance, while Blues (210-260 deg) have low luminance.
   let targetL = hsl.l;
   const isYellowOrLime = hsl.h >= 45 && hsl.h <= 95;
   const isBlueOrViolet = hsl.h >= 210 && hsl.h <= 275;
 
-  if (isDark) {
-    // DARK MODE:
-    // Needs adequate luminance so text and icons pop against #0a0a0f / glass,
-    // but not so high that it washes out against white elements or causes glare.
+  if (isNight) {
+    // NIGHT MODE:
+    // Electric blue / accents need clean contrast against deep glass #0a0a0f
     if (isYellowOrLime) {
       targetL = Math.max(50, Math.min(62, targetL));
     } else if (isBlueOrViolet) {
-      targetL = Math.max(60, Math.min(70, targetL)); // Blues need a little boost in dark mode
+      targetL = Math.max(60, Math.min(68, targetL));
     } else {
       targetL = Math.max(54, Math.min(66, targetL));
     }
   } else {
     // LIGHT MODE:
-    // Needs deeper tone (lower lightness) so it provides crisp contrast against white/light surfaces.
+    // Deeper tone for clean contrast against light frosted surfaces
     if (isYellowOrLime) {
-      targetL = Math.max(36, Math.min(46, targetL)); // Darker amber so it is readable on white
+      targetL = Math.max(36, Math.min(46, targetL));
     } else if (isBlueOrViolet) {
-      targetL = Math.max(42, Math.min(52, targetL));
+      targetL = Math.max(45, Math.min(52, targetL));
     } else {
       targetL = Math.max(38, Math.min(48, targetL));
     }
@@ -247,30 +246,32 @@ export function harmonizeAccentColor(
     darkContrast >= 4.5 && darkContrast > whiteContrast ? "#0b0f19" : "#ffffff";
   const activeRatio = Math.max(whiteContrast, darkContrast);
 
-  // 4. Hover & Active States
+  // 4. Hover & Active (Clicking) States
+  // Hover: brighter with glowing lift
   const hoverHsl: HSL = {
     h: harmonizedHsl.h,
-    s: harmonizedHsl.s,
-    l: isDark
-      ? Math.min(80, harmonizedHsl.l + 6)
-      : Math.max(25, harmonizedHsl.l - 6),
+    s: Math.min(95, harmonizedHsl.s + 4),
+    l: isNight
+      ? Math.min(78, harmonizedHsl.l + 8)
+      : Math.max(30, harmonizedHsl.l - 6),
   };
   const hoverRgbObj = hslToRgb(hoverHsl);
   const hoverRgb = `${hoverRgbObj.r} ${hoverRgbObj.g} ${hoverRgbObj.b}`;
 
+  // Active / Clicking: deeper, saturated pressed tone
   const activeHsl: HSL = {
     h: harmonizedHsl.h,
-    s: harmonizedHsl.s,
-    l: isDark
-      ? Math.max(35, harmonizedHsl.l - 6)
-      : Math.min(65, harmonizedHsl.l + 6),
+    s: Math.min(100, harmonizedHsl.s + 6),
+    l: isNight
+      ? Math.max(42, harmonizedHsl.l - 8)
+      : Math.min(65, harmonizedHsl.l + 8),
   };
   const activeRgbObj = hslToRgb(activeHsl);
   const activeRgb = `${activeRgbObj.r} ${activeRgbObj.g} ${activeRgbObj.b}`;
 
   // 5. Secondary analogous hue for harmonious gradients
   const gradientHsl: HSL = {
-    h: (harmonizedHsl.h + 22) % 360,
+    h: (harmonizedHsl.h + 20) % 360,
     s: harmonizedHsl.s,
     l: harmonizedHsl.l,
   };
@@ -286,17 +287,17 @@ export function harmonizeAccentColor(
     activeRgb,
     subtle: `rgba(${rgbString.split(" ").join(", ")}, 0.14)`,
     border: `rgba(${rgbString.split(" ").join(", ")}, 0.32)`,
-    glow: `0 0 24px rgba(${rgbString.split(" ").join(", ")}, 0.35)`,
+    glow: `0 0 24px rgba(${rgbString.split(" ").join(", ")}, 0.38)`,
     gradient: `linear-gradient(135deg, rgb(${rgbString.split(" ").join(", ")}), rgb(${gradientRgbObj.r}, ${gradientRgbObj.g}, ${gradientRgbObj.b}))`,
     wcagContrast: `${activeRatio.toFixed(1)}:1`,
-    mode: isDark ? "dark" : "light",
+    mode: isNight ? "night" : "light",
   };
 }
 
 /**
  * Apply the harmonized palette directly to the document root element
  */
-export function applyHarmonizedPaletteToDoc(palette: HarmonizedPalette, _isDark: boolean = true) {
+export function applyHarmonizedPaletteToDoc(palette: HarmonizedPalette, isNight: boolean = true) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
 
@@ -310,8 +311,8 @@ export function applyHarmonizedPaletteToDoc(palette: HarmonizedPalette, _isDark:
   root.style.setProperty("--accent-glow", palette.glow);
   root.style.setProperty("--accent-gradient", palette.gradient);
 
-  // Always lock to native dark glass desktop
-  root.setAttribute("data-theme", "dark");
+  // Default to native dark-theme
+  root.removeAttribute("data-theme");
   root.classList.remove("light-theme");
   root.classList.add("dark-theme");
 }
