@@ -52,10 +52,12 @@ export default function DesktopIcon({ icon: Icon, label, onOpen, style, color }:
         <Icon size={22} className="text-white/90 group-hover:text-white transition-colors sm:scale-105" color={color} />
       </div>
       <span
-        className={`text-[10px] sm:text-[11px] font-medium text-white text-center leading-tight px-1 sm:px-1.5 py-0.5 rounded-md truncate max-w-full ${
-          selected ? "bg-accent text-white shadow-sm" : "group-hover:text-white text-white/90"
+        className={`text-[10px] sm:text-[11px] font-semibold text-white text-center leading-tight px-1.5 py-0.5 rounded-md truncate max-w-full tracking-wide transition-colors ${
+          selected ? "bg-accent text-white shadow-md shadow-accent/30" : "group-hover:text-white text-white/95"
         }`}
-        style={{ textShadow: "0 1px 3px rgba(0,0,0,0.9)" }}
+        style={{
+          textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 2px 8px rgba(0,0,0,0.85)",
+        }}
       >
         {label}
       </span>

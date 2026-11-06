@@ -33,7 +33,7 @@ function MenuDropdown({ label, isOpen, onToggle, onClose, children }: MenuDropdo
     <div ref={ref} className="relative">
       <button
         onClick={onToggle}
-        className={`px-3 py-0.5 rounded transition-colors cursor-default text-[14px] ${isOpen ? "bg-white/15 text-white" : "hover:text-white text-white/70"}`}>
+        className={`px-3 py-0.5 rounded transition-colors cursor-default text-[14px] ${isOpen ? "bg-white/15 text-white" : "hover:text-white text-white/90 font-medium"}`}>
         {label}
       </button>
       {isOpen && (
@@ -178,7 +178,7 @@ export default function MenuBar() {
   });
 
   return (
-    <div className="absolute top-0 left-0 right-0 h-8 z-[999] glass flex items-center justify-between px-3 sm:px-4 text-[14px] text-white/80 select-none">
+    <div className="absolute top-0 left-0 right-0 h-8 z-[999] glass flex items-center justify-between px-3 sm:px-4 text-[14px] text-white/95 select-none shadow-md">
       <div className="flex items-center gap-3 sm:gap-4 min-w-0">
         {/* Apple-style OS Logo using Gravity UI */}
         <MenuDropdown
@@ -465,7 +465,7 @@ export default function MenuBar() {
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 sm:gap-2 text-white/70">
+      <div className="flex items-center gap-1.5 sm:gap-2 text-white/90">
         {/* Mission Control Button */}
         <button
           onClick={toggleMissionControl}
@@ -586,7 +586,7 @@ export default function MenuBar() {
             onClick={() => setDateOpen(!dateOpen)}
             title="View Calendar & Clock"
             className={`font-mono text-[12px] sm:text-[14px] whitespace-nowrap px-1.5 py-1 rounded-lg transition-colors cursor-pointer ${
-              dateOpen ? "bg-white/15 text-white" : "hover:bg-white/10 text-white/85"
+              dateOpen ? "bg-white/20 text-white shadow-sm" : "hover:bg-white/10 text-white font-medium"
             }`}
           >
             <span className="hidden sm:inline">{date} · </span>
