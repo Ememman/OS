@@ -2,153 +2,263 @@ import { useState } from "react";
 import { LogoApple, LogoWindows } from "@gravity-ui/icons";
 import Wallpaper from "./Wallpaper";
 import { useOS } from "../store/useOS";
+import { soundFx } from "../lib/soundFx";
 import type { OSMode } from "../types/os";
-import { GIconCheck, GIconChevronRight } from "./icons/GravityIcons";
+import { GIconCheck, GIconChevronRight, GIconSparkles } from "./icons/GravityIcons";
 import macPreview from "../assets/macos.png";
 import windowsPreview from "../assets/windows.png";
 
+interface OsOption {
+  id: OSMode;
+  name: string;
+  tagline: string;
+  desc: string;
+  img: string;
+  Icon: typeof LogoApple;
+  color: string;
+  features: string[];
+}
+
+const OPTIONS: OsOption[] = [
+  {
+    id: "mac",
+    name: "macOS Style",
+    tagline: "Apple Sequoia Desktop",
+    desc: "Top menu bar, dock at the bottom, and traffic-light windows.",
+    img: macPreview,
+    Icon: LogoApple,
+    color: "#38bdf8",
+    features: ["Top Menu Bar", "Floating Dock", "Traffic Lights"],
+  },
+  {
+    id: "win",
+    name: "Windows 11 Style",
+    tagline: "Fluent Touch & Desktop",
+    desc: "Taskbar with search, system tray, and squared window controls.",
+    img: windowsPreview,
+    Icon: LogoWindows,
+    color: "#0284c7",
+    features: ["Centered Taskbar", "Start Menu", "System Tray"],
+  },
+];
+
+interface OsCardProps {
+  option: OsOption;
+  isSelected: boolean;
+  onSelect: () => void;
+}
+
+function OsCard({ option, isSelected, onSelect }: OsCardProps) {
+  const { id, name, tagline, desc, img, Icon, color, features } = option;
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMousePos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
+  const handleMouseLeave = () => setMousePos(null);
+
+  return (
+    <button
+      onClick={onSelect}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      aria-pressed={isSelected}
+      className={`group relative rounded-2xl p-px text-left transition-all duration-300 ease-out cursor-pointer transform ${
+        isSelected
+          ? "bg-gradient-to-b from-accent/90 via-accent/40 to-white/20 ring-2 ring-accent/60 shadow-2xl shadow-accent/20 scale-[1.015] -translate-y-1"
+          : "bg-gradient-to-b from-white/15 to-white/5 hover:from-white/30 hover:to-white/10 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/60"
+      }`}
+    >
+      {/* Outer interactive mouse spotlight highlight */}
+      {mousePos && (
+        <div
+          className="absolute inset-0 rounded-2xl opacity-100 pointer-events-none transition-opacity duration-300"
+          style={{
+            background: `radial-gradient(320px circle at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.14), transparent 75%)`,
+          }}
+        />
+      )}
+
+      {/* Card Body */}
+      <div
+        className={`relative h-full rounded-[15px] p-3 sm:p-4 transition-all duration-300 flex flex-col justify-between overflow-hidden ${
+          isSelected
+            ? "bg-[#0b101c]/95 backdrop-blur-xl"
+            : "bg-[#090d18]/85 backdrop-blur-md group-hover:bg-[#0c1220]/95"
+        }`}
+      >
+        {/* Inner ambient glow on selection */}
+        {isSelected && (
+          <div
+            className="absolute -top-16 -right-16 w-36 h-36 rounded-full blur-2xl pointer-events-none opacity-25"
+            style={{ backgroundColor: color }}
+          />
+        )}
+
+        {/* Preview Image with Glass Sheen Effect */}
+        <div className="relative overflow-hidden rounded-xl bg-[#121a2a] border border-white/10 shadow-inner">
+          <img
+            src={img}
+            alt={name}
+            className={`w-full aspect-[16/10] object-cover transition-transform duration-500 ease-out ${
+              isSelected ? "scale-[1.03]" : "group-hover:scale-[1.05]"
+            }`}
+          />
+          {/* Subtle gradient vignette */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent pointer-events-none" />
+
+          {/* Diagonal Glass Sheen animation on hover */}
+          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+
+          {/* Badge: Selected Pill or Hover Prompt */}
+          <div className="absolute top-2.5 right-2.5 transition-all duration-300 z-10">
+            {isSelected ? (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent text-white text-[10px] font-semibold shadow-lg shadow-accent/50 border border-white/30 animate-pop-in">
+                <GIconCheck size={12} />
+                <span>Selected</span>
+              </div>
+            ) : (
+              <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md text-white/90 text-[10px] font-medium border border-white/20 shadow-md">
+                <span>Click to Select</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Title, Icon & Description */}
+        <div className="mt-3.5 flex items-start gap-3">
+          <div
+            className={`mt-0.5 w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border transition-all duration-300 ${
+              isSelected
+                ? "bg-accent text-white border-accent shadow-lg shadow-accent/30 scale-105"
+                : "bg-white/5 text-white/70 border-white/10 group-hover:text-white group-hover:bg-white/10 group-hover:border-white/25 group-hover:scale-105"
+            }`}
+          >
+            <Icon width={17} height={17} />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-1.5">
+              <h3 className="text-xs sm:text-sm font-bold text-white tracking-tight group-hover:text-white transition-colors">
+                {name}
+              </h3>
+              <span className="text-[10px] text-white/40 font-mono hidden xs:inline">
+                {tagline}
+              </span>
+            </div>
+
+            <p className="mt-1 text-[11px] text-white/55 leading-relaxed group-hover:text-white/70 transition-colors">
+              {desc}
+            </p>
+
+            {/* Feature Pills */}
+            <div className="flex flex-wrap gap-1.5 mt-2.5">
+              {features.map((feat) => (
+                <span
+                  key={feat}
+                  className={`text-[9px] font-medium px-2 py-0.5 rounded-md border transition-all duration-200 ${
+                    isSelected
+                      ? "bg-accent/15 border-accent/30 text-white/90"
+                      : "bg-white/5 border-white/10 text-white/55 group-hover:text-white/85 group-hover:border-white/20"
+                  }`}
+                >
+                  {feat}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
 export default function OsPicker() {
-  const { osMode, chooseOs } = useOS();
+  const { osMode, chooseOs, systemSounds } = useOS();
   const [selected, setSelected] = useState(osMode);
   const [entering, setEntering] = useState(false);
 
-  const confirm = () => {
-    setEntering(true);
-    setTimeout(() => chooseOs(selected), 260);
+  const handleSelect = (id: OSMode) => {
+    setSelected(id);
+    if (systemSounds) soundFx.playClick();
   };
 
-  const OPTIONS: {
-    id: OSMode;
-    name: string;
-    desc: string;
-    img: string;
-    Icon: typeof LogoApple;
-  }[] = [
-    {
-      id: "mac",
-      name: "macOS Style",
-      desc: "Top menu bar, dock at the bottom, traffic-light windows.",
-      img: macPreview,
-      Icon: LogoApple,
-    },
-    {
-      id: "win",
-      name: "Windows 11 Style",
-      desc: "Taskbar with search, system tray, and squared window controls.",
-      img: windowsPreview,
-      Icon: LogoWindows,
-    },
-  ];
+  const confirm = () => {
+    if (systemSounds) soundFx.playOpen();
+    setEntering(true);
+    setTimeout(() => chooseOs(selected), 280);
+  };
 
   return (
     <div
-      className={`fixed inset-0 z-1500 flex items-center justify-center transition-opacity duration-300 p-3 sm:p-6 ${entering ? "opacity-0" : "opacity-100"}`}>
+      className={`fixed inset-0 z-1500 flex items-center justify-center p-3 sm:p-6 transition-all duration-300 ${
+        entering ? "opacity-0 scale-[1.02] blur-sm pointer-events-none" : "opacity-100 scale-100"
+      }`}
+    >
+      {/* Background wallpaper with dark atmospheric gradient */}
       <div className="absolute inset-0">
         <Wallpaper />
-        <div className="absolute inset-0 bg-linear-to-br from-black/70 via-black/50 to-black/70 backdrop-blur-md" />
+        <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/55 to-black/80 backdrop-blur-md" />
+        {/* Soft background aurora lights */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none animate-pulse-glow" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none animate-pulse-glow" style={{ animationDelay: "2s" }} />
       </div>
 
-      <div className="relative z-10 text-center px-4 py-5 sm:px-7 sm:py-7 max-w-2xl max-h-[calc(100vh-24px)] mx-auto w-full overflow-y-auto thin-scroll rounded-2xl sm:rounded-3xl border border-white/10 bg-[#080d19]/85 sm:bg-[#080d19]/65 backdrop-blur-2xl shadow-[0_32px_100px_rgba(0,0,0,0.5)]">
+      {/* Main Glass Dialog Card */}
+      <div className="relative z-10 text-center px-4 py-6 sm:px-8 sm:py-8 max-w-2xl max-h-[calc(100vh-24px)] mx-auto w-full overflow-y-auto thin-scroll rounded-2xl sm:rounded-3xl border border-white/15 bg-[#080d19]/88 sm:bg-[#080d19]/75 backdrop-blur-2xl shadow-[0_32px_120px_rgba(0,0,0,0.7)] animate-pop-in">
         {/* Header */}
         <div className="mb-5 sm:mb-6 space-y-1.5">
-          <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] font-semibold text-accent">
-            Portfolio OS
-          </p>
-          <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-white">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-accent text-[10px] sm:text-xs font-semibold tracking-wider uppercase mb-1">
+            <GIconSparkles size={11} className="animate-pulse" />
+            <span>Portfolio OS</span>
+          </div>
+          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white">
             Choose Your Experience
           </h1>
-          <p className="max-w-md mx-auto text-xs sm:text-sm text-white/55 leading-relaxed">
+          <p className="max-w-md mx-auto text-xs sm:text-sm text-white/60 leading-relaxed">
             Pick a desktop interface to explore Bron's portfolio.
           </p>
         </div>
 
-        {/* OS Options Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-xl mx-auto">
-          {OPTIONS.map(({ id, name, desc, img, Icon }) => {
-            const isSelected = selected === id;
-            return (
-              <button
-                key={id}
-                onClick={() => setSelected(id)}
-                aria-pressed={isSelected}
-                className={`group relative rounded-2xl p-px text-left transition-all duration-200 cursor-pointer ${
-                  isSelected
-                    ? "bg-linear-to-b from-accent/80 via-accent/40 to-white/15 ring-2 ring-accent/50 shadow-xl shadow-accent/15 scale-[1.01]"
-                    : "bg-linear-to-b from-white/12 to-white/5 hover:from-white/20 hover:to-white/10"
-                }`}
-              >
-                <div
-                  className={`relative h-full rounded-[15px] p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between ${
-                    isSelected
-                      ? "bg-[#0b101c]/95 backdrop-blur-xl"
-                      : "bg-[#0a0e19]/85 backdrop-blur-md hover:bg-[#0c1220]/90"
-                  }`}
-                >
-                  {/* Preview Image with Checkmark */}
-                  <div className="relative overflow-hidden rounded-xl bg-[#121a2a] border border-white/10">
-                    <img
-                      src={img}
-                      alt={name}
-                      className={`w-full aspect-[16/10] object-cover transition-transform duration-300 ${
-                        isSelected ? "scale-[1.02]" : "group-hover:scale-[1.02]"
-                      }`}
-                    />
-                    <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent" />
-                    {isSelected && (
-                      <div className="absolute top-2 right-2">
-                        <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center shadow-lg shadow-accent/50 border border-white/30 text-white">
-                          <GIconCheck size={13} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Title, Icon & Description */}
-                  <div className="mt-3 flex items-start gap-2.5">
-                    <div
-                      className={`mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-colors ${
-                        isSelected
-                          ? "bg-accent/20 text-white border-accent/40"
-                          : "bg-white/5 text-white/70 border-white/10 group-hover:text-white"
-                      }`}
-                    >
-                      <Icon width={15} height={15} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-1.5">
-                        <h3 className="text-xs sm:text-sm font-semibold text-white truncate">
-                          {name}
-                        </h3>
-                        {isSelected && (
-                          <span className="text-[9px] font-semibold text-accent bg-accent/15 px-2 py-0.5 rounded-full border border-accent/25 shrink-0">
-                            Selected
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-[11px] text-white/50 leading-relaxed">
-                        {desc}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
+        {/* OS Options Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-5 max-w-xl mx-auto">
+          {OPTIONS.map((option) => (
+            <OsCard
+              key={option.id}
+              option={option}
+              isSelected={selected === option.id}
+              onSelect={() => handleSelect(option.id)}
+            />
+          ))}
         </div>
 
-        {/* Action Button */}
+        {/* Continue Action Button with Shimmer and Arrow animation */}
         <button
           onClick={confirm}
-          className="group relative mt-5 sm:mt-6 px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl bg-accent hover:brightness-110 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-lg shadow-accent/25 transition-all flex items-center justify-center gap-2 mx-auto cursor-pointer"
+          className="group relative mt-6 sm:mt-7 px-8 sm:px-10 py-3 sm:py-3.5 rounded-xl bg-accent hover:brightness-110 active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-[0_0_28px_rgba(var(--accent),0.35)] hover:shadow-[0_0_40px_rgba(var(--accent),0.6)] hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2.5 mx-auto cursor-pointer overflow-hidden"
         >
-          <span>Continue with {selected === "mac" ? "macOS" : "Windows 11"}</span>
-          <GIconChevronRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+          {/* Shimmer sweep effect on button hover */}
+          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
+
+          <span className="relative z-10 font-medium tracking-wide">
+            Continue with {selected === "mac" ? "macOS Sequoia" : "Windows 11"}
+          </span>
+          <GIconChevronRight
+            size={16}
+            className="relative z-10 transition-transform duration-200 group-hover:translate-x-1"
+          />
         </button>
 
-        {/* Short, straightforward description */}
+        {/* Short, straightforward note */}
         <div className="mt-4 pt-3.5 border-t border-white/10 max-w-md mx-auto">
           <p className="text-[11px] sm:text-xs text-white/50 leading-relaxed">
-            Both styles include all apps and features. You can switch interfaces anytime in <span className="text-white/80 font-medium">Settings</span>.
+            Both styles include all apps and features. You can switch interfaces anytime in{" "}
+            <span className="text-white/80 font-medium">Settings</span> or the Power menu.
           </p>
         </div>
       </div>
