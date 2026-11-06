@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   GIconDownload,
   GIconMail,
@@ -343,29 +344,46 @@ export default function Resume() {
             { id: "skills", label: "Tech Stack & Skills" },
             { id: "education", label: "Education & Certifications" },
             { id: "contact", label: "Hire / Contact Me" },
-          ].map((t) => (
-            <button
-              key={t.id}
-              onClick={() => {
-                setTab(t.id as any);
-                if (systemSounds) soundFx.playClick();
-              }}
-              className={`text-xs px-3.5 py-1.5 rounded-xl font-medium transition-all shrink-0 ${
-                tab === t.id
-                  ? "bg-accent text-white shadow-md shadow-accent/20"
-                  : "text-white/60 hover:text-white hover:bg-white/8"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+          ].map((t) => {
+            const isActive = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => {
+                  setTab(t.id as any);
+                  if (systemSounds) soundFx.playClick();
+                }}
+                className={`relative text-xs px-3.5 py-1.5 rounded-xl font-medium transition-colors shrink-0 cursor-pointer ${
+                  isActive ? "text-white" : "text-white/60 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="resumeActiveTab"
+                    className="absolute inset-0 bg-accent rounded-xl shadow-md shadow-accent/25"
+                    transition={{ type: "spring", stiffness: 450, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{t.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Main Content Pane */}
       <div className="flex-1 overflow-auto thin-scroll p-4 sm:p-6 space-y-6">
-        {tab === "experience" && (
-          <div className="space-y-6">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.16 }}
+            className="space-y-6"
+          >
+            {tab === "experience" && (
+              <div className="space-y-6">
             {EXPERIENCE.map((e, idx) => (
               <div
                 key={idx}
@@ -593,7 +611,9 @@ export default function Resume() {
             )}
           </div>
         )}
-      </div>
+      </motion.div>
+    </AnimatePresence>
+  </div>
 
       {/* Footer bar */}
       <div className="border-t border-white/10 px-4 py-2.5 bg-white/[0.02] flex items-center justify-between text-[11px] text-white/40">

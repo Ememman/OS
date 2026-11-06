@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useOS } from "../store/useOS";
 import { fallbackProjects } from "../data/projects";
 import { fileTree } from "../data/files";
@@ -223,18 +224,25 @@ export default function SpotlightSearch() {
     }
   };
 
-  if (!spotlightOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-[1500] bg-black/60 backdrop-blur-md flex items-start justify-center pt-8 sm:pt-[18vh] px-3 sm:px-4 animate-fade-in"
-      onClick={closeSpotlight}
-    >
-      <div
-        className="w-full max-w-xl glass rounded-2xl border border-white/15 shadow-2xl overflow-hidden flex flex-col origin-top"
-        style={{ animation: "menuOpen 160ms cubic-bezier(.16,1,.3,1) both" }}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {spotlightOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.16 }}
+          className="fixed inset-0 z-[1500] bg-black/65 backdrop-blur-md flex items-start justify-center pt-8 sm:pt-[18vh] px-3 sm:px-4"
+          onClick={closeSpotlight}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94, y: -16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: -16 }}
+            transition={{ type: "spring", stiffness: 420, damping: 28 }}
+            className="w-full max-w-xl glass rounded-2xl border border-white/15 shadow-2xl overflow-hidden flex flex-col origin-top"
+            onClick={(e) => e.stopPropagation()}
+          >
         {/* Search Header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-white/5">
           <GIconSearch size={18} className="text-white/40 shrink-0" />
@@ -337,7 +345,9 @@ export default function SpotlightSearch() {
             <span>Spotlight & Gravity UI</span>
           </div>
         </div>
-      </div>
-    </div>
-  );
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+);
 }
