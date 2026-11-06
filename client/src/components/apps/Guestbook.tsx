@@ -110,6 +110,7 @@ export default function Guestbook() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Profile customizer state
   const [profileMode, setProfileMode] = useState<"avatar" | "photo">(() => {
@@ -322,6 +323,7 @@ export default function Guestbook() {
     if (!cleanName || !cleanMsg) return;
 
     setSubmitting(true);
+    setFormError(null);
     if (systemSounds) soundFx.playClick();
 
     const payload = {
@@ -340,15 +342,19 @@ export default function Guestbook() {
         body: JSON.stringify(payload),
       });
 
+      const data = await res.json();
       if (res.ok) {
-        const created: GuestbookEntry = await res.json();
+        const created: GuestbookEntry = data;
         setEntries((prev) => [created, ...prev.filter((e) => e.id !== created.id)]);
         setMessage("");
+        setFormError(null);
         setMobileTab("feed");
         if (systemSounds) soundFx.playNotification();
         notify("Guestbook Signed", "Your message was published to the ledger.", "add");
       } else {
-        throw new Error("Failed to post");
+        const errMsg = Array.isArray(data.details) ? data.details.join(" ") : (data.error || "Failed to post signature.");
+        setFormError(errMsg);
+        notify("Validation Error", errMsg, "warning");
       }
     } catch {
       // Local session signature fallback
@@ -860,6 +866,14 @@ export default function Guestbook() {
                 className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl p-2.5 text-xs text-white placeholder:text-white/30 outline-none focus:border-white/25 focus:bg-white/[0.05] resize-none thin-scroll transition leading-relaxed"
               />
             </div>
+
+            {/* Validation Error Alert */}
+            {formError && (
+              <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-[11px] flex items-start gap-2">
+                <span className="text-rose-400 font-bold shrink-0">⚠</span>
+                <span className="leading-tight">{formError}</span>
+              </div>
+            )}
 
             {/* Submit Button */}
             <button

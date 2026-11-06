@@ -268,12 +268,27 @@ export default function CodePlay() {
       setExecTime(durationMs);
       setIsRunning(false);
 
-      // Backend analysis endpoint verification (optional enrichment)
+      // Backend AST and complexity analysis enrichment
       fetch(`${API_URL}/api/snippets/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: currentScript, id: activeTemplateId }),
-      }).catch(() => {});
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data?.metrics) {
+            const timeStr = new Date().toLocaleTimeString([], { hour12: false });
+            setOutputLogs((prev) => [
+              ...prev,
+              {
+                type: "info",
+                args: [`Server Verified · Complexity: ${data.metrics.estimatedComplexity} · ${data.lines} lines`],
+                time: timeStr
+              }
+            ]);
+          }
+        })
+        .catch(() => {});
       return;
     }
 
