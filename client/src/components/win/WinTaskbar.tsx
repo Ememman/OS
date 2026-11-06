@@ -6,7 +6,6 @@ import WeatherChip from "./WeatherChip";
 import LiveBadge from "../LiveBadge";
 import CalendarWidget from "../widgets/CalendarWidget";
 import WeatherWidget from "../widgets/WeatherWidget";
-import PowerDialog from "../PowerDialog";
 import {
   GIconTerminal,
   GIconLibrary,
@@ -54,9 +53,9 @@ const TASKBAR_ITEMS = [
 
 const POP_ANIM = { animation: "menuOpen 150ms cubic-bezier(.16,1,.3,1) both" };
 
-function StartMenu({ onClose, onOpenPower }: { onClose: () => void; onOpenPower: () => void }) {
+function StartMenu({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
-  const { openApp } = useOS();
+  const { openApp, openPowerDialog } = useOS();
   const [query, setQuery] = useState("");
   useOutsideClick(ref, onClose);
 
@@ -123,7 +122,7 @@ function StartMenu({ onClose, onOpenPower }: { onClose: () => void; onOpenPower:
           <button
             onClick={() => {
               onClose();
-              onOpenPower();
+              openPowerDialog();
             }}
             className="p-1.5 rounded-lg hover:bg-rose-500/20 text-white/70 hover:text-rose-400 transition cursor-pointer"
             title="Power: Shut Down, Restart, or Switch OS Style"
@@ -136,9 +135,9 @@ function StartMenu({ onClose, onOpenPower }: { onClose: () => void; onOpenPower:
   );
 }
 
-function TrayFlyout({ onClose, onOpenPower }: { onClose: () => void; onOpenPower: () => void }) {
+function TrayFlyout({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
-  const { openApp, reopenPicker, toggleControlCenter, restart, powerOff, setSleeping } = useOS();
+  const { openApp, reopenPicker, toggleControlCenter, restart, openPowerDialog, setSleeping } = useOS();
   useOutsideClick(ref, onClose);
   return (
     <div
@@ -196,7 +195,7 @@ function TrayFlyout({ onClose, onOpenPower }: { onClose: () => void; onOpenPower
       <button
         onClick={() => {
           onClose();
-          onOpenPower();
+          openPowerDialog();
         }}
         className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-xs hover:bg-rose-500/20 text-left text-rose-300"
       >
@@ -243,7 +242,6 @@ function DateFlyout({ onClose }: { onClose: () => void }) {
 export default function WinTaskbar() {
   const { openApp, windows, focusWindow, toggleSpotlight, toggleControlCenter, controlCenterOpen, toggleMissionControl, missionControlOpen } = useOS();
   const [panel, setPanel] = useState<"start" | "tray" | "weather" | "date" | null>(null);
-  const [powerOpen, setPowerOpen] = useState(false);
   const isMobile = useIsMobile();
   const [time, setTime] = useState("");
   const [date, setDate] = useState("");
@@ -366,13 +364,12 @@ export default function WinTaskbar() {
           <div className="text-white/50 hidden sm:block">{date}</div>
         </button>
 
-        {panel === "tray" && <TrayFlyout onClose={() => setPanel(null)} onOpenPower={() => setPowerOpen(true)} />}
+        {panel === "tray" && <TrayFlyout onClose={() => setPanel(null)} />}
         {panel === "date" && <DateFlyout onClose={() => setPanel(null)} />}
       </div>
 
       {panel === "weather" && <WeatherFlyout onClose={() => setPanel(null)} />}
-      {panel === "start" && <StartMenu onClose={() => setPanel(null)} onOpenPower={() => setPowerOpen(true)} />}
-      {powerOpen && <PowerDialog onClose={() => setPowerOpen(false)} />}
+      {panel === "start" && <StartMenu onClose={() => setPanel(null)} />}
     </div>
   );
 }

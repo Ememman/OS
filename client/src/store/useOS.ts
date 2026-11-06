@@ -77,6 +77,10 @@ interface OSState {
   openSpotlight: () => void;
   closeSpotlight: () => void;
   toggleSpotlight: () => void;
+  powerDialogOpen: boolean;
+  openPowerDialog: () => void;
+  closePowerDialog: () => void;
+  togglePowerDialog: () => void;
   resetDefaults: () => void;
   compact: boolean;
   toggleCompact: () => void;
@@ -256,6 +260,7 @@ export const useOS = create<OSState>((set, get) => ({
       controlCenterOpen: false,
       missionControlOpen: false,
       spotlightOpen: false,
+      powerDialogOpen: false,
     });
   },
   isPoweredOff: false,
@@ -268,11 +273,12 @@ export const useOS = create<OSState>((set, get) => ({
       controlCenterOpen: false,
       missionControlOpen: false,
       spotlightOpen: false,
+      powerDialogOpen: false,
     });
   },
   powerOn: () => {
     if (get().systemSounds) soundFx.playOpen();
-    set({ isPoweredOff: false, isSleeping: false });
+    set({ isPoweredOff: false, isSleeping: false, powerDialogOpen: false });
   },
   restart: () => {
     if (get().systemSounds) soundFx.playPop();
@@ -283,6 +289,7 @@ export const useOS = create<OSState>((set, get) => ({
       controlCenterOpen: false,
       missionControlOpen: false,
       spotlightOpen: false,
+      powerDialogOpen: false,
       windows: [],
     });
   },
@@ -389,6 +396,12 @@ export const useOS = create<OSState>((set, get) => ({
   openSpotlight: () => set({ spotlightOpen: true }),
   closeSpotlight: () => set({ spotlightOpen: false }),
   toggleSpotlight: () => set((s) => ({ spotlightOpen: !s.spotlightOpen })),
+
+  // Power & Session Dialog
+  powerDialogOpen: false,
+  openPowerDialog: () => set({ powerDialogOpen: true }),
+  closePowerDialog: () => set({ powerDialogOpen: false }),
+  togglePowerDialog: () => set((s) => ({ powerDialogOpen: !s.powerDialogOpen })),
 
   resetDefaults: () => {
     ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift"].forEach((k) =>

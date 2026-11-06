@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useOS } from "../store/useOS";
 import { useOutsideClick as useOutsideClose } from "../lib/useOutsideClick";
 import LiveBadge from "./LiveBadge";
-import PowerDialog from "./PowerDialog";
 import CalendarWidget from "./widgets/CalendarWidget";
 import {
   GIconCode,
@@ -85,16 +85,17 @@ interface InfoModalProps {
 }
 
 function InfoModal({ title, onClose, children }: InfoModalProps) {
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[2000] bg-black/60 flex items-center justify-center p-6"
+      className="fixed inset-0 z-[99999] bg-black/75 backdrop-blur-md flex items-center justify-center p-6 select-none"
       onClick={onClose}>
       <div
-        className="glass rounded-2xl max-w-sm w-full p-5 border border-white/10"
-        onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-3">
+        className="bg-[#0d111d] sm:bg-[#0d111d]/98 backdrop-blur-2xl rounded-2xl max-w-sm w-full p-5 border border-white/20 shadow-[0_24px_80px_rgba(0,0,0,0.85)] text-white"
+        onClick={(e) => e.stopPropagation()}
+        style={{ animation: "menuOpen 160ms cubic-bezier(.16,1,.3,1) both" }}>
+        <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
           <h3 className="font-display text-sm font-semibold">{title}</h3>
-          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded text-white/60 hover:text-white">
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-lg text-white/60 hover:text-white cursor-pointer">
             <GIconClose size={14} />
           </button>
         </div>
@@ -102,7 +103,8 @@ function InfoModal({ title, onClose, children }: InfoModalProps) {
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -124,13 +126,13 @@ export default function MenuBar() {
     powerOff,
     restart,
     setSleeping,
+    openPowerDialog,
   } = useOS();
   const [now, setNow] = useState(new Date());
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [modal, setModal] = useState<"about" | "shortcuts" | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
-  const [powerOpen, setPowerOpen] = useState(false);
   const [wifiOpen, setWifiOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
 
@@ -571,7 +573,7 @@ export default function MenuBar() {
 
         {/* Power Options Trigger (Working Power Button!) */}
         <button
-          onClick={() => setPowerOpen(true)}
+          onClick={openPowerDialog}
           title="Power: Shut Down, Restart, or Switch OS Style"
           className="p-1.5 rounded-lg hover:bg-white/10 hover:text-rose-400 active:scale-95 transition-all text-white/80 cursor-pointer hidden xs:flex items-center justify-center"
         >
@@ -736,8 +738,6 @@ export default function MenuBar() {
           </div>
         </div>
       )}
-
-      {powerOpen && <PowerDialog onClose={() => setPowerOpen(false)} />}
 
       {modal === "about" && (
         <InfoModal title="About Portfolio OS" onClose={() => setModal(null)}>
