@@ -66,8 +66,8 @@ export default function Dock() {
       <div
         className={`glass rounded-2xl shadow-2xl border border-white/10 ${
           vertical
-            ? "flex flex-col items-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-2 max-w-full overflow-y-auto thin-scroll"
-            : "flex items-end gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-2 max-w-full overflow-x-auto no-scrollbar"
+            ? "flex flex-col items-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-2 max-w-full overflow-y-auto thin-scroll touch-pan-y"
+            : "flex items-end gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-2 max-w-full overflow-x-auto no-scrollbar touch-pan-x"
         }`}
       >
         {/* Mission Control button */}

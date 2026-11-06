@@ -320,9 +320,51 @@ export default function Music() {
         <canvas ref={canvasRef} width={600} height={46} className="w-full h-\[46px]" />
       </div>
 
+      {/* Mobile Navigation Bar */}
+      <div className="sm:hidden flex items-center gap-1.5 px-3 py-2 border-b border-white/10 bg-black/35 overflow-x-auto no-scrollbar shrink-0">
+        <button
+          onClick={() => setMode("search")}
+          className={`flex items-center gap-1.5 text-xs px-3 py-1 rounded-full whitespace-nowrap transition-colors shrink-0 cursor-pointer ${
+            mode === "search"
+              ? "bg-accent text-white font-medium shadow-sm"
+              : "bg-white/10 text-white/70 hover:text-white"
+          }`}
+        >
+          <GIconSearch size={12} />
+          <span>Search</span>
+        </button>
+        {playlists.map((p) => (
+          <button
+            key={p.id}
+            onClick={() => openPlaylist(p.id)}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1 rounded-full whitespace-nowrap transition-colors shrink-0 cursor-pointer ${
+              mode === "browse" && playlistId === p.id
+                ? "bg-white/20 text-white font-medium border border-white/20"
+                : "bg-white/5 text-white/60 hover:text-white"
+            }`}
+          >
+            <GIconMusic size={11} className="text-white/40" />
+            <span>{p.name}</span>
+          </button>
+        ))}
+        {myMix.length > 0 && (
+          <button
+            onClick={() => openPlaylist("mymix")}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1 rounded-full whitespace-nowrap transition-colors shrink-0 cursor-pointer ${
+              mode === "browse" && playlistId === "mymix"
+                ? "bg-white/20 text-white font-medium border border-white/20"
+                : "bg-white/5 text-white/60 hover:text-white"
+            }`}
+          >
+            <GIconSparkles size={11} className="text-amber-400" />
+            <span>My Mix ({myMix.length})</span>
+          </button>
+        )}
+      </div>
+
       <div className="flex flex-1 min-h-0">
-        {/* Sidebar */}
-        <div className="w-28 sm:w-44 border-r border-white/10 p-2 sm:p-3 space-y-1 shrink-0 overflow-y-auto thin-scroll bg-black/25">
+        {/* Desktop Sidebar */}
+        <div className="hidden sm:block sm:w-44 border-r border-white/10 p-3 space-y-1 shrink-0 overflow-y-auto thin-scroll bg-black/25">
           <button
             onClick={() => setMode("search")}
             className={`w-full flex items-center gap-2 text-left text-xs px-2.5 py-2 rounded-xl mb-2 font-medium transition-colors ${

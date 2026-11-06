@@ -42,13 +42,13 @@ export default function OsPicker() {
 
   return (
     <div
-      className={`fixed inset-0 z-1500 flex items-center justify-center transition-opacity duration-300 p-4 sm:p-6 ${entering ? "opacity-0" : "opacity-100"}`}>
+      className={`fixed inset-0 z-1500 flex items-center justify-center transition-opacity duration-300 p-3 sm:p-6 ${entering ? "opacity-0" : "opacity-100"}`}>
       <div className="absolute inset-0">
         <Wallpaper />
         <div className="absolute inset-0 bg-linear-to-br from-black/70 via-black/50 to-black/70 backdrop-blur-md" />
       </div>
 
-      <div className="relative z-10 text-center px-5 py-6 sm:px-8 sm:py-8 max-w-4xl max-h-full mx-auto w-full overflow-y-auto thin-scroll rounded-[28px] border border-white/10 bg-[#080d19]/45 backdrop-blur-xl shadow-[0_32px_100px_rgba(0,0,0,0.42)]">
+      <div className="relative z-10 text-center px-4 py-5 sm:px-8 sm:py-8 max-w-4xl max-h-[calc(100vh-24px)] mx-auto w-full overflow-y-auto thin-scroll rounded-2xl sm:rounded-[28px] border border-white/10 bg-[#080d19]/80 sm:bg-[#080d19]/45 backdrop-blur-xl shadow-[0_32px_100px_rgba(0,0,0,0.42)]">
         <div className="mb-6 sm:mb-8 space-y-2">
           <p className="text-[10px] sm:text-xs uppercase tracking-[0.24em] font-semibold text-accent/90">
             Portfolio OS

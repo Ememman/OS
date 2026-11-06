@@ -69,7 +69,7 @@ export default function ControlCenter() {
   return (
     <div
       ref={panelRef}
-      className={`fixed z-[1600] w-[330px] sm:w-[350px] glass rounded-3xl border border-white/20 shadow-2xl p-4 text-white text-xs select-none backdrop-blur-2xl animate-fade-in ${
+      className={`fixed z-[1600] w-[calc(100vw-24px)] sm:w-[350px] max-w-[360px] max-h-[calc(100vh-80px)] overflow-y-auto thin-scroll glass rounded-3xl border border-white/20 shadow-2xl p-4 text-white text-xs select-none backdrop-blur-2xl animate-fade-in ${
         isWin
           ? "bottom-14 right-3 sm:right-6 origin-bottom-right"
           : "top-10 right-3 sm:right-6 origin-top-right"

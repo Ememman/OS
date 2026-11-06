@@ -24,6 +24,7 @@ import {
   GIconRotateRight,
   GIconUpload,
   GIconSparkles,
+  GIconChevronLeft,
 } from "../icons/GravityIcons";
 import { soundFx } from "../../lib/soundFx";
 import { useOS } from "../../store/useOS";
@@ -125,6 +126,7 @@ export default function Notes() {
   });
 
   const [activeId, setActiveId] = useState<string>(notes[0]?.id || "welcome-note");
+  const [mobileView, setMobileView] = useState<"list" | "editor">("editor");
   const [copied, setCopied] = useState(false);
   const [copiedCodeIdx, setCopiedCodeIdx] = useState<number | null>(null);
   const [mode, setMode] = useState<"edit" | "split" | "preview">("edit");
@@ -219,6 +221,7 @@ export default function Notes() {
       };
       setNotes((prev) => [newNote, ...prev]);
       setActiveId(newNote.id);
+      setMobileView("editor");
       notify("File Imported", `Imported "${file.name}" as new note.`, "add");
       if (systemSounds) soundFx.playSuccess();
     };
@@ -309,6 +312,7 @@ export default function Notes() {
     };
     setNotes((prev) => [newNote, ...prev]);
     setActiveId(newNote.id);
+    setMobileView("editor");
     setMode("edit");
     notify("Note Created", `Added "${newNote.title}" to notepad.`, "add");
     requestAnimationFrame(() => {
@@ -896,7 +900,7 @@ export default function Notes() {
       />
 
       {/* Sidebar: Notes List */}
-      <div className="w-56 sm:w-64 border-r border-white/10 flex flex-col shrink-0 bg-black/25">
+      <div className={`w-full sm:w-64 border-r border-white/10 flex flex-col shrink-0 bg-black/25 ${mobileView === "list" ? "flex" : "hidden sm:flex"}`}>
         <div className="p-2.5 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <GIconNotes size={16} className="text-amber-400" />
@@ -973,6 +977,7 @@ export default function Notes() {
                   key={n.id}
                   onClick={() => {
                     setActiveId(n.id);
+                    setMobileView("editor");
                     requestAnimationFrame(() => textareaRef.current?.focus());
                   }}
                   className={`group relative p-2.5 rounded-xl cursor-pointer transition-all border-l-2 ${
@@ -1044,12 +1049,25 @@ export default function Notes() {
 
       {/* Editor Body */}
       {activeNote ? (
-        <div className="flex-1 flex flex-col min-w-0 bg-[#0d0e15]">
+        <div className={`flex-1 flex flex-col min-w-0 bg-[#0d0e15] ${mobileView === "editor" ? "flex" : "hidden sm:flex"}`}>
           {/* Editor Header Bar */}
-          <div className="px-3.5 py-2 border-b border-white/10 flex flex-wrap items-center justify-between gap-2 bg-black/15">
-            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+          <div className="px-3 sm:px-3.5 py-2 border-b border-white/10 flex flex-wrap items-center justify-between gap-2 bg-black/15">
+            <div className="flex items-center gap-2 flex-1 min-w-[180px]">
+              {/* Back to list button on mobile */}
+              <button
+                onClick={() => {
+                  if (systemSounds) soundFx.playClick();
+                  setMobileView("list");
+                }}
+                className="sm:hidden px-2 py-1 -ml-1 text-white/70 hover:text-white rounded-lg hover:bg-white/10 flex items-center gap-1 text-xs font-medium cursor-pointer shrink-0"
+                title="Back to notes list"
+              >
+                <GIconChevronLeft size={14} />
+                <span>Notes</span>
+              </button>
+
               {/* Note color dot picker */}
-              <div className="flex items-center gap-1 shrink-0" title="Note Accent Color">
+              <div className="hidden sm:flex items-center gap-1 shrink-0" title="Note Accent Color">
                 {NOTE_COLORS.map((c) => (
                   <button
                     key={c.id}
@@ -1544,9 +1562,15 @@ export default function Notes() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center text-white/30 text-xs space-y-2">
+        <div className={`flex-1 flex-col items-center justify-center text-white/30 text-xs space-y-3 p-6 ${mobileView === "editor" ? "flex" : "hidden sm:flex"}`}>
           <GIconNotes size={32} className="opacity-30" />
           <span>Select or create a note to begin.</span>
+          <button
+            onClick={() => setMobileView("list")}
+            className="sm:hidden px-3 py-1.5 rounded-lg bg-white/10 text-white/70 hover:text-white text-xs font-medium"
+          >
+            Back to Notes List
+          </button>
         </div>
       )}
     </div>

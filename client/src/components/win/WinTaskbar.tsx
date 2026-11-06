@@ -226,7 +226,7 @@ export default function WinTaskbar() {
 
   return (
     <div className="absolute bottom-0 left-0 right-0 h-12 bg-black/65 backdrop-blur-2xl border-t border-white/10 flex items-center justify-between px-2 sm:px-3 z-[900] select-none">
-      <div className="flex items-center flex-1 min-w-0 basis-0">
+      <div className="hidden sm:flex items-center flex-1 min-w-0 basis-0">
         <button
           onClick={() => toggle("weather")}
           className="hover:bg-white/10 active:bg-white/15 px-2 py-1 rounded-xl transition-colors shrink-0"
@@ -235,7 +235,7 @@ export default function WinTaskbar() {
         </button>
       </div>
 
-      <div className="flex items-center gap-1 sm:gap-1.5 max-w-[calc(100vw-180px)] overflow-x-auto no-scrollbar shrink-0 px-1">
+      <div className="flex items-center gap-1 sm:gap-1.5 max-w-[calc(100vw-90px)] sm:max-w-[calc(100vw-180px)] overflow-x-auto no-scrollbar shrink-0 px-1">
         <button
           onClick={() => toggle("start")}
           title="Start"

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useIsMobile } from "../../lib/useMediaQuery";
 import {
   GIconFolder,
   GIconFileText,
@@ -68,6 +69,8 @@ function Icon({ item }: { item: any }) {
 }
 
 export default function Files() {
+  const isMobile = useIsMobile();
+  const [mobileSidebar, setMobileSidebar] = useState(false);
   const { openApp, systemSounds, notify } = useOS();
   const [path, setPath] = useState<string[]>([]);
   const [view, setView] = useState<"grid" | "list">("grid");
@@ -113,6 +116,7 @@ export default function Files() {
   const goFavorite = (fav: any) => {
     if (systemSounds) soundFx.playClick();
     setPath(fav.path);
+    setMobileSidebar(false);
     if (fav.target) {
       const resolved = resolvePath(fav.path, customFiles);
       const target = resolved.children?.find((c) => c.name === fav.target);
@@ -153,12 +157,32 @@ export default function Files() {
   };
 
   return (
-    <div className="flex h-full bg-black/40 text-white select-none">
+    <div className="relative flex h-full bg-black/40 text-white select-none overflow-hidden">
+      {/* Mobile Sidebar Overlay */}
+      {mobileSidebar && (
+        <div
+          onClick={() => setMobileSidebar(false)}
+          className="sm:hidden absolute inset-0 z-20 bg-black/60 backdrop-blur-xs transition-opacity"
+        />
+      )}
+
       {/* Sidebar */}
-      <div className="w-24 sm:w-44 border-r border-white/10 p-2 sm:p-3 shrink-0 flex flex-col justify-between bg-white/[0.02]">
+      <div
+        className={`absolute sm:static inset-y-0 left-0 z-30 w-48 sm:w-44 border-r border-white/10 p-2 sm:p-3 shrink-0 flex flex-col justify-between bg-[#0e1017] sm:bg-white/[0.02] transition-transform duration-200 ${
+          mobileSidebar ? "translate-x-0 shadow-2xl" : "-translate-x-full sm:translate-x-0"
+        }`}
+      >
         <div>
-          <div className="text-[10px] uppercase tracking-wide text-white/40 mb-2 flex items-center gap-1">
-            <GIconStar size={11} /> Favorites
+          <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-white/40 mb-2">
+            <span className="flex items-center gap-1">
+              <GIconStar size={11} /> Favorites
+            </span>
+            <button
+              onClick={() => setMobileSidebar(false)}
+              className="sm:hidden text-white/50 hover:text-white p-0.5"
+            >
+              <GIconClose size={12} />
+            </button>
           </div>
           <div className="space-y-0.5">
             {FAVORITES.map((f) => (
@@ -176,11 +200,14 @@ export default function Files() {
 
         {/* Create new document button */}
         <button
-          onClick={() => setCreatingFile(true)}
-          className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl bg-accent/20 hover:bg-accent/30 text-accent border border-accent/30 text-xs font-medium transition"
+          onClick={() => {
+            setCreatingFile(true);
+            setMobileSidebar(false);
+          }}
+          className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl bg-accent/20 hover:bg-accent/30 text-accent border border-accent/30 text-xs font-medium transition cursor-pointer"
         >
           <GIconPlus size={13} />
-          <span className="hidden sm:inline">New File</span>
+          <span>New File</span>
         </button>
       </div>
 
@@ -188,8 +215,15 @@ export default function Files() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Navigation & Controls Bar */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 shrink-0 gap-2 bg-white/5">
-          {/* Breadcrumbs */}
-          <div className="flex items-center gap-1 text-xs text-white/60 min-w-0 overflow-hidden">
+          {/* Breadcrumbs & Mobile Menu Toggle */}
+          <div className="flex items-center gap-1.5 text-xs text-white/60 min-w-0 overflow-hidden">
+            <button
+              onClick={() => setMobileSidebar(true)}
+              className="sm:hidden p-1 rounded-lg bg-white/10 hover:bg-white/15 text-white/80 shrink-0 cursor-pointer"
+              title="Toggle Favorites"
+            >
+              <GIconStar size={12} />
+            </button>
             <button onClick={() => setPath([])} className="hover:text-white shrink-0 font-medium">Root</button>
             {path.map((seg, i) => (
               <span key={i} className="flex items-center gap-1 shrink-0">
@@ -200,30 +234,30 @@ export default function Files() {
           </div>
 
           {/* Search bar & View Toggles */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2 py-1">
-              <GIconSearch size={12} className="text-white/40" />
+              <GIconSearch size={12} className="text-white/40 shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Filter files..."
-                className="bg-transparent text-xs text-white placeholder:text-white/30 outline-none w-20 sm:w-28"
+                placeholder="Filter..."
+                className="bg-transparent text-xs text-white placeholder:text-white/30 outline-none w-16 sm:w-28"
               />
             </div>
 
-            <div className="flex gap-1">
+            <div className="flex gap-0.5">
               <button
                 onClick={() => setView("grid")}
                 title="Grid View"
-                className={`p-1.5 rounded-lg ${view === "grid" ? "bg-white/15 text-white" : "hover:bg-white/8 text-white/50"}`}
+                className={`p-1.5 rounded-lg transition cursor-pointer ${view === "grid" ? "bg-white/15 text-white" : "hover:bg-white/8 text-white/50"}`}
               >
                 <GIconLayoutCells size={13} />
               </button>
               <button
                 onClick={() => setView("list")}
                 title="List View"
-                className={`p-1.5 rounded-lg ${view === "list" ? "bg-white/15 text-white" : "hover:bg-white/8 text-white/50"}`}
+                className={`p-1.5 rounded-lg transition cursor-pointer ${view === "list" ? "bg-white/15 text-white" : "hover:bg-white/8 text-white/50"}`}
               >
                 <GIconList size={13} />
               </button>
@@ -232,7 +266,7 @@ export default function Files() {
         </div>
 
         {/* Files Content */}
-        <div className="flex-1 overflow-auto thin-scroll p-4">
+        <div className="flex-1 overflow-auto thin-scroll p-3 sm:p-4">
           {filteredItems.length === 0 && (
             <div className="text-center py-12 text-white/35">
               <p>No items found in this directory.</p>
@@ -245,9 +279,11 @@ export default function Files() {
                 <div
                   key={item.name}
                   onDoubleClick={() => openItem(item)}
-                  onClick={(e) => e.detail === 2 && openItem(item)}
-                  className="group relative flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-white/8 border border-transparent hover:border-white/10 text-center transition cursor-pointer"
-                  title="Double-click to open"
+                  onClick={(e) => {
+                    if (isMobile || e.detail === 2) openItem(item);
+                  }}
+                  className="group relative flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-white/8 active:bg-white/12 border border-transparent hover:border-white/10 text-center transition cursor-pointer"
+                  title="Click to open"
                 >
                   <Icon item={item} />
                   <span className="text-[11px] text-white/85 leading-tight break-all line-clamp-2">{item.name}</span>
@@ -269,8 +305,10 @@ export default function Files() {
                 <div
                   key={item.name}
                   onDoubleClick={() => openItem(item)}
-                  onClick={(e) => e.detail === 2 && openItem(item)}
-                  className="group w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/8 text-left transition cursor-pointer border border-transparent hover:border-white/5"
+                  onClick={(e) => {
+                    if (isMobile || e.detail === 2) openItem(item);
+                  }}
+                  className="group w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-white/8 active:bg-white/12 text-left transition cursor-pointer border border-transparent hover:border-white/5"
                 >
                   <Icon item={{ ...item, _size: 18 }} />
                   <span className="text-xs text-white/85 flex-1 truncate font-medium">{item.name}</span>

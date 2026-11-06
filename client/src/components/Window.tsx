@@ -253,7 +253,7 @@ export default function Window({ win, children }) {
   const macRight = !isWin && dockPosition === "right" && !isMobile ? dockClearance : 8;
   const baseStyle = forceFull
     ? isMobile
-      ? { top: isWin ? 6 : 34, left: 6, right: 6, bottom: isWin ? 56 : 72, width: "auto", height: "auto", zIndex: win.z }
+      ? { top: isWin ? 4 : 32, left: 4, right: 4, bottom: isWin ? 52 : 68, width: "auto", height: "auto", zIndex: win.z }
       : isWin
         ? { top: 8, left: 8, right: 8, bottom: 64, width: "auto", height: "auto", zIndex: win.z }
         : { top: 30, left: macLeft, right: macRight, bottom: 8, width: "auto", height: "auto", zIndex: win.z }
@@ -446,48 +446,52 @@ export default function Window({ win, children }) {
         ) : (
           <>
             {/* macOS Window Controls (Traffic Lights) */}
-            <div className="group/controls flex items-center gap-2">
+            <div className="group/controls flex items-center gap-1 sm:gap-2">
               {/* Close (Red) */}
               <button
                 onClick={requestClose}
-                className="w-3 h-3 aspect-square shrink-0 rounded-full bg-[#ff5f56] border border-[#e0443e]/80 hover:brightness-95 active:brightness-90 flex items-center justify-center transition-all cursor-pointer shadow-sm"
+                className="w-6 h-6 sm:w-3 sm:h-3 rounded-full flex items-center justify-center transition-all cursor-pointer"
                 aria-label="Close window"
                 title="Close"
               >
-                <svg
-                  width="7"
-                  height="7"
-                  viewBox="0 0 10 10"
-                  fill="none"
-                  stroke="#4a0002"
-                  strokeWidth="1.3"
-                  strokeLinecap="round"
-                  className="opacity-75 group-hover/controls:opacity-100 transition-opacity"
-                >
-                  <line x1="2" y1="2" x2="8" y2="8" />
-                  <line x1="8" y1="2" x2="2" y2="8" />
-                </svg>
+                <div className="w-3.5 h-3.5 sm:w-3 sm:h-3 rounded-full bg-[#ff5f56] border border-[#e0443e]/80 hover:brightness-95 active:brightness-90 flex items-center justify-center shadow-sm">
+                  <svg
+                    width="7"
+                    height="7"
+                    viewBox="0 0 10 10"
+                    fill="none"
+                    stroke="#4a0002"
+                    strokeWidth="1.3"
+                    strokeLinecap="round"
+                    className="opacity-75 group-hover/controls:opacity-100 transition-opacity"
+                  >
+                    <line x1="2" y1="2" x2="8" y2="8" />
+                    <line x1="8" y1="2" x2="2" y2="8" />
+                  </svg>
+                </div>
               </button>
 
               {/* Minimize (Yellow) */}
               <button
                 onClick={requestMinimize}
-                className="w-3 h-3 aspect-square shrink-0 rounded-full bg-[#ffbd2e] border border-[#dea123]/80 hover:brightness-95 active:brightness-90 flex items-center justify-center transition-all cursor-pointer shadow-sm"
+                className="w-6 h-6 sm:w-3 sm:h-3 rounded-full flex items-center justify-center transition-all cursor-pointer"
                 aria-label="Minimize window"
                 title="Minimize"
               >
-                <svg
-                  width="7"
-                  height="7"
-                  viewBox="0 0 10 10"
-                  fill="none"
-                  stroke="#613600"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  className="opacity-75 group-hover/controls:opacity-100 transition-opacity"
-                >
-                  <line x1="1.5" y1="5" x2="8.5" y2="5" />
-                </svg>
+                <div className="w-3.5 h-3.5 sm:w-3 sm:h-3 rounded-full bg-[#ffbd2e] border border-[#dea123]/80 hover:brightness-95 active:brightness-90 flex items-center justify-center shadow-sm">
+                  <svg
+                    width="7"
+                    height="7"
+                    viewBox="0 0 10 10"
+                    fill="none"
+                    stroke="#613600"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    className="opacity-75 group-hover/controls:opacity-100 transition-opacity"
+                  >
+                    <line x1="1.5" y1="5" x2="8.5" y2="5" />
+                  </svg>
+                </div>
               </button>
 
               {/* Maximize / Fullscreen (Green) */}
@@ -512,7 +516,7 @@ export default function Window({ win, children }) {
                 </button>
               )}
             </div>
-            <div className="flex-1 text-center text-xs text-white/60 font-medium select-none pr-10 truncate">{win.title}</div>
+            <div className="flex-1 text-center text-xs text-white/60 font-medium select-none pr-4 sm:pr-10 truncate">{win.title}</div>
           </>
         )}
       </div>

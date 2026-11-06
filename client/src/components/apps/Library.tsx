@@ -322,10 +322,10 @@ export default function Library() {
             </div>
 
             {/* Modal Tabs */}
-            <div className="flex border-b border-white/10 mb-3 text-xs gap-1 shrink-0">
+            <div className="flex border-b border-white/10 mb-3 text-xs gap-1 shrink-0 overflow-x-auto no-scrollbar">
               <button
                 onClick={() => setModalTab("overview")}
-                className={`px-3 py-1.5 font-medium border-b-2 transition ${
+                className={`px-3 py-1.5 font-medium border-b-2 transition whitespace-nowrap shrink-0 cursor-pointer ${
                   modalTab === "overview"
                     ? "border-accent text-white"
                     : "border-transparent text-white/50 hover:text-white"
@@ -335,7 +335,7 @@ export default function Library() {
               </button>
               <button
                 onClick={() => setModalTab("highlights")}
-                className={`px-3 py-1.5 font-medium border-b-2 transition ${
+                className={`px-3 py-1.5 font-medium border-b-2 transition whitespace-nowrap shrink-0 cursor-pointer ${
                   modalTab === "highlights"
                     ? "border-accent text-white"
                     : "border-transparent text-white/50 hover:text-white"
@@ -345,7 +345,7 @@ export default function Library() {
               </button>
               <button
                 onClick={() => setModalTab("stack")}
-                className={`px-3 py-1.5 font-medium border-b-2 transition ${
+                className={`px-3 py-1.5 font-medium border-b-2 transition whitespace-nowrap shrink-0 cursor-pointer ${
                   modalTab === "stack"
                     ? "border-accent text-white"
                     : "border-transparent text-white/50 hover:text-white"
@@ -355,7 +355,7 @@ export default function Library() {
               </button>
               <button
                 onClick={() => setModalTab("reviews")}
-                className={`px-3 py-1.5 font-medium border-b-2 transition flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 font-medium border-b-2 transition flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${
                   modalTab === "reviews"
                     ? "border-accent text-white"
                     : "border-transparent text-white/50 hover:text-white"

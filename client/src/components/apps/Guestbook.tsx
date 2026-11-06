@@ -180,6 +180,7 @@ export default function Guestbook() {
   const [message, setMessage] = useState("");
 
   // Filters & sorting
+  const [mobileTab, setMobileTab] = useState<"feed" | "sign">("feed");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("All");
   const [sortBy, setSortBy] = useState<"newest" | "loved" | "oldest">("newest");
@@ -343,6 +344,7 @@ export default function Guestbook() {
         const created: GuestbookEntry = await res.json();
         setEntries((prev) => [created, ...prev.filter((e) => e.id !== created.id)]);
         setMessage("");
+        setMobileTab("feed");
         if (systemSounds) soundFx.playNotification();
         notify("Guestbook Signed", "Your message was published to the ledger.", "add");
       } else {
@@ -363,6 +365,7 @@ export default function Guestbook() {
       };
       setEntries((prev) => [fallbackEntry, ...prev]);
       setMessage("");
+      setMobileTab("feed");
       notify("Signed Locally", "Your message is saved for this session.", "add");
     } finally {
       setSubmitting(false);
@@ -485,10 +488,46 @@ export default function Guestbook() {
         </div>
       </div>
 
+      {/* Mobile Segmented View Switcher */}
+      <div className="lg:hidden flex items-center p-2 border-b border-white/[0.08] bg-white/[0.02] shrink-0 gap-1.5">
+        <button
+          type="button"
+          onClick={() => {
+            if (systemSounds) soundFx.playClick();
+            setMobileTab("feed");
+          }}
+          className={`flex-1 py-1.5 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition ${
+            mobileTab === "feed"
+              ? "bg-white/15 text-white border border-white/10 shadow-sm"
+              : "text-white/50 hover:text-white"
+          }`}
+        >
+          <GIconBookOpen size={13} />
+          <span>Signatures ({entries.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (systemSounds) soundFx.playClick();
+            setMobileTab("sign");
+          }}
+          className={`flex-1 py-1.5 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition ${
+            mobileTab === "sign"
+              ? "bg-accent/20 text-accent border border-accent/30 shadow-sm"
+              : "text-white/50 hover:text-white"
+          }`}
+        >
+          <GIconPencil size={13} />
+          <span>Sign Guestbook</span>
+        </button>
+      </div>
+
       {/* Main 2-Column Body */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
         {/* Left Column: Profile & Sign Form */}
-        <div className="lg:col-span-5 p-4 border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-y-auto thin-scroll space-y-4 bg-white/[0.01]">
+        <div className={`lg:col-span-5 p-4 border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-y-auto thin-scroll space-y-4 bg-white/[0.01] ${
+          mobileTab === "sign" ? "block" : "hidden lg:block"
+        }`}>
           <div className="flex items-center justify-between pb-1">
             <span className="font-semibold text-white/90 flex items-center gap-1.5 text-xs">
               <GIconPencil size={13} className="text-white/70" />
@@ -835,11 +874,13 @@ export default function Guestbook() {
         </div>
 
         {/* Right Column: Ledger Feed */}
-        <div className="lg:col-span-7 flex flex-col h-full overflow-hidden bg-white/[0.01]">
+        <div className={`lg:col-span-7 flex flex-col h-full overflow-hidden bg-white/[0.01] ${
+          mobileTab === "feed" ? "flex" : "hidden lg:flex"
+        }`}>
           {/* Top Filter & Search Bar */}
           <div className="p-3 border-b border-white/[0.08] space-y-2 bg-white/[0.015]">
-            <div className="flex items-center gap-2">
-              <div className="flex-1 flex items-center gap-2 bg-white/[0.03] px-3 py-1.5 rounded-xl border border-white/[0.08] focus-within:border-white/25 transition">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+              <div className="flex-1 min-w-[180px] flex items-center gap-2 bg-white/[0.03] px-3 py-1.5 rounded-xl border border-white/[0.08] focus-within:border-white/25 transition">
                 <GIconSearch size={12} className="text-white/40" />
                 <input
                   type="text"

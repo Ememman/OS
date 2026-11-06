@@ -227,7 +227,7 @@ export default function SpotlightSearch() {
 
   return (
     <div
-      className="fixed inset-0 z-[1500] bg-black/60 backdrop-blur-md flex items-start justify-center pt-[14vh] sm:pt-[18vh] px-4 animate-fade-in"
+      className="fixed inset-0 z-[1500] bg-black/60 backdrop-blur-md flex items-start justify-center pt-8 sm:pt-[18vh] px-3 sm:px-4 animate-fade-in"
       onClick={closeSpotlight}
     >
       <div

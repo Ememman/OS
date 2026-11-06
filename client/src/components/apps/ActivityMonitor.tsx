@@ -264,11 +264,11 @@ export default function ActivityMonitor() {
   return (
     <div className="flex flex-col h-full select-none bg-black/40 text-white text-xs">
       {/* Tab Navigation */}
-      <div className="flex flex-wrap items-center justify-between border-b border-white/10 px-3 py-2 bg-white/5 gap-2">
-        <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 bg-white/5 gap-2">
+        <div className="flex-1 flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
           <button
             onClick={() => setActiveTab("processes")}
-            className={`px-2.5 py-1 rounded-lg transition-all font-medium ${
+            className={`px-2.5 py-1 rounded-lg transition-all font-medium whitespace-nowrap shrink-0 cursor-pointer ${
               activeTab === "processes"
                 ? "bg-accent text-white shadow-md shadow-accent/20"
                 : "text-white/60 hover:text-white hover:bg-white/10"
@@ -278,7 +278,7 @@ export default function ActivityMonitor() {
           </button>
           <button
             onClick={() => setActiveTab("performance")}
-            className={`px-2.5 py-1 rounded-lg transition-all font-medium ${
+            className={`px-2.5 py-1 rounded-lg transition-all font-medium whitespace-nowrap shrink-0 cursor-pointer ${
               activeTab === "performance"
                 ? "bg-accent text-white shadow-md shadow-accent/20"
                 : "text-white/60 hover:text-white hover:bg-white/10"
@@ -288,7 +288,7 @@ export default function ActivityMonitor() {
           </button>
           <button
             onClick={() => setActiveTab("logs")}
-            className={`px-2.5 py-1 rounded-lg transition-all font-medium ${
+            className={`px-2.5 py-1 rounded-lg transition-all font-medium whitespace-nowrap shrink-0 cursor-pointer ${
               activeTab === "logs"
                 ? "bg-accent text-white shadow-md shadow-accent/20"
                 : "text-white/60 hover:text-white hover:bg-white/10"
@@ -298,7 +298,7 @@ export default function ActivityMonitor() {
           </button>
           <button
             onClick={() => setActiveTab("storage")}
-            className={`px-2.5 py-1 rounded-lg transition-all font-medium ${
+            className={`px-2.5 py-1 rounded-lg transition-all font-medium whitespace-nowrap shrink-0 cursor-pointer ${
               activeTab === "storage"
                 ? "bg-accent text-white shadow-md shadow-accent/20"
                 : "text-white/60 hover:text-white hover:bg-white/10"
@@ -308,7 +308,7 @@ export default function ActivityMonitor() {
           </button>
           <button
             onClick={() => setActiveTab("network")}
-            className={`px-2.5 py-1 rounded-lg transition-all font-medium ${
+            className={`px-2.5 py-1 rounded-lg transition-all font-medium whitespace-nowrap shrink-0 cursor-pointer ${
               activeTab === "network"
                 ? "bg-accent text-white shadow-md shadow-accent/20"
                 : "text-white/60 hover:text-white hover:bg-white/10"
@@ -318,7 +318,7 @@ export default function ActivityMonitor() {
           </button>
           <button
             onClick={() => setActiveTab("specs")}
-            className={`px-2.5 py-1 rounded-lg transition-all font-medium ${
+            className={`px-2.5 py-1 rounded-lg transition-all font-medium whitespace-nowrap shrink-0 cursor-pointer ${
               activeTab === "specs"
                 ? "bg-accent text-white shadow-md shadow-accent/20"
                 : "text-white/60 hover:text-white hover:bg-white/10"
@@ -331,7 +331,7 @@ export default function ActivityMonitor() {
         <button
           onClick={fetchDiagnostics}
           title="Refresh metrics & processes"
-          className="p-1 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition"
+          className="p-1 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition shrink-0 cursor-pointer"
         >
           <GIconRotateRight size={14} className={loading ? "animate-spin text-accent" : ""} />
         </button>
@@ -368,8 +368,8 @@ export default function ActivityMonitor() {
                   </p>
                 </div>
               ) : (
-                <div className="rounded-xl border border-white/10 overflow-hidden bg-black/20">
-                  <table className="w-full text-left text-[11px]">
+                <div className="rounded-xl border border-white/10 overflow-x-auto thin-scroll bg-black/20">
+                  <table className="w-full min-w-[340px] text-left text-[11px]">
                     <thead className="bg-white/5 border-b border-white/10 text-white/40 uppercase font-mono text-[9px] tracking-wider">
                       <tr>
                         <th className="py-2 px-3">Process Name</th>
@@ -422,8 +422,8 @@ export default function ActivityMonitor() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-white/10 overflow-hidden bg-black/20">
-                <table className="w-full text-left text-[11px]">
+              <div className="rounded-xl border border-white/10 overflow-x-auto thin-scroll bg-black/20">
+                <table className="w-full min-w-[500px] text-left text-[11px]">
                   <thead className="bg-white/5 border-b border-white/10 text-white/40 uppercase font-mono text-[9px] tracking-wider">
                     <tr>
                       <th className="py-2 px-3">PID</th>
