@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   GIconPaperPlane,
   GIconPersons,
@@ -20,11 +21,41 @@ import { soundFx } from "../../lib/soundFx";
 import { API_URL } from "../../lib/config";
 
 const BG_OPTIONS = [
-  { id: "halftone", label: "Soft paper", swatch: "#f7f4ee" },
-  { id: "notebook", label: "Notebook", swatch: "#f5f7fa" },
-  { id: "ink", label: "Midnight", swatch: "#18212b" },
-  { id: "plain", label: "Warm neutral", swatch: "#f2eee7" },
-  { id: "action", label: "Evening", swatch: "#272331" },
+  {
+    id: "ink",
+    label: "Midnight Dark",
+    desc: "Deep OLED dark mode",
+    swatch: "#0d1117",
+    border: "border-slate-700",
+  },
+  {
+    id: "action",
+    label: "Evening Slate",
+    desc: "Manga ink & dark graphite tone",
+    swatch: "#151d28",
+    border: "border-slate-600",
+  },
+  {
+    id: "halftone",
+    label: "Soft Paper",
+    desc: "Vintage newsprint halftone texture",
+    swatch: "#f4f1ea",
+    border: "border-stone-400/50",
+  },
+  {
+    id: "notebook",
+    label: "Notebook",
+    desc: "Lined legal blue rules",
+    swatch: "#f4f8fc",
+    border: "border-sky-300/60",
+  },
+  {
+    id: "plain",
+    label: "Warm Neutral",
+    desc: "Creamy editorial paper tone",
+    swatch: "#f5f0e6",
+    border: "border-stone-300/60",
+  },
 ];
 
 const EMOJI_REACTIONS = ["❤️", "👍", "🔥", "🚀", "😂", "🎉"];
@@ -60,35 +91,86 @@ function nameColor(name: string) {
 
 function BgPicker({ current, onPick, onClose }: any) {
   const ref = useRef<HTMLDivElement>(null);
+  const { systemSounds } = useOS();
   useOutsideClick(ref, onClose);
+
   return (
-    <div
+    <motion.div
       ref={ref}
+      initial={{ opacity: 0, scale: 0.94, y: -6 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.94, y: -6 }}
+      transition={{ type: "spring", stiffness: 450, damping: 28 }}
       role="group"
       aria-label="Chat color theme"
-      className="absolute top-full right-3 mt-1.5 z-[1200] chat-theme-picker rounded-xl p-2 shadow-2xl"
-      style={{ animation: "menuOpen 140ms cubic-bezier(.16,1,.3,1) both" }}
+      className="absolute top-full right-0 mt-2 w-64 sm:w-72 z-[1300] bg-[#101524]/95 backdrop-blur-2xl rounded-2xl p-3 border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.7)] text-white select-none"
+      onClick={(e) => e.stopPropagation()}
     >
-      <div className="text-xs font-semibold px-1 pb-1.5">Chat theme</div>
-      <div className="grid grid-cols-3 gap-1.5">
-        {BG_OPTIONS.map((o) => (
-          <button
-            key={o.id}
-            onClick={() => {
-              onPick(o.id);
-              onClose();
-            }}
-            aria-pressed={current === o.id}
-            className={`flex flex-col items-center gap-1 p-1.5 rounded-lg transition ${
-              current === o.id ? "ring-2 ring-accent" : "hover:bg-black/5 dark:hover:bg-white/10"
-            }`}
-          >
-            <span aria-hidden="true" className="w-8 h-8 rounded-md border border-black/15" style={{ background: o.swatch }} />
-            <span className="text-xs">{o.label}</span>
-          </button>
-        ))}
+      {/* Header */}
+      <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
+        <div className="flex items-center gap-1.5">
+          <GIconSliders size={13} className="text-accent" />
+          <span className="text-xs font-semibold text-white/90">Chat Theme</span>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition cursor-pointer"
+          title="Close"
+        >
+          <GIconClose size={12} />
+        </button>
       </div>
-    </div>
+
+      {/* Theme List */}
+      <div className="space-y-1">
+        {BG_OPTIONS.map((o) => {
+          const isSelected = current === o.id;
+          return (
+            <motion.button
+              key={o.id}
+              whileHover={{ x: 2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                if (systemSounds) soundFx.playClick();
+                onPick(o.id);
+                onClose();
+              }}
+              aria-pressed={isSelected}
+              className={`w-full flex items-center gap-2.5 p-2 rounded-xl transition-all cursor-pointer text-left ${
+                isSelected
+                  ? "bg-white/12 border border-white/20 shadow-sm"
+                  : "hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              {/* Swatch Preview Pill */}
+              <div
+                className={`w-7 h-7 rounded-lg border ${o.border} shadow-sm shrink-0 flex items-center justify-center`}
+                style={{ background: o.swatch }}
+              >
+                {isSelected && (
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      o.id === "ink" || o.id === "action" ? "bg-white" : "bg-black"
+                    }`}
+                  />
+                )}
+              </div>
+
+              {/* Label & Description */}
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium text-white/95 flex items-center justify-between">
+                  <span>{o.label}</span>
+                  {isSelected && <GIconCheck size={12} className="text-accent shrink-0 ml-1" />}
+                </div>
+                <div className="text-[10px] text-white/50 truncate leading-tight mt-0.5">
+                  {o.desc}
+                </div>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+    </motion.div>
   );
 }
 
@@ -361,9 +443,12 @@ export default function Chats() {
   }, [messages, searchQuery]);
 
   return (
-    <div data-chat-bg={chatBg} className="flex flex-col h-full chat-shell text-foreground relative">
+    <div
+      data-chat-bg={chatBg}
+      className={`flex flex-col h-full chat-surface chat-theme--${chatBg} relative select-none`}
+    >
       {/* Chat Topbar */}
-      <div className="chat-topbar flex items-center justify-between px-3.5 py-2.5 border-b gap-2">
+      <div className="chat-topbar chat-header flex items-center justify-between px-3.5 py-2.5 border-b border-[var(--chat-border)] bg-[var(--chat-panel)] gap-2">
         <div className="flex items-center gap-2">
           <div className="relative">
             <span
@@ -379,7 +464,7 @@ export default function Chats() {
             />
           </div>
           <div>
-            <div className="font-semibold text-xs leading-none">Chats</div>
+            <div className="font-semibold text-xs leading-none text-[var(--chat-text)]">Chats</div>
             <div className="text-[10px] chat-muted mt-0.5">
               {connected ? "Live & connected" : connecting ? "Reconnecting…" : "Offline mode · Bot active"}
             </div>
@@ -392,7 +477,7 @@ export default function Chats() {
           <div className="relative">
             <button
               onClick={() => setShowUsersModal(!showUsersModal)}
-              className="chat-badge flex items-center gap-1 text-xs px-2 py-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition"
+              className="chat-icon-button !min-h-7 !h-7 !min-w-0 px-2 rounded-full text-xs gap-1 cursor-pointer"
               title="View online guests"
             >
               <GIconPersons size={12} aria-hidden="true" />
@@ -400,40 +485,46 @@ export default function Chats() {
             </button>
 
             {/* Active Users Dropdown */}
-            {showUsersModal && (
-              <div
-                ref={usersModalRef}
-                className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-slate-900 border border-white/15 p-2 shadow-2xl z-50 text-xs text-white"
-              >
-                <div className="font-semibold text-[11px] text-white/50 px-1 pb-1 border-b border-white/10 mb-1">
-                  Online Visitors ({activeUsers.length || 1})
-                </div>
-                <div className="max-h-36 overflow-y-auto thin-scroll space-y-1">
-                  {activeUsers.length > 0 ? (
-                    activeUsers.map((u, i) => (
-                      <div key={i} className="flex items-center gap-2 px-1.5 py-1 rounded bg-white/5">
-                        <span
-                          className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
-                          style={{ background: nameColor(u.name) }}
-                        >
-                          {u.name?.[0]?.toUpperCase()}
-                        </span>
-                        <span className="truncate text-white/80">{u.name}</span>
-                        {u.name === name && <span className="text-[9px] text-accent ml-auto">(you)</span>}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-white/40 text-[10px] p-1">1 active session</div>
-                  )}
-                </div>
-              </div>
-            )}
+            <AnimatePresence>
+              {showUsersModal && (
+                <motion.div
+                  ref={usersModalRef}
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-slate-900 border border-white/15 p-2 shadow-2xl z-50 text-xs text-white"
+                >
+                  <div className="font-semibold text-[11px] text-white/50 px-1 pb-1 border-b border-white/10 mb-1">
+                    Online Visitors ({activeUsers.length || 1})
+                  </div>
+                  <div className="max-h-36 overflow-y-auto thin-scroll space-y-1">
+                    {activeUsers.length > 0 ? (
+                      activeUsers.map((u, i) => (
+                        <div key={i} className="flex items-center gap-2 px-1.5 py-1 rounded bg-white/5">
+                          <span
+                            className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
+                            style={{ background: nameColor(u.name) }}
+                          >
+                            {u.name?.[0]?.toUpperCase()}
+                          </span>
+                          <span className="truncate text-white/80">{u.name}</span>
+                          {u.name === name && <span className="text-[9px] text-accent ml-auto">(you)</span>}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-white/40 text-[10px] p-1">1 active session</div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Search Toggle */}
           <button
             onClick={() => setSearchOpen(!searchOpen)}
-            className={`chat-icon-button ${searchOpen ? "text-accent" : ""}`}
+            className={`chat-icon-button ${searchOpen ? "ring-2 ring-accent" : ""}`}
             title="Search messages"
           >
             <GIconSearch size={14} />
@@ -460,28 +551,31 @@ export default function Chats() {
               ref={themeButtonRef}
               onClick={() => setBgPickerOpen((o) => !o)}
               aria-label="Choose chat color theme"
-              className="chat-icon-button"
+              className={`chat-icon-button ${bgPickerOpen ? "ring-2 ring-accent" : ""}`}
+              title="Choose chat theme"
             >
               <GIconSliders size={14} />
             </button>
-            {bgPickerOpen && (
-              <BgPicker current={chatBg} onPick={setChatBg} onClose={() => setBgPickerOpen(false)} />
-            )}
+            <AnimatePresence>
+              {bgPickerOpen && (
+                <BgPicker current={chatBg} onPick={setChatBg} onClose={() => setBgPickerOpen(false)} />
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
 
       {/* Pinned Messages Banner */}
       {pinnedList.length > 0 && (
-        <div className="px-3.5 py-1.5 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between gap-2 text-xs text-amber-200">
+        <div className="px-3.5 py-1.5 bg-amber-500/15 border-b border-amber-500/30 flex items-center justify-between gap-2 text-xs text-amber-700 dark:text-amber-200">
           <div className="flex items-center gap-1.5 truncate">
-            <GIconPin size={12} className="text-amber-400 shrink-0" />
+            <GIconPin size={12} className="text-amber-500 shrink-0" />
             <span className="font-semibold text-[11px] shrink-0">Pinned:</span>
-            <span className="truncate text-white/80 text-[11px]">{pinnedList[0].text}</span>
+            <span className="truncate opacity-90 text-[11px]">{pinnedList[0].text}</span>
           </div>
           <button
             onClick={() => togglePinMessage(pinnedList[0].id)}
-            className="text-[10px] text-amber-300 hover:text-white shrink-0 underline"
+            className="text-[10px] text-amber-600 dark:text-amber-300 hover:underline shrink-0 cursor-pointer"
           >
             Unpin
           </button>
@@ -490,18 +584,21 @@ export default function Chats() {
 
       {/* Search Input Bar */}
       {searchOpen && (
-        <div className="p-2 border-b border-white/10 bg-black/20 flex items-center gap-2">
-          <GIconSearch size={12} className="text-white/40 ml-1" />
+        <div className="chat-search-bar p-2 border-b border-[var(--chat-border)] bg-[var(--chat-panel)] flex items-center gap-2">
+          <GIconSearch size={12} className="text-[var(--chat-muted)] ml-1" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search conversation..."
-            className="flex-1 bg-transparent text-xs text-white placeholder-white/40 outline-none"
+            className="flex-1 bg-transparent text-xs text-[var(--chat-text)] placeholder-[var(--chat-muted)] outline-none"
             autoFocus
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="text-white/40 hover:text-white">
+            <button
+              onClick={() => setSearchQuery("")}
+              className="text-[var(--chat-muted)] hover:text-[var(--chat-text)] cursor-pointer"
+            >
               <GIconClose size={12} />
             </button>
           )}
@@ -562,7 +659,7 @@ export default function Chats() {
                 {/* Quoted Message in Reply */}
                 {m.replyTo && (
                   <div
-                    className={`text-[11px] p-1.5 mb-1 rounded-lg border border-white/10 bg-black/15 text-white/60 truncate flex items-center gap-1 ${
+                    className={`text-[11px] p-1.5 mb-1 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-panel)]/80 text-[var(--chat-muted)] truncate flex items-center gap-1 ${
                       isSelf ? "justify-end" : "justify-start"
                     }`}
                   >
@@ -588,7 +685,7 @@ export default function Chats() {
                         <button
                           key={emo}
                           onClick={() => reactToMessage(m.id, emo)}
-                          className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-full bg-black/10 dark:bg-white/10 hover:scale-105 transition"
+                          className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-full border border-[var(--chat-border)] bg-[var(--chat-panel)] text-[var(--chat-text)] hover:scale-105 transition cursor-pointer"
                         >
                           <span>{emo}</span>
                           <span className="font-semibold text-[10px]">{count}</span>
@@ -606,23 +703,23 @@ export default function Chats() {
                 >
                   <button
                     onClick={() => setReplyTarget({ id: m.id, name: m.name, text: m.text })}
-                    className="text-[10px] hover:text-accent transition text-white/60 mr-1"
+                    className="text-[10px] hover:text-accent transition text-[var(--chat-muted)] mr-1 cursor-pointer"
                     title="Reply to message"
                   >
                     Reply
                   </button>
                   <button
                     onClick={() => togglePinMessage(m.id)}
-                    className="text-[10px] hover:text-amber-400 transition text-white/60 mr-1"
+                    className="text-[10px] hover:text-amber-500 transition text-[var(--chat-muted)] mr-1 cursor-pointer"
                     title={isPinned ? "Unpin message" : "Pin message"}
                   >
-                    <GIconPin size={10} className={isPinned ? "text-amber-400" : ""} />
+                    <GIconPin size={10} className={isPinned ? "text-amber-500" : ""} />
                   </button>
                   {EMOJI_REACTIONS.map((emo) => (
                     <button
                       key={emo}
                       onClick={() => reactToMessage(m.id, emo)}
-                      className="hover:scale-125 transition-transform text-xs"
+                      className="hover:scale-125 transition-transform text-xs cursor-pointer"
                       title={`React with ${emo}`}
                     >
                       {emo}
@@ -659,14 +756,14 @@ export default function Chats() {
 
       {/* Quoted Reply Banner */}
       {replyTarget && (
-        <div className="px-3.5 py-1.5 bg-accent/15 border-t border-accent/30 flex items-center justify-between text-xs text-white">
+        <div className="px-3.5 py-1.5 bg-accent/15 border-t border-accent/30 flex items-center justify-between text-xs text-[var(--chat-text)]">
           <div className="truncate mr-2">
             <span className="font-semibold text-accent">Replying to @{replyTarget.name}: </span>
             <span className="opacity-80 truncate">{replyTarget.text}</span>
           </div>
           <button
             onClick={() => setReplyTarget(null)}
-            className="p-1 hover:text-white text-white/50"
+            className="p-1 hover:text-[var(--chat-text)] text-[var(--chat-muted)] cursor-pointer"
             title="Cancel reply"
           >
             <GIconClose size={12} />
@@ -675,14 +772,14 @@ export default function Chats() {
       )}
 
       {/* Quick Emojis Bar */}
-      <div className="px-3 py-1 bg-black/10 border-t border-white/5 flex items-center gap-1.5 overflow-x-auto thin-scroll">
-        <span className="text-[10px] text-white/40 uppercase font-mono mr-1">Quick:</span>
+      <div className="chat-quick-bar px-3 py-1.5 border-t border-[var(--chat-border)] bg-[var(--chat-panel)] flex items-center gap-1.5 overflow-x-auto thin-scroll">
+        <span className="text-[10px] text-[var(--chat-muted)] uppercase font-mono mr-1">Quick:</span>
         {QUICK_EMOJIS.map((em) => (
           <button
             key={em}
             type="button"
             onClick={() => setText((prev) => prev + em)}
-            className="text-xs hover:scale-125 transition-transform px-1 py-0.5 rounded hover:bg-white/10"
+            className="text-xs hover:scale-125 transition-transform px-1 py-0.5 rounded hover:bg-[var(--chat-bg)] cursor-pointer text-[var(--chat-text)]"
           >
             {em}
           </button>
@@ -690,7 +787,7 @@ export default function Chats() {
       </div>
 
       {/* Identity bar */}
-      <div className="chat-identity flex items-center justify-between gap-2 px-4 py-2 border-t">
+      <div className="chat-identity flex items-center justify-between gap-2 px-4 py-2 border-t border-[var(--chat-border)] bg-[var(--chat-panel)]">
         {editingName ? (
           <form
             onSubmit={(e) => {
@@ -699,7 +796,7 @@ export default function Chats() {
             }}
             className="flex items-center gap-2"
           >
-            <label htmlFor="chat-display-name" className="text-sm font-medium">
+            <label htmlFor="chat-display-name" className="text-sm font-medium text-[var(--chat-text)]">
               Display name
             </label>
             <input
@@ -721,9 +818,9 @@ export default function Chats() {
               setDraftName(name);
               setEditingName(true);
             }}
-            className="chat-link inline-flex items-center gap-1.5 rounded px-1 py-0.5 text-sm"
+            className="chat-link inline-flex items-center gap-1.5 rounded px-1 py-0.5 text-sm cursor-pointer"
           >
-            <GIconPencil size={14} /> Chatting as <span className="font-semibold">{name || "guest"}</span>
+            <GIconPencil size={14} /> Chatting as <span className="font-semibold text-[var(--chat-text)]">{name || "guest"}</span>
           </button>
         )}
         <div role="group" className="flex items-center gap-1" aria-label="Message text size">
@@ -755,7 +852,7 @@ export default function Chats() {
           e.preventDefault();
           send();
         }}
-        className="chat-composer flex items-end gap-2 p-3 border-t"
+        className="chat-composer flex items-end gap-2 p-3 border-t border-[var(--chat-border)] bg-[var(--chat-panel)]"
       >
         <label htmlFor="chat-message" className="sr-only">
           Write a message
