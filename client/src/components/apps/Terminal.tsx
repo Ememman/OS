@@ -19,7 +19,8 @@ const COMMANDS = [
   "help", "clear", "neofetch", "whoami", "skills", "projects",
   "ls", "cat", "open", "theme", "date", "uptime", "history", "matrix",
   "sysinfo", "server", "ping", "quote", "joke", "curl", "logs", "processes", "ps", "notes", "storage", "df",
-  "guestbook", "weather", "analytics", "codeplay", "snake", "github", "mission", "sudo"
+  "guestbook", "weather", "analytics", "top", "htop", "kill", "find", "search", "netstat", "clearlogs", "echo",
+  "codeplay", "snake", "github", "mission", "sudo"
 ];
 
 type TerminalEntry =
@@ -150,6 +151,16 @@ export default function Terminal() {
       case "sysinfo":
       case "server":
       case "ping":
+      case "weather":
+      case "analytics":
+      case "top":
+      case "htop":
+      case "kill":
+      case "find":
+      case "search":
+      case "netstat":
+      case "clearlogs":
+      case "echo":
       case "quote":
       case "joke":
       case "curl":

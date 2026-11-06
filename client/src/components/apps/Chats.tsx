@@ -245,6 +245,15 @@ export default function Chats() {
       typingTimeout.current = setTimeout(() => setTypingName(null), 1500);
     };
 
+    const onRateLimited = ({ message: rateMsg }: any) => {
+      notify("Anti-Flood Notice", rateMsg || "Please wait a moment before sending more messages.", "warning", 3500);
+    };
+
+    const onMessageDeleted = ({ id }: { id: string }) => {
+      setMessages((m) => m.filter((x) => x.id !== id));
+      setPinnedList((p) => p.filter((x) => x.id !== id));
+    };
+
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("reconnect_attempt", onConnecting);
@@ -255,6 +264,8 @@ export default function Chats() {
     socket.on("chat:users_updated", onUsersUpdated);
     socket.on("chat:pinned", onPinned);
     socket.on("chat:typing", onTyping);
+    socket.on("chat:rate_limited", onRateLimited);
+    socket.on("chat:message_deleted", onMessageDeleted);
 
     if (socket.connected) onConnect();
 
@@ -269,6 +280,8 @@ export default function Chats() {
       socket.off("chat:users_updated", onUsersUpdated);
       socket.off("chat:pinned", onPinned);
       socket.off("chat:typing", onTyping);
+      socket.off("chat:rate_limited", onRateLimited);
+      socket.off("chat:message_deleted", onMessageDeleted);
     };
   }, [chatSound]);
 

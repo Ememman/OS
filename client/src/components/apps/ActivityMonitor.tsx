@@ -90,6 +90,32 @@ export interface StorageBreakdown {
   }[];
 }
 
+export interface NetworkTelemetry {
+  interfaces: {
+    name: string;
+    address: string;
+    family: string;
+    mac: string;
+    internal: boolean;
+  }[];
+  primaryInterface: {
+    name: string;
+    address: string;
+    family: string;
+    mac: string;
+  } | null;
+  traffic: {
+    rxKbps: number;
+    txKbps: number;
+    totalRxMb: number;
+    totalTxMb: number;
+    activeConnections: number;
+    httpPort: number;
+    protocol: string;
+    latencyMs: number;
+  };
+}
+
 export default function ActivityMonitor() {
   const { windows, closeWindow, osMode, systemSounds, notify } = useOS();
   const isWin = osMode === "win";
@@ -103,27 +129,31 @@ export default function ActivityMonitor() {
   const [osProcesses, setOsProcesses] = useState<OsProcess[]>([]);
   const [systemLogs, setSystemLogs] = useState<SystemLogItem[]>([]);
   const [storageData, setStorageData] = useState<StorageBreakdown | null>(null);
+  const [networkData, setNetworkData] = useState<NetworkTelemetry | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Diagnostics & Ping tool state
   const [pingLatency, setPingLatency] = useState<number | null>(null);
   const [testingPing, setTestingPing] = useState(false);
   const [restartingPid, setRestartingPid] = useState<number | null>(null);
+  const [killingPid, setKillingPid] = useState<number | null>(null);
+  const [clearingLogs, setClearingLogs] = useState(false);
 
   // Log filter states
   const [logLevelFilter, setLogLevelFilter] = useState<string>("all");
   const [logSearchQuery, setLogSearchQuery] = useState("");
   const logsContainerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch telemetry, processes, logs, storage
+  // Fetch telemetry, processes, logs, storage, network
   const fetchDiagnostics = async () => {
     try {
-      const [infoRes, metricsRes, procRes, storageRes, logsRes] = await Promise.all([
+      const [infoRes, metricsRes, procRes, storageRes, logsRes, netRes] = await Promise.all([
         fetch(`${API_URL}/api/system/info`),
         fetch(`${API_URL}/api/system/metrics`),
         fetch(`${API_URL}/api/system/processes`).catch(() => null),
         fetch(`${API_URL}/api/system/storage`).catch(() => null),
-        fetch(`${API_URL}/api/system/logs`).catch(() => null)
+        fetch(`${API_URL}/api/system/logs`).catch(() => null),
+        fetch(`${API_URL}/api/system/network`).catch(() => null)
       ]);
 
       if (infoRes.ok) {
@@ -145,6 +175,10 @@ export default function ActivityMonitor() {
       if (logsRes && logsRes.ok) {
         const logs = await logsRes.json();
         setSystemLogs(logs);
+      }
+      if (netRes && netRes.ok) {
+        const net = await netRes.json();
+        setNetworkData(net);
       }
     } catch {
       // Fallback simulated metrics if server offline
@@ -170,12 +204,17 @@ export default function ActivityMonitor() {
     return () => clearInterval(interval);
   }, []);
 
-  // Real-time socket events for system log streaming and process updates
+  // Real-time socket events for system log streaming, process updates, and log clearing
   useEffect(() => {
     const socket = getSocket();
 
     const onLog = (entry: SystemLogItem) => {
       setSystemLogs((prev) => [entry, ...prev.slice(0, 99)]);
+    };
+
+    const onLogsCleared = () => {
+      setSystemLogs([]);
+      notify("Logs Cleared", "System logs buffer was cleared.", "delete");
     };
 
     const onProcUpdate = (updatedProc: OsProcess) => {
@@ -185,13 +224,15 @@ export default function ActivityMonitor() {
     };
 
     socket.on("system:log", onLog);
+    socket.on("system:logs_cleared", onLogsCleared);
     socket.on("system:process_updated", onProcUpdate);
 
     return () => {
       socket.off("system:log", onLog);
+      socket.off("system:logs_cleared", onLogsCleared);
       socket.off("system:process_updated", onProcUpdate);
     };
-  }, []);
+  }, [notify]);
 
   const runPingTest = async () => {
     if (systemSounds) soundFx.playClick();
@@ -238,6 +279,44 @@ export default function ActivityMonitor() {
       notify("Action Failed", `Could not restart process ${name}.`, "warning");
     } finally {
       setTimeout(() => setRestartingPid(null), 1000);
+    }
+  };
+
+  // Terminate an OS background process
+  const killProcess = async (pid: number, name: string) => {
+    if (systemSounds) soundFx.playClose();
+    setKillingPid(pid);
+    try {
+      const res = await fetch(`${API_URL}/api/system/process/${pid}/kill`, {
+        method: "POST"
+      });
+      if (res.ok) {
+        setOsProcesses((prev) =>
+          prev.map((p) => (p.pid === pid ? { ...p, status: "stopped", cpu: 0 } : p))
+        );
+        notify("Process Terminated", `Stopped ${name} (PID: ${pid})`, "delete");
+      }
+    } catch {
+      notify("Action Failed", `Could not stop process ${name}.`, "warning");
+    } finally {
+      setTimeout(() => setKillingPid(null), 500);
+    }
+  };
+
+  // Clear system logs buffer
+  const handleClearLogs = async () => {
+    if (systemSounds) soundFx.playClick();
+    setClearingLogs(true);
+    try {
+      const res = await fetch(`${API_URL}/api/system/logs/clear`, { method: "POST" });
+      if (res.ok) {
+        setSystemLogs([]);
+        notify("Logs Cleared", "Audit log buffer successfully flushed.", "delete");
+      }
+    } catch {
+      notify("Action Failed", "Could not clear system logs.", "warning");
+    } finally {
+      setClearingLogs(false);
     }
   };
 
@@ -455,6 +534,8 @@ export default function ActivityMonitor() {
                                   ? "bg-amber-500/20 text-amber-300 animate-pulse"
                                   : p.status === "running"
                                   ? "bg-emerald-500/20 text-emerald-300"
+                                  : p.status === "stopped"
+                                  ? "bg-rose-500/20 text-rose-300"
                                   : "bg-white/10 text-white/50"
                               }`}
                             >
@@ -462,13 +543,26 @@ export default function ActivityMonitor() {
                             </span>
                           </td>
                           <td className="py-2 px-3 text-right">
-                            <button
-                              onClick={() => restartProcess(p.pid, p.name)}
-                              disabled={isRestarting}
-                              className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition text-[10px] disabled:opacity-50"
-                            >
-                              Restart
-                            </button>
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => restartProcess(p.pid, p.name)}
+                                disabled={isRestarting}
+                                className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition text-[10px] disabled:opacity-50 cursor-pointer"
+                                title="Restart daemon process"
+                              >
+                                Restart
+                              </button>
+                              {p.status !== "stopped" && (
+                                <button
+                                  onClick={() => killProcess(p.pid, p.name)}
+                                  disabled={killingPid === p.pid}
+                                  className="px-2 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 transition text-[10px] disabled:opacity-50 cursor-pointer"
+                                  title="Terminate daemon"
+                                >
+                                  {killingPid === p.pid ? "Ending..." : "End"}
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -493,21 +587,32 @@ export default function ActivityMonitor() {
                 </p>
               </div>
 
-              {/* Log Level Filters */}
-              <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-lg p-0.5 text-[10px]">
-                {["all", "info", "warn", "error", "debug"].map((lvl) => (
-                  <button
-                    key={lvl}
-                    onClick={() => setLogLevelFilter(lvl)}
-                    className={`px-2 py-0.5 rounded uppercase font-mono transition ${
-                      logLevelFilter === lvl
-                        ? "bg-accent text-white font-semibold"
-                        : "text-white/50 hover:text-white"
-                    }`}
-                  >
-                    {lvl}
-                  </button>
-                ))}
+              {/* Log Level Filters & Clear */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-lg p-0.5 text-[10px]">
+                  {["all", "info", "warn", "error", "debug"].map((lvl) => (
+                    <button
+                      key={lvl}
+                      onClick={() => setLogLevelFilter(lvl)}
+                      className={`px-2 py-0.5 rounded uppercase font-mono transition ${
+                        logLevelFilter === lvl
+                          ? "bg-accent text-white font-semibold"
+                          : "text-white/50 hover:text-white"
+                      }`}
+                    >
+                      {lvl}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={handleClearLogs}
+                  disabled={clearingLogs || systemLogs.length === 0}
+                  className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-rose-500/20 hover:text-rose-300 border border-white/10 text-white/50 transition text-[10px] flex items-center gap-1 disabled:opacity-40 cursor-pointer"
+                  title="Clear system event buffer"
+                >
+                  <GIconTrash size={11} />
+                  <span>{clearingLogs ? "Clearing..." : "Clear"}</span>
+                </button>
               </div>
             </div>
 
@@ -678,6 +783,81 @@ export default function ActivityMonitor() {
         {/* Network & Ping Tab */}
         {activeTab === "network" && (
           <div className="space-y-4">
+            {/* Live Traffic Statistics Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 space-y-1">
+                <div className="text-[10px] text-white/50 uppercase font-mono">Inbound Speed</div>
+                <div className="font-mono text-base font-bold text-sky-400">
+                  {networkData?.traffic?.rxKbps ?? 14.8} <span className="text-[11px] font-normal text-white/60">KB/s</span>
+                </div>
+                <div className="text-[10px] text-white/40">
+                  Total: {networkData?.traffic?.totalRxMb ?? 1.85} MB
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 space-y-1">
+                <div className="text-[10px] text-white/50 uppercase font-mono">Outbound Speed</div>
+                <div className="font-mono text-base font-bold text-emerald-400">
+                  {networkData?.traffic?.txKbps ?? 9.2} <span className="text-[11px] font-normal text-white/60">KB/s</span>
+                </div>
+                <div className="text-[10px] text-white/40">
+                  Total: {networkData?.traffic?.totalTxMb ?? 1.12} MB
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 space-y-1">
+                <div className="text-[10px] text-white/50 uppercase font-mono">Active Sockets</div>
+                <div className="font-mono text-base font-bold text-amber-400">
+                  {networkData?.traffic?.activeConnections ?? 1} <span className="text-[11px] font-normal text-white/60">clients</span>
+                </div>
+                <div className="text-[10px] text-white/40">Real-time presence</div>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 space-y-1">
+                <div className="text-[10px] text-white/50 uppercase font-mono">Server Port</div>
+                <div className="font-mono text-base font-bold text-purple-400">
+                  :{networkData?.traffic?.httpPort ?? 4000}
+                </div>
+                <div className="text-[10px] text-white/40 truncate" title={networkData?.traffic?.protocol}>
+                  {networkData?.traffic?.protocol ? "HTTP + WS v4" : "HTTP/1.1"}
+                </div>
+              </div>
+            </div>
+
+            {/* Network Adapter Information */}
+            <div className="p-4 rounded-xl border border-white/10 bg-white/5 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-display text-sm font-semibold text-white/90">
+                  Host Network Interface &amp; Routing
+                </h4>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
+                  Online
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/5 space-y-1">
+                  <div className="text-[10px] text-white/40">Active Interface</div>
+                  <div className="font-mono text-white/90 font-medium">
+                    {networkData?.primaryInterface?.name || "Ethernet / WLAN"}
+                  </div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/5 space-y-1">
+                  <div className="text-[10px] text-white/40">Host IP Address</div>
+                  <div className="font-mono text-emerald-400 font-medium">
+                    {networkData?.primaryInterface?.address || "127.0.0.1 (Localhost)"}
+                  </div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/5 space-y-1">
+                  <div className="text-[10px] text-white/40">MAC Address</div>
+                  <div className="font-mono text-white/70 font-medium truncate">
+                    {networkData?.primaryInterface?.mac || "00:00:00:00:00:00"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Ping & Round-Trip Latency Tool */}
             <div className="p-4 rounded-xl border border-accent/30 bg-accent/5 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -689,7 +869,7 @@ export default function ActivityMonitor() {
                 <button
                   onClick={runPingTest}
                   disabled={testingPing}
-                  className="px-3 py-1.5 rounded-lg bg-accent hover:bg-accent/80 text-white font-medium transition shadow-lg shadow-accent/20 flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded-lg bg-accent hover:bg-accent/80 text-white font-medium transition shadow-lg shadow-accent/20 flex items-center gap-1.5 cursor-pointer"
                 >
                   <GIconSignal size={13} />
                   {testingPing ? "Pinging..." : "Test Latency"}
