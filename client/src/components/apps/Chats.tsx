@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   GIconPaperPlane,
   GIconPersons,
@@ -8,20 +8,27 @@ import {
   GIconSliders,
   GIconVolume,
   GIconVolumeMute,
+  GIconSearch,
+  GIconPin,
+  GIconDownload,
+  GIconClose,
 } from "../icons/GravityIcons";
 import { getSocket } from "../../lib/socket";
 import { useOS } from "../../store/useOS";
 import { useOutsideClick } from "../../lib/useOutsideClick";
+import { soundFx } from "../../lib/soundFx";
+import { API_URL } from "../../lib/config";
 
 const BG_OPTIONS = [
   { id: "halftone", label: "Soft paper", swatch: "#f7f4ee" },
   { id: "notebook", label: "Notebook", swatch: "#f5f7fa" },
   { id: "ink", label: "Midnight", swatch: "#18212b" },
   { id: "plain", label: "Warm neutral", swatch: "#f2eee7" },
-  { id: "action", label: "Evening", swatch: "#272331" }
+  { id: "action", label: "Evening", swatch: "#272331" },
 ];
 
-const EMOJI_REACTIONS = ["❤️", "👍", "🔥", "🚀", "😂"];
+const EMOJI_REACTIONS = ["❤️", "👍", "🔥", "🚀", "😂", "🎉"];
+const QUICK_EMOJIS = ["👍", "❤️", "🔥", "🚀", "😂", "🎉", "✨", "💻", "👋"];
 
 const ACK_TIMEOUT_MS = 6000;
 
@@ -55,15 +62,26 @@ function BgPicker({ current, onPick, onClose }: any) {
   const ref = useRef<HTMLDivElement>(null);
   useOutsideClick(ref, onClose);
   return (
-    <div ref={ref} role="group" aria-label="Chat color theme" className="absolute top-full right-3 mt-1.5 z-\[1200] chat-theme-picker rounded-xl p-2 shadow-2xl" style={{ animation: "menuOpen 140ms cubic-bezier(.16,1,.3,1) both" }}>
+    <div
+      ref={ref}
+      role="group"
+      aria-label="Chat color theme"
+      className="absolute top-full right-3 mt-1.5 z-[1200] chat-theme-picker rounded-xl p-2 shadow-2xl"
+      style={{ animation: "menuOpen 140ms cubic-bezier(.16,1,.3,1) both" }}
+    >
       <div className="text-xs font-semibold px-1 pb-1.5">Chat theme</div>
       <div className="grid grid-cols-3 gap-1.5">
         {BG_OPTIONS.map((o) => (
           <button
             key={o.id}
-            onClick={() => { onPick(o.id); onClose(); }}
+            onClick={() => {
+              onPick(o.id);
+              onClose();
+            }}
             aria-pressed={current === o.id}
-            className={`flex flex-col items-center gap-1 p-1.5 rounded-lg transition ${current === o.id ? "ring-2 ring-accent" : "hover:bg-black/5 dark:hover:bg-white/10"}`}
+            className={`flex flex-col items-center gap-1 p-1.5 rounded-lg transition ${
+              current === o.id ? "ring-2 ring-accent" : "hover:bg-black/5 dark:hover:bg-white/10"
+            }`}
           >
             <span aria-hidden="true" className="w-8 h-8 rounded-md border border-black/15" style={{ background: o.swatch }} />
             <span className="text-xs">{o.label}</span>
@@ -80,41 +98,65 @@ export default function Chats() {
   const reduceMotion = useOS((s) => s.reduceMotion);
   const chatBg = useOS((s) => s.chatBg);
   const setChatBg = useOS((s) => s.setChatBg);
+  const notify = useOS((s) => s.notify);
+
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(true);
   const [name, setName] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
+  const [pinnedList, setPinnedList] = useState<any[]>([]);
+  const [activeUsers, setActiveUsers] = useState<any[]>([]);
+  const [showUsersModal, setShowUsersModal] = useState(false);
   const [online, setOnline] = useState(0);
   const [text, setText] = useState("");
   const [typingName, setTypingName] = useState<string | null>(null);
   const [bgPickerOpen, setBgPickerOpen] = useState(false);
   const [textScale, setTextScale] = useState(() => Number(localStorage.getItem("os_chat_text_scale") || 1));
 
+  // Search & Reply States
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [replyTarget, setReplyTarget] = useState<{ id: string; name: string; text: string } | null>(null);
+
   const listRef = useRef<HTMLDivElement>(null);
   const typingTimeout = useRef<any>(null);
   const themeButtonRef = useRef<HTMLButtonElement>(null);
+  const usersModalRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef(name);
   nameRef.current = name;
+
+  useOutsideClick(usersModalRef, () => setShowUsersModal(false));
 
   useEffect(() => {
     const socket = getSocket();
 
-    const onConnect = () => { setConnected(true); setConnecting(false); };
+    const onConnect = () => {
+      setConnected(true);
+      setConnecting(false);
+    };
     const onDisconnect = () => setConnected(false);
     const onConnecting = () => setConnecting(true);
-    const onInit = ({ name, history }: any) => { setName(name); setMessages(history); };
+    const onInit = ({ name, history, pinned, users }: any) => {
+      setName(name);
+      setMessages(history || []);
+      if (pinned) setPinnedList(pinned);
+      if (users) setActiveUsers(users);
+    };
     const onMessage = (msg: any) => {
       setMessages((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
       if (chatSound && msg.name !== nameRef.current) playPing();
     };
     const onReacted = ({ id, reactions }: any) => {
-      setMessages((m) =>
-        m.map((x) => (x.id === id ? { ...x, reactions } : x))
-      );
+      setMessages((m) => m.map((x) => (x.id === id ? { ...x, reactions } : x)));
     };
     const onPresence = ({ online }: any) => setOnline(online);
+    const onUsersUpdated = (userList: any[]) => setActiveUsers(userList || []);
+    const onPinned = ({ isPinned, pinnedList: updatedList }: any) => {
+      if (updatedList) setPinnedList(updatedList);
+    };
+
     const onTyping = ({ name }: any) => {
       setTypingName(name);
       clearTimeout(typingTimeout.current);
@@ -128,6 +170,8 @@ export default function Chats() {
     socket.on("chat:message", onMessage);
     socket.on("chat:reacted", onReacted);
     socket.on("chat:presence", onPresence);
+    socket.on("chat:users_updated", onUsersUpdated);
+    socket.on("chat:pinned", onPinned);
     socket.on("chat:typing", onTyping);
 
     if (socket.connected) onConnect();
@@ -140,6 +184,8 @@ export default function Chats() {
       socket.off("chat:message", onMessage);
       socket.off("chat:reacted", onReacted);
       socket.off("chat:presence", onPresence);
+      socket.off("chat:users_updated", onUsersUpdated);
+      socket.off("chat:pinned", onPinned);
       socket.off("chat:typing", onTyping);
     };
   }, [chatSound]);
@@ -163,40 +209,51 @@ export default function Chats() {
   }, [bgPickerOpen]);
 
   const reactToMessage = (id: string, emoji: string) => {
-    if (connected) {
-      getSocket().emit("chat:react", { id, emoji });
-    }
+    getSocket().emit("chat:react", { id, emoji });
+    // Optimistic local update
     setMessages((m) =>
       m.map((x) => {
         if (x.id === id) {
-          const nextReactions = { ...(x.reactions || {}) };
-          nextReactions[emoji] = (nextReactions[emoji] || 0) + 1;
-          return { ...x, reactions: nextReactions };
+          const reactions = { ...(x.reactions || {}) };
+          reactions[emoji] = (reactions[emoji] || 0) + 1;
+          return { ...x, reactions };
         }
         return x;
       })
     );
   };
 
-  const sendText = (t: string) => {
-    if (!t) return;
-    const tempId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const togglePinMessage = async (id: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/chat/${id}/pin`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        setPinnedList(data.pinned || []);
+        notify("Chat Pin", data.isPinned ? "Message pinned to top" : "Message unpinned", "info");
+      }
+    } catch {}
+  };
 
+  const sendText = (t: string) => {
+    const tempId = `temp-${Date.now()}`;
+
+    // Local fallback bot when offline
     if (!connected) {
-      const userMsg = { id: tempId, name: name || "You", text: t, ts: Date.now(), reactions: {} };
-      setMessages((m) => [...m, userMsg]);
-      setTypingName("Portfolio Bot");
+      const localMsg = {
+        id: tempId,
+        name: name || "you",
+        text: t,
+        ts: Date.now(),
+        reactions: {},
+        replyTo: replyTarget || undefined
+      };
+      setMessages((m) => [...m, localMsg]);
+      setReplyTarget(null);
+
       setTimeout(() => {
-        setTypingName(null);
         const lower = t.toLowerCase();
-        let reply = "Thanks for visiting Portfolio OS! Feel free to explore the Music player, Terminal CLI, Library projects, and Games!";
-        if (lower.includes("hi") || lower.includes("hello") || lower.includes("hey")) {
-          reply = "Hello there! Welcome to Portfolio OS. You can test out all apps in the dock, play music, or open Terminal.";
-        } else if (lower.includes("who") || lower.includes("about") || lower.includes("bron")) {
-          reply = "Bron Mendoza is a Full-Stack Developer specializing in MERN stack, React Native / Expo, and modern web architectures!";
-        } else if (lower.includes("skill") || lower.includes("stack") || lower.includes("tech")) {
-          reply = "Core skills include React, Next.js, TypeScript, Node.js, Express, NestJS, MongoDB, MySQL, and Tailwind CSS.";
-        } else if (lower.includes("project") || lower.includes("work")) {
+        let reply = "Hello! I am Portfolio Bot. The live Socket.IO chat server is currently unreachable, but feel free to explore the desktop apps!";
+        if (lower.includes("project") || lower.includes("work")) {
           reply = "Check out the Library app to view all featured projects, or open Resume to see work experience!";
         } else if (lower.includes("music") || lower.includes("song")) {
           reply = "Open the Music app from the dock to stream Lo-fi beats, synthwave, or search Apple Music tracks live!";
@@ -217,8 +274,19 @@ export default function Chats() {
       return;
     }
 
-    const optimistic = { id: tempId, name: name || "you", text: t, ts: Date.now(), pending: true, reactions: {} };
+    const optimistic = {
+      id: tempId,
+      name: name || "you",
+      text: t,
+      ts: Date.now(),
+      pending: true,
+      reactions: {},
+      replyTo: replyTarget || undefined
+    };
     setMessages((m) => [...m, optimistic]);
+
+    const payload = replyTarget ? { text: t, replyTo: replyTarget } : t;
+    setReplyTarget(null);
 
     const socket = getSocket();
     let settled = false;
@@ -228,7 +296,7 @@ export default function Chats() {
       setMessages((m) => m.map((x) => (x.id === tempId ? { ...x, pending: false, failed: true } : x)));
     }, ACK_TIMEOUT_MS);
 
-    socket.emit("chat:message", t, (res: any) => {
+    socket.emit("chat:message", payload, (res: any) => {
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
@@ -269,9 +337,33 @@ export default function Chats() {
     });
   };
 
+  const exportChat = () => {
+    const json = JSON.stringify(messages, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `chat-transcript-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    notify("Chat Exported", "Downloaded conversation transcript.", "success");
+  };
+
+  // Filter messages based on search query
+  const displayedMessages = useMemo(() => {
+    if (!searchQuery.trim()) return messages;
+    const q = searchQuery.toLowerCase();
+    return messages.filter(
+      (m) => (m.text && m.text.toLowerCase().includes(q)) || (m.name && m.name.toLowerCase().includes(q))
+    );
+  }, [messages, searchQuery]);
+
   return (
-    <div data-chat-bg={chatBg} className="flex flex-col h-full chat-shell text-foreground">
-      <div className="chat-topbar flex items-center justify-between px-4 py-2.5 border-b">
+    <div data-chat-bg={chatBg} className="flex flex-col h-full chat-shell text-foreground relative">
+      {/* Chat Topbar */}
+      <div className="chat-topbar flex items-center justify-between px-3.5 py-2.5 border-b gap-2">
         <div className="flex items-center gap-2">
           <div className="relative">
             <span
@@ -281,73 +373,157 @@ export default function Chats() {
                 connected
                   ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]"
                   : connecting
-                    ? "bg-amber-400 animate-pulse"
-                    : "bg-zinc-400"
+                  ? "bg-amber-400 animate-pulse"
+                  : "bg-zinc-400"
               }`}
             />
           </div>
           <div>
             <div className="font-semibold text-xs leading-none">Chats</div>
             <div className="text-[10px] chat-muted mt-0.5">
-              {connected
-                ? "Live & connected"
-                : connecting
-                  ? "Reconnecting…"
-                  : "Offline mode · Bot active"}
+              {connected ? "Live & connected" : connecting ? "Reconnecting…" : "Offline mode · Bot active"}
             </div>
           </div>
         </div>
 
+        {/* Right Tools Group */}
         <div className="flex items-center gap-1">
-          <div className="chat-badge flex items-center gap-1 text-xs px-2 py-0.5 rounded-full mr-1">
-            <GIconPersons size={12} aria-hidden="true" />
-            <span>{connected ? online : 1}</span>
-            <span className="sr-only">people online</span>
+          {/* Active Participants Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowUsersModal(!showUsersModal)}
+              className="chat-badge flex items-center gap-1 text-xs px-2 py-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition"
+              title="View online guests"
+            >
+              <GIconPersons size={12} aria-hidden="true" />
+              <span>{connected ? online : 1}</span>
+            </button>
+
+            {/* Active Users Dropdown */}
+            {showUsersModal && (
+              <div
+                ref={usersModalRef}
+                className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-slate-900 border border-white/15 p-2 shadow-2xl z-50 text-xs text-white"
+              >
+                <div className="font-semibold text-[11px] text-white/50 px-1 pb-1 border-b border-white/10 mb-1">
+                  Online Visitors ({activeUsers.length || 1})
+                </div>
+                <div className="max-h-36 overflow-y-auto thin-scroll space-y-1">
+                  {activeUsers.length > 0 ? (
+                    activeUsers.map((u, i) => (
+                      <div key={i} className="flex items-center gap-2 px-1.5 py-1 rounded bg-white/5">
+                        <span
+                          className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
+                          style={{ background: nameColor(u.name) }}
+                        >
+                          {u.name?.[0]?.toUpperCase()}
+                        </span>
+                        <span className="truncate text-white/80">{u.name}</span>
+                        {u.name === name && <span className="text-[9px] text-accent ml-auto">(you)</span>}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-white/40 text-[10px] p-1">1 active session</div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
+          {/* Search Toggle */}
+          <button
+            onClick={() => setSearchOpen(!searchOpen)}
+            className={`chat-icon-button ${searchOpen ? "text-accent" : ""}`}
+            title="Search messages"
+          >
+            <GIconSearch size={14} />
+          </button>
+
+          {/* Export Chat */}
+          <button onClick={exportChat} className="chat-icon-button" title="Export Chat Transcript">
+            <GIconDownload size={14} />
+          </button>
+
+          {/* Sound Mute */}
           <button
             onClick={toggleChatSound}
             aria-label={chatSound ? "Mute chat sounds" : "Enable chat sounds"}
             title={chatSound ? "Mute chat sounds" : "Enable chat sounds"}
             className="chat-icon-button"
           >
-            {chatSound ? <GIconVolume size={15} /> : <GIconVolumeMute size={15} />}
+            {chatSound ? <GIconVolume size={14} /> : <GIconVolumeMute size={14} />}
           </button>
 
+          {/* Theme Picker */}
           <div className="relative">
             <button
               ref={themeButtonRef}
               onClick={() => setBgPickerOpen((o) => !o)}
               aria-label="Choose chat color theme"
-              aria-haspopup="true"
-              aria-expanded={bgPickerOpen}
               className="chat-icon-button"
             >
-              <GIconSliders size={15} />
+              <GIconSliders size={14} />
             </button>
             {bgPickerOpen && (
-              <BgPicker
-                current={chatBg}
-                onPick={setChatBg}
-                onClose={() => setBgPickerOpen(false)}
-              />
+              <BgPicker current={chatBg} onPick={setChatBg} onClose={() => setBgPickerOpen(false)} />
             )}
           </div>
         </div>
       </div>
 
-      <div ref={listRef} role="log" aria-label="Chat messages" aria-live="polite" aria-relevant="additions text" aria-atomic="false" className="chat-thread flex-1 overflow-auto thin-scroll p-4 space-y-4">
+      {/* Pinned Messages Banner */}
+      {pinnedList.length > 0 && (
+        <div className="px-3.5 py-1.5 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between gap-2 text-xs text-amber-200">
+          <div className="flex items-center gap-1.5 truncate">
+            <GIconPin size={12} className="text-amber-400 shrink-0" />
+            <span className="font-semibold text-[11px] shrink-0">Pinned:</span>
+            <span className="truncate text-white/80 text-[11px]">{pinnedList[0].text}</span>
+          </div>
+          <button
+            onClick={() => togglePinMessage(pinnedList[0].id)}
+            className="text-[10px] text-amber-300 hover:text-white shrink-0 underline"
+          >
+            Unpin
+          </button>
+        </div>
+      )}
+
+      {/* Search Input Bar */}
+      {searchOpen && (
+        <div className="p-2 border-b border-white/10 bg-black/20 flex items-center gap-2">
+          <GIconSearch size={12} className="text-white/40 ml-1" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search conversation..."
+            className="flex-1 bg-transparent text-xs text-white placeholder-white/40 outline-none"
+            autoFocus
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery("")} className="text-white/40 hover:text-white">
+              <GIconClose size={12} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Messages Thread */}
+      <div
+        ref={listRef}
+        role="log"
+        aria-label="Chat messages"
+        className="chat-thread flex-1 overflow-auto thin-scroll p-4 space-y-4"
+      >
         {!connected && !connecting && messages.length === 0 && (
           <div className="chat-empty-state max-w-sm mx-auto mt-8 p-5 rounded-2xl text-center">
             <p className="font-semibold mb-1">Welcome! You can start chatting right away.</p>
             <p className="text-sm">
-              Live chat is unavailable right now, but <strong>Portfolio Bot</strong> is here to help you explore.
+              Live chat is offline, but <strong>Portfolio Bot</strong> is ready to guide you.
             </p>
           </div>
         )}
-        {messages.length === 0 && connecting && (
-          <p role="status" className="chat-muted text-sm text-center mt-8">Connecting to live chat…</p>
-        )}
+
         {messages.length === 0 && connected && (
           <p className="chat-muted text-sm text-center mt-8">
             No messages yet. Say hi — no account needed, you're chatting as{" "}
@@ -355,11 +531,18 @@ export default function Chats() {
           </p>
         )}
 
-        {messages.map((m) => {
+        {displayedMessages.map((m) => {
           const isSelf = m.name === name;
           const color = nameColor(m.name);
+          const isPinned = pinnedList.some((p) => p.id === m.id);
+
           return (
-            <div key={m.id} className={`group flex items-end gap-2 max-w-[92%] sm:max-w-[86%] chat-message-in ${isSelf ? "ml-auto flex-row-reverse" : ""}`}>
+            <div
+              key={m.id}
+              className={`group flex items-end gap-2 max-w-[92%] sm:max-w-[86%] chat-message-in ${
+                isSelf ? "ml-auto flex-row-reverse" : ""
+              }`}
+            >
               <div
                 aria-hidden="true"
                 className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
@@ -368,11 +551,30 @@ export default function Chats() {
                 {m.name?.[0]?.toUpperCase() || "?"}
               </div>
               <div className={`min-w-0 ${isSelf ? "text-right" : ""}`}>
-                <div className="chat-meta text-xs font-medium mb-1">
-                  {m.name} <time className="font-normal" dateTime={new Date(m.ts).toISOString()}>· {new Date(m.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>
+                <div className="chat-meta text-xs font-medium mb-1 flex items-center gap-1.5">
+                  <span>{m.name}</span>
+                  <time className="font-normal opacity-60" dateTime={new Date(m.ts).toISOString()}>
+                    · {new Date(m.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </time>
+                  {isPinned && <GIconPin size={10} className="text-amber-400" />}
                 </div>
+
+                {/* Quoted Message in Reply */}
+                {m.replyTo && (
+                  <div
+                    className={`text-[11px] p-1.5 mb-1 rounded-lg border border-white/10 bg-black/15 text-white/60 truncate flex items-center gap-1 ${
+                      isSelf ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <span className="font-semibold text-accent">@{m.replyTo.name}:</span>
+                    <span className="truncate">{m.replyTo.text}</span>
+                  </div>
+                )}
+
                 <div
-                  className={`chat-bubble ${isSelf ? "chat-bubble-self" : ""} ${m.pending ? "chat-bubble-pending" : ""} ${m.failed ? "chat-bubble-failed" : ""} px-3.5 py-2.5 leading-relaxed relative`}
+                  className={`chat-bubble ${isSelf ? "chat-bubble-self" : ""} ${
+                    m.pending ? "chat-bubble-pending" : ""
+                  } ${m.failed ? "chat-bubble-failed" : ""} px-3.5 py-2.5 leading-relaxed relative`}
                   style={{ fontSize: `${15 * textScale}px` }}
                 >
                   {m.text}
@@ -396,8 +598,26 @@ export default function Chats() {
                   </div>
                 )}
 
-                {/* Hover Quick Reaction Bar */}
-                <div className={`opacity-0 group-hover:opacity-100 flex items-center gap-1.5 transition-opacity ${isSelf ? "justify-end" : "justify-start"} mt-0.5 px-1`}>
+                {/* Hover Quick Bar: Reply, Pin, Reactions */}
+                <div
+                  className={`opacity-0 group-hover:opacity-100 flex items-center gap-1.5 transition-opacity ${
+                    isSelf ? "justify-end" : "justify-start"
+                  } mt-0.5 px-1`}
+                >
+                  <button
+                    onClick={() => setReplyTarget({ id: m.id, name: m.name, text: m.text })}
+                    className="text-[10px] hover:text-accent transition text-white/60 mr-1"
+                    title="Reply to message"
+                  >
+                    Reply
+                  </button>
+                  <button
+                    onClick={() => togglePinMessage(m.id)}
+                    className="text-[10px] hover:text-amber-400 transition text-white/60 mr-1"
+                    title={isPinned ? "Unpin message" : "Pin message"}
+                  >
+                    <GIconPin size={10} className={isPinned ? "text-amber-400" : ""} />
+                  </button>
                   {EMOJI_REACTIONS.map((emo) => (
                     <button
                       key={emo}
@@ -412,7 +632,10 @@ export default function Chats() {
 
                 {m.pending && <div role="status" className="chat-muted text-xs mt-1">Sending…</div>}
                 {m.failed && (
-                  <button onClick={() => retryMessage(m)} className="chat-error-link inline-flex items-center gap-1 text-xs font-semibold mt-1 rounded px-1 py-0.5">
+                  <button
+                    onClick={() => retryMessage(m)}
+                    className="chat-error-link inline-flex items-center gap-1 text-xs font-semibold mt-1 rounded px-1 py-0.5"
+                  >
                     <GIconRotateRight size={12} /> Failed to send. Retry message
                   </button>
                 )}
@@ -434,10 +657,51 @@ export default function Chats() {
         )}
       </div>
 
+      {/* Quoted Reply Banner */}
+      {replyTarget && (
+        <div className="px-3.5 py-1.5 bg-accent/15 border-t border-accent/30 flex items-center justify-between text-xs text-white">
+          <div className="truncate mr-2">
+            <span className="font-semibold text-accent">Replying to @{replyTarget.name}: </span>
+            <span className="opacity-80 truncate">{replyTarget.text}</span>
+          </div>
+          <button
+            onClick={() => setReplyTarget(null)}
+            className="p-1 hover:text-white text-white/50"
+            title="Cancel reply"
+          >
+            <GIconClose size={12} />
+          </button>
+        </div>
+      )}
+
+      {/* Quick Emojis Bar */}
+      <div className="px-3 py-1 bg-black/10 border-t border-white/5 flex items-center gap-1.5 overflow-x-auto thin-scroll">
+        <span className="text-[10px] text-white/40 uppercase font-mono mr-1">Quick:</span>
+        {QUICK_EMOJIS.map((em) => (
+          <button
+            key={em}
+            type="button"
+            onClick={() => setText((prev) => prev + em)}
+            className="text-xs hover:scale-125 transition-transform px-1 py-0.5 rounded hover:bg-white/10"
+          >
+            {em}
+          </button>
+        ))}
+      </div>
+
+      {/* Identity bar */}
       <div className="chat-identity flex items-center justify-between gap-2 px-4 py-2 border-t">
         {editingName ? (
-          <form onSubmit={(e) => { e.preventDefault(); saveName(); }} className="flex items-center gap-2">
-            <label htmlFor="chat-display-name" className="text-sm font-medium">Your display name</label>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              saveName();
+            }}
+            className="flex items-center gap-2"
+          >
+            <label htmlFor="chat-display-name" className="text-sm font-medium">
+              Display name
+            </label>
             <input
               id="chat-display-name"
               autoFocus
@@ -447,22 +711,55 @@ export default function Chats() {
               className="chat-input min-w-0 w-32 rounded-lg px-2.5 py-1.5 text-sm"
               placeholder="Your guest name"
             />
-            <button type="submit" aria-label="Save display name" className="chat-icon-button"><GIconCheck size={16} /></button>
+            <button type="submit" aria-label="Save display name" className="chat-icon-button">
+              <GIconCheck size={16} />
+            </button>
           </form>
         ) : (
-          <button onClick={() => { setDraftName(name); setEditingName(true); }} className="chat-link inline-flex items-center gap-1.5 rounded px-1 py-0.5 text-sm">
+          <button
+            onClick={() => {
+              setDraftName(name);
+              setEditingName(true);
+            }}
+            className="chat-link inline-flex items-center gap-1.5 rounded px-1 py-0.5 text-sm"
+          >
             <GIconPencil size={14} /> Chatting as <span className="font-semibold">{name || "guest"}</span>
           </button>
         )}
         <div role="group" className="flex items-center gap-1" aria-label="Message text size">
           <span className="chat-muted text-xs mr-1">Text</span>
-          <button type="button" onClick={() => changeTextScale(-0.1)} disabled={textScale <= 1} aria-label="Decrease message text size" className="chat-text-size-button">A−</button>
-          <button type="button" onClick={() => changeTextScale(0.1)} disabled={textScale >= 1.3} aria-label="Increase message text size" className="chat-text-size-button">A+</button>
+          <button
+            type="button"
+            onClick={() => changeTextScale(-0.1)}
+            disabled={textScale <= 1}
+            aria-label="Decrease message text size"
+            className="chat-text-size-button"
+          >
+            A−
+          </button>
+          <button
+            type="button"
+            onClick={() => changeTextScale(0.1)}
+            disabled={textScale >= 1.3}
+            aria-label="Increase message text size"
+            className="chat-text-size-button"
+          >
+            A+
+          </button>
         </div>
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); send(); }} className="chat-composer flex items-end gap-2 p-3 border-t">
-        <label htmlFor="chat-message" className="sr-only">Write a message</label>
+      {/* Composer */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          send();
+        }}
+        className="chat-composer flex items-end gap-2 p-3 border-t"
+      >
+        <label htmlFor="chat-message" className="sr-only">
+          Write a message
+        </label>
         <textarea
           id="chat-message"
           rows={1}

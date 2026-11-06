@@ -18,7 +18,8 @@ const BANNER = `
 const COMMANDS = [
   "help", "clear", "neofetch", "whoami", "skills", "projects",
   "ls", "cat", "open", "theme", "date", "uptime", "history", "matrix",
-  "sysinfo", "server", "ping", "quote", "joke", "curl", "guestbook", "weather", "analytics", "codeplay", "snake", "github", "mission", "sudo"
+  "sysinfo", "server", "ping", "quote", "joke", "curl", "logs", "processes", "ps", "notes", "storage", "df",
+  "guestbook", "weather", "analytics", "codeplay", "snake", "github", "mission", "sudo"
 ];
 
 type TerminalEntry =
@@ -152,6 +153,12 @@ export default function Terminal() {
       case "quote":
       case "joke":
       case "curl":
+      case "logs":
+      case "processes":
+      case "ps":
+      case "notes":
+      case "storage":
+      case "df":
         try {
           const res = await fetch(`${API_URL}/api/terminal/exec`, {
             method: "POST",

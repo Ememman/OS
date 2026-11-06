@@ -21,9 +21,14 @@ import {
   GIconUndo,
   GIconRedo,
   GIconFontCursor,
+  GIconRotateRight,
+  GIconUpload,
+  GIconSparkles,
 } from "../icons/GravityIcons";
 import { soundFx } from "../../lib/soundFx";
 import { useOS } from "../../store/useOS";
+import { API_URL } from "../../lib/config";
+import { getSocket } from "../../lib/socket";
 
 export interface NoteItem {
   id: string;
@@ -31,7 +36,43 @@ export interface NoteItem {
   updatedAt: string;
   content: string;
   pinned?: boolean;
+  tag?: string;
+  color?: "amber" | "emerald" | "sky" | "purple" | "rose" | string;
+  serverSyncedAt?: number;
 }
+
+export const NOTE_TEMPLATES = [
+  {
+    id: "standup",
+    name: "Daily Standup & Agenda",
+    content: `## ☀️ Daily Standup & Agenda\n\n### 🎯 Top Priorities Today\n- [ ] Priority 1\n- [ ] Priority 2\n- [ ] Priority 3\n\n### 🔄 Completed Yesterday\n- [x] Feature implementation\n- [x] Code review\n\n### 🚧 Blockers & Notes\n> No current blockers. All tests passing.`
+  },
+  {
+    id: "rfc",
+    name: "Architecture RFC Spec",
+    content: `## 📐 RFC: Architecture Specification\n\n**Author:** Bron Mendoza\n**Status:** In Review\n\n### 1. Abstract\nHigh-level architectural proposal for the new system feature.\n\n### 2. Objectives & Non-Goals\n- [x] Zero-latency synchronization\n- [ ] Offline caching layer\n\n### 3. API Design\n\`\`\`typescript\ninterface ServiceResponse<T> {\n  ok: boolean;\n  data: T;\n  timestamp: number;\n}\n\`\`\`\n\n### 4. Security & Performance Considerations\nAll endpoints validate request bodies with strict length limits.`
+  },
+  {
+    id: "bug",
+    name: "Bug Report Ticket",
+    content: `## 🐛 Bug Report: [Short Title]\n\n**Severity:** High / Medium / Low\n**Environment:** Chrome 124 / Windows 11\n\n### Steps to Reproduce\n1. Navigate to ...\n2. Click on ...\n3. Observe unexpected behaviour\n\n### Expected vs Actual\n- **Expected:** Window smoothly opens\n- **Actual:** Console shows warning\n\n### Proposed Fix\nCheck boundary condition in render handler.`
+  },
+  {
+    id: "scratchpad",
+    name: "Quick Code Scratchpad",
+    content: `## ⚡ Quick Code Scratchpad\n\n\`\`\`javascript\n// Test snippet\nconst greet = (name) => \`Hello, \${name}! Welcome to Portfolio OS.\`;\nconsole.log(greet("Developer"));\n\`\`\`\n\n### Ideas\n- Integrate Web Worker for heavy tasks\n- Optimize bundle chunks`
+  }
+];
+
+export const NOTE_COLORS: { id: string; hex: string; border: string; bg: string }[] = [
+  { id: "amber", hex: "#f59e0b", border: "border-amber-500/40", bg: "bg-amber-500" },
+  { id: "emerald", hex: "#10b981", border: "border-emerald-500/40", bg: "bg-emerald-500" },
+  { id: "sky", hex: "#0ea5e9", border: "border-sky-500/40", bg: "bg-sky-500" },
+  { id: "purple", hex: "#a855f7", border: "border-purple-500/40", bg: "bg-purple-500" },
+  { id: "rose", hex: "#f43f5e", border: "border-rose-500/40", bg: "bg-rose-500" },
+];
+
+export const NOTE_TAGS = ["all", "work", "ideas", "code", "todo", "personal"];
 
 const DEFAULT_NOTES: NoteItem[] = [
   {
@@ -88,8 +129,114 @@ export default function Notes() {
   const [copiedCodeIdx, setCopiedCodeIdx] = useState<number | null>(null);
   const [mode, setMode] = useState<"edit" | "split" | "preview">("edit");
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTagFilter, setActiveTagFilter] = useState<string>("all");
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
   const [isFocused, setIsFocused] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
+  const [templateMenuOpen, setTemplateMenuOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Cloud sync handler
+  const syncWithCloud = async () => {
+    setIsSyncing(true);
+    if (systemSounds) soundFx.playClick();
+    try {
+      const res = await fetch(`${API_URL}/api/notes/sync`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.notes && Array.isArray(data.notes)) {
+          setNotes(data.notes);
+          setLastSyncedAt(Date.now());
+          notify("Cloud Sync Complete", `${data.notes.length} notes backed up to server.`, "success");
+          if (systemSounds) soundFx.playSuccess();
+        }
+      }
+    } catch {
+      notify("Sync Offline", "Could not reach notes server, saved to browser.", "info");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Socket listener for real-time note updates
+  useEffect(() => {
+    const socket = getSocket();
+    const onSynced = (cloudList: NoteItem[]) => {
+      setNotes((prev) => {
+        const map = new Map();
+        prev.forEach((n) => map.set(n.id, n));
+        cloudList.forEach((n) => map.set(n.id, n));
+        return Array.from(map.values());
+      });
+      setLastSyncedAt(Date.now());
+    };
+    const onUpdated = (updatedNote: NoteItem) => {
+      setNotes((prev) => {
+        const idx = prev.findIndex((n) => n.id === updatedNote.id);
+        if (idx !== -1) {
+          const next = [...prev];
+          next[idx] = updatedNote;
+          return next;
+        }
+        return [updatedNote, ...prev];
+      });
+    };
+    const onDeleted = ({ id }: { id: string }) => {
+      setNotes((prev) => prev.filter((n) => n.id !== id));
+    };
+
+    socket.on("notes:synced", onSynced);
+    socket.on("notes:updated", onUpdated);
+    socket.on("notes:deleted", onDeleted);
+
+    return () => {
+      socket.off("notes:synced", onSynced);
+      socket.off("notes:updated", onUpdated);
+      socket.off("notes:deleted", onDeleted);
+    };
+  }, []);
+
+  // Handle file import
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const content = String(evt.target?.result || "");
+      const newNote: NoteItem = {
+        id: `note-${Date.now()}`,
+        title: file.name.replace(/\.[^/.]+$/, ""),
+        updatedAt: "Just now",
+        content,
+        pinned: false,
+        tag: "ideas",
+        color: "amber"
+      };
+      setNotes((prev) => [newNote, ...prev]);
+      setActiveId(newNote.id);
+      notify("File Imported", `Imported "${file.name}" as new note.`, "add");
+      if (systemSounds) soundFx.playSuccess();
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  // Insert template
+  const applyTemplate = (templateContent: string) => {
+    if (!activeNote) return;
+    if (systemSounds) soundFx.playClick();
+    const nextContent = activeNote.content
+      ? `${activeNote.content}\n\n${templateContent}`
+      : templateContent;
+    updateActiveNote({ content: nextContent });
+    setTemplateMenuOpen(false);
+    notify("Template Inserted", "Added template structure into note.", "update");
+  };
 
   // Undo / Redo history stack per note
   const [history, setHistory] = useState<string[]>([]);
@@ -721,13 +868,18 @@ export default function Notes() {
 
   // Filter & sort notes
   const filteredNotes = useMemo(() => {
-    const list = [...notes].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
-    if (!searchQuery.trim()) return list;
-    const q = searchQuery.toLowerCase();
-    return list.filter(
-      (n) => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q)
-    );
-  }, [notes, searchQuery]);
+    let list = [...notes].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    if (activeTagFilter !== "all") {
+      list = list.filter((n) => (n.tag || "ideas").toLowerCase() === activeTagFilter.toLowerCase());
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (n) => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [notes, searchQuery, activeTagFilter]);
 
   const wordCount = activeNote?.content ? activeNote.content.trim().split(/\s+/).filter(Boolean).length : 0;
   const charCount = activeNote?.content ? activeNote.content.length : 0;
@@ -735,6 +887,14 @@ export default function Notes() {
 
   return (
     <div className="flex h-full bg-[#0a0a0f] text-white select-none">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleImportFile}
+        accept=".md,.txt,.json"
+        className="hidden"
+      />
+
       {/* Sidebar: Notes List */}
       <div className="w-56 sm:w-64 border-r border-white/10 flex flex-col shrink-0 bg-black/25">
         <div className="p-2.5 border-b border-white/10 flex items-center justify-between">
@@ -745,18 +905,28 @@ export default function Notes() {
               {notes.length}
             </span>
           </div>
-          <button
-            onClick={createNote}
-            className="flex items-center gap-1 px-2.5 py-1 bg-accent/20 hover:bg-accent/30 text-accent rounded-lg text-xs font-medium transition cursor-pointer"
-            title="Create New Note"
-          >
-            <GIconPlus size={13} />
-            <span>New</span>
-          </button>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="p-1 rounded-md text-white/50 hover:text-white hover:bg-white/10 transition"
+              title="Import .md / .txt file"
+            >
+              <GIconUpload size={13} />
+            </button>
+            <button
+              onClick={createNote}
+              className="flex items-center gap-1 px-2 py-0.5 bg-accent/20 hover:bg-accent/30 text-accent rounded-lg text-xs font-medium transition cursor-pointer"
+              title="Create New Note"
+            >
+              <GIconPlus size={13} />
+              <span>New</span>
+            </button>
+          </div>
         </div>
 
         {/* Search bar */}
-        <div className="p-2 border-b border-white/10">
+        <div className="p-2 border-b border-white/10 space-y-2">
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5 border border-white/10">
             <GIconSearch size={12} className="text-white/40 shrink-0" />
             <input
@@ -766,6 +936,26 @@ export default function Notes() {
               placeholder="Search notes..."
               className="bg-transparent text-xs text-white placeholder:text-white/35 outline-none w-full"
             />
+          </div>
+
+          {/* Category Filter Pills */}
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5 text-[10px]">
+            {NOTE_TAGS.map((t) => (
+              <button
+                key={t}
+                onClick={() => {
+                  if (systemSounds) soundFx.playClick();
+                  setActiveTagFilter(t);
+                }}
+                className={`px-2 py-0.5 rounded-full capitalize transition shrink-0 ${
+                  activeTagFilter === t
+                    ? "bg-accent text-white font-medium"
+                    : "bg-white/5 text-white/50 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                {t === "all" ? "All" : `#${t}`}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -785,10 +975,20 @@ export default function Notes() {
                     setActiveId(n.id);
                     requestAnimationFrame(() => textareaRef.current?.focus());
                   }}
-                  className={`group relative p-2.5 rounded-xl cursor-pointer transition-all ${
+                  className={`group relative p-2.5 rounded-xl cursor-pointer transition-all border-l-2 ${
+                    n.color === "emerald"
+                      ? "border-l-emerald-400"
+                      : n.color === "sky"
+                      ? "border-l-sky-400"
+                      : n.color === "purple"
+                      ? "border-l-purple-400"
+                      : n.color === "rose"
+                      ? "border-l-rose-400"
+                      : "border-l-amber-400"
+                  } ${
                     isSelected
-                      ? "bg-white/12 shadow-md border border-white/15"
-                      : "hover:bg-white/6 border border-transparent"
+                      ? "bg-white/12 shadow-md border-r border-t border-b border-white/15"
+                      : "hover:bg-white/6 border-r border-t border-b border-transparent"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-1">
@@ -827,9 +1027,14 @@ export default function Notes() {
                   <p className="text-[10px] text-white/45 truncate mt-1">
                     {n.content ? n.content.replace(/[#*`_~]/g, "") : "Empty note"}
                   </p>
-                  <span className="text-[9px] text-white/30 mt-1.5 block font-mono">
-                    {n.updatedAt}
-                  </span>
+                  <div className="flex items-center justify-between gap-1 mt-1.5 text-[9px] text-white/30 font-mono">
+                    <span>{n.updatedAt}</span>
+                    {n.tag && (
+                      <span className="px-1.5 py-0.2 rounded-full bg-white/5 text-white/50 text-[8px] uppercase tracking-wider">
+                        #{n.tag}
+                      </span>
+                    )}
+                  </div>
                 </div>
               );
             })
@@ -841,15 +1046,60 @@ export default function Notes() {
       {activeNote ? (
         <div className="flex-1 flex flex-col min-w-0 bg-[#0d0e15]">
           {/* Editor Header Bar */}
-          <div className="px-3.5 py-2 border-b border-white/10 flex items-center justify-between gap-2 bg-black/15">
-            <input
-              type="text"
-              value={activeNote.title}
-              onChange={(e) => updateActiveNote({ title: e.target.value })}
-              placeholder="Note Title"
-              className="bg-transparent text-sm sm:text-base font-semibold text-white outline-none flex-1 placeholder:text-white/30 truncate"
-            />
+          <div className="px-3.5 py-2 border-b border-white/10 flex flex-wrap items-center justify-between gap-2 bg-black/15">
+            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+              {/* Note color dot picker */}
+              <div className="flex items-center gap-1 shrink-0" title="Note Accent Color">
+                {NOTE_COLORS.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => updateActiveNote({ color: c.id })}
+                    title={`Color: ${c.id}`}
+                    className={`w-2.5 h-2.5 rounded-full transition ${c.bg} ${
+                      (activeNote.color || "amber") === c.id
+                        ? "ring-2 ring-white scale-125"
+                        : "opacity-40 hover:opacity-100"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <input
+                type="text"
+                value={activeNote.title}
+                onChange={(e) => updateActiveNote({ title: e.target.value })}
+                placeholder="Note Title"
+                className="bg-transparent text-sm sm:text-base font-semibold text-white outline-none flex-1 placeholder:text-white/30 truncate"
+              />
+
+              {/* Tag Selector Pill */}
+              <select
+                value={activeNote.tag || "ideas"}
+                onChange={(e) => updateActiveNote({ tag: e.target.value })}
+                className="text-[10px] bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-white/70 focus:outline-none focus:border-accent"
+              >
+                <option value="ideas">💡 #ideas</option>
+                <option value="work">💼 #work</option>
+                <option value="code">⚡ #code</option>
+                <option value="todo">✅ #todo</option>
+                <option value="personal">🔒 #personal</option>
+              </select>
+            </div>
+
             <div className="flex items-center gap-1.5 shrink-0">
+              {/* Cloud Sync Status Button */}
+              <button
+                onClick={syncWithCloud}
+                disabled={isSyncing}
+                className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-xs text-white/75 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                title="Sync and backup notes to server"
+              >
+                <GIconRotateRight size={12} className={isSyncing ? "animate-spin text-accent" : "text-white/60"} />
+                <span className="hidden sm:inline">
+                  {isSyncing ? "Syncing..." : lastSyncedAt ? "Synced" : "Cloud Sync"}
+                </span>
+              </button>
+
               {/* Copy Button */}
               <button
                 onClick={copyNote}
@@ -875,6 +1125,36 @@ export default function Notes() {
           <div className="px-3 py-1.5 bg-white/[0.03] border-b border-white/5 flex items-center justify-between gap-1 overflow-x-auto no-scrollbar text-xs">
             {/* Left Tools Group */}
             <div className="flex items-center gap-0.5 shrink-0">
+              {/* Templates Dropdown Button */}
+              <div className="relative">
+                <button
+                  onClick={() => setTemplateMenuOpen(!templateMenuOpen)}
+                  className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-[11px] text-white/70 hover:text-white transition cursor-pointer"
+                  title="Insert Note Template"
+                >
+                  <GIconSparkles size={12} className="text-amber-400" />
+                  <span>Templates</span>
+                </button>
+                {templateMenuOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-48 rounded-xl bg-slate-900 border border-white/15 p-1.5 shadow-2xl z-50 animate-scaleIn">
+                    <div className="text-[10px] font-semibold text-white/40 px-2 py-1 uppercase tracking-wider">
+                      Insert Template
+                    </div>
+                    {NOTE_TEMPLATES.map((tmpl) => (
+                      <button
+                        key={tmpl.id}
+                        onClick={() => applyTemplate(tmpl.content)}
+                        className="w-full text-left px-2 py-1.5 text-xs text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition"
+                      >
+                        {tmpl.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="w-px h-4 bg-white/10 mx-1 shrink-0" />
+
               {/* History Undo / Redo */}
               <button
                 onClick={handleUndo}
