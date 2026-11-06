@@ -76,7 +76,6 @@ export default function App() {
   const {
     windows,
     openApp,
-    themeMode,
     harmonizedPalette,
     reduceMotion,
     booted,
@@ -87,7 +86,6 @@ export default function App() {
     widgetsVisible,
     toggleSpotlight,
     toggleMissionControl,
-    nightShift,
     isPoweredOff,
     isSleeping,
     powerDialogOpen,
@@ -108,8 +106,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    applyHarmonizedPaletteToDoc(harmonizedPalette, themeMode === "dark");
-  }, [harmonizedPalette, themeMode]);
+    applyHarmonizedPaletteToDoc(harmonizedPalette, true);
+  }, [harmonizedPalette]);
 
   useEffect(() => {
     document.documentElement.style.setProperty("--glass-alpha", String(glassAlpha));
@@ -139,11 +137,6 @@ export default function App() {
       onContextMenu={handleDesktopContextMenu}
       className={`relative w-screen h-screen overflow-hidden ${reduceMotion ? "reduced-motion" : ""}`}
     >
-      {/* Night Shift warm overlay */}
-      {nightShift && (
-        <div className="pointer-events-none fixed inset-0 z-[99999] bg-amber-500/10 mix-blend-multiply transition-opacity duration-500" />
-      )}
-
       <Wallpaper />
       <GlobalAudioPlayer />
       {!isWin && <MenuBar />}

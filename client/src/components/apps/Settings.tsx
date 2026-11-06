@@ -14,8 +14,6 @@ import {
   GIconCalculator,
   GIconDownload,
   GIconHardDrive,
-  GIconMoon,
-  GIconSun,
 } from "../icons/GravityIcons";
 import { soundFx } from "../../lib/soundFx";
 
@@ -80,12 +78,6 @@ export default function Settings() {
     wallpaper,
     setWallpaper,
     wallpapers,
-    accent,
-    setAccent,
-    accents,
-    themeMode,
-    setThemeMode,
-    harmonizedPalette,
     reduceMotion,
     toggleMotion,
     particlesEnabled,
@@ -196,43 +188,6 @@ export default function Settings() {
         </div>
       </section>
 
-      {/* Color Theme (Dark Mode / Light Mode) */}
-      <section className="space-y-2">
-        <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Color theme</h3>
-        <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
-          Switch between dark glassmorphism and light frosted aesthetics. Accent colors automatically blend and calibrate for maximum readability.
-        </p>
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
-          <button
-            onClick={() => setThemeMode("dark")}
-            className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm transition-all duration-200 ${
-              themeMode === "dark"
-                ? "border-accent bg-accent/15 text-white shadow-lg shadow-accent/10"
-                : "border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-white/20 hover:bg-white/10"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <GIconMoon size={14} className={themeMode === "dark" ? "text-accent" : "text-white/60"} />
-              <span className="font-medium">Dark Mode</span>
-            </div>
-            {themeMode === "dark" && <GIconCheck size={14} className="text-accent shrink-0" />}
-          </button>
-          <button
-            onClick={() => setThemeMode("light")}
-            className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border text-xs sm:text-sm transition-all duration-200 ${
-              themeMode === "light"
-                ? "border-accent bg-accent/15 text-white shadow-lg shadow-accent/10"
-                : "border-white/10 bg-white/5 text-white/70 hover:text-white hover:border-white/20 hover:bg-white/10"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <GIconSun size={14} className={themeMode === "light" ? "text-accent" : "text-white/60"} />
-              <span className="font-medium">Light Mode</span>
-            </div>
-            {themeMode === "light" && <GIconCheck size={14} className="text-accent shrink-0" />}
-          </button>
-        </div>
-      </section>
 
       {osMode === "mac" && (
         <section className="space-y-2">
@@ -306,124 +261,91 @@ export default function Settings() {
         </div>
       </section>
 
+      {/* System Interactive Palette */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Accent color</h3>
+            <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Interactive Palette & States</h3>
             <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
-              Used for focus rings, hover states, active indicators, and highlights across the desktop.
+              Standardized system interactive color scheme for buttons, window controls, hover glows, and active clicks.
             </p>
           </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-white/70">
-            {harmonizedPalette?.hex || "#e8543f"}
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-accent/20 border border-accent/40 text-accent font-semibold">
+            #3b82f6 · Electric Blue
           </span>
         </div>
 
-        {/* Swatches & Custom Picker */}
-        <div className="flex gap-2 sm:gap-3 items-center flex-wrap">
-          {accents.map((a) => {
-            const isSelected = accent === a.value;
-            return (
-              <button
-                key={a.value}
-                onClick={() => setAccent(a.value)}
-                title={a.name}
-                className={`w-8 h-8 sm:w-9 sm:h-9 aspect-square shrink-0 rounded-full flex items-center justify-center border-2 transition-all duration-200 hover:scale-110 ${
-                  isSelected ? "border-white scale-110 shadow-lg shadow-white/20" : "border-transparent hover:border-white/30"
-                }`}
-                style={{ background: `rgb(${a.value})` }}
-              >
-                {isSelected && <GIconCheck size={14} className="text-white drop-shadow-sm" />}
-              </button>
-            );
-          })}
-
-          {/* Custom Color Native Picker (+) */}
-          <label
-            className="w-8 h-8 sm:w-9 sm:h-9 aspect-square shrink-0 rounded-full flex items-center justify-center border-2 border-dashed border-white/30 cursor-pointer hover:border-white/60 hover:scale-110 transition relative overflow-hidden"
-            title="Pick any custom color"
-          >
-            <input
-              type="color"
-              value={harmonizedPalette?.hex || "#e8543f"}
-              onChange={(e) => setAccent(e.target.value)}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-            />
-            <span className="text-white/60 text-xs font-bold select-none">+</span>
-          </label>
-        </div>
-
-        {/* Adaptive Color Harmonization Card */}
-        <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span
-                className="w-3.5 h-3.5 aspect-square shrink-0 rounded-full border border-white/20 shadow-sm"
-                style={{ background: `rgb(${harmonizedPalette?.rgb || accent})` }}
-              />
-              <span className="text-xs font-semibold text-white">
-                {accents.find((a) => a.value === accent)?.name || "Custom Palette"}
-              </span>
-              <span className="text-[10px] font-mono text-white/50">
-                rgb({harmonizedPalette?.rgb || accent})
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1.5 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-              <GIconCheck size={11} />
-              <span>Balanced for {themeMode === "dark" ? "Dark Mode" : "Light Mode"}</span>
+        {/* State Color Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <div className="p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+            <span className="w-6 h-6 rounded-lg bg-[#3b82f6] shadow-md shadow-blue-500/30 shrink-0" />
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-white">Default / Rest</div>
+              <div className="text-[10px] text-white/40 font-mono">#3b82f6 · rgb(59, 130, 246)</div>
             </div>
           </div>
 
-          {/* Live Component Blending Previews */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+          <div className="p-3 rounded-xl bg-white/5 border border-[#60a5fa]/40 flex items-center gap-3 shadow-sm shadow-[#60a5fa]/10">
+            <span className="w-6 h-6 rounded-lg bg-[#60a5fa] shadow-md shadow-blue-400/30 shrink-0" />
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-white">Hover State</div>
+              <div className="text-[10px] text-[#60a5fa] font-mono">#60a5fa · High Saturation</div>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-white/5 border border-[#1d4ed8]/40 flex items-center gap-3 shadow-sm shadow-[#1d4ed8]/10">
+            <span className="w-6 h-6 rounded-lg bg-[#1d4ed8] shadow-md shadow-blue-700/30 shrink-0" />
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-white">Active / Click</div>
+              <div className="text-[10px] text-blue-300 font-mono">#1d4ed8 · Tactile Feedback</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Interactive Component Previews */}
+        <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-white/90">Live Interactive Components</span>
+            <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+              Native Dark Glass
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
             {/* Primary Action Button */}
-            <div className="p-2.5 rounded-xl bg-black/20 border border-white/5 flex flex-col items-center justify-center gap-1.5">
-              <span className="text-[9px] uppercase font-mono text-white/40">Primary Button</span>
+            <div className="p-3 rounded-xl bg-black/20 border border-white/5 flex flex-col items-center justify-center gap-2">
+              <span className="text-[9px] uppercase font-mono text-white/40">Interactive Button</span>
               <button
                 type="button"
-                className="w-full py-1.5 px-3 rounded-lg bg-accent text-xs font-semibold transition active:scale-95 shadow-md flex items-center justify-center gap-1"
-                style={{ color: harmonizedPalette?.contrastText || "#ffffff" }}
+                className="w-full py-2 px-3 rounded-lg bg-accent hover:bg-[rgb(var(--accent-hover))] active:bg-[rgb(var(--accent-active))] text-white text-xs font-semibold transition-all duration-150 active:scale-95 shadow-md shadow-accent/25 flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <GIconSparkles size={11} />
-                <span>Action Button</span>
+                <GIconSparkles size={12} />
+                <span>Hover & Click Me</span>
               </button>
             </div>
 
             {/* Translucent Surface Badge */}
-            <div className="p-2.5 rounded-xl bg-black/20 border border-white/5 flex flex-col items-center justify-center gap-1.5">
-              <span className="text-[9px] uppercase font-mono text-white/40">Glass Badge</span>
-              <div
-                className="w-full py-1.5 px-2 rounded-lg text-center text-xs font-medium border"
-                style={{
-                  backgroundColor: harmonizedPalette?.subtle || "rgba(var(--accent), 0.14)",
-                  borderColor: harmonizedPalette?.border || "rgba(var(--accent), 0.32)",
-                  color: "rgb(var(--accent))",
-                }}
+            <div className="p-3 rounded-xl bg-black/20 border border-white/5 flex flex-col items-center justify-center gap-2">
+              <span className="text-[9px] uppercase font-mono text-white/40">Glass Surface</span>
+              <button
+                type="button"
+                className="w-full py-2 px-3 rounded-lg text-center text-xs font-medium border border-accent/40 bg-accent/15 hover:bg-accent/25 hover:border-accent active:bg-accent/35 active:scale-95 text-blue-200 transition-all duration-150 cursor-pointer"
               >
-                Selected Item
-              </div>
+                Interactive Badge
+              </button>
             </div>
 
             {/* Focus Ring / Selection */}
-            <div className="p-2.5 rounded-xl bg-black/20 border border-white/5 flex flex-col items-center justify-center gap-1.5">
-              <span className="text-[9px] uppercase font-mono text-white/40">Focus Ring</span>
-              <div
-                className="w-full py-1.5 px-2 rounded-lg bg-white/5 text-center text-xs text-white/80 ring-2"
-                style={{
-                  boxShadow: harmonizedPalette?.glow || "0 0 16px rgba(var(--accent), 0.35)",
-                  outline: `2px solid rgb(var(--accent))`,
-                  outlineOffset: "1px",
-                }}
-              >
-                Focused Element
-              </div>
+            <div className="p-3 rounded-xl bg-black/20 border border-white/5 flex flex-col items-center justify-center gap-2">
+              <span className="text-[9px] uppercase font-mono text-white/40">Focused Field</span>
+              <input
+                type="text"
+                readOnly
+                value="Click to focus ring"
+                className="w-full py-1.5 px-2.5 rounded-lg bg-white/5 text-center text-xs text-white/90 border border-white/10 focus:border-accent focus:ring-2 focus:ring-accent/40 outline-none transition-all cursor-pointer"
+              />
             </div>
           </div>
-
-          <p className="text-[10px] text-white/45 leading-relaxed pt-0.5">
-            ✨ <strong>Smart Blending Function:</strong> Any color you set is mathematically calibrated for comfortable saturation (no harsh neon glare) and relative luminance (WCAG compliant contrast ratio: <strong>{harmonizedPalette?.wcagContrast || "4.5:1"}</strong>). When you toggle between Dark and Light mode, the color automatically adjusts its tone to blend with the interface.
-          </p>
         </div>
       </section>
 

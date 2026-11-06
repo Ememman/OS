@@ -116,14 +116,10 @@ export const APPS: Record<string, AppMetadata> = {
   resume: { title: "Resume", w: 720, h: 640 },
 };
 
-const ACCENTS = [
-  { name: "Balloon Coral", value: "232 84 63" },
-  { name: "Cyan Tide", value: "87 217 199" },
-  { name: "Violet Dusk", value: "148 120 255" },
-  { name: "Amber Glow", value: "245 166 66" },
-  { name: "Rose", value: "236 96 150" },
-  { name: "Emerald Mint", value: "46 204 140" },
-  { name: "Royal Azure", value: "59 130 246" },
+export const DEFAULT_ACCENT = "59 130 246";
+
+const ACCENTS: AccentColor[] = [
+  { name: "System Electric Blue", value: DEFAULT_ACCENT },
 ];
 
 const WALLPAPERS = [
@@ -143,21 +139,19 @@ const dockPosition: DockPosition =
     ? savedDockPosition
     : "bottom";
 
-const savedThemeMode = (localStorage.getItem("os_theme_mode") as ThemeMode) || "dark";
-const initialAccentValue = localStorage.getItem("os_accent") || ACCENTS[0].value;
-const initialPalette = harmonizeAccentColor(initialAccentValue, savedThemeMode === "dark");
+const initialPalette = harmonizeAccentColor(DEFAULT_ACCENT, true);
 
 if (typeof document !== "undefined") {
-  applyHarmonizedPaletteToDoc(initialPalette, savedThemeMode === "dark");
+  applyHarmonizedPaletteToDoc(initialPalette, true);
 }
 
 let z = 10;
 
 export const useOS = create<OSState>((set, get) => ({
   windows: [],
-  themeMode: savedThemeMode,
+  themeMode: "dark",
   harmonizedPalette: initialPalette,
-  accent: initialAccentValue,
+  accent: DEFAULT_ACCENT,
   wallpaper: localStorage.getItem("os_wallpaper") || "bg1",
   reduceMotion: localStorage.getItem("os_motion") === "off",
   photoUrl: localStorage.getItem("os_photo") || "",
@@ -309,17 +303,9 @@ export const useOS = create<OSState>((set, get) => ({
     set({ widgetsVisible: next });
   },
 
-  // Night Shift Mode
-  nightShift: localStorage.getItem("os_night_shift") === "on",
-  toggleNightShift: () => {
-    const next = !get().nightShift;
-    localStorage.setItem("os_night_shift", next ? "on" : "off");
-    set({ nightShift: next });
-    get().notify(
-      "Night Shift",
-      next ? "Warm twilight filter enabled" : "Standard color profile active"
-    );
-  },
+  // Night Shift Mode (disabled/removed)
+  nightShift: false,
+  toggleNightShift: () => {},
 
   // Control Center
   controlCenterOpen: false,
@@ -423,20 +409,16 @@ export const useOS = create<OSState>((set, get) => ({
     set({ dockPosition: pos });
   },
 
-  setThemeMode: (mode) => {
-    localStorage.setItem("os_theme_mode", mode);
-    const isDark = mode === "dark";
-    const palette = harmonizeAccentColor(get().accent, isDark);
-    applyHarmonizedPaletteToDoc(palette, isDark);
-    set({ themeMode: mode, harmonizedPalette: palette });
+  setThemeMode: () => {
+    // Theme is locked to native dark glass
+    set({ themeMode: "dark" });
   },
 
-  setAccent: (value) => {
-    localStorage.setItem("os_accent", value);
-    const isDark = get().themeMode === "dark";
-    const palette = harmonizeAccentColor(value, isDark);
-    applyHarmonizedPaletteToDoc(palette, isDark);
-    set({ accent: value, harmonizedPalette: palette });
+  setAccent: (_value) => {
+    // Locked to default Electric Blue for consistent hover/active/clicking states
+    const palette = harmonizeAccentColor(DEFAULT_ACCENT, true);
+    applyHarmonizedPaletteToDoc(palette, true);
+    set({ accent: DEFAULT_ACCENT, harmonizedPalette: palette });
   },
   setWallpaper: (id) => {
     localStorage.setItem("os_wallpaper", id);

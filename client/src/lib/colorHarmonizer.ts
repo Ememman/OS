@@ -70,8 +70,8 @@ export function parseColor(input: string): RGB {
     };
   }
 
-  // Default fallback (Portfolio OS Coral)
-  return { r: 232, g: 84, b: 63 };
+  // Default fallback (Portfolio OS System Electric Blue)
+  return { r: 59, g: 130, b: 246 };
 }
 
 /**
@@ -296,7 +296,7 @@ export function harmonizeAccentColor(
 /**
  * Apply the harmonized palette directly to the document root element
  */
-export function applyHarmonizedPaletteToDoc(palette: HarmonizedPalette, isDark: boolean = true) {
+export function applyHarmonizedPaletteToDoc(palette: HarmonizedPalette, _isDark: boolean = true) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
 
@@ -310,14 +310,8 @@ export function applyHarmonizedPaletteToDoc(palette: HarmonizedPalette, isDark: 
   root.style.setProperty("--accent-glow", palette.glow);
   root.style.setProperty("--accent-gradient", palette.gradient);
 
-  // Set theme attributes on html
-  if (isDark) {
-    root.setAttribute("data-theme", "dark");
-    root.classList.remove("light-theme");
-    root.classList.add("dark-theme");
-  } else {
-    root.setAttribute("data-theme", "light");
-    root.classList.remove("dark-theme");
-    root.classList.add("light-theme");
-  }
+  // Always lock to native dark glass desktop
+  root.setAttribute("data-theme", "dark");
+  root.classList.remove("light-theme");
+  root.classList.add("dark-theme");
 }
