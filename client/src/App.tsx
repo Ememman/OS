@@ -108,7 +108,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    applyHarmonizedPaletteToDoc(harmonizedPalette, themeMode === "dark");
+    applyHarmonizedPaletteToDoc(harmonizedPalette, themeMode === "night");
   }, [harmonizedPalette, themeMode]);
 
   useEffect(() => {

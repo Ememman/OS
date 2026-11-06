@@ -27,9 +27,6 @@ export default function ControlCenter() {
     setOsMode,
     themeMode,
     setThemeMode,
-    accent,
-    setAccent,
-    accents,
     glassAlpha,
     setGlassAlpha,
     nightShift,
@@ -116,10 +113,10 @@ export default function ControlCenter() {
             </div>
           </div>
 
-          {/* Theme Mode Toggle (Dark / Light) */}
+          {/* Theme Mode Toggle (Night / Light) */}
           <button
             onClick={() => {
-              const next = themeMode === "dark" ? "light" : "dark";
+              const next = themeMode === "night" ? "light" : "night";
               setThemeMode(next);
               if (systemSounds) soundFx.playClick();
             }}
@@ -128,7 +125,7 @@ export default function ControlCenter() {
                 ? "bg-accent/20 border-accent/50 shadow-md shadow-accent/20"
                 : "bg-white/5 border-white/10 hover:bg-white/10"
             }`}
-            title="Toggle Dark / Light Theme"
+            title="Toggle Night / Light Mode"
           >
             <div className="flex items-center justify-between">
               <div
@@ -136,15 +133,15 @@ export default function ControlCenter() {
                   themeMode === "light" ? "bg-accent text-white" : "bg-white/10 text-white/70"
                 }`}
               >
-                {themeMode === "dark" ? <GIconMoon size={14} /> : <GIconSun size={14} className="text-amber-300" />}
+                {themeMode === "night" ? <GIconMoon size={14} /> : <GIconSun size={14} className="text-amber-300" />}
               </div>
               <span className="text-[10px] text-accent font-bold uppercase">{themeMode}</span>
             </div>
             <div className="mt-2">
               <div className="font-semibold text-white/90 text-[11px]">
-                {themeMode === "dark" ? "Dark Theme" : "Light Theme"}
+                {themeMode === "night" ? "Night Mode" : "Light Mode"}
               </div>
-              <div className="text-[10px] text-white/40">Adaptive Color Blend</div>
+              <div className="text-[10px] text-white/40">Adaptive Glass</div>
             </div>
           </button>
         </div>
@@ -283,34 +280,6 @@ export default function ControlCenter() {
             </button>
           </div>
         )}
-
-        {/* Accent Color Palette Quick Switcher */}
-        <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
-          <div className="text-[10px] uppercase font-semibold text-white/40 tracking-wider mb-2">
-            System Accent
-          </div>
-          <div className="flex items-center justify-between">
-            {accents.map((a) => {
-              const isSelected = accent === a.value;
-              return (
-                <button
-                  key={a.value}
-                  onClick={() => {
-                    setAccent(a.value);
-                    if (systemSounds) soundFx.playClick();
-                  }}
-                  title={a.name}
-                  className={`w-7 h-7 aspect-square shrink-0 rounded-full flex items-center justify-center transition-all ${
-                    isSelected ? "ring-2 ring-white scale-110 shadow-lg" : "hover:scale-105 opacity-80 hover:opacity-100"
-                  }`}
-                  style={{ background: `rgb(${a.value})` }}
-                >
-                  {isSelected && <GIconCheck size={11} className="text-white drop-shadow" />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </div>
     </motion.div>
   )}
