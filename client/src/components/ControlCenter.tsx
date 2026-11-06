@@ -1,4 +1,5 @@
 import { useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useOS } from "../store/useOS";
 import { usePlayer } from "../store/usePlayer";
 import { useOutsideClick } from "../lib/useOutsideClick";
@@ -64,19 +65,22 @@ export default function ControlCenter() {
     return () => window.removeEventListener("keydown", handleKey);
   }, [controlCenterOpen, closeControlCenter]);
 
-  if (!controlCenterOpen) return null;
-
   return (
-    <div
-      ref={panelRef}
-      className={`fixed z-[1600] w-[calc(100vw-24px)] sm:w-[350px] max-w-[360px] max-h-[calc(100vh-80px)] overflow-y-auto thin-scroll glass rounded-3xl border border-white/20 shadow-2xl p-4 text-white text-xs select-none backdrop-blur-2xl animate-fade-in ${
-        isWin
-          ? "bottom-14 right-3 sm:right-6 origin-bottom-right"
-          : "top-10 right-3 sm:right-6 origin-top-right"
-      }`}
-      style={{ animation: "menuOpen 160ms cubic-bezier(.16,1,.3,1) both" }}
-      onClick={(e) => e.stopPropagation()}
-    >
+    <AnimatePresence>
+      {controlCenterOpen && (
+        <motion.div
+          ref={panelRef}
+          initial={{ opacity: 0, scale: 0.94, y: isWin ? 14 : -14 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.94, y: isWin ? 10 : -10 }}
+          transition={{ type: "spring", stiffness: 420, damping: 28 }}
+          className={`fixed z-[1600] w-[calc(100vw-24px)] sm:w-[350px] max-w-[360px] max-h-[calc(100vh-80px)] overflow-y-auto thin-scroll glass rounded-3xl border border-white/20 shadow-2xl p-4 text-white text-xs select-none backdrop-blur-2xl ${
+            isWin
+              ? "bottom-14 right-3 sm:right-6 origin-bottom-right"
+              : "top-10 right-3 sm:right-6 origin-top-right"
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
       {/* Header */}
       <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
         <span className="font-display font-semibold text-xs tracking-wide text-white/90 uppercase">
@@ -308,7 +312,9 @@ export default function ControlCenter() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
+  )}
+</AnimatePresence>
   );
 }
 

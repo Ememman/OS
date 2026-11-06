@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   GIconExternalLink,
   GIconGithub,
@@ -189,23 +190,35 @@ export default function Library() {
             />
           </div>
 
-          <div className="flex gap-1 overflow-x-auto no-scrollbar">
-            {categories.map((c) => (
-              <button
-                key={c}
-                onClick={() => {
-                  setFilter(c);
-                  if (systemSounds) soundFx.playClick();
-                }}
-                className={`text-xs px-3 py-1 rounded-xl border transition-all ${
-                  filter === c
-                    ? "bg-accent border-accent text-white shadow-md shadow-accent/20"
-                    : "border-white/15 text-white/60 hover:text-white hover:border-white/30 hover:bg-white/5"
-                }`}
-              >
-                {c}
-              </button>
-            ))}
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            {categories.map((c) => {
+              const isSelected = filter === c;
+              return (
+                <motion.button
+                  key={c}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setFilter(c);
+                    if (systemSounds) soundFx.playClick();
+                  }}
+                  className={`relative text-xs px-3.5 py-1.5 rounded-xl border transition-colors shrink-0 cursor-pointer ${
+                    isSelected
+                      ? "border-accent text-white shadow-md shadow-accent/25"
+                      : "border-white/15 text-white/60 hover:text-white hover:border-white/30 hover:bg-white/5"
+                  }`}
+                >
+                  {isSelected && (
+                    <motion.div
+                      layoutId="libraryFilterPill"
+                      className="absolute inset-0 bg-accent rounded-xl -z-10"
+                      transition={{ type: "spring", stiffness: 450, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10">{c}</span>
+                </motion.button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -222,14 +235,18 @@ export default function Library() {
             {shown.map((p) => {
               const projectLikeCount = likes[p.id] || 0;
               return (
-                <div
+                <motion.div
+                  layout
                   key={p.id}
+                  whileHover={{ y: -5, scale: 1.015 }}
+                  whileTap={{ scale: 0.985 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   onClick={() => {
                     setActive(p);
                     setModalTab("overview");
                     if (systemSounds) soundFx.playClick();
                   }}
-                  className="rounded-2xl overflow-hidden border border-white/10 bg-white/5 hover:border-accent/60 transition-all duration-300 group cursor-pointer flex flex-col justify-between hover:shadow-xl hover:shadow-black/40"
+                  className="rounded-2xl overflow-hidden border border-white/10 bg-white/5 hover:border-accent/60 transition-colors group cursor-pointer flex flex-col justify-between hover:shadow-xl hover:shadow-black/40"
                 >
                   <div className="relative h-36 overflow-hidden">
                     <img
@@ -281,7 +298,7 @@ export default function Library() {
                       )}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
@@ -289,16 +306,24 @@ export default function Library() {
       </div>
 
       {/* Interactive Project Inspector Modal */}
-      {active && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 sm:p-6"
-          onClick={() => setActive(null)}
-        >
-          <div
-            className="glass rounded-3xl max-w-xl w-full p-5 sm:p-6 border border-white/15 shadow-2xl overflow-hidden flex flex-col max-h-[88vh]"
-            onClick={(e) => e.stopPropagation()}
-            style={{ animation: "menuOpen 160ms cubic-bezier(.16,1,.3,1) both" }}
+      <AnimatePresence>
+        {active && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 sm:p-6"
+            onClick={() => setActive(null)}
           >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.93, y: 14 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.93, y: 14 }}
+              transition={{ type: "spring", stiffness: 420, damping: 28 }}
+              className="glass rounded-3xl max-w-xl w-full p-5 sm:p-6 border border-white/15 shadow-2xl overflow-hidden flex flex-col max-h-[88vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
             {/* Modal Header */}
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="min-w-0">
@@ -559,9 +584,10 @@ export default function Library() {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
-    </div>
-  );
+    </AnimatePresence>
+  </div>
+);
 }

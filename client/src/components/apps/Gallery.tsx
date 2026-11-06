@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   GIconClose,
   GIconChevronLeft,
@@ -118,13 +119,16 @@ export default function Gallery() {
       {/* Masonry / Grid */}
       <div className="[column-fill:balance] sm:columns-3 columns-2 gap-2 space-y-2">
         {shown.map((g, i) => (
-          <button
+          <motion.button
             key={g.id}
+            whileHover={{ y: -4, scale: 1.015 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 450, damping: 25 }}
             onClick={() => {
               if (systemSounds) soundFx.playClick();
               setOpenIdx(i);
             }}
-            className="relative rounded-xl overflow-hidden group block w-full break-inside-avoid border border-white/5 hover:border-accent/40 transition cursor-pointer"
+            className="relative rounded-xl overflow-hidden group block w-full break-inside-avoid border border-white/5 hover:border-accent/40 transition-colors cursor-pointer"
           >
             <img
               src={g.type === "video" ? g.poster : g.src}
@@ -139,16 +143,21 @@ export default function Gallery() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-2.5">
               <span className="text-[11px] text-white font-medium line-clamp-1">{g.caption}</span>
             </div>
-          </button>
+          </motion.button>
         ))}
       </div>
 
       {/* Expanded Lightbox Modal */}
-      {currentItem && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-3 sm:p-6"
-          onClick={close}
-        >
+      <AnimatePresence>
+        {currentItem && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-3 sm:p-6"
+            onClick={close}
+          >
           {/* Top Bar Controls */}
           <div
             className="w-full max-w-4xl flex items-center justify-between z-10 pb-2"
@@ -270,8 +279,9 @@ export default function Gallery() {
               {(openIdx ?? 0) + 1} of {shown.length} · Arrow keys to navigate · Esc to close
             </p>
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
-  );
+    </AnimatePresence>
+  </div>
+);
 }

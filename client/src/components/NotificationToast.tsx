@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from "framer-motion";
 import { useOS } from "../store/useOS";
 import {
   GIconCircleInfo,
@@ -84,10 +85,14 @@ function ToastCard({
   const duration = item.durationMs || 3800;
 
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: -16, scale: 0.92 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 24, scale: 0.9, transition: { duration: 0.18 } }}
+      transition={{ type: "spring", stiffness: 400, damping: 28 }}
       onClick={() => onDismiss(item.id)}
-      className={`pointer-events-auto relative max-w-sm w-full glass rounded-2xl border ${cfg.border} shadow-2xl p-3 sm:p-3.5 flex flex-col gap-2 cursor-pointer hover:border-white/40 transition-all select-none overflow-hidden group`}
-      style={{ animation: "menuOpen 200ms cubic-bezier(.16,1,.3,1) both" }}
+      className={`pointer-events-auto relative max-w-sm w-full glass rounded-2xl border ${cfg.border} shadow-2xl p-3 sm:p-3.5 flex flex-col gap-2 cursor-pointer hover:border-white/40 transition-colors select-none overflow-hidden group`}
     >
       <div className="flex items-start gap-2.5">
         <div
@@ -98,19 +103,20 @@ function ToastCard({
         </div>
 
         <div className="flex-1 min-w-0 pr-1">
-          <div className="flex items-center gap-1.5 mb-0.5">
+          <div className="flex items-center gap-1.5">
             <span
-              className={`text-[9px] font-mono uppercase font-bold px-1.5 py-0.5 rounded ${cfg.badgeBg}`}
+              className={`text-[9px] font-bold px-1.5 py-0.2 rounded-md ${cfg.badgeBg} tracking-wider`}
             >
               {cfg.label}
             </span>
-            <span className="text-xs font-semibold text-white truncate leading-tight">
+            <span className="text-xs font-semibold text-white/95 truncate">
               {item.title}
             </span>
           </div>
-          <div className="text-[11px] text-white/75 leading-normal">
+
+          <p className="text-[11px] text-white/70 leading-relaxed mt-0.5 line-clamp-2">
             {item.message}
-          </div>
+          </p>
         </div>
 
         <button
@@ -134,14 +140,12 @@ function ToastCard({
           }}
         />
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export default function NotificationToast() {
   const { notifications, dismissNotification, osMode } = useOS();
-
-  if (!notifications || notifications.length === 0) return null;
 
   const isWin = osMode === "win";
 
@@ -153,13 +157,15 @@ export default function NotificationToast() {
           : "top-12 right-4 sm:right-6 flex flex-col gap-2"
       } z-[2500] max-w-sm w-[calc(100vw-32px)] pointer-events-none`}
     >
-      {notifications.map((item) => (
-        <ToastCard
-          key={item.id}
-          item={item}
-          onDismiss={dismissNotification}
-        />
-      ))}
+      <AnimatePresence mode="popLayout">
+        {notifications.map((item) => (
+          <ToastCard
+            key={item.id}
+            item={item}
+            onDismiss={dismissNotification}
+          />
+        ))}
+      </AnimatePresence>
     </div>
   );
 }
