@@ -159,9 +159,9 @@ let z = 10;
 
 export const useOS = create<OSState>((set, get) => ({
   windows: [],
-  themeMode: savedThemeMode,
+  themeMode: "dark",
   harmonizedPalette: initialPalette,
-  accent: initialAccentValue,
+  accent: DEFAULT_ACCENT,
   wallpaper: localStorage.getItem("os_wallpaper") || "bg1",
   reduceMotion: localStorage.getItem("os_motion") === "off",
   photoUrl: localStorage.getItem("os_photo") || "",
@@ -313,17 +313,9 @@ export const useOS = create<OSState>((set, get) => ({
     set({ widgetsVisible: next });
   },
 
-  // Night Shift Mode
-  nightShift: localStorage.getItem("os_night_shift") === "on",
-  toggleNightShift: () => {
-    const next = !get().nightShift;
-    localStorage.setItem("os_night_shift", next ? "on" : "off");
-    set({ nightShift: next });
-    get().notify(
-      "Night Shift",
-      next ? "Warm twilight filter enabled" : "Standard color profile active"
-    );
-  },
+  // Night Shift Mode (disabled/removed)
+  nightShift: false,
+  toggleNightShift: () => {},
 
   // Control Center
   controlCenterOpen: false,

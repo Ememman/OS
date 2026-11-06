@@ -8,7 +8,6 @@ import {
   GIconVolume,
   GIconVolumeMute,
   GIconSignal,
-  GIconMoon,
   GIconSun,
   GIconSparkles,
   GIconSliders,
@@ -16,7 +15,6 @@ import {
   GIconPlay,
   GIconPause,
   GIconLayoutCells,
-  GIconCheck,
 } from "./icons/GravityIcons";
 
 export default function ControlCenter() {
@@ -27,8 +25,6 @@ export default function ControlCenter() {
     setOsMode,
     glassAlpha,
     setGlassAlpha,
-    nightShift,
-    toggleNightShift,
     particlesEnabled,
     toggleParticles,
     widgetsVisible,
@@ -37,8 +33,6 @@ export default function ControlCenter() {
     toggleMotion,
     systemSounds,
     toggleSystemSounds,
-    chatSound,
-    toggleChatSound,
     toggleMissionControl,
   } = useOS();
 

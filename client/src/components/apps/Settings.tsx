@@ -14,8 +14,6 @@ import {
   GIconCalculator,
   GIconDownload,
   GIconHardDrive,
-  GIconMoon,
-  GIconSun,
 } from "../icons/GravityIcons";
 import { soundFx } from "../../lib/soundFx";
 
