@@ -12,6 +12,9 @@ import GlobalAudioPlayer from "./components/GlobalAudioPlayer";
 import MiniPlayer from "./components/MiniPlayer";
 import BootScreen from "./components/BootScreen";
 import OsPicker from "./components/OsPicker";
+import PowerOffScreen from "./components/PowerOffScreen";
+import SleepScreen from "./components/SleepScreen";
+import PowerDialog from "./components/PowerDialog";
 import SpotlightSearch from "./components/SpotlightSearch";
 import ControlCenter from "./components/ControlCenter";
 import NotificationToast from "./components/NotificationToast";
@@ -85,6 +88,10 @@ export default function App() {
     toggleSpotlight,
     toggleMissionControl,
     nightShift,
+    isPoweredOff,
+    isSleeping,
+    powerDialogOpen,
+    closePowerDialog,
   } = useOS();
 
   const isWin = osMode === "win";
@@ -123,6 +130,7 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleSpotlight, toggleMissionControl]);
 
+  if (isPoweredOff) return <PowerOffScreen />;
   if (!booted) return <BootScreen />;
   if (!osChosen) return <OsPicker />;
 
@@ -212,6 +220,8 @@ export default function App() {
           widgetsVisible={widgetsVisible}
         />
       )}
+      {powerDialogOpen && <PowerDialog onClose={closePowerDialog} />}
+      {isSleeping && <SleepScreen />}
     </div>
   );
 }

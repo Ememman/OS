@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useOS } from "../store/useOS";
 import { useOutsideClick as useOutsideClose } from "../lib/useOutsideClick";
 import LiveBadge from "./LiveBadge";
+import CalendarWidget from "./widgets/CalendarWidget";
 import {
   GIconCode,
   GIconSignal,
@@ -12,6 +14,8 @@ import {
   GIconBars,
   GIconSliders,
   GIconLayoutCells,
+  GIconMoon,
+  GIconRotateRight,
 } from "./icons/GravityIcons";
 
 interface MenuDropdownProps {
@@ -81,16 +85,17 @@ interface InfoModalProps {
 }
 
 function InfoModal({ title, onClose, children }: InfoModalProps) {
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[2000] bg-black/60 flex items-center justify-center p-6"
+      className="fixed inset-0 z-[99999] bg-black/75 backdrop-blur-md flex items-center justify-center p-6 select-none"
       onClick={onClose}>
       <div
-        className="glass rounded-2xl max-w-sm w-full p-5 border border-white/10"
-        onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-3">
+        className="bg-[#0d111d] sm:bg-[#0d111d]/98 backdrop-blur-2xl rounded-2xl max-w-sm w-full p-5 border border-white/20 shadow-[0_24px_80px_rgba(0,0,0,0.85)] text-white"
+        onClick={(e) => e.stopPropagation()}
+        style={{ animation: "menuOpen 160ms cubic-bezier(.16,1,.3,1) both" }}>
+        <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
           <h3 className="font-display text-sm font-semibold">{title}</h3>
-          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded text-white/60 hover:text-white">
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-lg text-white/60 hover:text-white cursor-pointer">
             <GIconClose size={14} />
           </button>
         </div>
@@ -98,7 +103,8 @@ function InfoModal({ title, onClose, children }: InfoModalProps) {
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -117,12 +123,23 @@ export default function MenuBar() {
     toggleControlCenter,
     missionControlOpen,
     toggleMissionControl,
+    powerOff,
+    restart,
+    setSleeping,
+    openPowerDialog,
   } = useOS();
   const [now, setNow] = useState(new Date());
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [modal, setModal] = useState<"about" | "shortcuts" | null>(null);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [wifiOpen, setWifiOpen] = useState(false);
+  const [dateOpen, setDateOpen] = useState(false);
+
+  const wifiRef = useRef<HTMLDivElement>(null);
+  const dateRef = useRef<HTMLDivElement>(null);
+  useOutsideClose(wifiRef, () => setWifiOpen(false));
+  useOutsideClose(dateRef, () => setDateOpen(false));
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -224,6 +241,35 @@ export default function MenuBar() {
               setOpenMenu(null);
             }}>
             Force Quit All Windows
+          </MenuItem>
+          <MenuSeparator />
+          <MenuItem
+            onClick={() => {
+              setSleeping(true);
+              setOpenMenu(null);
+            }}>
+            Sleep
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              restart();
+              setOpenMenu(null);
+            }}>
+            Restart…
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              powerOff();
+              setOpenMenu(null);
+            }}>
+            Shut Down…
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              reopenPicker();
+              setOpenMenu(null);
+            }}>
+            Log Out / Switch OS…
           </MenuItem>
         </MenuDropdown>
 
@@ -419,12 +465,12 @@ export default function MenuBar() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2.5 sm:gap-3 text-white/70">
-                {/* Mission Control Button */}
+      <div className="flex items-center gap-1.5 sm:gap-2 text-white/70">
+        {/* Mission Control Button */}
         <button
           onClick={toggleMissionControl}
           title="Mission Control (F3)"
-          className={`flex items-center justify-center p-1.5 rounded-lg transition-all ${
+          className={`flex items-center justify-center p-1.5 rounded-lg transition-all cursor-pointer ${
             missionControlOpen
               ? "bg-accent text-white shadow-md shadow-accent/20"
               : "hover:bg-white/10 text-white/80 hover:text-white"
@@ -433,23 +479,30 @@ export default function MenuBar() {
           <GIconLayoutCells size={15} />
         </button>
 
-{/* Spotlight Trigger */}
+        {/* Spotlight Trigger */}
         <button
           onClick={openSpotlight}
           title="Spotlight Search (⌘K)"
-          className="flex items-center gap-1.5 hover:text-white transition-colors p-1 rounded-md hover:bg-white/10 text-white/80"
+          className="flex items-center gap-1.5 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10 text-white/80 cursor-pointer"
         >
           <GIconSearch size={15} />
           <span className="hidden md:inline text-[11px] text-white/40 border border-white/15 rounded px-1.5 py-0.2">⌘K</span>
         </button>
 
-        <LiveBadge compact />
+        {/* Online Visitors Badge -> Opens Chats */}
+        <button
+          onClick={() => openApp("chats")}
+          title="Live Visitors — Click to open Chat"
+          className="hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+        >
+          <LiveBadge compact />
+        </button>
 
         {/* macOS Control Center Trigger */}
         <button
           onClick={toggleControlCenter}
-          title="Control Center"
-          className={`flex items-center justify-center p-1.5 rounded-lg transition-all ${
+          title="Control Center (Display, Sound & System)"
+          className={`flex items-center justify-center p-1.5 rounded-lg transition-all cursor-pointer ${
             controlCenterOpen
               ? "bg-accent text-white shadow-md shadow-accent/20"
               : "hover:bg-white/10 text-white/80 hover:text-white"
@@ -458,12 +511,97 @@ export default function MenuBar() {
           <GIconSliders size={15} />
         </button>
 
-        <GIconSignal size={15} className="hidden xs:inline text-white/80" />
-        <GIconPower size={16} className="hidden xs:inline text-white/80" />
-        <span className="font-mono text-white/85 text-[12px] sm:text-[14px] whitespace-nowrap">
-          <span className="hidden sm:inline">{date} · </span>
-          {time}
-        </span>
+        {/* Wi-Fi Status Trigger & Flyout */}
+        <div ref={wifiRef} className="relative hidden xs:block">
+          <button
+            onClick={() => setWifiOpen(!wifiOpen)}
+            title="Wi-Fi: Connected to Portfolio-OS-Mesh"
+            className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+              wifiOpen ? "bg-accent text-white shadow-sm" : "hover:bg-white/10 text-white/80 hover:text-white"
+            }`}
+          >
+            <GIconSignal size={15} />
+          </button>
+
+          {wifiOpen && (
+            <div
+              className="absolute top-full right-0 mt-1.5 w-64 glass rounded-2xl border border-white/15 p-3.5 shadow-2xl z-[1300] text-xs text-white space-y-3 origin-top-right select-none"
+              style={{ animation: "menuOpen 140ms cubic-bezier(.16,1,.3,1) both" }}
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                <div className="flex items-center gap-2 font-semibold">
+                  <GIconSignal size={14} className="text-emerald-400" />
+                  <span>Wi-Fi Network</span>
+                </div>
+                <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/25">
+                  Connected
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/10">
+                  <div>
+                    <div className="font-medium text-white/90">Portfolio-OS-Fiber</div>
+                    <div className="text-[10px] text-white/45">5 GHz · 100% Signal Quality</div>
+                  </div>
+                  <GIconCheck size={14} className="text-emerald-400" />
+                </div>
+
+                <div className="flex justify-between text-[11px] text-white/50 px-1 pt-1">
+                  <span>Security</span>
+                  <span className="text-white/80 font-mono">WPA3 Enterprise</span>
+                </div>
+                <div className="flex justify-between text-[11px] text-white/50 px-1">
+                  <span>IP Address</span>
+                  <span className="text-white/80 font-mono">192.168.1.104</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  openApp("activity");
+                  setWifiOpen(false);
+                }}
+                className="w-full py-1.5 px-2 rounded-xl bg-accent/20 hover:bg-accent/30 text-accent border border-accent/30 text-[11px] font-medium transition flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <GIconSignal size={12} />
+                <span>Diagnostics & Ping...</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Power Options Trigger (Working Power Button!) */}
+        <button
+          onClick={openPowerDialog}
+          title="Power: Shut Down, Restart, or Switch OS Style"
+          className="p-1.5 rounded-lg hover:bg-white/10 hover:text-rose-400 active:scale-95 transition-all text-white/80 cursor-pointer hidden xs:flex items-center justify-center"
+        >
+          <GIconPower size={16} />
+        </button>
+
+        {/* Date & Time with Calendar Flyout */}
+        <div ref={dateRef} className="relative">
+          <button
+            onClick={() => setDateOpen(!dateOpen)}
+            title="View Calendar & Clock"
+            className={`font-mono text-[12px] sm:text-[14px] whitespace-nowrap px-1.5 py-1 rounded-lg transition-colors cursor-pointer ${
+              dateOpen ? "bg-white/15 text-white" : "hover:bg-white/10 text-white/85"
+            }`}
+          >
+            <span className="hidden sm:inline">{date} · </span>
+            {time}
+          </button>
+
+          {dateOpen && (
+            <div
+              className="absolute top-full right-0 mt-1.5 w-72 glass rounded-2xl border border-white/15 p-2.5 shadow-2xl z-[1300] origin-top-right select-none"
+              style={{ animation: "menuOpen 140ms cubic-bezier(.16,1,.3,1) both" }}
+            >
+              <CalendarWidget />
+            </div>
+          )}
+        </div>
       </div>
 
       {mobileSheetOpen && (
@@ -574,21 +712,28 @@ export default function MenuBar() {
             </MenuItem>
 
             <div className="px-2 py-1 mt-1 text-[10px] uppercase tracking-wide text-white/35">
-              Help
+              Power & Session
             </div>
             <MenuItem
               onClick={() => {
-                setModal("about");
                 setMobileSheetOpen(false);
+                reopenPicker();
               }}>
-              About This Portfolio
+              Switch OS Style
             </MenuItem>
             <MenuItem
               onClick={() => {
-                openApp("chats");
                 setMobileSheetOpen(false);
+                restart();
               }}>
-              Say Hi in Chat
+              Restart System
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                setMobileSheetOpen(false);
+                powerOff();
+              }}>
+              Shut Down
             </MenuItem>
           </div>
         </div>

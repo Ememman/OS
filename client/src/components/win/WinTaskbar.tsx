@@ -55,7 +55,7 @@ const POP_ANIM = { animation: "menuOpen 150ms cubic-bezier(.16,1,.3,1) both" };
 
 function StartMenu({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
-  const { openApp } = useOS();
+  const { openApp, openPowerDialog } = useOS();
   const [query, setQuery] = useState("");
   useOutsideClick(ref, onClose);
 
@@ -111,13 +111,25 @@ function StartMenu({ onClose }: { onClose: () => void }) {
           <div className="w-7 h-7 aspect-square shrink-0 rounded-full bg-accent/40 flex items-center justify-center text-xs font-semibold">B</div>
           <span className="text-xs font-medium">Bron Mendoza</span>
         </div>
-        <button
-          onClick={() => { useOS.getState().openApp("settings"); onClose(); }}
-          className="p-1.5 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition"
-          title="Settings"
-        >
-          <GIconSliders size={14} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => { useOS.getState().openApp("settings"); onClose(); }}
+            className="p-1.5 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition cursor-pointer"
+            title="Settings"
+          >
+            <GIconSliders size={14} />
+          </button>
+          <button
+            onClick={() => {
+              onClose();
+              openPowerDialog();
+            }}
+            className="p-1.5 rounded-lg hover:bg-rose-500/20 text-white/70 hover:text-rose-400 transition cursor-pointer"
+            title="Power: Shut Down, Restart, or Switch OS Style"
+          >
+            <GIconPower size={14} />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -125,7 +137,7 @@ function StartMenu({ onClose }: { onClose: () => void }) {
 
 function TrayFlyout({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
-  const { openApp, reopenPicker, toggleControlCenter } = useOS();
+  const { openApp, reopenPicker, toggleControlCenter, restart, openPowerDialog, setSleeping } = useOS();
   useOutsideClick(ref, onClose);
   return (
     <div
@@ -158,12 +170,38 @@ function TrayFlyout({ onClose }: { onClose: () => void }) {
       >
         <GIconSliders size={14} className="text-amber-400" /> System Settings
       </button>
+
+      <div className="h-px bg-white/10 my-1.5" />
+      <div className="text-[10px] uppercase font-semibold text-white/40 tracking-wider px-1 pb-1">Power & Session</div>
+
       <button
         onClick={() => { reopenPicker(); onClose(); }}
         className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-xs hover:bg-white/10 text-left text-white/85"
       >
         <GIconMoon size={14} className="text-sky-400" /> Switch OS Style
       </button>
+      <button
+        onClick={() => { setSleeping(true); onClose(); }}
+        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-xs hover:bg-white/10 text-left text-white/85"
+      >
+        <GIconMoon size={14} className="text-indigo-400" /> Sleep / Lock Screen
+      </button>
+      <button
+        onClick={() => { restart(); onClose(); }}
+        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-xs hover:bg-white/10 text-left text-white/85"
+      >
+        <GIconSliders size={14} className="text-amber-400" /> Restart System
+      </button>
+      <button
+        onClick={() => {
+          onClose();
+          openPowerDialog();
+        }}
+        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg text-xs hover:bg-rose-500/20 text-left text-rose-300"
+      >
+        <GIconPower size={14} className="text-rose-400" /> Shut Down…
+      </button>
+
       <div className="h-px bg-white/10 my-1" />
       <div className="px-2 py-1 flex items-center justify-between text-[10px] text-white/40">
         <span>Portfolio OS</span>
@@ -297,7 +335,15 @@ export default function WinTaskbar() {
       </div>
 
       <div className="flex items-center justify-end flex-1 min-w-0 basis-0 relative gap-1.5">
-        <div className="hidden sm:block"><LiveBadge compact /></div>
+        <div className="hidden sm:block">
+          <button
+            onClick={() => openApp("chats")}
+            title="Live Visitors — Open Chats"
+            className="cursor-pointer hover:scale-105 active:scale-95 transition-transform"
+          >
+            <LiveBadge compact />
+          </button>
+        </div>
         <button onClick={() => toggle("tray")} className="p-1.5 sm:p-2 rounded-xl hover:bg-white/10 active:bg-white/15 transition-colors shrink-0">
           <GIconChevronUp size={14} className={`text-white/50 transition-transform ${panel === "tray" ? "rotate-180" : ""}`} />
         </button>

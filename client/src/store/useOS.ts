@@ -52,6 +52,12 @@ interface OSState {
   chooseOs: (mode: OSMode) => void;
   setOsMode: (mode: OSMode) => void;
   reopenPicker: () => void;
+  isPoweredOff: boolean;
+  powerOff: () => void;
+  powerOn: () => void;
+  restart: () => void;
+  isSleeping: boolean;
+  setSleeping: (sleep: boolean) => void;
   particlesEnabled: boolean;
   toggleParticles: () => void;
   widgetsVisible: boolean;
@@ -71,6 +77,10 @@ interface OSState {
   openSpotlight: () => void;
   closeSpotlight: () => void;
   toggleSpotlight: () => void;
+  powerDialogOpen: boolean;
+  openPowerDialog: () => void;
+  closePowerDialog: () => void;
+  togglePowerDialog: () => void;
   resetDefaults: () => void;
   compact: boolean;
   toggleCompact: () => void;
@@ -241,7 +251,49 @@ export const useOS = create<OSState>((set, get) => ({
     localStorage.setItem("os_mode", mode);
     set({ osMode: mode });
   },
-  reopenPicker: () => set({ osChosen: false }),
+  reopenPicker: () => {
+    if (get().systemSounds) soundFx.playClick();
+    set({
+      osChosen: false,
+      isPoweredOff: false,
+      isSleeping: false,
+      controlCenterOpen: false,
+      missionControlOpen: false,
+      spotlightOpen: false,
+      powerDialogOpen: false,
+    });
+  },
+  isPoweredOff: false,
+  isSleeping: false,
+  powerOff: () => {
+    if (get().systemSounds) soundFx.playClose();
+    set({
+      isPoweredOff: true,
+      isSleeping: false,
+      controlCenterOpen: false,
+      missionControlOpen: false,
+      spotlightOpen: false,
+      powerDialogOpen: false,
+    });
+  },
+  powerOn: () => {
+    if (get().systemSounds) soundFx.playOpen();
+    set({ isPoweredOff: false, isSleeping: false, powerDialogOpen: false });
+  },
+  restart: () => {
+    if (get().systemSounds) soundFx.playPop();
+    set({
+      booted: false,
+      isPoweredOff: false,
+      isSleeping: false,
+      controlCenterOpen: false,
+      missionControlOpen: false,
+      spotlightOpen: false,
+      powerDialogOpen: false,
+      windows: [],
+    });
+  },
+  setSleeping: (sleep: boolean) => set({ isSleeping: sleep }),
 
   // Desktop celestial starfield & particles animation
   particlesEnabled: localStorage.getItem("os_particles") !== "off",
@@ -344,6 +396,12 @@ export const useOS = create<OSState>((set, get) => ({
   openSpotlight: () => set({ spotlightOpen: true }),
   closeSpotlight: () => set({ spotlightOpen: false }),
   toggleSpotlight: () => set((s) => ({ spotlightOpen: !s.spotlightOpen })),
+
+  // Power & Session Dialog
+  powerDialogOpen: false,
+  openPowerDialog: () => set({ powerDialogOpen: true }),
+  closePowerDialog: () => set({ powerDialogOpen: false }),
+  togglePowerDialog: () => set((s) => ({ powerDialogOpen: !s.powerDialogOpen })),
 
   resetDefaults: () => {
     ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift"].forEach((k) =>
