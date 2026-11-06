@@ -222,6 +222,7 @@ export default function Resume() {
   const [contactMessage, setContactMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [sentSuccess, setSentSuccess] = useState(false);
+  const [contactErrors, setContactErrors] = useState<string[]>([]);
 
   const copyEmail = () => {
     if (systemSounds) soundFx.playPop();
@@ -240,6 +241,7 @@ export default function Resume() {
     if (!contactName.trim() || !contactEmail.trim() || !contactMessage.trim()) return;
 
     setSending(true);
+    setContactErrors([]);
     try {
       const res = await fetch(`${API_URL}/api/contact`, {
         method: "POST",
@@ -252,10 +254,16 @@ export default function Resume() {
         }),
       });
 
-      if (res.ok) {
+      const data = await res.json();
+      if (res.ok && data.ok) {
         setSentSuccess(true);
+        setContactErrors([]);
         if (systemSounds) soundFx.playNotification();
         notify("Inquiry Sent!", "Thank you! James will review your message shortly.");
+      } else {
+        const errs = data.details || [data.error || "Failed to submit inquiry."];
+        setContactErrors(errs);
+        notify("Validation Error", errs[0] || "Please check form fields.", "warning");
       }
     } catch {
       setSentSuccess(true);
@@ -552,6 +560,17 @@ export default function Resume() {
               </div>
             ) : (
               <form onSubmit={handleSendMessage} className="space-y-3">
+                {contactErrors.length > 0 && (
+                  <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs space-y-1">
+                    <div className="font-semibold text-rose-200">Please correct the following:</div>
+                    <ul className="list-disc list-inside space-y-0.5 text-[11px] text-rose-300/90">
+                      {contactErrors.map((err, i) => (
+                        <li key={i}>{err}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 <div className="space-y-1">
                   <label className="text-[10px] text-white/50 uppercase tracking-wide block">Your Name</label>
                   <input

@@ -16,9 +16,87 @@ import { initialFeedback } from "./data/feedback.js";
 dns.setDefaultResultOrder("ipv4first");
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+const PORT = process.env.PORT || 4000;
 
+// ---------- Security & Content Protection Middleware ----------
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
+
+app.use(cors({ origin: "*" }));
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+
+// ---------- Validation & Sanitization Utilities ----------
+export function sanitizeText(str, maxLen = 1000) {
+  if (typeof str !== "string") return "";
+  const cleaned = str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+  return cleaned.trim().slice(0, maxLen);
+}
+
+export function sanitizePlain(str, maxLen = 1000) {
+  if (typeof str !== "string") return "";
+  return str.trim().slice(0, maxLen);
+}
+
+export function isValidEmail(email) {
+  if (!email || typeof email !== "string") return false;
+  const re = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+  return re.test(email.trim());
+}
+
+// ---------- In-Memory Rate Limiting (Sliding Window) ----------
+const rateLimitBuckets = new Map();
+
+function createRateLimiter(options = { windowMs: 60000, max: 120, message: "Too many requests. Please slow down." }) {
+  return (req, res, next) => {
+    const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress || "127.0.0.1";
+    const key = `${req.baseUrl || req.path}:${ip}`;
+    const now = Date.now();
+    let record = rateLimitBuckets.get(key);
+
+    if (!record || now - record.resetTime > options.windowMs) {
+      record = { count: 1, resetTime: now };
+      rateLimitBuckets.set(key, record);
+    } else {
+      record.count++;
+      if (record.count > options.max) {
+        const retrySecs = Math.ceil((record.resetTime + options.windowMs - now) / 1000);
+        res.setHeader("Retry-After", retrySecs);
+        return res.status(429).json({
+          ok: false,
+          error: options.message,
+          retryAfterSeconds: retrySecs
+        });
+      }
+    }
+    next();
+  };
+}
+
+// Sweep stale rate limiter buckets periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of rateLimitBuckets.entries()) {
+    if (now - record.resetTime > 120000) rateLimitBuckets.delete(key);
+  }
+}, 300000);
+
+const generalLimiter = createRateLimiter({ windowMs: 60000, max: 200, message: "General API rate limit reached. Please wait a minute." });
+const strictSubmissionLimiter = createRateLimiter({ windowMs: 60000, max: 25, message: "Submission frequency limit reached. Please wait a minute before trying again." });
+
+app.use("/api", generalLimiter);
+
+// ---------- HTTP Server & Socket.IO Initialization ----------
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
@@ -31,9 +109,9 @@ let activityFeed = [
 
 // Rolling system log buffer
 const SYSTEM_LOGS_MAX = 100;
-const systemLogs = [
+let systemLogs = [
   { id: "log-1", ts: Date.now() - 120000, level: "info", module: "Kernel", message: "Portfolio OS core kernel v2.4 initialized with frosted glass compositor." },
-  { id: "log-2", ts: Date.now() - 95000, level: "info", module: "SocketDaemon", message: "Real-time WebSocket presence bridge listening on port 4000." },
+  { id: "log-2", ts: Date.now() - 95000, level: "info", module: "SocketDaemon", message: `Real-time WebSocket presence bridge listening on port ${PORT}.` },
   { id: "log-3", ts: Date.now() - 60000, level: "debug", module: "AudioEngine", message: "WebAudio proxy and dynamic visualizer frequency analyser ready." },
   { id: "log-4", ts: Date.now() - 25000, level: "info", module: "ProcessMgr", message: "Virtual process scheduler initialized (6 active background tasks)." },
 ];
@@ -115,19 +193,24 @@ app.get("/api/updates", (req, res) => {
   res.json(list);
 });
 
-// Create new update
-app.post("/api/updates", (req, res) => {
+// Create new update with validation
+app.post("/api/updates", strictSubmissionLimiter, (req, res) => {
   const { title, tag, body, date, pinned } = req.body || {};
-  const cleanTitle = String(title || "").trim().slice(0, 100);
-  const cleanBody = String(body || "").trim().slice(0, 2500);
+  const errors = [];
+
+  const cleanTitle = sanitizePlain(title, 120);
+  const cleanBody = sanitizePlain(body, 3500);
   const cleanTag = String(tag || "feature").trim().toLowerCase();
 
-  if (!cleanTitle || !cleanBody) {
-    return res.status(400).json({ error: "Title and body are required." });
-  }
+  if (!cleanTitle || cleanTitle.length < 3) errors.push("Title must be at least 3 characters.");
+  if (!cleanBody || cleanBody.length < 5) errors.push("Body must be at least 5 characters.");
 
   const validTags = ["feature", "fix", "launch", "announcement", "performance"];
   const finalTag = validTags.includes(cleanTag) ? cleanTag : "feature";
+
+  if (errors.length > 0) {
+    return res.status(400).json({ ok: false, error: "Validation Error", details: errors });
+  }
 
   const newUpdate = {
     id: `u-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -220,44 +303,48 @@ app.post("/api/projects/:id/like", (req, res) => {
   const { id } = req.params;
   projectLikes[id] = (projectLikes[id] || 0) + 1;
   io.emit("project:liked", { id, count: projectLikes[id] });
-  const p = projects.find(item => item.id === id);
+  const p = projects.find((item) => item.id === id);
   addActivity("project", `Project "${p ? p.title : id}" received a star!`);
   res.json({ id, count: projectLikes[id] });
 });
 
 app.get("/api/projects/stats", (req, res) => {
   const totalLikes = Object.values(projectLikes).reduce((a, b) => a + b, 0);
-  const stacks = Array.from(new Set(projects.flatMap(p => p.stack)));
+  const stacks = Array.from(new Set(projects.flatMap((p) => p.stack)));
   res.json({
     totalProjects: projects.length,
     totalLikes,
-    categories: Array.from(new Set(projects.map(p => p.category))),
+    categories: Array.from(new Set(projects.map((p) => p.category))),
     techStack: stacks,
     lastUpdated: "2026"
   });
 });
-
-
 
 // ---------- Project Feedback & Reviews ----------
 let projectFeedbackList = [...initialFeedback];
 
 app.get("/api/projects/:id/feedback", (req, res) => {
   const { id } = req.params;
-  const list = projectFeedbackList.filter(f => f.projectId === id);
+  const list = projectFeedbackList.filter((f) => f.projectId === id);
   res.json(list);
 });
 
-app.post("/api/projects/:id/feedback", (req, res) => {
+app.post("/api/projects/:id/feedback", strictSubmissionLimiter, (req, res) => {
   const { id } = req.params;
   const { author, role, rating, comment } = req.body || {};
-  const cleanAuthor = String(author || "").trim().slice(0, 40) || "Anonymous Visitor";
-  const cleanRole = String(role || "Developer").trim().slice(0, 40);
-  const cleanRating = Math.min(5, Math.max(1, Number(rating) || 5));
-  const cleanComment = String(comment || "").trim().slice(0, 400);
+  const errors = [];
 
-  if (!cleanComment) {
-    return res.status(400).json({ error: "Comment is required" });
+  const cleanAuthor = sanitizePlain(author, 50) || "Anonymous Visitor";
+  const cleanRole = sanitizePlain(role || "Developer", 40);
+  const cleanRating = Math.min(5, Math.max(1, Number(rating) || 5));
+  const cleanComment = sanitizePlain(comment, 600);
+
+  if (!cleanComment || cleanComment.length < 3) {
+    errors.push("Comment is required (minimum 3 characters).");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({ ok: false, error: "Validation Error", details: errors });
   }
 
   const newFeedback = {
@@ -272,22 +359,39 @@ app.post("/api/projects/:id/feedback", (req, res) => {
 
   projectFeedbackList.unshift(newFeedback);
   io.emit("project:feedback", newFeedback);
-  const p = projects.find(item => item.id === id);
+  const p = projects.find((item) => item.id === id);
   addActivity("project", `${cleanAuthor} reviewed "${p ? p.title : id}" (${cleanRating}★)`);
   res.status(201).json(newFeedback);
 });
 
-// Contact / Hire Inquiry Endpoint
+// ---------- Contact / Hire Inquiry Endpoint with Schema Validation ----------
 const contactInquiries = [];
-app.post("/api/contact", (req, res) => {
-  const { name, email, subject, message } = req.body || {};
-  const cleanName = String(name || "").trim().slice(0, 60);
-  const cleanEmail = String(email || "").trim().slice(0, 100);
-  const cleanSubject = String(subject || "General Inquiry").trim().slice(0, 120);
-  const cleanMsg = String(message || "").trim().slice(0, 1000);
 
-  if (!cleanName || !cleanEmail || !cleanMsg) {
-    return res.status(400).json({ error: "Name, email, and message are required" });
+app.get("/api/contact/inquiries", (req, res) => {
+  res.json({ count: contactInquiries.length, inquiries: contactInquiries.slice(0, 20) });
+});
+
+app.post("/api/contact", strictSubmissionLimiter, (req, res) => {
+  const { name, email, subject, message } = req.body || {};
+  const errors = [];
+
+  const cleanName = sanitizePlain(name, 60);
+  const cleanEmail = sanitizePlain(email, 100);
+  const cleanSubject = sanitizePlain(subject || "General Inquiry", 120);
+  const cleanMsg = sanitizePlain(message, 1500);
+
+  if (!cleanName || cleanName.length < 2) {
+    errors.push("Your name is required (minimum 2 characters).");
+  }
+  if (!cleanEmail || !isValidEmail(cleanEmail)) {
+    errors.push("Please enter a valid email address (e.g. name@domain.com).");
+  }
+  if (!cleanMsg || cleanMsg.length < 5) {
+    errors.push("Message body must be at least 5 characters long.");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({ ok: false, error: "Validation Error", details: errors });
   }
 
   const inquiry = {
@@ -303,7 +407,7 @@ app.post("/api/contact", (req, res) => {
   addActivity("contact", `Inquiry received from ${cleanName}: "${cleanSubject}"`);
   res.status(201).json({
     ok: true,
-    message: `Thank you, ${cleanName}! Your message was recorded. Bron will get back to ${cleanEmail} soon.`
+    message: `Thank you, ${cleanName}! Your message was successfully recorded. Bron will get back to ${cleanEmail} soon.`
   });
 });
 
@@ -391,10 +495,62 @@ app.get("/api/system/metrics", (req, res) => {
     timestamp: now,
     current: {
       cpuPercent: points[points.length - 1].cpuPercent,
-      memoryMb: Math.round(mem.heapUsed / 1024 / 1024 * 10) / 10,
+      memoryMb: Math.round((mem.heapUsed / 1024 / 1024) * 10) / 10,
       systemPercent: usedPercent,
     },
     history: points
+  });
+});
+
+// ---------- Network Interfaces & Simulated Live Throughput ----------
+let lastNetworkSample = Date.now();
+let cumulativeRxBytes = 1420580;
+let cumulativeTxBytes = 894200;
+
+app.get("/api/system/network", (req, res) => {
+  const interfaces = os.networkInterfaces();
+  const ifaceList = [];
+
+  for (const [name, addrs] of Object.entries(interfaces)) {
+    if (!addrs) continue;
+    for (const addr of addrs) {
+      ifaceList.push({
+        name,
+        address: addr.address,
+        family: addr.family,
+        mac: addr.mac,
+        internal: addr.internal,
+        netmask: addr.netmask,
+      });
+    }
+  }
+
+  const now = Date.now();
+  const elapsedSec = Math.max(1, (now - lastNetworkSample) / 1000);
+  lastNetworkSample = now;
+
+  const clientWeight = (io.engine.clientsCount || 1) * 3.5;
+  const rxKbps = Math.round((14.2 + Math.random() * 8.5 + clientWeight) * 10) / 10;
+  const txKbps = Math.round((9.4 + Math.random() * 6.2 + clientWeight * 0.8) * 10) / 10;
+
+  cumulativeRxBytes += Math.round(rxKbps * 1024 * elapsedSec);
+  cumulativeTxBytes += Math.round(txKbps * 1024 * elapsedSec);
+
+  res.json({
+    ok: true,
+    timestamp: now,
+    interfaces: ifaceList,
+    primaryInterface: ifaceList.find((i) => !i.internal && i.family === "IPv4") || ifaceList[0] || null,
+    traffic: {
+      rxKbps,
+      txKbps,
+      totalRxMb: Math.round((cumulativeRxBytes / 1024 / 1024) * 100) / 100,
+      totalTxMb: Math.round((cumulativeTxBytes / 1024 / 1024) * 100) / 100,
+      activeConnections: io.engine.clientsCount || 1,
+      httpPort: PORT,
+      protocol: "HTTP/1.1 + WebSocket (Engine.IO v4)",
+      latencyMs: 14 + Math.round(Math.random() * 8)
+    }
   });
 });
 
@@ -411,6 +567,21 @@ app.get("/api/system/logs", (req, res) => {
   res.json(logs);
 });
 
+app.post("/api/system/logs/clear", (req, res) => {
+  systemLogs = [];
+  const resetLog = {
+    id: `log-${Date.now()}-reset`,
+    ts: Date.now(),
+    level: "info",
+    module: "Kernel",
+    message: "System event logs buffer cleared by administrator."
+  };
+  systemLogs.push(resetLog);
+  io.emit("system:logs_cleared");
+  io.emit("system:log", resetLog);
+  res.json({ ok: true, message: "System logs buffer cleared successfully." });
+});
+
 // Simulated OS processes with live telemetry
 const osProcesses = [
   { pid: 101, name: "kernel.sys", user: "system", cpu: 1.2, memoryMb: 24.5, threads: 8, status: "running", description: "Portfolio OS Kernel & Scheduler" },
@@ -422,14 +593,20 @@ const osProcesses = [
 ];
 
 app.get("/api/system/processes", (req, res) => {
-  const updated = osProcesses.map((p) => ({
-    ...p,
-    cpu: Math.max(0.1, Math.round((p.cpu + (Math.random() * 0.8 - 0.4)) * 10) / 10),
-    memoryMb: Math.max(5, Math.round((p.memoryMb + (Math.random() * 0.6 - 0.3)) * 10) / 10),
-  }));
+  const updated = osProcesses.map((p) => {
+    if (p.status === "stopped") {
+      return { ...p, cpu: 0 };
+    }
+    return {
+      ...p,
+      cpu: Math.max(0.1, Math.round((p.cpu + (Math.random() * 0.8 - 0.4)) * 10) / 10),
+      memoryMb: Math.max(5, Math.round((p.memoryMb + (Math.random() * 0.6 - 0.3)) * 10) / 10),
+    };
+  });
   res.json(updated);
 });
 
+// Restart a simulated process
 app.post("/api/system/process/:pid/restart", (req, res) => {
   const pid = Number(req.params.pid);
   const p = osProcesses.find((item) => item.pid === pid);
@@ -444,6 +621,21 @@ app.post("/api/system/process/:pid/restart", (req, res) => {
     io.emit("system:process_updated", p);
     logSystem("info", "ProcessMgr", `Process ${p.name} (PID: ${pid}) recovered successfully.`);
   }, 1000);
+
+  res.json({ ok: true, process: p });
+});
+
+// Terminate / Kill a process
+app.post("/api/system/process/:pid/kill", (req, res) => {
+  const pid = Number(req.params.pid);
+  const p = osProcesses.find((item) => item.pid === pid);
+  if (!p) return res.status(404).json({ ok: false, error: "Process not found" });
+
+  p.status = "stopped";
+  p.cpu = 0;
+  logSystem("warn", "ProcessMgr", `Process ${p.name} (PID: ${pid}) was terminated by user.`);
+  io.emit("system:process_updated", p);
+  addActivity("system", `Terminated process "${p.name}" (PID: ${pid})`);
 
   res.json({ ok: true, process: p });
 });
@@ -588,11 +780,66 @@ app.get("/api/calc/convert", (req, res) => {
   res.json({ ok: true, type, from: f, to: t, value: num, result: Math.round(result * 1000000) / 1000000 });
 });
 
+// ---------- Code Playground Snippets (Built-in + Custom CRUD) ----------
+let customSnippets = [];
 
-
-// ---------- Code Playground Snippets ----------
 app.get("/api/snippets", (req, res) => {
-  res.json(snippets);
+  const { lang, q } = req.query;
+  let all = [...snippets, ...customSnippets];
+  if (lang && lang !== "all") {
+    all = all.filter((s) => s.language.toLowerCase() === String(lang).toLowerCase());
+  }
+  if (q) {
+    const query = String(q).toLowerCase();
+    all = all.filter((s) => s.title.toLowerCase().includes(query) || (s.description && s.description.toLowerCase().includes(query)));
+  }
+  res.json(all);
+});
+
+app.post("/api/snippets", strictSubmissionLimiter, (req, res) => {
+  const { title, language, code, description, category } = req.body || {};
+  const errors = [];
+  const cleanTitle = sanitizePlain(title, 80);
+  const cleanLang = String(language || "javascript").trim().toLowerCase();
+  const cleanCode = String(code || "").trim();
+  const cleanDesc = sanitizePlain(description || "", 300);
+  const cleanCategory = sanitizePlain(category || "Custom Snippet", 50);
+
+  if (!cleanTitle || cleanTitle.length < 2) errors.push("Title must be at least 2 characters.");
+  if (!cleanCode) errors.push("Code content cannot be empty.");
+  const allowedLangs = ["javascript", "typescript", "python", "sql", "markdown", "web", "html", "css"];
+  if (!allowedLangs.includes(cleanLang)) errors.push(`Language must be one of: ${allowedLangs.join(", ")}`);
+
+  if (errors.length > 0) {
+    return res.status(400).json({ ok: false, error: "Validation Error", details: errors });
+  }
+
+  const newSnippet = {
+    id: `snippet-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    title: cleanTitle,
+    language: cleanLang,
+    code: cleanCode,
+    description: cleanDesc,
+    category: cleanCategory,
+    isCustom: true,
+    createdAt: Date.now()
+  };
+
+  customSnippets.unshift(newSnippet);
+  io.emit("snippet:created", newSnippet);
+  addActivity("codeplay", `New code snippet created: "${cleanTitle}" (${cleanLang})`);
+  res.status(201).json({ ok: true, snippet: newSnippet });
+});
+
+app.delete("/api/snippets/:id", (req, res) => {
+  const { id } = req.params;
+  const initialCount = customSnippets.length;
+  customSnippets = customSnippets.filter((s) => s.id !== id);
+  if (customSnippets.length === initialCount) {
+    return res.status(404).json({ ok: false, error: "Custom snippet not found or cannot delete default templates." });
+  }
+  io.emit("snippet:deleted", { id });
+  res.json({ ok: true, id });
 });
 
 app.post("/api/snippets/run", (req, res) => {
@@ -619,6 +866,76 @@ app.post("/api/snippets/run", (req, res) => {
       verified: true
     },
     message: "Snippet parsed and verified successfully."
+  });
+});
+
+// ---------- Global Universal Search API ----------
+app.get("/api/search", (req, res) => {
+  const q = String(req.query.q || "").trim().toLowerCase();
+  if (!q) {
+    return res.json({
+      ok: true,
+      query: "",
+      total: 0,
+      results: { projects: [], updates: [], guestbook: [], notes: [], snippets: [] }
+    });
+  }
+
+  const matchedProjects = projects.filter(
+    (p) =>
+      p.title.toLowerCase().includes(q) ||
+      p.summary.toLowerCase().includes(q) ||
+      p.category.toLowerCase().includes(q) ||
+      (Array.isArray(p.stack) && p.stack.some((s) => s.toLowerCase().includes(q)))
+  ).slice(0, 6);
+
+  const matchedUpdates = liveUpdates.filter(
+    (u) =>
+      u.title.toLowerCase().includes(q) ||
+      u.body.toLowerCase().includes(q) ||
+      u.tag.toLowerCase().includes(q)
+  ).slice(0, 6);
+
+  const matchedGuestbook = guestbookEntries.filter(
+    (g) =>
+      g.name.toLowerCase().includes(q) ||
+      g.message.toLowerCase().includes(q) ||
+      (g.role && g.role.toLowerCase().includes(q))
+  ).slice(0, 6);
+
+  const matchedNotes = cloudNotes.filter(
+    (n) =>
+      n.title.toLowerCase().includes(q) ||
+      n.content.toLowerCase().includes(q) ||
+      (n.tag && n.tag.toLowerCase().includes(q))
+  ).slice(0, 6);
+
+  const allSnippets = [...snippets, ...customSnippets];
+  const matchedSnippets = allSnippets.filter(
+    (s) =>
+      s.title.toLowerCase().includes(q) ||
+      (s.description && s.description.toLowerCase().includes(q)) ||
+      s.language.toLowerCase().includes(q)
+  ).slice(0, 6);
+
+  const total =
+    matchedProjects.length +
+    matchedUpdates.length +
+    matchedGuestbook.length +
+    matchedNotes.length +
+    matchedSnippets.length;
+
+  res.json({
+    ok: true,
+    query: q,
+    total,
+    results: {
+      projects: matchedProjects,
+      updates: matchedUpdates,
+      guestbook: matchedGuestbook,
+      notes: matchedNotes,
+      snippets: matchedSnippets
+    }
   });
 });
 
@@ -684,29 +1001,84 @@ app.get("/api/analytics", (req, res) => {
     guestbookEntriesCount: guestbookEntries.length,
     totalProjectStars: Object.values(projectLikes).reduce((a, b) => a + b, 0),
     serverUptime: Math.floor(process.uptime()),
-    heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024 * 10) / 10,
+    heapUsedMb: Math.round((mem.heapUsed / 1024 / 1024) * 10) / 10,
     timestamp: Date.now()
   });
 });
 
-// ---------- Guestbook Feature ----------
+// ---------- Guestbook Feature with Validation & Search ----------
 let guestbookEntries = [...initialGuestbook];
 
 app.get("/api/guestbook", (req, res) => {
-  res.json(guestbookEntries);
+  const { search, role, sort } = req.query;
+  let list = [...guestbookEntries];
+
+  if (search) {
+    const q = String(search).toLowerCase().trim();
+    list = list.filter(
+      (e) =>
+        e.name.toLowerCase().includes(q) ||
+        e.message.toLowerCase().includes(q) ||
+        (e.location && e.location.toLowerCase().includes(q))
+    );
+  }
+
+  if (role && role !== "all") {
+    list = list.filter((e) => (e.role || "Visitor").toLowerCase() === String(role).toLowerCase());
+  }
+
+  if (sort === "popular") {
+    list.sort((a, b) => (b.reactions || 0) - (a.reactions || 0));
+  } else if (sort === "oldest") {
+    list.sort((a, b) => a.ts - b.ts);
+  } else {
+    // Default newest first
+    list.sort((a, b) => b.ts - a.ts);
+  }
+
+  res.json(list);
 });
 
-app.post("/api/guestbook", (req, res) => {
-  const { name, role, avatar, message, link, location } = req.body || {};
-  const cleanName = String(name || "").trim().slice(0, 40);
-  const cleanRole = String(role || "Visitor").trim().slice(0, 30);
-  const cleanAvatar = String(avatar || "lorelei:guest").trim().slice(0, 500000);
-  const cleanMsg = String(message || "").trim().slice(0, 500);
-  const cleanLink = String(link || "").trim().slice(0, 200);
-  const cleanLocation = String(location || "").trim().slice(0, 80);
+app.get("/api/guestbook/stats", (req, res) => {
+  const totalSignatures = guestbookEntries.length;
+  const totalReactions = guestbookEntries.reduce((sum, e) => sum + (e.reactions || 0), 0);
+  const rolesCount = {};
+  for (const e of guestbookEntries) {
+    const r = e.role || "Visitor";
+    rolesCount[r] = (rolesCount[r] || 0) + 1;
+  }
+  res.json({
+    ok: true,
+    totalSignatures,
+    totalReactions,
+    rolesCount,
+    latestSignedAt: guestbookEntries[0]?.ts || null
+  });
+});
 
-  if (!cleanName || !cleanMsg) {
-    return res.status(400).json({ error: "Name and message are required" });
+app.post("/api/guestbook", strictSubmissionLimiter, (req, res) => {
+  const { name, role, avatar, message, link, location } = req.body || {};
+  const errors = [];
+
+  const cleanName = sanitizeText(name, 40);
+  const cleanRole = sanitizePlain(role || "Visitor", 30);
+  const cleanAvatar = String(avatar || "lorelei:guest").trim().slice(0, 500000);
+  const cleanMsg = sanitizeText(message, 500);
+  const cleanLink = sanitizePlain(link || "", 200);
+  const cleanLocation = sanitizeText(location || "", 80);
+
+  if (!cleanName || cleanName.length < 2) {
+    errors.push("Name must be between 2 and 40 characters.");
+  }
+  if (!cleanMsg || cleanMsg.length < 3) {
+    errors.push("Message must be between 3 and 500 characters.");
+  }
+  if (cleanLink && !/^https?:\/\//i.test(cleanLink) && !cleanLink.startsWith("@") && !cleanLink.includes(".")) {
+    errors.push("Link must be a valid URL (starting with http:// or https://) or social handle.");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({ ok: false, error: "Validation Error", details: errors });
   }
 
   const newEntry = {
@@ -800,7 +1172,7 @@ app.post("/api/terminal/exec", (req, res) => {
     }
 
     case "ping": {
-      const host = args[0] || "localhost:4000";
+      const host = args[0] || `localhost:${PORT}`;
       return res.json({
         ok: true,
         output: `PING ${host}: 64 bytes from server, seq=1 time=0.42ms, TTL=64 (status 200 OK)`
@@ -840,6 +1212,100 @@ app.post("/api/terminal/exec", (req, res) => {
           `System Status:         100% Operational (Express 5 Active)`
         ].join("\n")
       });
+    }
+
+    case "top":
+    case "htop": {
+      const header = "PID    USER     STATUS      CPU%   MEM(MB)  THREADS  NAME";
+      const rows = osProcesses.map((p) =>
+        `${String(p.pid).padEnd(6)} ${p.user.padEnd(8)} ${p.status.padEnd(11)} ${String(p.cpu + "%").padEnd(6)} ${String(p.memoryMb).padEnd(8)} ${String(p.threads).padEnd(8)} ${p.name}`
+      );
+      return res.json({
+        ok: true,
+        output: `⚡ Real-Time Process Monitor (System Load: ${os.loadavg()[0].toFixed(2)}):\n${header}\n${"-".repeat(64)}\n${rows.join("\n")}`
+      });
+    }
+
+    case "kill": {
+      const pidToKill = parseInt(args[0], 10);
+      if (isNaN(pidToKill)) {
+        return res.status(400).json({ ok: false, error: "Usage: kill <pid> (e.g. kill 312)" });
+      }
+      const targetProc = osProcesses.find((p) => p.pid === pidToKill);
+      if (!targetProc) {
+        return res.status(404).json({ ok: false, error: `Process PID ${pidToKill} not found.` });
+      }
+      targetProc.status = "stopped";
+      targetProc.cpu = 0;
+      io.emit("system:process_updated", targetProc);
+      logSystem("warn", "Terminal", `Killed process ${targetProc.name} (PID: ${pidToKill}) via terminal.`);
+      return res.json({
+        ok: true,
+        output: `[SIGTERM] Process ${targetProc.name} (PID ${pidToKill}) terminated successfully.`
+      });
+    }
+
+    case "find":
+    case "search": {
+      const term = args.join(" ").toLowerCase().trim();
+      if (!term) {
+        return res.json({ ok: false, error: "Usage: find <keyword> (e.g. find react, find salon, find audio)" });
+      }
+      const pMatches = projects.filter((p) => p.title.toLowerCase().includes(term) || p.summary.toLowerCase().includes(term));
+      const uMatches = liveUpdates.filter((u) => u.title.toLowerCase().includes(term) || u.body.toLowerCase().includes(term));
+      const nMatches = cloudNotes.filter((n) => n.title.toLowerCase().includes(term) || n.content.toLowerCase().includes(term));
+
+      const lines = [
+        `🔍 Search results for '${term}':`,
+        `----------------------------------------`,
+        `Projects (${pMatches.length}): ${pMatches.map((p) => p.title).join(", ") || "None"}`,
+        `Updates  (${uMatches.length}): ${uMatches.map((u) => u.title).join(", ") || "None"}`,
+        `Notes    (${nMatches.length}): ${nMatches.map((n) => n.title).join(", ") || "None"}`
+      ];
+      return res.json({ ok: true, output: lines.join("\n") });
+    }
+
+    case "netstat": {
+      const ifaces = os.networkInterfaces();
+      const summary = [];
+      for (const [name, addrs] of Object.entries(ifaces)) {
+        for (const a of addrs || []) {
+          if (!a.internal && a.family === "IPv4") {
+            summary.push(`• Interface [${name}]: IP ${a.address} (MAC: ${a.mac})`);
+          }
+        }
+      }
+      return res.json({
+        ok: true,
+        output: [
+          `🌐 Network Interfaces & Active Sockets:`,
+          `----------------------------------------`,
+          ...summary,
+          `• Connected WebSocket Clients: ${io.engine.clientsCount}`,
+          `• HTTP Server Port:            ${PORT}`,
+          `• Cumulative Traffic:          Rx: ${(cumulativeRxBytes / 1024 / 1024).toFixed(2)} MB | Tx: ${(cumulativeTxBytes / 1024 / 1024).toFixed(2)} MB`
+        ].join("\n")
+      });
+    }
+
+    case "clearlogs": {
+      systemLogs = [];
+      const resetLog = {
+        id: `log-${Date.now()}-reset`,
+        ts: Date.now(),
+        level: "info",
+        module: "Terminal",
+        message: "System event logs buffer cleared via terminal command."
+      };
+      systemLogs.push(resetLog);
+      io.emit("system:logs_cleared");
+      io.emit("system:log", resetLog);
+      return res.json({ ok: true, output: "System logs buffer cleared." });
+    }
+
+    case "echo": {
+      const echoMsg = sanitizeText(args.join(" "), 300);
+      return res.json({ ok: true, output: echoMsg || "" });
     }
 
     case "quote": {
@@ -928,7 +1394,7 @@ app.post("/api/terminal/exec", (req, res) => {
     default:
       return res.status(400).json({
         ok: false,
-        error: `Unknown server command: '${lower}'. Try 'sysinfo', 'ping', 'logs', 'ps', 'storage', 'notes', 'quote', 'joke', or 'curl'.`
+        error: `Unknown server command: '${lower}'. Try 'sysinfo', 'ping', 'weather', 'analytics', 'top', 'kill <pid>', 'search <query>', 'netstat', 'clearlogs', 'logs', 'ps', 'storage', 'notes', 'quote', 'joke', or 'curl'.`
       });
   }
 });
@@ -1027,7 +1493,7 @@ app.get("/api/music/youtube-search", async (req, res) => {
   }
 });
 
-// ---------- Chat (anonymous, no login with real-time sync) ----------
+// ---------- Chat (anonymous, no login with real-time sync & anti-spam) ----------
 const ADJECTIVES = ["Swift", "Quiet", "Amber", "Cosmic", "Lucky", "Nimble", "Gentle", "Bright", "Wandering", "Velvet"];
 const ANIMALS = ["Falcon", "Otter", "Lynx", "Comet", "Heron", "Fox", "Whale", "Sparrow", "Marlin", "Wren"];
 const nano = customAlphabet("0123456789", 3);
@@ -1039,6 +1505,7 @@ let chatHistory = [];
 let onlineCount = 0;
 let pinnedChatMessages = [];
 const connectedUsers = new Map();
+const socketFloodTracker = new Map();
 
 app.get("/api/chat/users", (req, res) => {
   res.json(Array.from(connectedUsers.values()));
@@ -1065,8 +1532,20 @@ app.post("/api/chat/:id/pin", (req, res) => {
   res.json({ id, isPinned: !isPinned, pinned: pinnedChatMessages });
 });
 
+app.delete("/api/chat/:id", (req, res) => {
+  const { id } = req.params;
+  const idx = chatHistory.findIndex((m) => m.id === id);
+  if (idx !== -1) {
+    chatHistory.splice(idx, 1);
+    pinnedChatMessages = pinnedChatMessages.filter((m) => m.id !== id);
+    io.emit("chat:message_deleted", { id });
+    return res.json({ ok: true, id });
+  }
+  res.status(404).json({ ok: false, error: "Message not found" });
+});
+
 app.get("/api/chat/export", (req, res) => {
-  res.setHeader("Content-Disposition", "attachment; filename=\"chat-transcript.json\"");
+  res.setHeader("Content-Disposition", 'attachment; filename="chat-transcript.json"');
   res.json({
     exportedAt: new Date().toISOString(),
     totalMessages: chatHistory.length,
@@ -1079,7 +1558,7 @@ io.on("connection", (socket) => {
   socket.data.name = guestName;
   socket.data.id = socket.id;
   socket.data.joinedAt = Date.now();
-  
+
   connectedUsers.set(socket.id, {
     id: socket.id,
     name: guestName,
@@ -1101,7 +1580,7 @@ io.on("connection", (socket) => {
   addActivity("visitor", `Visitor ${guestName} joined the desktop session`);
 
   socket.on("chat:rename", (newName) => {
-    const clean = String(newName || "").trim().slice(0, 20);
+    const clean = sanitizePlain(newName, 20);
     if (clean) {
       socket.data.name = clean;
       const user = connectedUsers.get(socket.id);
@@ -1113,13 +1592,27 @@ io.on("connection", (socket) => {
   });
 
   socket.on("chat:message", (data, ack) => {
+    // Flood protection (max 5 messages within 3 seconds)
+    const now = Date.now();
+    let timestamps = socketFloodTracker.get(socket.id) || [];
+    timestamps = timestamps.filter((t) => now - t < 3000);
+
+    if (timestamps.length >= 5) {
+      const floodError = "Flood protection active. Please wait a few seconds before sending another message.";
+      socket.emit("chat:rate_limited", { message: floodError, cooldownMs: 3000 });
+      if (typeof ack === "function") ack({ ok: false, error: floodError });
+      return;
+    }
+    timestamps.push(now);
+    socketFloodTracker.set(socket.id, timestamps);
+
     const isObj = typeof data === "object" && data !== null;
     const rawText = isObj ? data.text : data;
     const replyTo = isObj ? data.replyTo : null;
 
-    const clean = String(rawText || "").trim().slice(0, 500);
+    const clean = sanitizePlain(rawText, 500);
     if (!clean) {
-      if (typeof ack === "function") ack({ ok: false, error: "empty" });
+      if (typeof ack === "function") ack({ ok: false, error: "Message cannot be empty." });
       return;
     }
 
@@ -1129,11 +1622,14 @@ io.on("connection", (socket) => {
       text: clean,
       ts: Date.now(),
       reactions: {},
-      replyTo: replyTo && typeof replyTo === "object" ? {
-        id: replyTo.id,
-        name: replyTo.name,
-        text: String(replyTo.text || "").slice(0, 100)
-      } : undefined
+      replyTo:
+        replyTo && typeof replyTo === "object"
+          ? {
+              id: replyTo.id,
+              name: sanitizePlain(replyTo.name, 30),
+              text: sanitizePlain(replyTo.text, 100)
+            }
+          : undefined
     };
 
     chatHistory.push(msg);
@@ -1156,17 +1652,46 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Chat message deletion via socket
+  socket.on("chat:delete", ({ id }) => {
+    const idx = chatHistory.findIndex((m) => m.id === id);
+    if (idx !== -1) {
+      chatHistory.splice(idx, 1);
+      pinnedChatMessages = pinnedChatMessages.filter((m) => m.id !== id);
+      io.emit("chat:message_deleted", { id });
+    }
+  });
+
   socket.on("chat:typing", () => {
     socket.broadcast.emit("chat:typing", { name: socket.data.name });
   });
 
   socket.on("disconnect", () => {
     connectedUsers.delete(socket.id);
+    socketFloodTracker.delete(socket.id);
     onlineCount = Math.max(0, onlineCount - 1);
     io.emit("chat:presence", { online: onlineCount });
     io.emit("chat:users_updated", Array.from(connectedUsers.values()));
   });
 });
 
-const PORT = process.env.PORT || 4000;
+// ---------- Express 404 & Centralized Error Handlers ----------
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    ok: false,
+    error: `API route not found: ${req.method} ${req.originalUrl}`
+  });
+});
+
+app.use((err, req, res, next) => {
+  console.error("[Portfolio OS Server Error]:", err);
+  if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+    return res.status(400).json({ ok: false, error: "Malformed JSON payload in request body." });
+  }
+  res.status(err.status || 500).json({
+    ok: false,
+    error: err.message || "An unexpected internal server error occurred."
+  });
+});
+
 server.listen(PORT, () => console.log(`Portfolio OS API + chat running on :${PORT}`));
