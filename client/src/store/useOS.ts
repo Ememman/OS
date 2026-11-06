@@ -52,6 +52,12 @@ interface OSState {
   chooseOs: (mode: OSMode) => void;
   setOsMode: (mode: OSMode) => void;
   reopenPicker: () => void;
+  isPoweredOff: boolean;
+  powerOff: () => void;
+  powerOn: () => void;
+  restart: () => void;
+  isSleeping: boolean;
+  setSleeping: (sleep: boolean) => void;
   particlesEnabled: boolean;
   toggleParticles: () => void;
   widgetsVisible: boolean;
@@ -241,7 +247,46 @@ export const useOS = create<OSState>((set, get) => ({
     localStorage.setItem("os_mode", mode);
     set({ osMode: mode });
   },
-  reopenPicker: () => set({ osChosen: false }),
+  reopenPicker: () => {
+    if (get().systemSounds) soundFx.playClick();
+    set({
+      osChosen: false,
+      isPoweredOff: false,
+      isSleeping: false,
+      controlCenterOpen: false,
+      missionControlOpen: false,
+      spotlightOpen: false,
+    });
+  },
+  isPoweredOff: false,
+  isSleeping: false,
+  powerOff: () => {
+    if (get().systemSounds) soundFx.playClose();
+    set({
+      isPoweredOff: true,
+      isSleeping: false,
+      controlCenterOpen: false,
+      missionControlOpen: false,
+      spotlightOpen: false,
+    });
+  },
+  powerOn: () => {
+    if (get().systemSounds) soundFx.playOpen();
+    set({ isPoweredOff: false, isSleeping: false });
+  },
+  restart: () => {
+    if (get().systemSounds) soundFx.playPop();
+    set({
+      booted: false,
+      isPoweredOff: false,
+      isSleeping: false,
+      controlCenterOpen: false,
+      missionControlOpen: false,
+      spotlightOpen: false,
+      windows: [],
+    });
+  },
+  setSleeping: (sleep: boolean) => set({ isSleeping: sleep }),
 
   // Desktop celestial starfield & particles animation
   particlesEnabled: localStorage.getItem("os_particles") !== "off",
