@@ -29,6 +29,28 @@ let activityFeed = [
   { id: "act-3", type: "project", text: "SandreaLee Salon Customer App starred by a visitor", ts: Date.now() - 1800000 },
 ];
 
+// Rolling system log buffer
+const SYSTEM_LOGS_MAX = 100;
+const systemLogs = [
+  { id: "log-1", ts: Date.now() - 120000, level: "info", module: "Kernel", message: "Portfolio OS core kernel v2.4 initialized with frosted glass compositor." },
+  { id: "log-2", ts: Date.now() - 95000, level: "info", module: "SocketDaemon", message: "Real-time WebSocket presence bridge listening on port 4000." },
+  { id: "log-3", ts: Date.now() - 60000, level: "debug", module: "AudioEngine", message: "WebAudio proxy and dynamic visualizer frequency analyser ready." },
+  { id: "log-4", ts: Date.now() - 25000, level: "info", module: "ProcessMgr", message: "Virtual process scheduler initialized (6 active background tasks)." },
+];
+
+function logSystem(level, module, message) {
+  const entry = {
+    id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    ts: Date.now(),
+    level,
+    module,
+    message
+  };
+  systemLogs.unshift(entry);
+  if (systemLogs.length > SYSTEM_LOGS_MAX) systemLogs.pop();
+  io.emit("system:log", entry);
+}
+
 function addActivity(type, text) {
   const item = {
     id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -39,13 +61,150 @@ function addActivity(type, text) {
   activityFeed.unshift(item);
   if (activityFeed.length > 50) activityFeed = activityFeed.slice(0, 50);
   io.emit("activity:entry", item);
+  logSystem("info", type.toUpperCase(), text);
 }
 
 app.get("/api/activity/feed", (req, res) => res.json(activityFeed));
 
 // ---------- REST: projects / updates ----------
 app.get("/api/projects", (req, res) => res.json(projects));
-app.get("/api/updates", (req, res) => res.json(updates));
+
+// Live updates array with real-time CRUD and multi-reactions
+let liveUpdates = [...updates];
+const updateReactions = {};
+
+// Initialize default reactions for updates
+liveUpdates.forEach((u, idx) => {
+  const baseHeart = 3 + (idx % 4) * 2;
+  const baseFire = 1 + (idx % 3);
+  const baseRocket = 1 + (idx % 2);
+  const baseParty = idx % 2;
+  updateReactions[u.id] = {
+    heart: baseHeart,
+    fire: baseFire,
+    rocket: baseRocket,
+    party: baseParty,
+    total: baseHeart + baseFire + baseRocket + baseParty
+  };
+});
+
+app.get("/api/updates", (req, res) => {
+  const { tag, q, sort } = req.query;
+  let list = [...liveUpdates];
+  if (tag && tag !== "all") {
+    list = list.filter((u) => u.tag?.toLowerCase() === String(tag).toLowerCase());
+  }
+  if (q) {
+    const query = String(q).toLowerCase();
+    list = list.filter(
+      (u) => u.title.toLowerCase().includes(query) || u.body.toLowerCase().includes(query)
+    );
+  }
+  if (sort === "popular") {
+    list.sort((a, b) => (updateReactions[b.id]?.total || 0) - (updateReactions[a.id]?.total || 0));
+  } else if (sort === "oldest") {
+    list.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  } else {
+    // Default newest first (pinned float to top)
+    list.sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
+  }
+  res.json(list);
+});
+
+// Create new update
+app.post("/api/updates", (req, res) => {
+  const { title, tag, body, date, pinned } = req.body || {};
+  const cleanTitle = String(title || "").trim().slice(0, 100);
+  const cleanBody = String(body || "").trim().slice(0, 2500);
+  const cleanTag = String(tag || "feature").trim().toLowerCase();
+
+  if (!cleanTitle || !cleanBody) {
+    return res.status(400).json({ error: "Title and body are required." });
+  }
+
+  const validTags = ["feature", "fix", "launch", "announcement", "performance"];
+  const finalTag = validTags.includes(cleanTag) ? cleanTag : "feature";
+
+  const newUpdate = {
+    id: `u-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    date: date || new Date().toISOString().slice(0, 10),
+    tag: finalTag,
+    title: cleanTitle,
+    body: cleanBody,
+    pinned: Boolean(pinned)
+  };
+
+  liveUpdates.unshift(newUpdate);
+  updateReactions[newUpdate.id] = { heart: 1, fire: 0, rocket: 0, party: 0, total: 1 };
+
+  io.emit("update:new", newUpdate);
+  addActivity("update", `New update published: "${newUpdate.title}"`);
+  res.status(201).json(newUpdate);
+});
+
+// Multi-reaction support on updates
+app.post("/api/updates/:id/react", (req, res) => {
+  const { id } = req.params;
+  const { type = "heart" } = req.body || {};
+  const validTypes = ["heart", "fire", "rocket", "party"];
+  const reactionType = validTypes.includes(type) ? type : "heart";
+
+  if (!updateReactions[id]) {
+    updateReactions[id] = { heart: 0, fire: 0, rocket: 0, party: 0, total: 0 };
+  }
+
+  updateReactions[id][reactionType] = (updateReactions[id][reactionType] || 0) + 1;
+  updateReactions[id].total = (updateReactions[id].total || 0) + 1;
+
+  const count = updateReactions[id].total;
+  io.emit("update:reacted", {
+    id,
+    type: reactionType,
+    count,
+    reactions: updateReactions[id]
+  });
+
+  const u = liveUpdates.find((item) => item.id === id);
+  addActivity("update", `Update "${u ? u.title : id}" received a ${reactionType} reaction`);
+  res.json({ id, count, reactions: updateReactions[id] });
+});
+
+app.get("/api/updates/reactions", (req, res) => {
+  const counts = {};
+  for (const [key, val] of Object.entries(updateReactions)) {
+    counts[key] = val.total;
+  }
+  res.json({ counts, detailed: updateReactions });
+});
+
+// Toggle pinned update
+app.post("/api/updates/:id/pin", (req, res) => {
+  const { id } = req.params;
+  const updateItem = liveUpdates.find((u) => u.id === id);
+  if (!updateItem) return res.status(404).json({ error: "Update not found" });
+
+  updateItem.pinned = !updateItem.pinned;
+  io.emit("update:pinned", { id, pinned: updateItem.pinned });
+  res.json({ id, pinned: updateItem.pinned });
+});
+
+// Real-time update deletion
+app.delete("/api/updates/:id", (req, res) => {
+  const { id } = req.params;
+  const index = liveUpdates.findIndex((u) => u.id === id);
+  if (index !== -1) {
+    const deleted = liveUpdates.splice(index, 1)[0];
+    delete updateReactions[id];
+    io.emit("update:deleted", { id });
+    addActivity("update", `Update entry "${deleted.title}" was removed`);
+    return res.json({ ok: true, id });
+  }
+  res.status(404).json({ error: "Update not found" });
+});
 
 // In-memory project star/like reactions
 const projectLikes = {
@@ -76,30 +235,6 @@ app.get("/api/projects/stats", (req, res) => {
     techStack: stacks,
     lastUpdated: "2026"
   });
-});
-
-// Simple in-memory reactions on updates (resets on server restart)
-const reactionCounts = {}; // { [updateId]: number }
-app.post("/api/updates/:id/react", (req, res) => {
-  const { id } = req.params;
-  reactionCounts[id] = (reactionCounts[id] || 0) + 1;
-  io.emit("update:reacted", { id, count: reactionCounts[id] });
-  addActivity("update", `Update post #${id} received a heart reaction`);
-  res.json({ id, count: reactionCounts[id] });
-});
-app.get("/api/updates/reactions", (req, res) => res.json(reactionCounts));
-// Real-time update deletion
-app.delete("/api/updates/:id", (req, res) => {
-  const { id } = req.params;
-  const index = liveUpdates.findIndex((u) => u.id === id);
-  if (index !== -1) {
-    const deleted = liveUpdates.splice(index, 1)[0];
-    delete reactionCounts[id];
-    io.emit("update:deleted", { id });
-    addActivity("update", `Update entry "${deleted.title}" was removed`);
-    return res.json({ ok: true, id });
-  }
-  res.status(404).json({ error: "Update not found" });
 });
 
 
@@ -261,6 +396,196 @@ app.get("/api/system/metrics", (req, res) => {
     },
     history: points
   });
+});
+
+// ---------- Live System Logs & Process Management ----------
+app.get("/api/system/logs", (req, res) => {
+  const { level, module } = req.query;
+  let logs = [...systemLogs];
+  if (level && level !== "all") {
+    logs = logs.filter((l) => l.level.toLowerCase() === String(level).toLowerCase());
+  }
+  if (module && module !== "all") {
+    logs = logs.filter((l) => l.module.toLowerCase() === String(module).toLowerCase());
+  }
+  res.json(logs);
+});
+
+// Simulated OS processes with live telemetry
+const osProcesses = [
+  { pid: 101, name: "kernel.sys", user: "system", cpu: 1.2, memoryMb: 24.5, threads: 8, status: "running", description: "Portfolio OS Kernel & Scheduler" },
+  { pid: 104, name: "window-server", user: "bron", cpu: 3.4, memoryMb: 48.2, threads: 4, status: "running", description: "Glass Compositor & Display Manager" },
+  { pid: 210, name: "socket-daemon", user: "system", cpu: 0.8, memoryMb: 16.1, threads: 2, status: "running", description: "Realtime WebSocket Hub" },
+  { pid: 312, name: "audio-synth-service", user: "bron", cpu: 2.1, memoryMb: 32.0, threads: 2, status: "running", description: "WebAudio Analyser & Music Streamer" },
+  { pid: 418, name: "guestbook-worker", user: "system", cpu: 0.4, memoryMb: 12.8, threads: 1, status: "idle", description: "Guestbook Signature Processor" },
+  { pid: 502, name: "analytics-telemetry", user: "system", cpu: 0.6, memoryMb: 14.3, threads: 1, status: "running", description: "OS Metrics & Diagnostics Collector" },
+];
+
+app.get("/api/system/processes", (req, res) => {
+  const updated = osProcesses.map((p) => ({
+    ...p,
+    cpu: Math.max(0.1, Math.round((p.cpu + (Math.random() * 0.8 - 0.4)) * 10) / 10),
+    memoryMb: Math.max(5, Math.round((p.memoryMb + (Math.random() * 0.6 - 0.3)) * 10) / 10),
+  }));
+  res.json(updated);
+});
+
+app.post("/api/system/process/:pid/restart", (req, res) => {
+  const pid = Number(req.params.pid);
+  const p = osProcesses.find((item) => item.pid === pid);
+  if (!p) return res.status(404).json({ error: "Process not found" });
+
+  p.status = "restarting";
+  logSystem("warn", "ProcessMgr", `Process ${p.name} (PID: ${pid}) restarted by user.`);
+  io.emit("system:process_updated", p);
+
+  setTimeout(() => {
+    p.status = "running";
+    io.emit("system:process_updated", p);
+    logSystem("info", "ProcessMgr", `Process ${p.name} (PID: ${pid}) recovered successfully.`);
+  }, 1000);
+
+  res.json({ ok: true, process: p });
+});
+
+// Virtual System Disk Storage Breakdown
+app.get("/api/system/storage", (req, res) => {
+  res.json({
+    totalGb: 256,
+    usedGb: 68.4,
+    freeGb: 187.6,
+    percentUsed: 26.7,
+    partitions: [
+      { name: "Portfolio OS System", sizeGb: 22.1, color: "#38bdf8", desc: "Kernel, Compositor & Static Assets" },
+      { name: "Applications & Binaries", sizeGb: 18.5, color: "#a855f7", desc: "Library, Games, Sandbox & Tools" },
+      { name: "Notes & User Scratchpad", sizeGb: 12.8, color: "#f59e0b", desc: "Markdown Notes & Cloud Synced Docs" },
+      { name: "Media, Audio & Cache", sizeGb: 15.0, color: "#22c55e", desc: "Cached Previews, Wallpapers & Sound FX" },
+    ]
+  });
+});
+
+// ---------- Notes Cloud Sync & Backup ----------
+let cloudNotes = [
+  {
+    id: "welcome-note",
+    title: "Welcome to Portfolio OS Notes",
+    updatedAt: "Cloud Synced",
+    pinned: true,
+    tag: "guide",
+    color: "amber",
+    content: `# Welcome to Portfolio OS Notes\n\nThis is your persistent notepad, rich markdown editor, and task scratchpad with real-time cloud sync.\n\n### Key Capabilities\n- [x] **Full Formatting Tools**: Bold, italic, underline, strikethrough, headings & code\n- [x] **Cloud Sync & Backup**: Seamlessly sync across tabs and devices\n- [x] **Document Analytics**: Word count, character count, and reading time\n- [x] **Smart Tagging**: Organize thoughts with #tags\n- [x] **Auto-saved**: Everything you write persists locally and in the cloud`
+  },
+  {
+    id: "tech-stack",
+    title: "Portfolio OS Technical Stack",
+    updatedAt: "Cloud Synced",
+    pinned: false,
+    tag: "architecture",
+    color: "sky",
+    content: `## Portfolio OS Technical Stack\n\n- **Frontend Core**: React 19 + Vite 8.1 + TypeScript\n- **Styling**: Tailwind CSS v4 + Frosted Glassmorphism\n- **Icons**: Gravity UI Icons (@gravity-ui/icons)\n- **Real-Time Backend**: Express 5 & Socket.IO realtime parity\n- **Storage**: Real-time cloud sync engine + localStorage persistence`
+  }
+];
+
+app.get("/api/notes", (req, res) => {
+  res.json(cloudNotes);
+});
+
+app.post("/api/notes/sync", (req, res) => {
+  const { notes } = req.body || {};
+  if (!Array.isArray(notes)) {
+    return res.status(400).json({ error: "Invalid notes payload" });
+  }
+
+  const map = new Map();
+  cloudNotes.forEach((n) => map.set(n.id, n));
+  notes.forEach((clientNote) => {
+    if (clientNote && clientNote.id) {
+      map.set(clientNote.id, {
+        ...(map.get(clientNote.id) || {}),
+        ...clientNote,
+        serverSyncedAt: Date.now()
+      });
+    }
+  });
+
+  cloudNotes = Array.from(map.values());
+  io.emit("notes:synced", cloudNotes);
+  addActivity("notes", `Notes synchronized with cloud (${cloudNotes.length} notes)`);
+  res.json({ ok: true, notes: cloudNotes });
+});
+
+app.post("/api/notes", (req, res) => {
+  const note = req.body;
+  if (!note || !note.id) return res.status(400).json({ error: "Invalid note" });
+
+  const idx = cloudNotes.findIndex((n) => n.id === note.id);
+  const updatedNote = { ...note, serverSyncedAt: Date.now() };
+
+  if (idx !== -1) {
+    cloudNotes[idx] = updatedNote;
+  } else {
+    cloudNotes.unshift(updatedNote);
+  }
+
+  io.emit("notes:updated", updatedNote);
+  res.json(updatedNote);
+});
+
+app.delete("/api/notes/:id", (req, res) => {
+  const { id } = req.params;
+  cloudNotes = cloudNotes.filter((n) => n.id !== id);
+  io.emit("notes:deleted", { id });
+  res.json({ ok: true, id });
+});
+
+// ---------- Calculator Constants & Conversions ----------
+const MATH_CONSTANTS = [
+  { symbol: "π", name: "Pi", value: 3.141592653589793, category: "Math", desc: "Ratio of circle circumference to diameter" },
+  { symbol: "e", name: "Euler's Number", value: 2.718281828459045, category: "Math", desc: "Base of natural logarithm" },
+  { symbol: "φ", name: "Golden Ratio", value: 1.618033988749895, category: "Math", desc: "Divine proportion in geometry & art" },
+  { symbol: "c", name: "Speed of Light", value: 299792458, unit: "m/s", category: "Physics", desc: "Universal speed of light in vacuum" },
+  { symbol: "h", name: "Planck Constant", value: "6.62607015e-34", unit: "J·s", category: "Physics", desc: "Scale of quantum mechanical actions" },
+  { symbol: "G", name: "Gravitational Constant", value: "6.67430e-11", unit: "N·m²/kg²", category: "Physics", desc: "Newtonian gravitational constant" },
+  { symbol: "kB", name: "Boltzmann Constant", value: "1.380649e-23", unit: "J/K", category: "Physics", desc: "Relates thermal energy to temperature" },
+  { symbol: "NA", name: "Avogadro Number", value: "6.02214076e23", unit: "mol⁻¹", category: "Chemistry", desc: "Number of particles per mole" }
+];
+
+app.get("/api/calc/constants", (req, res) => {
+  res.json(MATH_CONSTANTS);
+});
+
+app.get("/api/calc/convert", (req, res) => {
+  const { type, from, to, value } = req.query;
+  const num = parseFloat(value);
+  if (isNaN(num)) return res.status(400).json({ error: "Invalid numeric value" });
+
+  let result = null;
+  const lengthToMeters = { m: 1, km: 1000, cm: 0.01, mm: 0.001, mi: 1609.344, ft: 0.3048, in: 0.0254 };
+  const weightToKg = { kg: 1, g: 0.001, mg: 0.000001, lb: 0.453592, oz: 0.0283495 };
+  const dataToBytes = { b: 1, kb: 1024, mb: 1024 * 1024, gb: 1024 * 1024 * 1024, tb: 1024 * 1024 * 1024 * 1024 };
+
+  const f = String(from || "").toLowerCase();
+  const t = String(to || "").toLowerCase();
+
+  if (type === "length" && lengthToMeters[f] && lengthToMeters[t]) {
+    const meters = num * lengthToMeters[f];
+    result = meters / lengthToMeters[t];
+  } else if (type === "weight" && weightToKg[f] && weightToKg[t]) {
+    const kg = num * weightToKg[f];
+    result = kg / weightToKg[t];
+  } else if (type === "data" && dataToBytes[f] && dataToBytes[t]) {
+    const bytes = num * dataToBytes[f];
+    result = bytes / dataToBytes[t];
+  } else if (type === "temp") {
+    if (f === "c" && t === "f") result = (num * 9) / 5 + 32;
+    else if (f === "f" && t === "c") result = ((num - 32) * 5) / 9;
+    else if (f === "c" && t === "k") result = num + 273.15;
+    else if (f === "k" && t === "c") result = num - 273.15;
+    else if (f === t) result = num;
+  }
+
+  if (result === null) return res.status(400).json({ error: "Unsupported conversion" });
+  res.json({ ok: true, type, from: f, to: t, value: num, result: Math.round(result * 1000000) / 1000000 });
 });
 
 
@@ -553,10 +878,57 @@ app.post("/api/terminal/exec", (req, res) => {
       });
     }
 
+    case "logs": {
+      const recent = systemLogs.slice(0, 8);
+      const lines = recent.map(
+        (l) => `[${new Date(l.ts).toLocaleTimeString()}] [${l.level.toUpperCase()}] [${l.module}] ${l.message}`
+      );
+      return res.json({
+        ok: true,
+        output: `📜 Recent System Logs:\n----------------------------------------\n${lines.join("\n")}`
+      });
+    }
+
+    case "processes":
+    case "ps": {
+      const header = "PID    USER     STATUS      CPU%   MEM(MB)  NAME";
+      const rows = osProcesses.map((p) =>
+        `${String(p.pid).padEnd(6)} ${p.user.padEnd(8)} ${p.status.padEnd(11)} ${String(p.cpu + "%").padEnd(6)} ${String(p.memoryMb).padEnd(8)} ${p.name}`
+      );
+      return res.json({
+        ok: true,
+        output: `${header}\n${"-".repeat(54)}\n${rows.join("\n")}`
+      });
+    }
+
+    case "notes": {
+      const list = cloudNotes.map((n) => `• [${n.tag || "general"}] ${n.title} (${n.pinned ? "Pinned" : "Normal"})`);
+      return res.json({
+        ok: true,
+        output: `📝 Cloud Notes Repository (${cloudNotes.length} notes):\n${list.join("\n")}`
+      });
+    }
+
+    case "storage":
+    case "df": {
+      return res.json({
+        ok: true,
+        output: [
+          `💾 Disk Storage Usage (Virtual SSD 256GB):`,
+          `-------------------------------------------`,
+          `Used: 68.4 GB (26.7%) | Free: 187.6 GB`,
+          `• OS Subsystem:        22.1 GB`,
+          `• Applications:        18.5 GB`,
+          `• Notes & User Data:   12.8 GB`,
+          `• Audio & Media Cache: 15.0 GB`
+        ].join("\n")
+      });
+    }
+
     default:
       return res.status(400).json({
         ok: false,
-        error: `Unknown server command: '${lower}'. Try 'sysinfo', 'ping', 'quote', 'joke', or 'curl'.`
+        error: `Unknown server command: '${lower}'. Try 'sysinfo', 'ping', 'logs', 'ps', 'storage', 'notes', 'quote', 'joke', or 'curl'.`
       });
   }
 });
@@ -655,7 +1027,7 @@ app.get("/api/music/youtube-search", async (req, res) => {
   }
 });
 
-// ---------- Chat (anonymous, no login) ----------
+// ---------- Chat (anonymous, no login with real-time sync) ----------
 const ADJECTIVES = ["Swift", "Quiet", "Amber", "Cosmic", "Lucky", "Nimble", "Gentle", "Bright", "Wandering", "Velvet"];
 const ANIMALS = ["Falcon", "Otter", "Lynx", "Comet", "Heron", "Fox", "Whale", "Sparrow", "Marlin", "Wren"];
 const nano = customAlphabet("0123456789", 3);
@@ -665,37 +1037,108 @@ const randomName = () =>
 const MAX_HISTORY = 100;
 let chatHistory = [];
 let onlineCount = 0;
+let pinnedChatMessages = [];
+const connectedUsers = new Map();
+
+app.get("/api/chat/users", (req, res) => {
+  res.json(Array.from(connectedUsers.values()));
+});
+
+app.get("/api/chat/pinned", (req, res) => {
+  res.json(pinnedChatMessages);
+});
+
+app.post("/api/chat/:id/pin", (req, res) => {
+  const { id } = req.params;
+  const msg = chatHistory.find((m) => m.id === id);
+  if (!msg) return res.status(404).json({ error: "Message not found" });
+
+  const isPinned = pinnedChatMessages.some((m) => m.id === id);
+  if (isPinned) {
+    pinnedChatMessages = pinnedChatMessages.filter((m) => m.id !== id);
+  } else {
+    pinnedChatMessages.unshift(msg);
+    if (pinnedChatMessages.length > 5) pinnedChatMessages.pop();
+  }
+
+  io.emit("chat:pinned", { id, isPinned: !isPinned, pinnedList: pinnedChatMessages });
+  res.json({ id, isPinned: !isPinned, pinned: pinnedChatMessages });
+});
+
+app.get("/api/chat/export", (req, res) => {
+  res.setHeader("Content-Disposition", "attachment; filename=\"chat-transcript.json\"");
+  res.json({
+    exportedAt: new Date().toISOString(),
+    totalMessages: chatHistory.length,
+    messages: chatHistory
+  });
+});
 
 io.on("connection", (socket) => {
   const guestName = randomName();
   socket.data.name = guestName;
+  socket.data.id = socket.id;
+  socket.data.joinedAt = Date.now();
+  
+  connectedUsers.set(socket.id, {
+    id: socket.id,
+    name: guestName,
+    joinedAt: socket.data.joinedAt
+  });
+
   onlineCount++;
   totalVisitorSessions++;
 
-  socket.emit("chat:init", { name: guestName, history: chatHistory });
+  socket.emit("chat:init", {
+    name: guestName,
+    history: chatHistory,
+    pinned: pinnedChatMessages,
+    users: Array.from(connectedUsers.values())
+  });
+
   io.emit("chat:presence", { online: onlineCount });
+  io.emit("chat:users_updated", Array.from(connectedUsers.values()));
   addActivity("visitor", `Visitor ${guestName} joined the desktop session`);
 
   socket.on("chat:rename", (newName) => {
     const clean = String(newName || "").trim().slice(0, 20);
-    if (clean) socket.data.name = clean;
+    if (clean) {
+      socket.data.name = clean;
+      const user = connectedUsers.get(socket.id);
+      if (user) {
+        user.name = clean;
+        io.emit("chat:users_updated", Array.from(connectedUsers.values()));
+      }
+    }
   });
 
-  socket.on("chat:message", (text, ack) => {
-    const clean = String(text || "").trim().slice(0, 500);
+  socket.on("chat:message", (data, ack) => {
+    const isObj = typeof data === "object" && data !== null;
+    const rawText = isObj ? data.text : data;
+    const replyTo = isObj ? data.replyTo : null;
+
+    const clean = String(rawText || "").trim().slice(0, 500);
     if (!clean) {
       if (typeof ack === "function") ack({ ok: false, error: "empty" });
       return;
     }
+
     const msg = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name: socket.data.name,
       text: clean,
       ts: Date.now(),
-      reactions: {}
+      reactions: {},
+      replyTo: replyTo && typeof replyTo === "object" ? {
+        id: replyTo.id,
+        name: replyTo.name,
+        text: String(replyTo.text || "").slice(0, 100)
+      } : undefined
     };
+
     chatHistory.push(msg);
     if (chatHistory.length > MAX_HISTORY) chatHistory = chatHistory.slice(-MAX_HISTORY);
+
     io.emit("chat:message", msg);
     addActivity("chat", `${socket.data.name} sent a message in Chat`);
     if (typeof ack === "function") ack({ ok: true, message: msg });
@@ -703,7 +1146,7 @@ io.on("connection", (socket) => {
 
   // Chat message emoji reaction
   socket.on("chat:react", ({ id, emoji }) => {
-    const validEmojis = ["❤️", "👍", "🔥", "🚀", "😂"];
+    const validEmojis = ["❤️", "👍", "🔥", "🚀", "😂", "🎉"];
     if (!id || !validEmojis.includes(emoji)) return;
     const msg = chatHistory.find((m) => m.id === id);
     if (msg) {
@@ -718,8 +1161,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
+    connectedUsers.delete(socket.id);
     onlineCount = Math.max(0, onlineCount - 1);
     io.emit("chat:presence", { online: onlineCount });
+    io.emit("chat:users_updated", Array.from(connectedUsers.values()));
   });
 });
 

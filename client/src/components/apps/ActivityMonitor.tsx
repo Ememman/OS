@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useOS } from "../../store/useOS";
 import { soundFx } from "../../lib/soundFx";
 import { API_URL } from "../../lib/config";
+import { getSocket } from "../../lib/socket";
 import {
   GIconActivity,
   GIconCpu,
@@ -11,6 +12,10 @@ import {
   GIconRotateRight,
   GIconTrash,
   GIconCheck,
+  GIconHardDrive,
+  GIconFileText,
+  GIconSearch,
+  GIconSliders,
 } from "../icons/GravityIcons";
 
 interface SystemInfoData {
@@ -53,33 +58,93 @@ interface MetricPoint {
   systemPercent: number;
 }
 
+export interface OsProcess {
+  pid: number;
+  name: string;
+  user: string;
+  cpu: number;
+  memoryMb: number;
+  threads: number;
+  status: "running" | "idle" | "restarting" | string;
+  description?: string;
+}
+
+export interface SystemLogItem {
+  id: string;
+  ts: number;
+  level: "info" | "warn" | "error" | "debug" | string;
+  module: string;
+  message: string;
+}
+
+export interface StorageBreakdown {
+  totalGb: number;
+  usedGb: number;
+  freeGb: number;
+  percentUsed: number;
+  partitions: {
+    name: string;
+    sizeGb: number;
+    color: string;
+    desc: string;
+  }[];
+}
+
 export default function ActivityMonitor() {
   const { windows, closeWindow, osMode, systemSounds, notify } = useOS();
   const isWin = osMode === "win";
 
-  const [activeTab, setActiveTab] = useState<"processes" | "performance" | "network" | "specs">("processes");
+  const [activeTab, setActiveTab] = useState<
+    "processes" | "performance" | "network" | "logs" | "storage" | "specs"
+  >("processes");
+
   const [sysInfo, setSysInfo] = useState<SystemInfoData | null>(null);
   const [metrics, setMetrics] = useState<MetricPoint[]>([]);
+  const [osProcesses, setOsProcesses] = useState<OsProcess[]>([]);
+  const [systemLogs, setSystemLogs] = useState<SystemLogItem[]>([]);
+  const [storageData, setStorageData] = useState<StorageBreakdown | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Diagnostics & Ping tool state
   const [pingLatency, setPingLatency] = useState<number | null>(null);
   const [testingPing, setTestingPing] = useState(false);
+  const [restartingPid, setRestartingPid] = useState<number | null>(null);
 
-  // Fetch system diagnostics and metrics
+  // Log filter states
+  const [logLevelFilter, setLogLevelFilter] = useState<string>("all");
+  const [logSearchQuery, setLogSearchQuery] = useState("");
+  const logsContainerRef = useRef<HTMLDivElement>(null);
+
+  // Fetch telemetry, processes, logs, storage
   const fetchDiagnostics = async () => {
     try {
-      const [infoRes, metricsRes] = await Promise.all([
+      const [infoRes, metricsRes, procRes, storageRes, logsRes] = await Promise.all([
         fetch(`${API_URL}/api/system/info`),
-        fetch(`${API_URL}/api/system/metrics`)
+        fetch(`${API_URL}/api/system/metrics`),
+        fetch(`${API_URL}/api/system/processes`).catch(() => null),
+        fetch(`${API_URL}/api/system/storage`).catch(() => null),
+        fetch(`${API_URL}/api/system/logs`).catch(() => null)
       ]);
+
       if (infoRes.ok) {
         const infoData = await infoRes.json();
         setSysInfo(infoData);
       }
       if (metricsRes.ok) {
         const metricsData = await metricsRes.json();
-        if (metricsData.history) {
-          setMetrics(metricsData.history);
-        }
+        if (metricsData.history) setMetrics(metricsData.history);
+      }
+      if (procRes && procRes.ok) {
+        const procs = await procRes.json();
+        setOsProcesses(procs);
+      }
+      if (storageRes && storageRes.ok) {
+        const storage = await storageRes.json();
+        setStorageData(storage);
+      }
+      if (logsRes && logsRes.ok) {
+        const logs = await logsRes.json();
+        setSystemLogs(logs);
       }
     } catch {
       // Fallback simulated metrics if server offline
@@ -92,8 +157,7 @@ export default function ActivityMonitor() {
           memoryMb: 42 + Math.round(Math.random() * 8),
           systemPercent: 35
         };
-        const next = [...prev.slice(-14), point];
-        return next;
+        return [...prev.slice(-14), point];
       });
     } finally {
       setLoading(false);
@@ -102,8 +166,31 @@ export default function ActivityMonitor() {
 
   useEffect(() => {
     fetchDiagnostics();
-    const interval = setInterval(fetchDiagnostics, 2500);
+    const interval = setInterval(fetchDiagnostics, 3000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Real-time socket events for system log streaming and process updates
+  useEffect(() => {
+    const socket = getSocket();
+
+    const onLog = (entry: SystemLogItem) => {
+      setSystemLogs((prev) => [entry, ...prev.slice(0, 99)]);
+    };
+
+    const onProcUpdate = (updatedProc: OsProcess) => {
+      setOsProcesses((prev) =>
+        prev.map((p) => (p.pid === updatedProc.pid ? updatedProc : p))
+      );
+    };
+
+    socket.on("system:log", onLog);
+    socket.on("system:process_updated", onProcUpdate);
+
+    return () => {
+      socket.off("system:log", onLog);
+      socket.off("system:process_updated", onProcUpdate);
+    };
   }, []);
 
   const runPingTest = async () => {
@@ -125,20 +212,60 @@ export default function ActivityMonitor() {
     }
   };
 
+  // Close open user application window
   const handleEndTask = (winId: string, title: string) => {
     if (systemSounds) soundFx.playClose();
     closeWindow(winId);
-    notify("Process Terminated", `Closed "${title}" successfully.`);
+    notify("Process Terminated", `Closed "${title}" successfully.`, "delete");
+  };
+
+  // Restart an OS background process
+  const restartProcess = async (pid: number, name: string) => {
+    if (systemSounds) soundFx.playClick();
+    setRestartingPid(pid);
+    try {
+      const res = await fetch(`${API_URL}/api/system/process/${pid}/restart`, {
+        method: "POST"
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setOsProcesses((prev) =>
+          prev.map((p) => (p.pid === pid ? { ...p, status: "restarting" } : p))
+        );
+        notify("Process Recovered", `Restarted ${name} (PID: ${pid})`, "update");
+      }
+    } catch {
+      notify("Action Failed", `Could not restart process ${name}.`, "warning");
+    } finally {
+      setTimeout(() => setRestartingPid(null), 1000);
+    }
   };
 
   const currentCpu = metrics.length > 0 ? metrics[metrics.length - 1].cpuPercent : 16;
-  const currentMem = sysInfo?.memory?.heapUsedMb || (metrics.length > 0 ? metrics[metrics.length - 1].memoryMb : 48);
+  const currentMem =
+    sysInfo?.memory?.heapUsedMb ||
+    (metrics.length > 0 ? metrics[metrics.length - 1].memoryMb : 48);
+
+  // Filtered system logs
+  const filteredLogs = useMemo(() => {
+    let result = [...systemLogs];
+    if (logLevelFilter !== "all") {
+      result = result.filter((l) => l.level.toLowerCase() === logLevelFilter.toLowerCase());
+    }
+    if (logSearchQuery.trim()) {
+      const q = logSearchQuery.toLowerCase();
+      result = result.filter(
+        (l) => l.message.toLowerCase().includes(q) || l.module.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [systemLogs, logLevelFilter, logSearchQuery]);
 
   return (
     <div className="flex flex-col h-full select-none bg-black/40 text-white text-xs">
       {/* Tab Navigation */}
-      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 bg-white/5">
-        <div className="flex items-center gap-1 sm:gap-2">
+      <div className="flex flex-wrap items-center justify-between border-b border-white/10 px-3 py-2 bg-white/5 gap-2">
+        <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
           <button
             onClick={() => setActiveTab("processes")}
             className={`px-2.5 py-1 rounded-lg transition-all font-medium ${
@@ -147,7 +274,7 @@ export default function ActivityMonitor() {
                 : "text-white/60 hover:text-white hover:bg-white/10"
             }`}
           >
-            Processes ({windows.length})
+            Processes ({windows.length + osProcesses.length})
           </button>
           <button
             onClick={() => setActiveTab("performance")}
@@ -158,6 +285,26 @@ export default function ActivityMonitor() {
             }`}
           >
             Performance
+          </button>
+          <button
+            onClick={() => setActiveTab("logs")}
+            className={`px-2.5 py-1 rounded-lg transition-all font-medium ${
+              activeTab === "logs"
+                ? "bg-accent text-white shadow-md shadow-accent/20"
+                : "text-white/60 hover:text-white hover:bg-white/10"
+            }`}
+          >
+            Live Logs
+          </button>
+          <button
+            onClick={() => setActiveTab("storage")}
+            className={`px-2.5 py-1 rounded-lg transition-all font-medium ${
+              activeTab === "storage"
+                ? "bg-accent text-white shadow-md shadow-accent/20"
+                : "text-white/60 hover:text-white hover:bg-white/10"
+            }`}
+          >
+            Storage
           </button>
           <button
             onClick={() => setActiveTab("network")}
@@ -177,13 +324,13 @@ export default function ActivityMonitor() {
                 : "text-white/60 hover:text-white hover:bg-white/10"
             }`}
           >
-            System Specs
+            Specs
           </button>
         </div>
 
         <button
           onClick={fetchDiagnostics}
-          title="Refresh metrics"
+          title="Refresh metrics & processes"
           className="p-1 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition"
         >
           <GIconRotateRight size={14} className={loading ? "animate-spin text-accent" : ""} />
@@ -192,71 +339,135 @@ export default function ActivityMonitor() {
 
       {/* Main Content View */}
       <div className="flex-1 overflow-auto thin-scroll p-4">
+        {/* Processes Tab */}
         {activeTab === "processes" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-display text-sm font-semibold text-white/90">
-                  {isWin ? "Running Tasks & Windows" : "Active OS Processes"}
-                </h3>
-                <p className="text-[11px] text-white/40">
-                  {windows.length} user window{windows.length === 1 ? "" : "s"} running in window manager.
-                </p>
-              </div>
-              <div className="flex items-center gap-3 text-[11px] text-white/50">
-                <span className="flex items-center gap-1.5">
+          <div className="space-y-5">
+            {/* User Application Windows */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <h3 className="font-display text-sm font-semibold text-white/90">
+                    {isWin ? "Active Application Windows" : "User Window Compositor Tasks"}
+                  </h3>
+                  <p className="text-[11px] text-white/40">
+                    {windows.length} window{windows.length === 1 ? "" : "s"} managed by Portfolio OS compositor.
+                  </p>
+                </div>
+                <span className="flex items-center gap-1.5 text-[11px] text-white/50">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Live Synced
+                  Live Reactive
                 </span>
               </div>
+
+              {windows.length === 0 ? (
+                <div className="text-center py-6 rounded-xl border border-dashed border-white/10 bg-white/5">
+                  <GIconActivity size={24} className="mx-auto text-white/20 mb-1.5" />
+                  <p className="text-white/50 font-medium">No open windows</p>
+                  <p className="text-[10px] text-white/30">
+                    Launch apps from dock or desktop icons to inspect running window processes.
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-white/10 overflow-hidden bg-black/20">
+                  <table className="w-full text-left text-[11px]">
+                    <thead className="bg-white/5 border-b border-white/10 text-white/40 uppercase font-mono text-[9px] tracking-wider">
+                      <tr>
+                        <th className="py-2 px-3">Process Name</th>
+                        <th className="py-2 px-3">Status</th>
+                        <th className="py-2 px-3">Memory</th>
+                        <th className="py-2 px-3 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {windows.map((win) => (
+                        <tr key={win.id} className="hover:bg-white/5 transition-colors">
+                          <td className="py-2 px-3 font-medium flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-accent" />
+                            <span>{win.title}</span>
+                          </td>
+                          <td className="py-2 px-3">
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px]">
+                              {win.minimized ? "Minimized" : "Active"}
+                            </span>
+                          </td>
+                          <td className="py-2 px-3 font-mono text-white/60">
+                            ~{(Math.abs(win.id.charCodeAt(0) * 3) % 24) + 12} MB
+                          </td>
+                          <td className="py-2 px-3 text-right">
+                            <button
+                              onClick={() => handleEndTask(win.id, win.title)}
+                              className="px-2 py-1 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 transition text-[10px] font-medium"
+                            >
+                              End Task
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
-            {windows.length === 0 ? (
-              <div className="text-center py-12 rounded-xl border border-dashed border-white/10 bg-white/5">
-                <GIconActivity size={32} className="mx-auto text-white/20 mb-2" />
-                <p className="text-white/50 font-medium">No open windows</p>
-                <p className="text-[11px] text-white/30">Launch apps from the dock or desktop to view running processes.</p>
+            {/* Simulated OS Background Daemons */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <h3 className="font-display text-sm font-semibold text-white/90">
+                    Background System Daemons
+                  </h3>
+                  <p className="text-[11px] text-white/40">
+                    Core services handling WebSockets, audio synthesis, and system telemetry.
+                  </p>
+                </div>
               </div>
-            ) : (
-              <div className="rounded-xl border border-white/10 overflow-hidden bg-white/5 shadow-inner">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-white/10 bg-white/5 text-[10px] uppercase text-white/40 tracking-wider">
-                      <th className="py-2 px-3">Process Name</th>
+
+              <div className="rounded-xl border border-white/10 overflow-hidden bg-black/20">
+                <table className="w-full text-left text-[11px]">
+                  <thead className="bg-white/5 border-b border-white/10 text-white/40 uppercase font-mono text-[9px] tracking-wider">
+                    <tr>
                       <th className="py-2 px-3">PID</th>
-                      <th className="py-2 px-3">Status</th>
-                      <th className="py-2 px-3">Est. Memory</th>
+                      <th className="py-2 px-3">Service Name</th>
+                      <th className="py-2 px-3">CPU %</th>
+                      <th className="py-2 px-3">Memory</th>
+                      <th className="py-2 px-3">State</th>
                       <th className="py-2 px-3 text-right">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5 text-white/80">
-                    {windows.map((win, idx) => {
-                      const pseudoPid = 1024 + (win.id.charCodeAt(0) * 17 + idx * 43) % 8000;
-                      const pseudoMem = 28 + (win.title.length * 4) + (win.maximized ? 18 : 6);
+                  <tbody className="divide-y divide-white/5">
+                    {osProcesses.map((p) => {
+                      const isRestarting = restartingPid === p.pid || p.status === "restarting";
                       return (
-                        <tr key={win.id} className="hover:bg-white/8 transition-colors">
-                          <td className="py-2.5 px-3 flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-accent" />
-                            <span className="font-medium text-white/95">{win.title}</span>
-                            <span className="text-[10px] text-white/40">({win.app})</span>
+                        <tr key={p.pid} className="hover:bg-white/5 transition-colors">
+                          <td className="py-2 px-3 font-mono text-white/40">{p.pid}</td>
+                          <td className="py-2 px-3">
+                            <div className="font-medium text-white/90">{p.name}</div>
+                            {p.description && (
+                              <div className="text-[9px] text-white/40">{p.description}</div>
+                            )}
                           </td>
-                          <td className="py-2.5 px-3 font-mono text-[11px] text-white/50">{pseudoPid}</td>
-                          <td className="py-2.5 px-3">
-                            <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                              win.minimized
-                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                                : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                            }`}>
-                              {win.minimized ? "Suspended" : "Active"}
+                          <td className="py-2 px-3 font-mono text-white/70">{p.cpu}%</td>
+                          <td className="py-2 px-3 font-mono text-white/70">{p.memoryMb} MB</td>
+                          <td className="py-2 px-3">
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] ${
+                                isRestarting
+                                  ? "bg-amber-500/20 text-amber-300 animate-pulse"
+                                  : p.status === "running"
+                                  ? "bg-emerald-500/20 text-emerald-300"
+                                  : "bg-white/10 text-white/50"
+                              }`}
+                            >
+                              {isRestarting ? "Restarting..." : p.status}
                             </span>
                           </td>
-                          <td className="py-2.5 px-3 font-mono text-[11px] text-white/60">{pseudoMem} MB</td>
-                          <td className="py-2.5 px-3 text-right">
+                          <td className="py-2 px-3 text-right">
                             <button
-                              onClick={() => handleEndTask(win.id, win.title)}
-                              className="px-2 py-1 rounded bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/30 transition text-[11px]"
+                              onClick={() => restartProcess(p.pid, p.name)}
+                              disabled={isRestarting}
+                              className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition text-[10px] disabled:opacity-50"
                             >
-                              {isWin ? "End Task" : "Force Quit"}
+                              Restart
                             </button>
                           </td>
                         </tr>
@@ -265,153 +476,215 @@ export default function ActivityMonitor() {
                   </tbody>
                 </table>
               </div>
-            )}
+            </div>
           </div>
         )}
 
-        {activeTab === "performance" && (
-          <div className="space-y-4">
-            {/* Realtime Stats Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3 rounded-xl border border-white/10 bg-white/5">
-                <div className="text-[10px] text-white/40 uppercase tracking-wide">CPU Load</div>
-                <div className="text-2xl font-display font-semibold text-emerald-400 mt-1">
-                  {currentCpu}%
-                </div>
-                <div className="text-[10px] text-white/40 mt-0.5">{sysInfo?.cpu?.cores || 8} Cores Active</div>
+        {/* Live Logs Tab */}
+        {activeTab === "logs" && (
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="font-display text-sm font-semibold text-white/90">
+                  Real-time Kernel & Server Logs
+                </h3>
+                <p className="text-[11px] text-white/40">
+                  Live streaming audit log of system events, guestbook actions, and realtime sockets.
+                </p>
               </div>
 
-              <div className="p-3 rounded-xl border border-white/10 bg-white/5">
-                <div className="text-[10px] text-white/40 uppercase tracking-wide">Heap Memory</div>
-                <div className="text-2xl font-display font-semibold text-cyan-400 mt-1">
-                  {currentMem} <span className="text-xs font-normal">MB</span>
-                </div>
-                <div className="text-[10px] text-white/40 mt-0.5">Total: {sysInfo?.memory?.heapTotalMb || 64} MB</div>
-              </div>
-
-              <div className="p-3 rounded-xl border border-white/10 bg-white/5">
-                <div className="text-[10px] text-white/40 uppercase tracking-wide">System RAM</div>
-                <div className="text-2xl font-display font-semibold text-violet-400 mt-1">
-                  {sysInfo?.memory?.usagePercent || 42}%
-                </div>
-                <div className="text-[10px] text-white/40 mt-0.5">
-                  {sysInfo?.memory?.systemFreeMb ? `${Math.round(sysInfo.memory.systemFreeMb / 1024)}GB Free` : "Plenty free"}
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl border border-white/10 bg-white/5">
-                <div className="text-[10px] text-white/40 uppercase tracking-wide">Connected Sockets</div>
-                <div className="text-2xl font-display font-semibold text-accent mt-1">
-                  {sysInfo?.realtime?.connectedClients || 1}
-                </div>
-                <div className="text-[10px] text-white/40 mt-0.5">Real-time Visitors</div>
+              {/* Log Level Filters */}
+              <div className="flex items-center gap-1 bg-black/40 border border-white/10 rounded-lg p-0.5 text-[10px]">
+                {["all", "info", "warn", "error", "debug"].map((lvl) => (
+                  <button
+                    key={lvl}
+                    onClick={() => setLogLevelFilter(lvl)}
+                    className={`px-2 py-0.5 rounded uppercase font-mono transition ${
+                      logLevelFilter === lvl
+                        ? "bg-accent text-white font-semibold"
+                        : "text-white/50 hover:text-white"
+                    }`}
+                  >
+                    {lvl}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Live Chart Canvas or SVG */}
-            <div className="p-4 rounded-xl border border-white/10 bg-white/5 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-white/80">CPU Utilization History</span>
-                <span className="text-[11px] text-emerald-400 font-mono">{currentCpu}%</span>
+            {/* Search filter input */}
+            <div className="relative">
+              <GIconSearch size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40" />
+              <input
+                type="text"
+                value={logSearchQuery}
+                onChange={(e) => setLogSearchQuery(e.target.value)}
+                placeholder="Filter logs by message or module..."
+                className="w-full pl-7 pr-3 py-1.5 rounded-lg text-xs bg-black/30 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-accent"
+              />
+            </div>
+
+            {/* Rolling Log Output Viewer */}
+            <div
+              ref={logsContainerRef}
+              className="rounded-xl border border-white/10 bg-slate-950/80 p-3 h-80 overflow-y-auto thin-scroll font-mono text-[11px] space-y-1.5 select-text"
+            >
+              {filteredLogs.length === 0 ? (
+                <div className="text-center py-12 text-white/30 text-xs">
+                  No log entries matching filter.
+                </div>
+              ) : (
+                filteredLogs.map((l) => {
+                  const badgeColor =
+                    l.level === "error"
+                      ? "text-rose-400 bg-rose-500/10 border-rose-500/30"
+                      : l.level === "warn"
+                      ? "text-amber-400 bg-amber-500/10 border-amber-500/30"
+                      : l.level === "debug"
+                      ? "text-purple-400 bg-purple-500/10 border-purple-500/30"
+                      : "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
+
+                  return (
+                    <div key={l.id} className="flex items-start gap-2 leading-relaxed">
+                      <span className="text-white/30 shrink-0 text-[10px]">
+                        {new Date(l.ts).toLocaleTimeString()}
+                      </span>
+                      <span
+                        className={`px-1.5 py-0.2 rounded border text-[9px] uppercase font-bold shrink-0 ${badgeColor}`}
+                      >
+                        {l.level}
+                      </span>
+                      <span className="text-accent shrink-0 font-semibold">[{l.module}]</span>
+                      <span className="text-white/80 break-all">{l.message}</span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Storage Breakdown Tab */}
+        {activeTab === "storage" && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-display text-sm font-semibold text-white/90">
+                Virtual Disk Storage & Allocation
+              </h3>
+              <p className="text-[11px] text-white/40">
+                Telemetry for virtual SSD storage, persistent cache, and user notes.
+              </p>
+            </div>
+
+            {/* Storage Progress Meter */}
+            <div className="p-4 rounded-xl border border-white/10 bg-white/5 space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-white">Virtual SSD (256 GB)</span>
+                <span className="text-white/60">
+                  {storageData?.usedGb || 68.4} GB used of {storageData?.totalGb || 256} GB (
+                  {storageData?.freeGb || 187.6} GB free)
+                </span>
               </div>
-              <div className="h-28 w-full flex items-end gap-1.5 pt-2 border-b border-white/10">
-                {metrics.map((m, i) => (
-                  <div key={i} className="flex-1 flex flex-col justify-end items-center h-full group relative">
-                    <div
-                      className="w-full bg-emerald-400/70 hover:bg-emerald-300 rounded-t transition-all duration-300"
-                      style={{ height: `${Math.max(4, m.cpuPercent)}%` }}
+
+              {/* Multi-segment capacity bar */}
+              <div className="h-4 w-full bg-black/40 rounded-full overflow-hidden flex p-0.5 border border-white/10">
+                {(storageData?.partitions || []).map((part, idx) => (
+                  <div
+                    key={idx}
+                    title={`${part.name}: ${part.sizeGb} GB`}
+                    style={{
+                      width: `${(part.sizeGb / (storageData?.totalGb || 256)) * 100}%`,
+                      backgroundColor: part.color
+                    }}
+                    className="h-full rounded-sm first:rounded-l-full last:rounded-r-full transition-all duration-500"
+                  />
+                ))}
+              </div>
+
+              {/* Legend & Details */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                {(storageData?.partitions || []).map((part, idx) => (
+                  <div key={idx} className="p-2.5 rounded-lg bg-black/25 border border-white/5 flex items-start gap-2.5">
+                    <span
+                      className="w-3 h-3 rounded-full mt-0.5 shrink-0"
+                      style={{ backgroundColor: part.color }}
                     />
-                    <div className="absolute -top-7 opacity-0 group-hover:opacity-100 bg-black/90 px-1.5 py-0.5 rounded text-[9px] pointer-events-none transition whitespace-nowrap z-10">
-                      {m.cpuPercent}%
+                    <div>
+                      <div className="font-semibold text-white text-xs">{part.name}</div>
+                      <div className="text-[10px] text-white/40">{part.desc}</div>
+                      <div className="font-mono text-xs text-white/80 mt-1">{part.sizeGb} GB</div>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between text-[10px] text-white/30 pt-1 font-mono">
-                <span>30s ago</span>
-                <span>15s ago</span>
-                <span>Now</span>
+            </div>
+          </div>
+        )}
+
+        {/* Performance Tab */}
+        {activeTab === "performance" && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="p-4 rounded-xl border border-white/10 bg-white/5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-white/70">CPU Utilization</span>
+                  <span className="font-mono text-accent text-sm font-bold">{currentCpu}%</span>
+                </div>
+                <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-accent transition-all duration-300"
+                    style={{ width: `${currentCpu}%` }}
+                  />
+                </div>
+                <div className="text-[10px] text-white/40">
+                  {sysInfo?.cpu?.model || "Multi-core Virtual Processor"} · {sysInfo?.cpu?.cores || 8} cores
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl border border-white/10 bg-white/5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-white/70">Memory (Heap)</span>
+                  <span className="font-mono text-emerald-400 text-sm font-bold">{currentMem} MB</span>
+                </div>
+                <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-400 transition-all duration-300"
+                    style={{ width: `${Math.min(100, (currentMem / 256) * 100)}%` }}
+                  />
+                </div>
+                <div className="text-[10px] text-white/40">
+                  Total Allocated: {sysInfo?.memory?.heapTotalMb || 64} MB
+                </div>
               </div>
             </div>
 
-            {/* Memory breakdown */}
-            <div className="p-4 rounded-xl border border-white/10 bg-white/5 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-white/80">Memory Footprint</span>
-                <span className="text-[11px] text-white/40">V8 Garbage Collector Stable</span>
-              </div>
-              <div className="space-y-2">
-                <div>
-                  <div className="flex justify-between text-[11px] mb-1">
-                    <span className="text-white/60">Node V8 Heap Used</span>
-                    <span className="font-mono text-cyan-300">{sysInfo?.memory?.heapUsedMb || 44} MB</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+            {/* Sparkline History Chart */}
+            <div className="p-4 rounded-xl border border-white/10 bg-white/5 space-y-2">
+              <span className="font-medium text-white/80">CPU Activity History (30s)</span>
+              <div className="h-28 w-full flex items-end gap-1.5 pt-3">
+                {metrics.map((m, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
                     <div
-                      className="h-full bg-cyan-400 transition-all duration-500 rounded-full"
-                      style={{
-                        width: `${Math.min(100, ((sysInfo?.memory?.heapUsedMb || 44) / (sysInfo?.memory?.heapTotalMb || 64)) * 100)}%`
-                      }}
+                      className="w-full bg-accent/80 hover:bg-accent rounded-t transition-all duration-300"
+                      style={{ height: `${Math.max(6, m.cpuPercent)}%` }}
+                      title={`${m.cpuPercent}% at ${new Date(m.time).toLocaleTimeString()}`}
                     />
                   </div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-[11px] mb-1">
-                    <span className="text-white/60">Resident Set Size (RSS)</span>
-                    <span className="font-mono text-violet-300">{sysInfo?.memory?.rssMb || 86} MB</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-                    <div
-                      className="h-full bg-violet-400 transition-all duration-500 rounded-full"
-                      style={{ width: "45%" }}
-                    />
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
         )}
 
+        {/* Network & Ping Tab */}
         {activeTab === "network" && (
           <div className="space-y-4">
-            <div className="p-4 rounded-xl border border-white/10 bg-white/5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-display text-sm font-semibold text-white/90">API Server & Real-Time Gateway</h4>
-                  <p className="text-[11px] text-white/40">Socket.IO WebSockets & Express REST Endpoint Status</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-emerald-300 font-medium">Operational</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className="p-3 rounded-lg border border-white/5 bg-black/30">
-                  <div className="text-[10px] text-white/40">API URL</div>
-                  <div className="font-mono text-[11px] text-white/90 truncate mt-0.5">{API_URL}</div>
-                </div>
-                <div className="p-3 rounded-lg border border-white/5 bg-black/30">
-                  <div className="text-[10px] text-white/40">Server Process Uptime</div>
-                  <div className="font-mono text-[11px] text-white/90 mt-0.5">
-                    {sysInfo?.node?.uptimeSeconds ? `${Math.floor(sysInfo.node.uptimeSeconds / 60)}m ${sysInfo.node.uptimeSeconds % 60}s` : "Online"}
-                  </div>
-                </div>
-                <div className="p-3 rounded-lg border border-white/5 bg-black/30">
-                  <div className="text-[10px] text-white/40">Realtime Clients</div>
-                  <div className="font-mono text-[11px] text-accent mt-0.5">
-                    {sysInfo?.realtime?.connectedClients || 1} active
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Interactive Ping Tool */}
             <div className="p-4 rounded-xl border border-accent/30 bg-accent/5 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-display text-sm font-semibold text-white">Live Ping Test</h4>
-                  <p className="text-[11px] text-white/50">Measure real-time HTTP roundtrip latency between your browser and the Portfolio OS server.</p>
+                  <p className="text-[11px] text-white/50">
+                    Measure real-time HTTP roundtrip latency between your browser and the Portfolio OS server.
+                  </p>
                 </div>
                 <button
                   onClick={runPingTest}
@@ -433,15 +706,17 @@ export default function ActivityMonitor() {
                       {pingLatency === -1 ? (
                         <span className="text-rose-400">Request timed out</span>
                       ) : (
-                        <span className="text-emerald-400">{pingLatency} ms <span className="text-white/40 font-normal text-xs">· Roundtrip</span></span>
+                        <span className="text-emerald-400">
+                          {pingLatency} ms <span className="text-white/40 font-normal text-xs">· Roundtrip</span>
+                        </span>
                       )}
                     </div>
                     <div className="text-[11px] text-white/50">
                       {pingLatency < 50
                         ? "Optimal connection speed — instant reactivity."
                         : pingLatency < 150
-                          ? "Good connection latency."
-                          : "High latency — standard web performance."}
+                        ? "Good connection latency."
+                        : "High latency — standard web performance."}
                     </div>
                   </div>
                 </div>
@@ -450,6 +725,7 @@ export default function ActivityMonitor() {
           </div>
         )}
 
+        {/* System Specs Tab */}
         {activeTab === "specs" && (
           <div className="space-y-4">
             <div className="p-4 rounded-xl border border-white/10 bg-white/5 space-y-3">
@@ -461,7 +737,9 @@ export default function ActivityMonitor() {
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-white/5">
                   <span className="text-white/40">Viewport Resolution:</span>
-                  <span className="font-mono text-white">{typeof window !== "undefined" ? `${window.innerWidth} × ${window.innerHeight}` : "1920 × 1080"}</span>
+                  <span className="font-mono text-white">
+                    {typeof window !== "undefined" ? `${window.innerWidth} × ${window.innerHeight}` : "1920 × 1080"}
+                  </span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-white/5">
                   <span className="text-white/40">Host Platform:</span>

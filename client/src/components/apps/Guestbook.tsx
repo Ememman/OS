@@ -23,6 +23,7 @@ import {
   GIconUpload,
   GIconMapPin,
   GIconClose,
+  GIconDownload,
 } from "../icons/GravityIcons";
 import {
   AVATAR_STYLES,
@@ -181,7 +182,22 @@ export default function Guestbook() {
   // Filters & sorting
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("All");
-  const [sortBy, setSortBy] = useState<"newest" | "loved">("newest");
+  const [sortBy, setSortBy] = useState<"newest" | "loved" | "oldest">("newest");
+
+  const exportGuestbook = () => {
+    if (systemSounds) soundFx.playPop();
+    const dataStr = JSON.stringify(entries, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `guestbook-signatures-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    notify("Exported", "Guestbook ledger saved to Downloads.", "success");
+  };
 
   // Save profile changes to localStorage
   useEffect(() => {
@@ -409,6 +425,8 @@ export default function Guestbook() {
 
     if (sortBy === "loved") {
       list = [...list].sort((a, b) => (b.reactions || 0) - (a.reactions || 0));
+    } else if (sortBy === "oldest") {
+      list = [...list].sort((a, b) => a.ts - b.ts);
     } else {
       list = [...list].sort((a, b) => b.ts - a.ts);
     }
@@ -447,6 +465,15 @@ export default function Guestbook() {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             <span className="hidden sm:inline">Live synced</span>
           </div>
+
+          <button
+            onClick={exportGuestbook}
+            title="Export Guestbook Signatures (.json)"
+            className="flex items-center gap-1 px-2 py-1 rounded-lg border border-white/[0.08] hover:bg-white/[0.06] text-white/60 hover:text-white transition cursor-pointer text-xs"
+          >
+            <GIconDownload size={13} />
+            <span className="hidden sm:inline">Export</span>
+          </button>
 
           <button
             onClick={fetchEntries}
@@ -743,7 +770,7 @@ export default function Guestbook() {
               {/* Optional Profile Website / Link & Location */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
                 <div className="space-y-1">
-                  <label className="text-[10px] text-white/50 uppercase tracking-wide block font-mono flex items-center gap-1">
+                  <label className="text-[10px] text-white/50 uppercase tracking-wide font-mono flex items-center gap-1">
                     <GIconLink size={10} />
                     <span>Website or GitHub</span>
                   </label>
@@ -844,6 +871,16 @@ export default function Guestbook() {
                   }`}
                 >
                   Top Loved
+                </button>
+                <button
+                  onClick={() => setSortBy("oldest")}
+                  className={`px-2 py-1 rounded-lg transition cursor-pointer ${
+                    sortBy === "oldest"
+                      ? "bg-white/15 text-white font-medium border border-white/10"
+                      : "text-white/50 hover:text-white"
+                  }`}
+                >
+                  Oldest
                 </button>
               </div>
             </div>
