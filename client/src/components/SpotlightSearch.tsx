@@ -132,7 +132,7 @@ export default function SpotlightSearch() {
         action: () => windows.forEach((w) => closeWindow(w.id)),
       },
     ],
-    [setOsMode, toggleMotion, toggleChatSound, windows, closeWindow]
+    [setOsMode, toggleMotion, toggleChatSound, windows, closeWindow, toggleMissionControl]
   );
 
   // Filter items

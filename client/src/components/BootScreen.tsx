@@ -36,7 +36,7 @@ export default function BootScreen() {
 
   return (
     <div
-      className={`fixed inset-0 z-\[2000] flex flex-col items-center justify-center transition-opacity duration-300 p-4 ${
+      className={`fixed inset-0 z-[2000] flex flex-col items-center justify-center transition-opacity duration-300 p-4 ${
         leaving ? "opacity-0" : "opacity-100"
       }`}>
       {/* Background with dark theme */}

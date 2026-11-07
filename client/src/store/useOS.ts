@@ -159,7 +159,7 @@ let z = 10;
 
 export const useOS = create<OSState>((set, get) => ({
   windows: [],
-  themeMode: "dark",
+  themeMode: savedThemeMode,
   harmonizedPalette: initialPalette,
   accent: DEFAULT_ACCENT,
   wallpaper: localStorage.getItem("os_wallpaper") || "bg1",

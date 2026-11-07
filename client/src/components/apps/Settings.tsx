@@ -65,7 +65,7 @@ function ToggleRow({ label, checked, onToggle }) {
       >
         <span
           className={`absolute top-0.5 w-5 h-5 aspect-square shrink-0 rounded-full bg-white transition-all duration-300 shadow-md ${
-            checked ? "left-\[18px] sm:left-5.5" : "left-0.5"
+            checked ? "left-[18px] sm:left-5.5" : "left-0.5"
           }`}
         />
       </button>
@@ -78,7 +78,6 @@ export default function Settings() {
     wallpaper,
     setWallpaper,
     wallpapers,
-    harmonizedPalette,
     reduceMotion,
     toggleMotion,
     particlesEnabled,

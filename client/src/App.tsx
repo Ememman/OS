@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useOS } from "./store/useOS";
 import { applyHarmonizedPaletteToDoc } from "./lib/colorHarmonizer";
 import { useIsMobile, useIsTablet } from "./lib/useMediaQuery";

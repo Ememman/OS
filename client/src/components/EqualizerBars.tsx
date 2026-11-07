@@ -8,7 +8,7 @@ export default function EqualizerBars({ size = "sm", className = "" }) {
   const width = size === "lg" ? 2.5 : 2;
 
   return (
-    <div className={`flex items-end gap-\[2px] ${className}`} style={{ height: Math.max(...heights) }} aria-hidden="true">
+    <div className={`flex items-end gap-[2px] ${className}`} style={{ height: Math.max(...heights) }} aria-hidden="true">
       {heights.map((h, i) => (
         <span
           key={i}

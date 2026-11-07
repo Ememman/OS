@@ -42,7 +42,7 @@ export interface NoteItem {
   serverSyncedAt?: number;
 }
 
-export const NOTE_TEMPLATES = [
+const NOTE_TEMPLATES = [
   {
     id: "standup",
     name: "Daily Standup & Agenda",
@@ -65,7 +65,7 @@ export const NOTE_TEMPLATES = [
   }
 ];
 
-export const NOTE_COLORS: { id: string; hex: string; border: string; bg: string }[] = [
+const NOTE_COLORS: { id: string; hex: string; border: string; bg: string }[] = [
   { id: "amber", hex: "#f59e0b", border: "border-amber-500/40", bg: "bg-amber-500" },
   { id: "emerald", hex: "#10b981", border: "border-emerald-500/40", bg: "bg-emerald-500" },
   { id: "sky", hex: "#0ea5e9", border: "border-sky-500/40", bg: "bg-sky-500" },
@@ -73,7 +73,7 @@ export const NOTE_COLORS: { id: string; hex: string; border: string; bg: string 
   { id: "rose", hex: "#f43f5e", border: "border-rose-500/40", bg: "bg-rose-500" },
 ];
 
-export const NOTE_TAGS = ["all", "work", "ideas", "code", "todo", "personal"];
+const NOTE_TAGS = ["all", "work", "ideas", "code", "todo", "personal"];
 
 const DEFAULT_NOTES: NoteItem[] = [
   {
@@ -263,6 +263,7 @@ export default function Notes() {
       setHistory([activeNote.content]);
       setHistoryIdx(0);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeNote?.id]);
 
   // Push new history state on user edits (debounced / discrete)

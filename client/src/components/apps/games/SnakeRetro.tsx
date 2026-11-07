@@ -1,16 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   GIconPlay,
-  GIconPause,
   GIconRotateRight,
   GIconTrophy,
   GIconChevronUp,
   GIconChevronDown,
   GIconChevronLeft,
   GIconChevronRight,
+  GIconCheck,
 } from "../../icons/GravityIcons";
 import { soundFx } from "../../../lib/soundFx";
 import { useOS } from "../../../store/useOS";
+import { API_URL } from "../../../lib/config";
 
 type Point = { x: number; y: number };
 type Direction = "UP" | "DOWN" | "LEFT" | "RIGHT";
@@ -57,26 +58,59 @@ export default function SnakeRetro() {
     }
   });
 
+  const [playerName, setPlayerName] = useState(() => localStorage.getItem("os_player_name") || "Pilot");
+  const [submittingScore, setSubmittingScore] = useState(false);
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
+
   const nextDirRef = useRef<Direction>("RIGHT");
-  const gameLoopRef = useRef<number | null>(null);
 
   const resetGame = useCallback(() => {
     if (systemSounds) soundFx.playPop();
-    const initialSnake: Point[] = [
+    setSnake([
       { x: 10, y: 10 },
       { x: 9, y: 10 },
       { x: 8, y: 10 },
-    ];
-    setSnake(initialSnake);
-    setFood(getRandomPosition(initialSnake));
+    ]);
+    setFood({ x: 14, y: 10 });
     setGoldenFood(null);
     setDir("RIGHT");
     nextDirRef.current = "RIGHT";
     setIsGameOver(false);
     setIsPaused(false);
-    setHasStarted(true);
+    setHasStarted(false);
     setScore(0);
+    setScoreSubmitted(false);
   }, [systemSounds]);
+
+  const handleSubmitScore = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!playerName.trim() || submittingScore || scoreSubmitted || score <= 0) return;
+
+    setSubmittingScore(true);
+    localStorage.setItem("os_player_name", playerName.trim());
+
+    try {
+      const res = await fetch(`${API_URL}/api/games/leaderboard`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          game: "snake",
+          player: playerName.trim(),
+          score,
+          details: `${score / 10} Apples (${SPEEDS[speedIdx].label})`
+        })
+      });
+
+      if (res.ok) {
+        setScoreSubmitted(true);
+        notify("Score Posted!", `Your Snake score of ${score} was added to the leaderboard!`, "success");
+      }
+    } catch {
+      notify("Network Error", "Could not reach leaderboard API.", "warning");
+    } finally {
+      setSubmittingScore(false);
+    }
+  };
 
   const changeDirection = useCallback(
     (newDir: Direction) => {
@@ -294,16 +328,44 @@ export default function SnakeRetro() {
         )}
 
         {isGameOver && (
-          <div className="absolute inset-0 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center animate-fade-in">
+          <div className="absolute inset-0 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center animate-fade-in z-20">
             <h3 className="text-xl font-bold text-rose-400 mb-1">Game Over</h3>
             <p className="text-xs text-white/70 mb-1 font-mono">
               Final Score: <span className="text-accent font-bold">{score}</span>
             </p>
             {score >= bestScore && score > 0 && (
-              <span className="text-[10px] text-amber-300 font-semibold mb-3">
+              <span className="text-[10px] text-amber-300 font-semibold mb-2 block">
                 🏆 New High Score!
               </span>
             )}
+
+            {score > 0 && !scoreSubmitted && (
+              <form onSubmit={handleSubmitScore} className="my-2 flex items-center gap-1.5 max-w-[220px]">
+                <input
+                  type="text"
+                  maxLength={16}
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  placeholder="Pilot call-sign"
+                  className="w-full px-2 py-1 bg-white/10 border border-white/20 rounded-lg text-white text-[11px] outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={submittingScore}
+                  className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-lg text-[11px] shrink-0"
+                >
+                  {submittingScore ? "..." : "Post"}
+                </button>
+              </form>
+            )}
+
+            {scoreSubmitted && (
+              <div className="my-2 text-[11px] text-emerald-400 flex items-center gap-1 font-medium">
+                <GIconCheck size={13} />
+                <span>Score posted to Leaderboard!</span>
+              </div>
+            )}
+
             <button
               onClick={resetGame}
               className="flex items-center gap-1.5 px-4 py-2 mt-2 rounded-xl bg-accent text-white font-semibold text-xs shadow-lg shadow-accent/30 hover:brightness-110 active:scale-95 transition"

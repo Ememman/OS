@@ -11,6 +11,8 @@ import { updates } from "./data/updates.js";
 import { initialGuestbook } from "./data/guestbook.js";
 import { snippets } from "./data/snippets.js";
 import { initialFeedback } from "./data/feedback.js";
+import { initialLeaderboard } from "./data/leaderboard.js";
+import { initialCloudFiles } from "./data/files.js";
 
 // Force IPv4-first resolution for Windows networking stability
 dns.setDefaultResultOrder("ipv4first");
@@ -471,6 +473,78 @@ app.get("/api/system/ping", (req, res) => {
   res.json({ pong: true, time: Date.now() });
 });
 
+// High-performance CPU & Memory stress benchmarking
+app.post("/api/system/benchmark", (req, res) => {
+  const start = performance.now();
+  const memBefore = process.memoryUsage().heapUsed;
+
+  // CPU Test: Numerical computation & prime testing
+  let primesCount = 0;
+  const limit = 25000;
+  for (let i = 2; i <= limit; i++) {
+    let isPrime = true;
+    for (let j = 2; j * j <= i; j++) {
+      if (i % j === 0) {
+        isPrime = false;
+        break;
+      }
+    }
+    if (isPrime) primesCount++;
+  }
+
+  // Memory & JSON Serialization Throughput Test
+  const testPayload = Array.from({ length: 5000 }, (_, idx) => ({
+    id: idx,
+    hash: Math.random().toString(36).slice(2),
+    data: "Portfolio-OS-Core-Telemetry-Payload-Sample",
+    val: idx * 1.618
+  }));
+  const serialized = JSON.stringify(testPayload);
+  const parsed = JSON.parse(serialized);
+
+  const memAfter = process.memoryUsage().heapUsed;
+  const durationMs = Math.max(0.1, performance.now() - start);
+  const throughputMbSec = Math.round(((serialized.length / (1024 * 1024)) / (durationMs / 1000)) * 100) / 100;
+  const opsPerSec = Math.round((limit / (durationMs / 1000)) * 10);
+
+  let rating = "A+ (Ultra Fast)";
+  if (durationMs > 120) rating = "A (Fast)";
+  else if (durationMs > 300) rating = "B (Moderate)";
+
+  const result = {
+    ok: true,
+    timestamp: Date.now(),
+    durationMs: Math.round(durationMs * 100) / 100,
+    metrics: {
+      primesCalculated: primesCount,
+      opsPerSec,
+      jsonThroughputMbSec: throughputMbSec,
+      payloadItemsProcessed: parsed.length,
+      memoryDeltaKb: Math.round((memAfter - memBefore) / 1024),
+      rating
+    },
+    system: {
+      arch: os.arch(),
+      platform: os.platform(),
+      cpus: os.cpus().length,
+      model: os.cpus()[0]?.model || "Multi-core Host",
+      nodeVersion: process.version
+    }
+  };
+
+  logSystem("info", "Benchmark", `Benchmark completed in ${result.durationMs}ms (${rating})`);
+  res.json(result);
+});
+
+app.get("/api/system/benchmark", (req, res) => {
+  res.json({
+    ok: true,
+    description: "Portfolio OS Kernel Stress Benchmark API",
+    method: "POST to trigger a live benchmark test",
+    capabilities: ["cpu-primes", "json-throughput", "memory-delta", "event-loop-latency"]
+  });
+});
+
 // Metric history generator for charts
 app.get("/api/system/metrics", (req, res) => {
   const mem = process.memoryUsage();
@@ -869,6 +943,185 @@ app.post("/api/snippets/run", (req, res) => {
   });
 });
 
+// ---------- Arcade Games Leaderboard API ----------
+let arcadeLeaderboard = [...initialLeaderboard];
+
+app.get("/api/games/leaderboard", (req, res) => {
+  const { game, limit = 20 } = req.query;
+  let list = [...arcadeLeaderboard];
+  if (game && game !== "all") {
+    list = list.filter((e) => e.game.toLowerCase() === String(game).toLowerCase());
+  }
+  // Sort: For minesweeper, lower score (seconds) is better; for others, higher score is better
+  list.sort((a, b) => {
+    if (a.game === "minesweeper" && b.game === "minesweeper") {
+      return a.score - b.score;
+    }
+    return b.score - a.score;
+  });
+  const max = Math.min(50, Math.max(1, parseInt(limit, 10) || 20));
+  res.json({
+    ok: true,
+    total: list.length,
+    game: game || "all",
+    leaderboard: list.slice(0, max)
+  });
+});
+
+app.post("/api/games/leaderboard", strictSubmissionLimiter, (req, res) => {
+  const { game, player, score, details } = req.body || {};
+  const cleanPlayer = sanitizePlain(player, 25) || "Anonymous Pilot";
+  const cleanGame = String(game || "").trim().toLowerCase();
+  const numScore = Number(score);
+  const cleanDetails = sanitizePlain(details || "", 60);
+
+  const validGames = {
+    blockblast: "Block Blast",
+    "2048": "2048 Puzzle",
+    snake: "Snake Retro",
+    minesweeper: "Minesweeper Retro"
+  };
+
+  if (!validGames[cleanGame]) {
+    return res.status(400).json({ ok: false, error: "Invalid game. Supported: blockblast, 2048, snake, minesweeper" });
+  }
+
+  if (isNaN(numScore) || numScore < 0 || numScore > 1000000) {
+    return res.status(400).json({ ok: false, error: "Invalid score value." });
+  }
+
+  let badge = "🎮 Player";
+  if (cleanGame === "minesweeper") {
+    if (numScore < 30) badge = "⚡ Lightning Fast";
+    else if (numScore < 60) badge = "🏆 Master Defuser";
+    else badge = "🥈 Veteran";
+  } else if (cleanGame === "blockblast") {
+    if (numScore >= 5000) badge = "🏆 Legend";
+    else if (numScore >= 3000) badge = "🥈 Master";
+    else badge = "🥉 Pro";
+  } else if (cleanGame === "2048") {
+    if (numScore >= 15000) badge = "🏆 2048 Champion";
+    else if (numScore >= 8000) badge = "🥈 Strategist";
+    else badge = "🥉 Competitor";
+  } else if (cleanGame === "snake") {
+    if (numScore >= 300) badge = "🏆 Anaconda";
+    else if (numScore >= 150) badge = "🥈 Viper";
+    else badge = "🥉 Cobra";
+  }
+
+  const newEntry = {
+    id: `lb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    game: cleanGame,
+    gameName: validGames[cleanGame],
+    player: cleanPlayer,
+    score: numScore,
+    details: cleanDetails,
+    ts: Date.now(),
+    badge
+  };
+
+  arcadeLeaderboard.unshift(newEntry);
+  if (arcadeLeaderboard.length > 200) arcadeLeaderboard = arcadeLeaderboard.slice(0, 200);
+
+  io.emit("game:score_submitted", newEntry);
+  addActivity("game", `${cleanPlayer} scored ${numScore} in ${validGames[cleanGame]}!`);
+  res.status(201).json({ ok: true, entry: newEntry });
+});
+
+// ---------- Virtual Cloud Files API ----------
+let cloudFiles = [...initialCloudFiles];
+
+app.get("/api/files", (req, res) => {
+  const { path: filterPath, search } = req.query;
+  let list = [...cloudFiles];
+  if (filterPath && filterPath !== "all") {
+    list = list.filter((f) => f.path === filterPath);
+  }
+  if (search) {
+    const q = String(search).toLowerCase();
+    list = list.filter((f) => f.name.toLowerCase().includes(q) || (f.content && f.content.toLowerCase().includes(q)));
+  }
+  res.json({
+    ok: true,
+    count: list.length,
+    files: list
+  });
+});
+
+app.get("/api/files/stats", (req, res) => {
+  const totalFiles = cloudFiles.length;
+  const totalBytes = cloudFiles.reduce((acc, f) => acc + (f.size || (f.content ? f.content.length : 0)), 0);
+  const byType = {};
+  cloudFiles.forEach((f) => {
+    byType[f.type || "unknown"] = (byType[f.type || "unknown"] || 0) + 1;
+  });
+  res.json({
+    ok: true,
+    totalFiles,
+    totalBytes,
+    totalKb: Math.round((totalBytes / 1024) * 10) / 10,
+    byType,
+    allocatedDriveMb: 50,
+    usedPercentage: Math.round((totalBytes / (50 * 1024 * 1024)) * 10000) / 100
+  });
+});
+
+app.get("/api/files/:id", (req, res) => {
+  const file = cloudFiles.find((f) => f.id === req.params.id);
+  if (!file) return res.status(404).json({ ok: false, error: "File not found" });
+  res.json({ ok: true, file });
+});
+
+app.post("/api/files", (req, res) => {
+  const { id, name, path: filePath, content, type } = req.body || {};
+  const cleanName = sanitizePlain(name, 60);
+  if (!cleanName) return res.status(400).json({ ok: false, error: "Filename is required" });
+
+  const rawContent = typeof content === "string" ? content : "";
+  const cleanPath = String(filePath || "/").trim();
+  const fileType = String(type || "text").trim().toLowerCase();
+
+  const fileId = id || `file-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const existingIdx = cloudFiles.findIndex((f) => f.id === fileId);
+
+  const fileObj = {
+    id: fileId,
+    name: cleanName,
+    path: cleanPath,
+    type: fileType,
+    size: Buffer.byteLength(rawContent, "utf8"),
+    mimeType: fileType === "markdown" ? "text/markdown" : fileType === "json" ? "application/json" : "text/plain",
+    content: rawContent,
+    updatedAt: Date.now(),
+    readOnly: false
+  };
+
+  if (existingIdx !== -1) {
+    if (cloudFiles[existingIdx].readOnly) {
+      return res.status(403).json({ ok: false, error: "System file is read-only and cannot be modified." });
+    }
+    cloudFiles[existingIdx] = fileObj;
+  } else {
+    cloudFiles.unshift(fileObj);
+  }
+
+  io.emit("files:updated", fileObj);
+  addActivity("files", `File "${cleanName}" saved to cloud drive`);
+  res.status(201).json({ ok: true, file: fileObj });
+});
+
+app.delete("/api/files/:id", (req, res) => {
+  const { id } = req.params;
+  const existing = cloudFiles.find((f) => f.id === id);
+  if (!existing) return res.status(404).json({ ok: false, error: "File not found" });
+  if (existing.readOnly) return res.status(403).json({ ok: false, error: "System file is read-only and cannot be deleted." });
+
+  cloudFiles = cloudFiles.filter((f) => f.id !== id);
+  io.emit("files:deleted", { id });
+  addActivity("files", `File "${existing.name}" removed from cloud drive`);
+  res.json({ ok: true, id, message: `File ${existing.name} deleted successfully.` });
+});
+
 // ---------- Global Universal Search API ----------
 app.get("/api/search", (req, res) => {
   const q = String(req.query.q || "").trim().toLowerCase();
@@ -918,12 +1171,27 @@ app.get("/api/search", (req, res) => {
       s.language.toLowerCase().includes(q)
   ).slice(0, 6);
 
+  const matchedFiles = cloudFiles.filter(
+    (f) =>
+      f.name.toLowerCase().includes(q) ||
+      (f.content && f.content.toLowerCase().includes(q))
+  ).slice(0, 6);
+
+  const matchedLeaderboard = arcadeLeaderboard.filter(
+    (l) =>
+      l.gameName.toLowerCase().includes(q) ||
+      l.player.toLowerCase().includes(q) ||
+      (l.badge && l.badge.toLowerCase().includes(q))
+  ).slice(0, 6);
+
   const total =
     matchedProjects.length +
     matchedUpdates.length +
     matchedGuestbook.length +
     matchedNotes.length +
-    matchedSnippets.length;
+    matchedSnippets.length +
+    matchedFiles.length +
+    matchedLeaderboard.length;
 
   res.json({
     ok: true,
@@ -934,7 +1202,9 @@ app.get("/api/search", (req, res) => {
       updates: matchedUpdates,
       guestbook: matchedGuestbook,
       notes: matchedNotes,
-      snippets: matchedSnippets
+      snippets: matchedSnippets,
+      files: matchedFiles,
+      leaderboard: matchedLeaderboard
     }
   });
 });
@@ -1391,12 +1661,179 @@ app.post("/api/terminal/exec", (req, res) => {
       });
     }
 
+    case "minesweeper": {
+      return res.json({
+        ok: true,
+        output: [
+          "💣 Minesweeper Retro Launched!",
+          "----------------------------------------",
+          "Goal: Reveal all safe tiles without detonating a mine.",
+          "Controls: Left-click/Tap to reveal, Right-click/Flag button to flag, Smiley to reset.",
+          "Modes: Beginner (9x9, 10 mines), Intermediate (16x16, 40 mines), Expert (16x30, 99 mines).",
+          "Leaderboard: Your fastest defusal time can be recorded on the global leaderboard!"
+        ].join("\n")
+      });
+    }
+
+    case "benchmark": {
+      const start = performance.now();
+      let primesCount = 0;
+      for (let i = 2; i <= 20000; i++) {
+        let isP = true;
+        for (let j = 2; j * j <= i; j++) {
+          if (i % j === 0) { isP = false; break; }
+        }
+        if (isP) primesCount++;
+      }
+      const duration = Math.round((performance.now() - start) * 100) / 100;
+      const ops = Math.round(20000 / (duration / 1000));
+      return res.json({
+        ok: true,
+        output: [
+          "⚡ Portfolio OS Kernel Performance Benchmark:",
+          "--------------------------------------------------",
+          `• Primes Computed:     ${primesCount} (Range: 2 - 20,000)`,
+          `• Execution Time:      ${duration} ms`,
+          `• Computation Rate:    ${ops.toLocaleString()} Ops/sec`,
+          `• Memory Allocated:    ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)} MB`,
+          `• Host Architecture:   ${os.arch()} / ${os.platform()} (${os.cpus().length} Cores)`,
+          `• Benchmark Score:     ${duration < 50 ? "A+ (Ultra Fast)" : "A (Fast)"}`
+        ].join("\n")
+      });
+    }
+
+    case "leaderboard":
+    case "scores": {
+      const grouped = {};
+      arcadeLeaderboard.forEach((entry) => {
+        if (!grouped[entry.gameName]) grouped[entry.gameName] = [];
+        grouped[entry.gameName].push(entry);
+      });
+      const lines = ["🏆 Portfolio OS Global Arcade Leaderboard:", "=================================================="];
+      for (const [game, entries] of Object.entries(grouped)) {
+        lines.push(`\n🎮 ${game}:`);
+        lines.push("RANK  PLAYER              SCORE    BADGE / DETAILS");
+        lines.push("-".repeat(50));
+        entries.slice(0, 3).forEach((e, idx) => {
+          const rank = String(`#${idx + 1}`).padEnd(5);
+          const player = String(e.player).padEnd(19);
+          const score = String(e.score).padEnd(8);
+          lines.push(`${rank} ${player} ${score} ${e.badge || e.details}`);
+        });
+      }
+      return res.json({ ok: true, output: lines.join("\n") });
+    }
+
+    case "files":
+    case "ls": {
+      const lines = [
+        `📁 Virtual Cloud Drive Files (${cloudFiles.length} items):`,
+        "--------------------------------------------------",
+        "PERMS   SIZE      UPDATED      NAME",
+        "-".repeat(50)
+      ];
+      cloudFiles.forEach((f) => {
+        const perm = f.readOnly ? "r-- " : "rw- ";
+        const sz = String(`${f.size || 0}B`).padEnd(9);
+        const date = new Date(f.updatedAt).toLocaleDateString().padEnd(12);
+        lines.push(`${perm}    ${sz} ${date} ${f.name} (${f.path})`);
+      });
+      return res.json({ ok: true, output: lines.join("\n") });
+    }
+
+    case "motd": {
+      return res.json({
+        ok: true,
+        output: [
+          "╔══════════════════════════════════════════════════════════════╗",
+          "║        Welcome to Portfolio OS — Developer Edition           ║",
+          "╚══════════════════════════════════════════════════════════════╝",
+          `• System Status:       Online & Healthy (${io.engine.clientsCount} connected clients)`,
+          `• Active Applications: 15 Built-in Desktop Modules`,
+          `• Latest Update:       Arcade Leaderboard & Cloud Virtual Drive`,
+          `• Developer Tip:       Press ⌘K or Ctrl+K anywhere to open Spotlight Search!`
+        ].join("\n")
+      });
+    }
+
+    case "calc": {
+      const expr = args.join(" ").trim();
+      if (!expr) return res.json({ ok: false, error: "Usage: calc <expression> (e.g. calc (14 * 5) + 2^3)" });
+      try {
+        const sanitized = expr.replace(/\^/g, "**");
+        if (!/^[0-9+\-*/()., %^eE\sMath.sqrtcospitannabsceilfloorroundlog]+$/.test(sanitized)) {
+          return res.status(400).json({ ok: false, error: "Invalid math expression." });
+        }
+        const evaluated = Function(`"use strict"; return (${sanitized});`)();
+        return res.json({ ok: true, output: `${expr} = ${evaluated}` });
+      } catch {
+        return res.status(400).json({ ok: false, error: "Math evaluation syntax error." });
+      }
+    }
+
+    case "uptime": {
+      const uptime = Math.floor(process.uptime());
+      const hours = Math.floor(uptime / 3600);
+      const mins = Math.floor((uptime % 3600) / 60);
+      const secs = uptime % 60;
+      return res.json({
+        ok: true,
+        output: `up ${hours}h ${mins}m ${secs}s, load average: ${os.loadavg().map((l) => l.toFixed(2)).join(", ")}`
+      });
+    }
+
     default:
       return res.status(400).json({
         ok: false,
-        error: `Unknown server command: '${lower}'. Try 'sysinfo', 'ping', 'weather', 'analytics', 'top', 'kill <pid>', 'search <query>', 'netstat', 'clearlogs', 'logs', 'ps', 'storage', 'notes', 'quote', 'joke', or 'curl'.`
+        error: `Unknown server command: '${lower}'. Try 'sysinfo', 'ping', 'weather', 'analytics', 'benchmark', 'leaderboard', 'files', 'minesweeper', 'motd', 'calc', 'uptime', 'top', 'kill <pid>', 'search <query>', 'netstat', 'clearlogs', 'logs', 'ps', 'storage', 'notes', 'quote', 'joke', or 'curl'.`
       });
   }
+});
+
+// ---------- Interactive API Catalog & OpenAPI Specification ----------
+app.get(["/api", "/api/spec"], (req, res) => {
+  res.json({
+    ok: true,
+    service: "Portfolio OS Hypermedia API Gateway",
+    version: "3.2.0-lts",
+    environment: process.env.NODE_ENV || "development",
+    timestamp: Date.now(),
+    documentation: "https://github.com/portfolio-os",
+    endpoints: [
+      { path: "/api/health", method: "GET", description: "Health check, uptime and real-time socket client tally" },
+      { path: "/api/system/info", method: "GET", description: "Hardware telemetry, host architecture, memory & CPU statistics" },
+      { path: "/api/system/metrics", method: "GET", description: "Historical telemetry series for live performance graphing" },
+      { path: "/api/system/network", method: "GET", description: "Network interfaces, simulated throughput, active connections" },
+      { path: "/api/system/benchmark", method: "POST", description: "Run server-side compute, prime calculation & JSON serialization benchmark" },
+      { path: "/api/system/processes", method: "GET", description: "Active virtual processes with live CPU/RAM telemetry" },
+      { path: "/api/system/process/:pid/restart", method: "POST", description: "Restart a running virtual system process" },
+      { path: "/api/system/process/:pid/kill", method: "POST", description: "Terminate a virtual system process" },
+      { path: "/api/system/logs", method: "GET", description: "Kernel and service logs with module/level filtering" },
+      { path: "/api/system/storage", method: "GET", description: "Virtual partition storage allocations and usage" },
+      { path: "/api/games/leaderboard", method: "GET, POST", description: "Global arcade high scores for Block Blast, 2048, Snake, Minesweeper" },
+      { path: "/api/files", method: "GET, POST, DELETE", description: "Cloud virtual file system CRUD and storage management" },
+      { path: "/api/files/stats", method: "GET", description: "Cloud storage telemetry and file distribution metrics" },
+      { path: "/api/projects", method: "GET", description: "Showcase portfolio projects with tech stacks and live URLs" },
+      { path: "/api/projects/likes", method: "GET", description: "Project star counts across all portfolio projects" },
+      { path: "/api/projects/:id/like", method: "POST", description: "Star a project with real-time broadcast" },
+      { path: "/api/projects/:id/feedback", method: "GET, POST", description: "User reviews and ratings for portfolio projects" },
+      { path: "/api/updates", method: "GET, POST", description: "Changelog and feature updates feed with reactions" },
+      { path: "/api/notes", method: "GET, POST", description: "Markdown notes repository with real-time cloud sync" },
+      { path: "/api/notes/sync", method: "POST", description: "Two-way client-server markdown notes synchronizer" },
+      { path: "/api/guestbook", method: "GET, POST, DELETE", description: "Visitor ledger signatures, avatars, reactions" },
+      { path: "/api/snippets", method: "GET, POST, DELETE", description: "Code playground snippets and templates" },
+      { path: "/api/snippets/run", method: "POST", description: "AST parsing, complexity verification and execution validator" },
+      { path: "/api/music/search", method: "GET", description: "Search songs via iTunes Music Store API with 30s audio previews" },
+      { path: "/api/music/youtube-search", method: "GET", description: "Full music video search powered by YouTube API proxy" },
+      { path: "/api/chat/users", method: "GET", description: "Current online visitors in the chatroom" },
+      { path: "/api/chat/export", method: "GET", description: "Export complete chatroom transcript JSON" },
+      { path: "/api/calc/constants", method: "GET", description: "Mathematical, physical, and chemical constants" },
+      { path: "/api/calc/convert", method: "GET", description: "Unit conversions (length, weight, temperature, digital storage)" },
+      { path: "/api/weather", method: "GET", description: "Real-time weather proxy with hourly and daily forecast" },
+      { path: "/api/terminal/exec", method: "POST", description: "UNIX shell command execution hub" },
+      { path: "/api/contact", method: "POST", description: "Contact inquiry submission gateway with email validation" }
+    ]
+  });
 });
 
 const BROWSER_UA =
