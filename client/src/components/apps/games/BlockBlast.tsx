@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { GIconRotateLeft, GIconTrophy, GIconVolume, GIconVolumeMute } from "../../icons/GravityIcons";
+import { GIconRotateLeft, GIconTrophy, GIconVolume, GIconVolumeMute, GIconCheck } from "../../icons/GravityIcons";
+import { API_URL } from "../../../lib/config";
+import { useOS } from "../../../store/useOS";
 
 const SIZE = 8;
 const COLORS = ["#e8543f", "#57d9c7", "#9478ff", "#f5a642", "#ec6096", "#5fbf7c"];
@@ -151,9 +153,43 @@ export default function BlockBlast() {
   const popupId = useRef(0);
   const sfx = useGameAudio(soundOn);
 
+  const { notify } = useOS();
+  const [playerName, setPlayerName] = useState(() => localStorage.getItem("arcade_player_name") || "Player");
+  const [submittingScore, setSubmittingScore] = useState(false);
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
+
   useEffect(() => {
     localStorage.setItem("blockblast_sound", soundOn ? "on" : "off");
   }, [soundOn]);
+
+  const handleSubmitScore = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!playerName.trim() || submittingScore || score <= 0) return;
+    localStorage.setItem("arcade_player_name", playerName.trim());
+    setSubmittingScore(true);
+
+    try {
+      const res = await fetch(`${API_URL}/api/games/leaderboard`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          game: "blockblast",
+          player: playerName.trim(),
+          score,
+          details: `Score ${score} in Block Blast`
+        })
+      });
+
+      if (res.ok) {
+        setScoreSubmitted(true);
+        notify("Score Posted!", `Your Block Blast score of ${score} was added to the leaderboard!`, "success");
+      }
+    } catch {
+      notify("Network Error", "Could not reach leaderboard API.", "warning");
+    } finally {
+      setSubmittingScore(false);
+    }
+  };
 
   const refillIfNeeded = useCallback((newTray) => {
     if (newTray.every((p) => p === null)) {
@@ -247,6 +283,7 @@ export default function BlockBlast() {
     setSelected(null);
     setScore(0);
     setGameOver(false);
+    setScoreSubmitted(false);
     setClearingCells(new Set());
     setDropCells(new Set());
     setPopups([]);
@@ -345,11 +382,47 @@ export default function BlockBlast() {
       </p>
 
       {gameOver && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center" style={{ animation: "fadeInOpacity 200ms ease both" }}>
-          <div className="glass rounded-2xl p-6 text-center" style={{ animation: "menuOpen 220ms cubic-bezier(.34,1.56,.64,1) both" }}>
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" style={{ animation: "fadeInOpacity 200ms ease both" }}>
+          <div className="glass rounded-2xl p-6 text-center max-w-sm w-full border border-white/10 shadow-2xl" style={{ animation: "menuOpen 220ms cubic-bezier(.34,1.56,.64,1) both" }}>
+            <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 mx-auto mb-3 flex items-center justify-center">
+              <GIconTrophy size={24} />
+            </div>
             <h3 className="font-display text-lg font-semibold mb-1">Board's full</h3>
-            <p className="text-sm text-white/60 mb-4">Final score: <span className="accent font-semibold">{score}</span></p>
-            <button onClick={reset} className="px-4 py-2 rounded-lg bg-accent text-sm hover:brightness-110 active:scale-95 transition">Play again</button>
+            <p className="text-sm text-white/60 mb-4">Final score: <span className="text-accent font-semibold text-base">{score}</span></p>
+
+            {score > 0 && !scoreSubmitted && (
+              <form onSubmit={handleSubmitScore} className="mb-4 bg-white/5 p-3 rounded-xl border border-white/10">
+                <label className="block text-[11px] text-white/50 mb-1.5 text-left font-mono">Submit to Global Leaderboard</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    maxLength={16}
+                    value={playerName}
+                    onChange={(e) => setPlayerName(e.target.value)}
+                    placeholder="Your Alias"
+                    className="flex-1 bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-accent"
+                  />
+                  <button
+                    type="submit"
+                    disabled={submittingScore || !playerName.trim()}
+                    className="px-3 py-1.5 rounded-lg bg-accent text-white text-xs font-medium hover:brightness-110 active:scale-95 disabled:opacity-50 transition"
+                  >
+                    {submittingScore ? "Posting..." : "Post Score"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {scoreSubmitted && (
+              <div className="mb-4 py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center justify-center gap-1.5">
+                <GIconCheck size={14} />
+                <span>Score posted to Global Leaderboard!</span>
+              </div>
+            )}
+
+            <button onClick={reset} className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-xs active:scale-95 transition">
+              Play again
+            </button>
           </div>
         </div>
       )}
