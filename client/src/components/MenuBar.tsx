@@ -14,8 +14,6 @@ import {
   GIconBars,
   GIconSliders,
   GIconLayoutCells,
-  GIconMoon,
-  GIconRotateRight,
 } from "./icons/GravityIcons";
 
 interface MenuDropdownProps {

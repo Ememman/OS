@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { useOS, APPS } from "../store/useOS";
+import { useEffect } from "react";
+import { useOS } from "../store/useOS";
 import { soundFx } from "../lib/soundFx";
 import {
   GIconClose,

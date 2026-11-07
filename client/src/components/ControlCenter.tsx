@@ -32,7 +32,6 @@ export default function ControlCenter() {
     reduceMotion,
     toggleMotion,
     systemSounds,
-    toggleSystemSounds,
     toggleMissionControl,
   } = useOS();
 

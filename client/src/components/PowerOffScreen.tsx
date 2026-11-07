@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GIconPower, GIconRotateRight, GIconSliders } from "./icons/GravityIcons";
+import { GIconPower, GIconSliders } from "./icons/GravityIcons";
 import { useOS } from "../store/useOS";
 
 export default function PowerOffScreen() {

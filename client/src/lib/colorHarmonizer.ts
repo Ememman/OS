@@ -297,7 +297,7 @@ export function harmonizeAccentColor(
 /**
  * Apply the harmonized palette directly to the document root element
  */
-export function applyHarmonizedPaletteToDoc(palette: HarmonizedPalette, isNight: boolean = true) {
+export function applyHarmonizedPaletteToDoc(palette: HarmonizedPalette, _isNight: boolean = true) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
 

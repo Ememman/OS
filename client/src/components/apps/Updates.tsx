@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
-  GIconHeart,
   GIconWrench,
   GIconSparkles,
   GIconRocket,
@@ -253,7 +252,7 @@ export default function Updates() {
       } else {
         notify("Publication Failed", "Could not publish update to server.", "warning");
       }
-    } catch (err) {
+    } catch {
       notify("Network Error", "Unable to reach server to publish update.", "warning");
     } finally {
       setIsSubmitting(false);
