@@ -1,0 +1,121 @@
+name: Build & Deploy Server
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "server/**"
+      - ".github/workflows/deploy-server.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  validate:
+    name: Validate & Test Server
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run server syntax and verification tests
+        run: npm test
+
+      - name: Verify TypeScript / NestJS build
+        run: npm run build:nest
+
+  publish-container:
+    name: Build & Publish Container (GHCR)
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/portfolio-os-server
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=short
+
+      - name: Build and push Server Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-cloud:
+    name: Trigger Cloud Deployment
+    needs: publish-container
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy Webhook
+        if: ${{ env.RENDER_HOOK != '' }}
+        env:
+          RENDER_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          echo "Triggering automated deploy to Render..."
+          curl -fsSL -X POST "$RENDER_HOOK"
+          echo "Render deployment triggered successfully."
+
+      - name: Trigger Generic Deploy Webhook
+        if: ${{ env.DEPLOY_HOOK != '' }}
+        env:
+          DEPLOY_HOOK: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+        run: |
+          echo "Triggering webhook deployment..."
+          curl -fsSL -X POST "$DEPLOY_HOOK"
+          echo "Webhook deployment triggered successfully."
+
+      - name: Deployment Summary & Cloud Setup Guide
+        run: |
+          echo "### 🚀 Portfolio OS Server Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The backend server passed all verification checks and its Docker container was published to GitHub Packages." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Container Image**: \`ghcr.io/${{ github.repository_owner }}/portfolio-os-server:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "- **Render Auto-Deploy**: Triggered via \`RENDER_DEPLOY_HOOK_URL\`." >> $GITHUB_STEP_SUMMARY
+          elif [ -n "${{ secrets.DEPLOY_WEBHOOK_URL }}" ]; then
+            echo "- **Custom Webhook**: Triggered via \`DEPLOY_WEBHOOK_URL\`." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "💡 **Tip for 1-Click Live Cloud Hosting**:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Host the server on [Render](https://render.com), [Railway](https://railway.app), or any VPS." >> $GITHUB_STEP_SUMMARY
+            echo "2. Copy your service's **Deploy Hook URL**." >> $GITHUB_STEP_SUMMARY
+            echo "3. Add it as secret \`RENDER_DEPLOY_HOOK_URL\` in your GitHub repo **Settings → Secrets and variables → Actions**." >> $GITHUB_STEP_SUMMARY
+            echo "4. Future pushes will automatically rebuild and deploy the server live!" >> $GITHUB_STEP_SUMMARY
+          fi
