@@ -5,17 +5,10 @@ import { API_URL } from "../../lib/config";
 import { getSocket } from "../../lib/socket";
 import {
   GIconActivity,
-  GIconCpu,
-  GIconChartLine,
   GIconSignal,
-  GIconClose,
   GIconRotateRight,
   GIconTrash,
-  GIconCheck,
-  GIconHardDrive,
-  GIconFileText,
   GIconSearch,
-  GIconSliders,
 } from "../icons/GravityIcons";
 
 interface SystemInfoData {
@@ -121,7 +114,7 @@ export default function ActivityMonitor() {
   const isWin = osMode === "win";
 
   const [activeTab, setActiveTab] = useState<
-    "processes" | "performance" | "network" | "logs" | "storage" | "specs"
+    "processes" | "performance" | "network" | "logs" | "storage" | "specs" | "benchmark"
   >("processes");
 
   const [sysInfo, setSysInfo] = useState<SystemInfoData | null>(null);
@@ -138,6 +131,10 @@ export default function ActivityMonitor() {
   const [restartingPid, setRestartingPid] = useState<number | null>(null);
   const [killingPid, setKillingPid] = useState<number | null>(null);
   const [clearingLogs, setClearingLogs] = useState(false);
+
+  // Benchmark state
+  const [benchmarkResult, setBenchmarkResult] = useState<any | null>(null);
+  const [runningBenchmark, setRunningBenchmark] = useState(false);
 
   // Log filter states
   const [logLevelFilter, setLogLevelFilter] = useState<string>("all");
@@ -269,7 +266,7 @@ export default function ActivityMonitor() {
         method: "POST"
       });
       if (res.ok) {
-        const data = await res.json();
+        await res.json();
         setOsProcesses((prev) =>
           prev.map((p) => (p.pid === pid ? { ...p, status: "restarting" } : p))
         );
@@ -317,6 +314,26 @@ export default function ActivityMonitor() {
       notify("Action Failed", "Could not clear system logs.", "warning");
     } finally {
       setClearingLogs(false);
+    }
+  };
+
+  const runBenchmark = async () => {
+    setRunningBenchmark(true);
+    if (systemSounds) soundFx.playClick();
+    try {
+      const res = await fetch(`${API_URL}/api/system/benchmark`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        setBenchmarkResult(data);
+        notify("Benchmark Complete", `Rating: ${data.metrics?.rating || "A+"} (${data.durationMs}ms)`, "success");
+        if (systemSounds) soundFx.playPop();
+      } else {
+        notify("Benchmark Error", "Server could not process benchmark request.", "warning");
+      }
+    } catch {
+      notify("Network Error", "Unable to reach server benchmark endpoint.", "warning");
+    } finally {
+      setRunningBenchmark(false);
     }
   };
 
@@ -404,6 +421,16 @@ export default function ActivityMonitor() {
             }`}
           >
             Specs
+          </button>
+          <button
+            onClick={() => setActiveTab("benchmark")}
+            className={`px-2.5 py-1 rounded-lg transition-all font-medium whitespace-nowrap shrink-0 cursor-pointer ${
+              activeTab === "benchmark"
+                ? "bg-accent text-white shadow-md shadow-accent/20"
+                : "text-white/60 hover:text-white hover:bg-white/10"
+            }`}
+          >
+            ⚡ Benchmark
           </button>
         </div>
 
@@ -938,6 +965,89 @@ export default function ActivityMonitor() {
                   <span className="text-white">Web Audio API (Procedural Oscillator)</span>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Benchmark Tab */}
+        {activeTab === "benchmark" && (
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl border border-accent/40 bg-accent/5 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h4 className="font-display text-sm font-semibold text-white flex items-center gap-2">
+                    <span>⚡ Kernel Compute & Throughput Stress Benchmark</span>
+                  </h4>
+                  <p className="text-[11px] text-white/50 mt-0.5">
+                    Evaluates prime computation speed, JSON serialization throughput, memory delta, and event loop latency.
+                  </p>
+                </div>
+                <button
+                  onClick={runBenchmark}
+                  disabled={runningBenchmark}
+                  className="px-4 py-2 rounded-xl bg-accent hover:bg-accent/80 text-white text-xs font-semibold shadow-lg shadow-accent/20 transition flex items-center gap-2 shrink-0 cursor-pointer"
+                >
+                  <GIconRotateRight size={14} className={runningBenchmark ? "animate-spin" : ""} />
+                  <span>{runningBenchmark ? "Running Stress Test..." : "Run Benchmark"}</span>
+                </button>
+              </div>
+
+              {benchmarkResult && (
+                <div className="pt-2 space-y-3">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wide text-white/40">Performance Rating</div>
+                      <div className="text-lg font-bold font-display text-emerald-400">
+                        {benchmarkResult.metrics?.rating || "A+ (Ultra Fast)"}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[10px] uppercase tracking-wide text-white/40">Execution Time</div>
+                      <div className="font-mono text-base font-bold text-accent">
+                        {benchmarkResult.durationMs} ms
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="text-[10px] text-white/40 mb-1">Computation Rate</div>
+                      <div className="font-mono text-sm font-bold text-white">
+                        {(benchmarkResult.metrics?.opsPerSec || 0).toLocaleString()}
+                      </div>
+                      <div className="text-[9px] text-white/30">Ops / second</div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="text-[10px] text-white/40 mb-1">Primes Calculated</div>
+                      <div className="font-mono text-sm font-bold text-white">
+                        {(benchmarkResult.metrics?.primesCalculated || 0).toLocaleString()}
+                      </div>
+                      <div className="text-[9px] text-white/30">Range 2 - 25,000</div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="text-[10px] text-white/40 mb-1">JSON Throughput</div>
+                      <div className="font-mono text-sm font-bold text-white">
+                        {benchmarkResult.metrics?.jsonThroughputMbSec || 0} MB/s
+                      </div>
+                      <div className="text-[9px] text-white/30">5,000 payload items</div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5">
+                      <div className="text-[10px] text-white/40 mb-1">Memory Delta</div>
+                      <div className="font-mono text-sm font-bold text-white">
+                        {benchmarkResult.metrics?.memoryDeltaKb || 0} KB
+                      </div>
+                      <div className="text-[9px] text-white/30">Heap footprint</div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-black/20 border border-white/5 text-[11px] text-white/60 space-y-1">
+                    <div className="text-[10px] font-semibold uppercase text-white/40">Target Server Environment</div>
+                    <div>Host Architecture: <span className="text-white font-medium">{benchmarkResult.system?.platform} {benchmarkResult.system?.arch} ({benchmarkResult.system?.cpus} Cores)</span></div>
+                    <div>Processor: <span className="text-white font-medium">{benchmarkResult.system?.model}</span></div>
+                    <div>Node.js Version: <span className="text-white font-medium">{benchmarkResult.system?.nodeVersion}</span></div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

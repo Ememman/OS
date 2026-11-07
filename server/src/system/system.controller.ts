@@ -76,6 +76,133 @@ export class SystemController {
     return { pong: true, time: Date.now() };
   }
 
+  @Post("system/benchmark")
+  benchmark() {
+    const start = performance.now();
+    const memBefore = process.memoryUsage().heapUsed;
+
+    let primesCount = 0;
+    const limit = 25000;
+    for (let i = 2; i <= limit; i++) {
+      let isPrime = true;
+      for (let j = 2; j * j <= i; j++) {
+        if (i % j === 0) { isPrime = false; break; }
+      }
+      if (isPrime) primesCount++;
+    }
+
+    const testPayload = Array.from({ length: 5000 }, (_, idx) => ({
+      id: idx,
+      hash: Math.random().toString(36).slice(2),
+      data: "Portfolio-OS-Core-Telemetry-Payload-Sample",
+      val: idx * 1.618
+    }));
+    const serialized = JSON.stringify(testPayload);
+    const parsed = JSON.parse(serialized);
+
+    const memAfter = process.memoryUsage().heapUsed;
+    const durationMs = Math.max(0.1, performance.now() - start);
+    const throughputMbSec = Math.round(((serialized.length / (1024 * 1024)) / (durationMs / 1000)) * 100) / 100;
+    const opsPerSec = Math.round((limit / (durationMs / 1000)) * 10);
+
+    let rating = "A+ (Ultra Fast)";
+    if (durationMs > 120) rating = "A (Fast)";
+    else if (durationMs > 300) rating = "B (Moderate)";
+
+    return {
+      ok: true,
+      timestamp: Date.now(),
+      durationMs: Math.round(durationMs * 100) / 100,
+      metrics: {
+        primesCalculated: primesCount,
+        opsPerSec,
+        jsonThroughputMbSec: throughputMbSec,
+        payloadItemsProcessed: parsed.length,
+        memoryDeltaKb: Math.round((memAfter - memBefore) / 1024),
+        rating
+      },
+      system: {
+        arch: os.arch(),
+        platform: os.platform(),
+        cpus: os.cpus().length,
+        model: os.cpus()[0]?.model || "Multi-core Host",
+        nodeVersion: process.version
+      }
+    };
+  }
+
+  @Get("system/network")
+  getNetwork() {
+    const interfaces = os.networkInterfaces();
+    const ifaceList: any[] = [];
+    for (const [name, addrs] of Object.entries(interfaces)) {
+      if (!addrs) continue;
+      for (const addr of addrs) {
+        ifaceList.push({
+          name,
+          address: addr.address,
+          family: addr.family,
+          mac: addr.mac,
+          internal: addr.internal,
+          netmask: addr.netmask,
+        });
+      }
+    }
+    return {
+      ok: true,
+      timestamp: Date.now(),
+      interfaces: ifaceList,
+      primaryInterface: ifaceList.find((i) => !i.internal && i.family === "IPv4") || ifaceList[0] || null,
+      traffic: {
+        rxKbps: 22.4,
+        txKbps: 14.8,
+        totalRxMb: 12.8,
+        totalTxMb: 8.4,
+        activeConnections: this.chatGateway.getOnlineCount(),
+        protocol: "HTTP/1.1 + WebSocket (NestJS Gateway)",
+        latencyMs: 12
+      }
+    };
+  }
+
+  @Get("system/storage")
+  getStorage() {
+    return {
+      totalGb: 256,
+      usedGb: 68.4,
+      freeGb: 187.6,
+      percentUsed: 26.7,
+      partitions: [
+        { name: "Portfolio OS System", sizeGb: 22.1, color: "#38bdf8", desc: "Kernel, Compositor & Static Assets" },
+        { name: "Applications & Binaries", sizeGb: 18.5, color: "#a855f7", desc: "Library, Games, Sandbox & Tools" },
+        { name: "Notes & User Scratchpad", sizeGb: 12.8, color: "#f59e0b", desc: "Markdown Notes & Cloud Synced Docs" },
+        { name: "Media, Audio & Cache", sizeGb: 15.0, color: "#22c55e", desc: "Cached Previews, Wallpapers & Sound FX" },
+      ]
+    };
+  }
+
+  @Get("system/processes")
+  getProcesses() {
+    return [
+      { pid: 101, name: "kernel.sys", user: "system", cpu: 1.2, memoryMb: 24.5, threads: 8, status: "running", description: "Portfolio OS Kernel & Scheduler" },
+      { pid: 104, name: "window-server", user: "bron", cpu: 3.4, memoryMb: 48.2, threads: 4, status: "running", description: "Glass Compositor & Display Manager" },
+      { pid: 210, name: "socket-daemon", user: "system", cpu: 0.8, memoryMb: 16.1, threads: 2, status: "running", description: "Realtime WebSocket Hub" },
+      { pid: 312, name: "audio-synth-service", user: "bron", cpu: 2.1, memoryMb: 32.0, threads: 2, status: "running", description: "WebAudio Analyser & Music Streamer" },
+      { pid: 418, name: "guestbook-worker", user: "system", cpu: 0.4, memoryMb: 12.8, threads: 1, status: "idle", description: "Guestbook Signature Processor" },
+      { pid: 502, name: "analytics-telemetry", user: "system", cpu: 0.6, memoryMb: 14.3, threads: 1, status: "running", description: "OS Metrics & Diagnostics Collector" },
+    ];
+  }
+
+  @Get("spec")
+  getSpec() {
+    return {
+      ok: true,
+      service: "Portfolio OS NestJS API Gateway",
+      version: "3.2.0-lts",
+      realtime: { connectedClients: this.chatGateway.getOnlineCount() }
+    };
+  }
+
   @Get("system/metrics")
   getMetrics() {
     const mem = process.memoryUsage();

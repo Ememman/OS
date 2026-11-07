@@ -20,7 +20,7 @@ const COMMANDS = [
   "ls", "cat", "open", "theme", "date", "uptime", "history", "matrix",
   "sysinfo", "server", "ping", "quote", "joke", "curl", "logs", "processes", "ps", "notes", "storage", "df",
   "guestbook", "weather", "analytics", "top", "htop", "kill", "find", "search", "netstat", "clearlogs", "echo",
-  "codeplay", "snake", "github", "mission", "sudo"
+  "codeplay", "snake", "minesweeper", "benchmark", "leaderboard", "scores", "files", "motd", "calc", "github", "mission", "sudo"
 ];
 
 type TerminalEntry =
@@ -29,7 +29,7 @@ type TerminalEntry =
   | { type: "output"; content: ReactNode };
 
 export default function Terminal() {
-  const { openApp, accents, setAccent, wallpapers, setWallpaper, osMode, toggleMissionControl } = useOS();
+  const { openApp, wallpapers, setWallpaper, osMode } = useOS();
   const [history, setHistory] = useState<TerminalEntry[]>([
     { type: "banner", content: BANNER },
     { type: "system", content: "Portfolio OS Kernel v2.4.0 (Gravity Edition) initialized." },
@@ -117,11 +117,16 @@ export default function Terminal() {
               <div><span className="text-emerald-400 font-bold">skills</span> - Technical skill stacks</div>
               <div><span className="text-emerald-400 font-bold">projects</span> - Showcase of live projects</div>
               <div><span className="text-emerald-400 font-bold">sysinfo</span> - Live server CPU, RAM & diagnostics</div>
+              <div><span className="text-emerald-400 font-bold">benchmark</span> - Run live kernel CPU/throughput stress test</div>
+              <div><span className="text-emerald-400 font-bold">leaderboard</span> - View global arcade high scores</div>
+              <div><span className="text-emerald-400 font-bold">minesweeper</span> - Launch Retro Minesweeper minigame</div>
+              <div><span className="text-emerald-400 font-bold">files</span> - List virtual cloud drive files</div>
+              <div><span className="text-emerald-400 font-bold">calc &lt;math&gt;</span> - Evaluate math expression</div>
+              <div><span className="text-emerald-400 font-bold">motd</span> - Print message of the day</div>
               <div><span className="text-emerald-400 font-bold">weather</span> - Real-time forecast report</div>
               <div><span className="text-emerald-400 font-bold">analytics</span> - Live desktop platform telemetry</div>
               <div><span className="text-emerald-400 font-bold">ping [host]</span> - Test roundtrip response time</div>
-              <div><span className="text-emerald-400 font-bold">quote</span> - Random inspirational tech quote</div>
-              <div><span className="text-emerald-400 font-bold">joke</span> - Programmer humor</div>
+              <div><span className="text-emerald-400 font-bold">quote / joke</span> - Random developer quotes & humor</div>
               <div><span className="text-emerald-400 font-bold">curl [url]</span> - Inspect API endpoints</div>
               <div><span className="text-emerald-400 font-bold">codeplay</span> - Open interactive CodePlay Sandbox</div>
               <div><span className="text-emerald-400 font-bold">snake</span> - Launch retro Nokia Snake Arcade</div>
@@ -134,8 +139,7 @@ export default function Terminal() {
               <div><span className="text-emerald-400 font-bold">theme &lt;name&gt;</span> - Switch accent color or wallpaper</div>
               <div><span className="text-emerald-400 font-bold">neofetch</span> - System specs & OS stats</div>
               <div><span className="text-emerald-400 font-bold">matrix</span> - Toggle digital rain effect</div>
-              <div><span className="text-emerald-400 font-bold">date</span> - View current system time</div>
-              <div><span className="text-emerald-400 font-bold">uptime</span> - Check active session uptime</div>
+              <div><span className="text-emerald-400 font-bold">date / uptime</span> - Check system time & session duration</div>
               <div><span className="text-emerald-400 font-bold">clear</span> - Clear terminal screen</div>
             </div>
             <p className="text-white/40 text-[11px] pt-1">Tip: Use Tab for autocompletion, and ↑/↓ to browse history.</p>
@@ -170,6 +174,12 @@ export default function Terminal() {
       case "notes":
       case "storage":
       case "df":
+      case "benchmark":
+      case "leaderboard":
+      case "scores":
+      case "files":
+      case "motd":
+      case "calc":
         try {
           const res = await fetch(`${API_URL}/api/terminal/exec`, {
             method: "POST",
@@ -190,6 +200,11 @@ export default function Terminal() {
       case "guestbook":
         openApp("guestbook");
         output = <p className="text-emerald-300 text-xs">Launching Guestbook & Social Ledger...</p>;
+        break;
+
+      case "minesweeper":
+        openApp("games");
+        output = <p className="text-rose-300 text-xs">Launching Minesweeper Retro in Arcade Module...</p>;
         break;
 
       case "whoami":
@@ -331,7 +346,7 @@ export default function Terminal() {
         output = (
           <div className="flex flex-col sm:flex-row gap-4 py-2 text-xs">
             <pre className="text-accent font-bold leading-tight select-none shrink-0">
-{`   /\_/\  
+{`   /_/\\
   ( o.o ) 
    > ^ <  
  Portfolio
@@ -372,19 +387,20 @@ export default function Terminal() {
         if (!args[0]) {
           output = (
             <div className="space-y-1 text-xs">
-              <p className="text-amber-400">Usage: theme accent &lt;number/name&gt; OR theme wallpaper &lt;name&gt;</p>
-              <p className="text-white/60">Available accents: {accents.map((a) => a.name).join(", ")}</p>
+              <p className="text-amber-400">Usage: theme wallpaper &lt;name&gt; OR theme info</p>
+              <p className="text-white/60">System interactive accent is standardized to Electric Blue (#3b82f6) with active/hover feedback.</p>
               <p className="text-white/60">Available wallpapers: {wallpapers.map((w) => w.name).join(", ")}</p>
             </div>
           );
-        } else if (args[0] === "accent" && args[1]) {
-          const match = accents.find((a) => a.name.toLowerCase().includes(args[1].toLowerCase()));
-          if (match) {
-            setAccent(match.value);
-            output = <p className="text-emerald-400">Accent set to {match.name}.</p>;
-          } else {
-            output = <p className="text-rose-400">Accent '{args[1]}' not found.</p>;
-          }
+        } else if (args[0] === "accent" || args[0] === "info") {
+          output = (
+            <div className="space-y-1 text-xs">
+              <p className="text-cyan-400 font-semibold">Standard System Interactive Scheme:</p>
+              <p className="text-white/80">• Rest / Default: <span className="text-[#3b82f6] font-mono">#3b82f6</span> (Electric Blue)</p>
+              <p className="text-white/80">• Hover Glow: <span className="text-[#60a5fa] font-mono">#60a5fa</span> (Soft Azure)</p>
+              <p className="text-white/80">• Active / Click: <span className="text-[#1d4ed8] font-mono">#1d4ed8</span> (Deep Cobalt with tactile feedback)</p>
+            </div>
+          );
         } else if (args[0] === "wallpaper" && args[1]) {
           const match = wallpapers.find((w) => w.name.toLowerCase().includes(args[1].toLowerCase()) || w.id === args[1]);
           if (match) {

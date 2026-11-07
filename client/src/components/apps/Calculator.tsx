@@ -4,12 +4,9 @@ import { useOS } from "../../store/useOS";
 import {
   GIconHistory,
   GIconTrash,
-  GIconSliders,
   GIconDownload,
   GIconSparkles,
   GIconClose,
-  GIconCopy,
-  GIconCheck,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
 
@@ -47,7 +44,6 @@ export default function Calculator() {
   const [operation, setOperation] = useState<string | null>(null);
   const [waitingForOperand, setWaitingForOperand] = useState(false);
   const [historyTape, setHistoryTape] = useState("");
-  const [memory, setMemory] = useState(0);
   const [angleUnit, setAngleUnit] = useState<"deg" | "rad">("deg");
   const [showHistory, setShowHistory] = useState(false);
   const [showConstants, setShowConstants] = useState(false);

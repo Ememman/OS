@@ -35,6 +35,7 @@ export const fileTree: FolderNode = {
       name: "Games",
       type: "folder",
       children: [
+        { name: "Minesweeper Retro.exe", type: "app-link", app: "games" },
         { name: "Blast It!.exe", type: "app-link", app: "games" },
         { name: "2048 Puzzle.exe", type: "app-link", app: "games" },
         { name: "Snake Retro.exe", type: "app-link", app: "games" },

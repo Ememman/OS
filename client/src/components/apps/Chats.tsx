@@ -24,7 +24,7 @@ const BG_OPTIONS = [
   {
     id: "ink",
     label: "Midnight Dark",
-    desc: "Deep OLED dark mode",
+    desc: "Deep OLED night mode",
     swatch: "#0d1117",
     border: "border-slate-700",
   },
@@ -235,7 +235,7 @@ export default function Chats() {
     };
     const onPresence = ({ online }: any) => setOnline(online);
     const onUsersUpdated = (userList: any[]) => setActiveUsers(userList || []);
-    const onPinned = ({ isPinned, pinnedList: updatedList }: any) => {
+    const onPinned = ({ pinnedList: updatedList }: any) => {
       if (updatedList) setPinnedList(updatedList);
     };
 
@@ -283,6 +283,7 @@ export default function Chats() {
       socket.off("chat:rate_limited", onRateLimited);
       socket.off("chat:message_deleted", onMessageDeleted);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatSound]);
 
   useEffect(() => {

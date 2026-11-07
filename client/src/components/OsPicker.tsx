@@ -50,7 +50,7 @@ interface OsCardProps {
 }
 
 function OsCard({ option, isSelected, onSelect }: OsCardProps) {
-  const { id, name, tagline, desc, img, Icon, color, features } = option;
+  const { name, tagline, desc, img, Icon, color, features } = option;
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {

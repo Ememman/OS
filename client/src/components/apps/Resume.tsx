@@ -4,8 +4,6 @@ import {
   GIconDownload,
   GIconMail,
   GIconMapPin,
-  GIconGithub,
-  GIconExternalLink,
   GIconCheck,
   GIconSparkles,
   GIconPaperPlane,
@@ -211,7 +209,7 @@ const TECH_STACK: TechStackItem[] = [
 ];
 
 export default function Resume() {
-  const { systemSounds, notify, openApp } = useOS();
+  const { systemSounds, notify } = useOS();
   const [tab, setTab] = useState<"experience" | "skills" | "education" | "contact">("experience");
   const [copiedEmail, setCopiedEmail] = useState(false);
 
