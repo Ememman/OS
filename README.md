@@ -201,18 +201,26 @@ VITE_API_URL=http://localhost:4000
 
 ## 🧪 Production Build & Deployment
 
-### Build the Frontend
+For a full step-by-step walkthrough, see the dedicated [**Deployment Guide (DEPLOYMENT.md)**](DEPLOYMENT.md).
+
+### 🚀 Automated GitHub Actions Workflows
+Portfolio OS comes with ready-to-run GitHub Actions workflows for both client and server:
+* **Client (Frontend)**: [`.github/workflows/deploy-client.yml`](.github/workflows/deploy-client.yml) automatically builds and deploys to **GitHub Pages** on push to `main`.
+* **Server (Backend)**: [`.github/workflows/deploy-server.yml`](.github/workflows/deploy-server.yml) validates, publishes a container to **GitHub Packages (`ghcr.io`)**, and triggers 1-click cloud deployments (e.g. Render, Railway, VPS webhooks).
+* **CI Quality Gate**: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) lints and verifies builds on pull requests.
+
+### Build the Frontend Locally
 ```bash
 cd client
 npm run build
 ```
-This generates an optimized static bundle in `client/dist/`.
+This generates an optimized static bundle in `client/dist/` with relative base paths (`./`) compatible with any domain or subdirectory.
 
-### Deployment Options
-* **Frontend**: Deploy `client/dist` to any static host (Vercel, Netlify, Cloudflare Pages, GitHub Pages).
-  * Remember to set `VITE_API_URL` to your production backend URL.
-* **Backend**: Deploy `server/` to a Node.js-compatible host supporting WebSockets (Railway, Render, Fly.io, DigitalOcean, Heroku).
-  * Set `CLIENT_URL` to your production frontend domain to ensure CORS and Socket.IO handshakes succeed.
+### Run with Docker Compose
+```bash
+# Build and run both client & server with a single command
+docker compose up --build
+```
 
 ---
 

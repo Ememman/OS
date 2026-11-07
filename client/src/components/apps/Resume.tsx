@@ -333,7 +333,7 @@ export default function Resume() {
               Print Résumé
             </button>
             <a
-              href="/resume.pdf"
+              href={`${import.meta.env.BASE_URL}resume.pdf`}
               download
               className="flex items-center justify-center gap-1.5 text-xs px-3.5 py-2 rounded-xl bg-accent text-white font-medium shadow-md shadow-accent/20 hover:brightness-110 active:scale-95 transition"
             >
