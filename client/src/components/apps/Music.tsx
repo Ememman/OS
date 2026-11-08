@@ -79,7 +79,9 @@ export default function Music() {
   const [hasSearched, setHasSearched] = useState(false);
   const [searchSource, setSearchSource] = useState<"preview" | "youtube">("preview");
   const [ytResults, setYtResults] = useState<any[]>([]);
+  const [ytConfigured, setYtConfigured] = useState(true);
   const [ytLoading, setYtLoading] = useState(false);
+  const [ytError, setYtError] = useState<string | null>(null);
   const [ytQuery, setYtQuery] = useState("");
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
@@ -187,9 +189,11 @@ export default function Music() {
       setYtQuery(term);
       setPlayingVideoId(null);
       setYtLoading(true);
+      setYtError(null);
       try {
         const res = await fetch(`${API_URL}/api/music/youtube-search?q=${encodeURIComponent(term)}`);
         const data = await res.json();
+        setYtConfigured(data.configured !== false);
         if (data.results && data.results.length > 0) {
           setYtResults(data.results);
           setPlayingVideoId(data.results[0].id);
@@ -197,6 +201,7 @@ export default function Music() {
           setYtResults([]);
         }
       } catch {
+        setYtConfigured(false);
         setYtResults([]);
       } finally {
         setYtLoading(false);
@@ -231,28 +236,19 @@ export default function Music() {
           );
           if (directRes.ok) {
             const data = await directRes.json();
-            const allLocal = playlists.flatMap((p) => p.tracks);
             tracks = (data.results || [])
               .filter((t: any) => t.previewUrl)
-              .map((t: any) => {
-                const localMatch = allLocal.find(
-                  (l) =>
-                    l.title.toLowerCase() === t.trackName?.toLowerCase() ||
-                    (t.trackName?.toLowerCase().includes(l.title.toLowerCase()) &&
-                      t.artistName?.toLowerCase().includes(l.artist.toLowerCase()))
-                );
-                return {
-                  id: String(t.trackId),
-                  title: t.trackName,
-                  artist: t.artistName,
-                  album: t.collectionName,
-                  cover: localMatch?.cover || t.artworkUrl100?.replace("100x100", "300x300"),
-                  previewUrl: localMatch?.src || t.previewUrl,
-                  durationMs: t.trackTimeMillis,
-                  genre: t.primaryGenreName,
-                  storeUrl: t.trackViewUrl,
-                };
-              });
+              .map((t: any) => ({
+                id: String(t.trackId),
+                title: t.trackName,
+                artist: t.artistName,
+                album: t.collectionName,
+                cover: t.artworkUrl100?.replace("100x100", "300x300"),
+                previewUrl: t.previewUrl,
+                durationMs: t.trackTimeMillis,
+                genre: t.primaryGenreName,
+                storeUrl: t.trackViewUrl,
+              }));
           }
         } catch {
           // Network issues
@@ -498,46 +494,65 @@ export default function Music() {
                   </div>
                 )}
 
-                {ytQuery && (
-                  <div className="flex-1 flex flex-col min-h-0">
-                    <div className="w-full aspect-video rounded-xl overflow-hidden bg-black shadow-2xl mb-3 shrink-0 border border-white/10">
-                      <iframe
-                        key={playingVideoId || ytQuery}
-                        src={
-                          playingVideoId
-                            ? `https://www.youtube-nocookie.com/embed/${playingVideoId}?autoplay=1`
-                            : `https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(ytQuery)}&autoplay=1`
-                        }
-                        title="Full song player"
-                        allow="autoplay; encrypted-media; picture-in-picture"
-                        allowFullScreen
-                        className="w-full h-full border-0"
-                      />
-                    </div>
-                    {ytResults.length > 0 && (
-                      <div className="space-y-1 overflow-auto thin-scroll">
-                        {ytResults.map((v: any) => (
-                          <button
-                            key={v.id}
-                            onClick={() => setPlayingVideoId(v.id)}
-                            className={`w-full flex items-center gap-2.5 text-left px-2.5 py-2 rounded-xl transition-colors ${
-                              playingVideoId === v.id ? "bg-white/15" : "hover:bg-white/5"
-                            }`}
-                          >
-                            <img
-                              src={v.thumbnail}
-                              alt=""
-                              className="w-12 h-8 rounded-lg object-cover shrink-0"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="text-xs font-medium truncate">{v.title}</div>
-                              <div className="text-[10px] text-white/45 truncate">{v.channel}</div>
-                            </div>
-                            {playingVideoId === v.id && <EqualizerBars className="shrink-0" />}
-                          </button>
-                        ))}
+                {ytQuery && ytConfigured && (
+                  <>
+                    {playingVideoId && (
+                      <div className="w-full aspect-video rounded-xl overflow-hidden bg-black shadow-2xl mb-3 shrink-0 border border-white/10">
+                        <iframe
+                          key={playingVideoId}
+                          src={`https://www.youtube.com/embed/${playingVideoId}?autoplay=1`}
+                          title="Full song player"
+                          allow="autoplay; encrypted-media; picture-in-picture"
+                          allowFullScreen
+                          className="w-full h-full border-0"
+                        />
                       </div>
                     )}
+                    {ytError && <p className="text-xs text-rose-300 text-center py-4">{ytError}</p>}
+                    {!ytLoading && !ytError && ytResults.length === 0 && (
+                      <p className="text-xs text-white/40 text-center py-4">
+                        No results for "{ytQuery}".
+                      </p>
+                    )}
+                    <div className="space-y-1">
+                      {ytResults.map((v: any) => (
+                        <button
+                          key={v.id}
+                          onClick={() => setPlayingVideoId(v.id)}
+                          className={`w-full flex items-center gap-2.5 text-left px-2.5 py-2 rounded-xl transition-colors ${
+                            playingVideoId === v.id ? "bg-white/15" : "hover:bg-white/5"
+                          }`}
+                        >
+                          <img
+                            src={v.thumbnail}
+                            alt=""
+                            className="w-12 h-8 rounded-lg object-cover shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium truncate">{v.title}</div>
+                            <div className="text-[10px] text-white/45 truncate">{v.channel}</div>
+                          </div>
+                          {playingVideoId === v.id && <EqualizerBars className="shrink-0" />}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {ytQuery && !ytConfigured && (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center px-4 gap-3">
+                    <GIconMusic size={28} className="text-white/25" />
+                    <p className="text-xs text-white/50 max-w-xs">
+                      Search directly on YouTube for full-length streams:
+                    </p>
+                    <a
+                      href={`https://www.youtube.com/results?search_query=${encodeURIComponent(ytQuery)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-2 text-xs px-4 py-2 rounded-xl bg-accent text-white hover:brightness-110 transition shadow-lg shadow-accent/20"
+                    >
+                      <GIconExternalLink size={13} /> Open "{ytQuery}" on YouTube
+                    </a>
                   </div>
                 )}
               </div>
