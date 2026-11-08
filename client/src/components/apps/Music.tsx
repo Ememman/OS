@@ -131,10 +131,15 @@ export default function Music() {
       if (!hasSignal) {
         if (playing) {
           idlePhase += 0.08;
+          const bassKick = Math.pow(Math.sin(idlePhase * 2.5), 4) * 0.45;
           values = Array.from({ length: barCount }, (_, i) => {
-            const wave = Math.sin(idlePhase + i * 0.45) * 0.4 + 0.5;
-            const wave2 = Math.cos(idlePhase * 0.6 + i * 0.25) * 0.25;
-            return Math.min(1, Math.max(0.08, wave + wave2));
+            const normIdx = i / barCount;
+            const bass = (1 - normIdx * 0.7) * bassKick;
+            const wave1 = Math.sin(idlePhase + i * 0.45) * 0.35 + 0.45;
+            const wave2 = Math.cos(idlePhase * 1.6 + i * 0.75) * 0.22;
+            const wave3 = Math.sin(idlePhase * 3.1 + i * 1.3) * 0.12;
+            const combined = (wave1 + wave2 + wave3 + bass) * Math.max(0.3, volume);
+            return Math.min(1, Math.max(0.08, combined));
           });
         } else {
           values = Array.from({ length: barCount }, () => 0.04);
@@ -152,7 +157,7 @@ export default function Music() {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [visualizerLive, analyser, playing]);
+  }, [visualizerLive, analyser, playing, volume]);
 
   const startPlaying = (newQueue: any[], idx: number) => {
     ensureVisualizer();
@@ -637,7 +642,7 @@ export default function Music() {
               </div>
             )}
             {currentPlaylistTracks.map((t: any, i: number) => {
-              const isCurrent = queue === currentPlaylistTracks && i === queueIdx;
+              const isCurrent = track?.id === t.id;
               return (
                 <button
                   key={t.id}
