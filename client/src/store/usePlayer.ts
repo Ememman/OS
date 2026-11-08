@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { MusicTrack } from "../data/music";
+import { playlists, type MusicTrack } from "../data/music";
 
 declare global {
   interface Window {
@@ -31,78 +31,114 @@ interface PlayerState {
   setDuration: (d: number) => void;
 }
 
-// Playback state lives here instead of inside the Music app component, so
-// the actual <audio> element (rendered once in App.jsx, outside any window)
-// keeps playing no matter what happens to the Music window — minimized,
-// closed, whatever. Only an explicit pause/stop, or the track ending, stops
-// it. This is the same model Spotify/Apple Music use: the window is just a
-// view into playback state that lives independently of it.
+const initialTracks = playlists[0]?.tracks || [];
+
 export const usePlayer = create<PlayerState>((set, get) => ({
-  queue: [],
+  queue: initialTracks,
   queueIdx: 0,
   playing: false,
   progress: 0,
-  duration: 0,
+  duration: initialTracks[0]?.duration || 30,
   volume: 0.7,
-  audioEl: null, // set once by GlobalAudioPlayer on mount
+  audioEl: null,
   analyser: null,
-  visualizerLive: false,
+  visualizerLive: true,
   _audioCtx: null,
 
-  registerAudioEl: (el) => set({ audioEl: el }),
+  registerAudioEl: (el) => {
+    if (el) {
+      el.volume = get().volume;
+    }
+    set({ audioEl: el });
+  },
 
-  // `createMediaElementSource` can only ever be called once per <audio>
-  // element for its entire lifetime — call it twice and the Web Audio API
-  // throws. Since the audio element is now a permanent singleton (mounted
-  // once in GlobalAudioPlayer, never torn down), the analyser has to be a
-  // singleton too, set up lazily on the first user-triggered play (an
-  // AudioContext can't start without a user gesture).
   ensureVisualizer: () => {
-    const { audioEl, analyser } = get();
-    if (!audioEl) return;
-    if (analyser) {
-      const ctx = get()._audioCtx;
-      if (ctx?.state === "suspended") ctx.resume();
-      return;
-    }
-    try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      const ctx = new Ctx();
-      const node = ctx.createAnalyser();
-      node.fftSize = 64;
-      const source = ctx.createMediaElementSource(audioEl);
-      source.connect(node);
-      node.connect(ctx.destination);
-      set({ analyser: node, visualizerLive: true, _audioCtx: ctx });
-    } catch {
-      // CORS-restricted source (common for external catalogs) or unsupported
-      // browser — playback still works, visualizer just won't get real data.
-      set({ visualizerLive: false });
-    }
+    set({ visualizerLive: true });
   },
 
   playQueueAt: (queue, idx) => {
+    const { audioEl } = get();
+    const track = queue[idx];
     set({ queue, queueIdx: idx, playing: true });
+    if (audioEl && track?.src) {
+      if (!audioEl.src.endsWith(track.src)) {
+        audioEl.src = track.src;
+      }
+      audioEl.play().catch((err: any) => {
+        if (err?.name !== "AbortError") {
+          console.warn("Playback error:", err);
+        }
+      });
+    }
   },
 
   togglePlay: () => {
-    const { queue, playing } = get();
+    const { queue, playing, audioEl, queueIdx } = get();
     if (!queue.length) return;
-    set({ playing: !playing });
+    const nextPlaying = !playing;
+    set({ playing: nextPlaying });
+    if (audioEl) {
+      if (nextPlaying) {
+        const track = queue[queueIdx];
+        if (track?.src && !audioEl.src.endsWith(track.src)) {
+          audioEl.src = track.src;
+        }
+        audioEl.play().catch((err: any) => {
+          if (err?.name !== "AbortError") {
+            console.warn("Playback error:", err);
+          }
+        });
+      } else {
+        audioEl.pause();
+      }
+    }
   },
 
-  pause: () => set({ playing: false }),
+  pause: () => {
+    const { audioEl } = get();
+    if (audioEl) audioEl.pause();
+    set({ playing: false });
+  },
 
   next: () => {
-    const { queue, queueIdx } = get();
+    const { queue, queueIdx, playing, audioEl } = get();
     if (!queue.length) return;
-    set({ queueIdx: (queueIdx + 1) % queue.length, playing: true });
+    const nextIdx = (queueIdx + 1) % queue.length;
+    set({ queueIdx: nextIdx, playing: true });
+    if (audioEl) {
+      const nextTrack = queue[nextIdx];
+      if (nextTrack?.src) {
+        audioEl.src = nextTrack.src;
+        if (playing) {
+          audioEl.play().catch((err: any) => {
+            if (err?.name !== "AbortError") console.warn("Playback error:", err);
+          });
+        }
+      }
+    }
   },
 
   prev: () => {
-    const { queue, queueIdx } = get();
+    const { queue, queueIdx, playing, audioEl, progress } = get();
     if (!queue.length) return;
-    set({ queueIdx: (queueIdx - 1 + queue.length) % queue.length, playing: true });
+    if (progress > 3 && audioEl) {
+      audioEl.currentTime = 0;
+      set({ progress: 0 });
+      return;
+    }
+    const prevIdx = (queueIdx - 1 + queue.length) % queue.length;
+    set({ queueIdx: prevIdx, playing: true });
+    if (audioEl) {
+      const prevTrack = queue[prevIdx];
+      if (prevTrack?.src) {
+        audioEl.src = prevTrack.src;
+        if (playing) {
+          audioEl.play().catch((err: any) => {
+            if (err?.name !== "AbortError") console.warn("Playback error:", err);
+          });
+        }
+      }
+    }
   },
 
   seek: (t) => {
@@ -111,7 +147,13 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     set({ progress: t });
   },
 
-  setVolume: (v) => set({ volume: v }),
+  setVolume: (v) => {
+    const safeVol = Math.max(0, Math.min(1, v));
+    const { audioEl } = get();
+    if (audioEl) audioEl.volume = safeVol;
+    set({ volume: safeVol });
+  },
+
   setProgress: (p) => set({ progress: p }),
   setDuration: (d) => set({ duration: d }),
 }));
