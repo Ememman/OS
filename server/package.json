@@ -14,12 +14,14 @@
     "dev:nest": "tsx watch --tsconfig tsconfig.json src/main.ts",
     "start:nest": "tsx --tsconfig tsconfig.json src/main.ts",
     "build:nest": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --check index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@dicebear/core": "^10.7.0",
+    "@dicebear/styles": "^10.6.0",
     "@nestjs/common": "^12.2.0",
     "@nestjs/core": "^12.2.0",
     "@nestjs/platform-express": "^12.2.0",
