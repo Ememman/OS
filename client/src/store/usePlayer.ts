@@ -57,32 +57,18 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   },
 
   playQueueAt: (queue, idx) => {
-    const { audioEl } = get();
-    const track = queue[idx];
     set({ queue, queueIdx: idx, playing: true });
-    if (audioEl && track?.src) {
-      if (!audioEl.src.endsWith(track.src)) {
-        audioEl.src = track.src;
-      }
-      audioEl.play().catch((err: any) => {
-        if (err?.name !== "AbortError") {
-          console.warn("Playback error:", err);
-        }
-      });
-    }
   },
 
   togglePlay: () => {
-    const { queue, playing, audioEl, queueIdx } = get();
+    const { queue, playing, audioEl } = get();
     if (!queue.length) return;
     const nextPlaying = !playing;
     set({ playing: nextPlaying });
     if (audioEl) {
       if (nextPlaying) {
-        const track = queue[queueIdx];
-        if (track?.src && !audioEl.src.endsWith(track.src)) {
-          audioEl.src = track.src;
-        }
+        audioEl.muted = false;
+        audioEl.volume = get().volume;
         audioEl.play().catch((err: any) => {
           if (err?.name !== "AbortError") {
             console.warn("Playback error:", err);
@@ -101,25 +87,14 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   },
 
   next: () => {
-    const { queue, queueIdx, playing, audioEl } = get();
+    const { queue, queueIdx } = get();
     if (!queue.length) return;
     const nextIdx = (queueIdx + 1) % queue.length;
     set({ queueIdx: nextIdx, playing: true });
-    if (audioEl) {
-      const nextTrack = queue[nextIdx];
-      if (nextTrack?.src) {
-        audioEl.src = nextTrack.src;
-        if (playing) {
-          audioEl.play().catch((err: any) => {
-            if (err?.name !== "AbortError") console.warn("Playback error:", err);
-          });
-        }
-      }
-    }
   },
 
   prev: () => {
-    const { queue, queueIdx, playing, audioEl, progress } = get();
+    const { queue, queueIdx, audioEl, progress } = get();
     if (!queue.length) return;
     if (progress > 3 && audioEl) {
       audioEl.currentTime = 0;
@@ -128,17 +103,6 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     }
     const prevIdx = (queueIdx - 1 + queue.length) % queue.length;
     set({ queueIdx: prevIdx, playing: true });
-    if (audioEl) {
-      const prevTrack = queue[prevIdx];
-      if (prevTrack?.src) {
-        audioEl.src = prevTrack.src;
-        if (playing) {
-          audioEl.play().catch((err: any) => {
-            if (err?.name !== "AbortError") console.warn("Playback error:", err);
-          });
-        }
-      }
-    }
   },
 
   seek: (t) => {

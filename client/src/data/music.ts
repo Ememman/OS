@@ -17,6 +17,62 @@ export interface Playlist {
 
 export const playlists: Playlist[] = [
   {
+    id: "vocal",
+    name: "Pop & Vocal Hits",
+    tracks: [
+      {
+        id: "v1",
+        title: "Photograph",
+        artist: "Ed Sheeran",
+        genre: "Pop",
+        duration: 30,
+        src: "/audio/v1.m4a",
+        cover: "/covers/v1.jpg",
+        isPreview: false,
+      },
+      {
+        id: "v2",
+        title: "Yellow",
+        artist: "Coldplay",
+        genre: "Alternative",
+        duration: 30,
+        src: "/audio/v2.m4a",
+        cover: "/covers/v2.jpg",
+        isPreview: false,
+      },
+      {
+        id: "v3",
+        title: "Anti-Hero",
+        artist: "Taylor Swift",
+        genre: "Pop",
+        duration: 30,
+        src: "/audio/v3.m4a",
+        cover: "/covers/v3.jpg",
+        isPreview: false,
+      },
+      {
+        id: "v4",
+        title: "Blinding Lights",
+        artist: "The Weeknd",
+        genre: "Pop",
+        duration: 30,
+        src: "/audio/v4.m4a",
+        cover: "/covers/v4.jpg",
+        isPreview: false,
+      },
+      {
+        id: "v5",
+        title: "About You",
+        artist: "The 1975",
+        genre: "Indie Pop",
+        duration: 30,
+        src: "/audio/v5.m4a",
+        cover: "/covers/v5.jpg",
+        isPreview: false,
+      },
+    ],
+  },
+  {
     id: "lofi",
     name: "Lo-fi Focus",
     tracks: [
