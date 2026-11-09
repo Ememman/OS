@@ -19,7 +19,7 @@ import {
   GIconRocket,
   GIconSmile,
 } from "../icons/GravityIcons";
-import { getSocket } from "../../lib/socket";
+import { getSocket, getCachedChatInit } from "../../lib/socket";
 import { useOS } from "../../store/useOS";
 import { useOutsideClick } from "../../lib/useOutsideClick";
 import { soundFx } from "../../lib/soundFx";
@@ -210,16 +210,26 @@ export default function Chats() {
   const setChatBg = useOS((s) => s.setChatBg);
   const notify = useOS((s) => s.notify);
 
-  const [connected, setConnected] = useState(false);
-  const [connecting, setConnecting] = useState(true);
-  const [name, setName] = useState("");
+  const clientId = useMemo(() => {
+    let id = localStorage.getItem("os_chat_client_id");
+    if (!id) {
+      id = "c_" + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem("os_chat_client_id", id);
+    }
+    return id;
+  }, []);
+
+  const cached = getCachedChatInit();
+  const [connected, setConnected] = useState(() => getSocket().connected);
+  const [connecting, setConnecting] = useState(() => !getSocket().connected);
+  const [name, setName] = useState(() => localStorage.getItem("os_chat_name") || cached?.name || "");
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState("");
-  const [messages, setMessages] = useState<any[]>([]);
-  const [pinnedList, setPinnedList] = useState<any[]>([]);
-  const [activeUsers, setActiveUsers] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>(() => cached?.history || []);
+  const [pinnedList, setPinnedList] = useState<any[]>(() => cached?.pinned || []);
+  const [activeUsers, setActiveUsers] = useState<any[]>(() => cached?.users || []);
   const [showUsersModal, setShowUsersModal] = useState(false);
-  const [online, setOnline] = useState(0);
+  const [online, setOnline] = useState<number>(() => (typeof cached?.online === "number" ? cached.online : 0));
   const [text, setText] = useState("");
   const [typingName, setTypingName] = useState<string | null>(null);
   const [bgPickerOpen, setBgPickerOpen] = useState(false);
@@ -236,6 +246,8 @@ export default function Chats() {
   const usersModalRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef(name);
   nameRef.current = name;
+  const clientIdRef = useRef(clientId);
+  clientIdRef.current = clientId;
 
   useOutsideClick(usersModalRef, () => setShowUsersModal(false));
 
@@ -245,21 +257,62 @@ export default function Chats() {
     const onConnect = () => {
       setConnected(true);
       setConnecting(false);
+      socket.emit("chat:join");
+      const savedName = localStorage.getItem("os_chat_name");
+      if (savedName) socket.emit("chat:rename", savedName);
     };
     const onDisconnect = () => setConnected(false);
     const onConnecting = () => setConnecting(true);
-    const onInit = ({ name, history, pinned, users }: any) => {
-      setName(name);
+    const onInit = ({ name: serverName, history, pinned, users, online: onlineCount }: any) => {
+      setConnected(true);
+      setConnecting(false);
+      const chosenName = localStorage.getItem("os_chat_name") || serverName || "Guest";
+      setName(chosenName);
+      if (!localStorage.getItem("os_chat_name") && serverName) {
+        localStorage.setItem("os_chat_name", serverName);
+      }
       setMessages(history || []);
       if (pinned) setPinnedList(pinned);
       if (users) setActiveUsers(users);
+      if (typeof onlineCount === "number") setOnline(onlineCount);
     };
     const onMessage = (msg: any) => {
-      setMessages((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
-      if (chatSound && msg.name !== nameRef.current) playPing();
+      setMessages((m) => {
+        // If we already have this exact server message id, don't duplicate
+        if (m.some((x) => x.id === msg.id)) return m;
+        // If we have an optimistic pending message from this client, replace it with server record
+        const pendingIdx = m.findIndex(
+          (x) =>
+            x.pending &&
+            ((msg.tempId && (x.id === msg.tempId || x.tempId === msg.tempId)) ||
+              (x.text === msg.text &&
+                (x.senderId === msg.senderId ||
+                  msg.senderId === clientIdRef.current ||
+                  x.name === msg.name ||
+                  Date.now() - x.ts < 12000)))
+        );
+        if (pendingIdx !== -1) {
+          const copy = [...m];
+          copy[pendingIdx] = msg;
+          return copy;
+        }
+        return [...m, msg];
+      });
+      if (chatSound && msg.senderId !== clientIdRef.current && msg.name !== nameRef.current) {
+        playPing();
+      }
     };
-    const onReacted = ({ id, reactions }: any) => {
-      setMessages((m) => m.map((x) => (x.id === id ? { ...x, reactions } : x)));
+    const onReacted = ({ id, emoji, reactions }: any) => {
+      setMessages((m) =>
+        m.map((x) => {
+          if (x.id !== id) return x;
+          const nextReactions = reactions || { ...(x.reactions || {}) };
+          if (emoji && !reactions) {
+            nextReactions[emoji] = (nextReactions[emoji] || 0) + 1;
+          }
+          return { ...x, reactions: nextReactions };
+        })
+      );
     };
     const onPresence = ({ online }: any) => setOnline(online);
     const onUsersUpdated = (userList: any[]) => setActiveUsers(userList || []);
@@ -295,7 +348,11 @@ export default function Chats() {
     socket.on("chat:rate_limited", onRateLimited);
     socket.on("chat:message_deleted", onMessageDeleted);
 
-    if (socket.connected) onConnect();
+    if (socket.connected) {
+      onConnect();
+    } else {
+      socket.connect();
+    }
 
     return () => {
       socket.off("connect", onConnect);
@@ -360,12 +417,14 @@ export default function Chats() {
 
   const sendText = (t: string) => {
     const tempId = `temp-${Date.now()}`;
+    const currentName = name || localStorage.getItem("os_chat_name") || "Guest";
 
     // Local fallback bot when offline
     if (!connected) {
       const localMsg = {
         id: tempId,
-        name: name || "you",
+        senderId: clientId,
+        name: currentName,
         text: t,
         ts: Date.now(),
         reactions: {},
@@ -387,6 +446,7 @@ export default function Chats() {
 
         const botMsg = {
           id: `bot-${Date.now()}`,
+          senderId: "bot",
           name: "Portfolio Bot",
           text: reply,
           ts: Date.now(),
@@ -400,7 +460,9 @@ export default function Chats() {
 
     const optimistic = {
       id: tempId,
-      name: name || "you",
+      tempId,
+      senderId: clientId,
+      name: currentName,
       text: t,
       ts: Date.now(),
       pending: true,
@@ -409,7 +471,13 @@ export default function Chats() {
     };
     setMessages((m) => [...m, optimistic]);
 
-    const payload = replyTarget ? { text: t, replyTo: replyTarget } : t;
+    const payload = {
+      text: t,
+      senderId: clientId,
+      senderName: currentName,
+      tempId,
+      replyTo: replyTarget || undefined
+    };
     setReplyTarget(null);
 
     const socket = getSocket();
@@ -425,7 +493,13 @@ export default function Chats() {
       settled = true;
       clearTimeout(timeout);
       if (res?.ok && res.message) {
-        setMessages((m) => m.map((x) => (x.id === tempId ? res.message : x)));
+        setMessages((m) => {
+          const hasRealMsg = m.some((x) => x.id === res.message.id);
+          if (hasRealMsg) {
+            return m.filter((x) => x.id !== tempId);
+          }
+          return m.map((x) => (x.id === tempId ? res.message : x));
+        });
       } else {
         setMessages((m) => m.map((x) => (x.id === tempId ? { ...x, pending: false, failed: true } : x)));
       }
@@ -449,6 +523,7 @@ export default function Chats() {
     if (clean) {
       getSocket().emit("chat:rename", clean);
       setName(clean);
+      localStorage.setItem("os_chat_name", clean);
     }
     setEditingName(false);
   };
@@ -475,11 +550,20 @@ export default function Chats() {
     notify("Chat Exported", "Downloaded conversation transcript.", "success");
   };
 
-  // Filter messages based on search query
+  // Filter messages based on search query with ID deduplication
   const displayedMessages = useMemo(() => {
-    if (!searchQuery.trim()) return messages;
+    const seen = new Set<string>();
+    const unique = messages.filter((m) => {
+      const key = m.id || m.tempId;
+      if (!key) return true;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    if (!searchQuery.trim()) return unique;
     const q = searchQuery.toLowerCase();
-    return messages.filter(
+    return unique.filter(
       (m) => (m.text && m.text.toLowerCase().includes(q)) || (m.name && m.name.toLowerCase().includes(q))
     );
   }, [messages, searchQuery]);
@@ -671,28 +755,31 @@ export default function Chats() {
         )}
 
         {displayedMessages.map((m) => {
-          const isSelf = m.name === name;
+          const isSelf = Boolean(
+            (m.senderId && m.senderId === clientId) ||
+            (!m.senderId && name && name.toLowerCase() !== "guest" && m.name === name)
+          );
           const color = nameColor(m.name);
           const isPinned = pinnedList.some((p) => p.id === m.id);
 
           return (
             <div
-              key={m.id}
-              className={`group flex items-end gap-2 max-w-[92%] sm:max-w-[86%] chat-message-in ${
-                isSelf ? "ml-auto flex-row-reverse" : ""
+              key={m.id || m.tempId}
+              className={`group flex items-end gap-2 max-w-[90%] sm:max-w-[80%] chat-message-in ${
+                isSelf ? "ml-auto flex-row-reverse" : "mr-auto flex-row"
               }`}
             >
               <div
                 aria-hidden="true"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                style={{ background: color }}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm"
+                style={{ background: isSelf ? "var(--color-accent, #38bdf8)" : color }}
               >
-                {m.name?.[0]?.toUpperCase() || "?"}
+                {isSelf ? "You" : (m.name?.[0]?.toUpperCase() || "?")}
               </div>
-              <div className={`min-w-0 ${isSelf ? "text-right" : ""}`}>
-                <div className="chat-meta text-xs font-medium mb-1 flex items-center gap-1.5">
-                  <span>{m.name}</span>
-                  <time className="font-normal opacity-60" dateTime={new Date(m.ts).toISOString()}>
+              <div className={`min-w-0 flex flex-col ${isSelf ? "items-end text-right" : "items-start text-left"}`}>
+                <div className="chat-meta text-xs font-medium mb-1 flex items-center gap-1.5 opacity-80">
+                  <span className="font-semibold">{isSelf ? "You" : m.name}</span>
+                  <time className="font-normal opacity-60 text-[10px]" dateTime={new Date(m.ts).toISOString()}>
                     · {new Date(m.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </time>
                   {isPinned && <GIconPin size={10} className="text-amber-400" />}
@@ -701,7 +788,7 @@ export default function Chats() {
                 {/* Quoted Message in Reply */}
                 {m.replyTo && (
                   <div
-                    className={`text-[11px] p-1.5 mb-1 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-panel)]/80 text-[var(--chat-muted)] truncate flex items-center gap-1 ${
+                    className={`text-[11px] p-1.5 mb-1 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-panel)]/80 text-[var(--chat-muted)] truncate flex items-center gap-1 max-w-full ${
                       isSelf ? "justify-end" : "justify-start"
                     }`}
                   >
@@ -711,9 +798,9 @@ export default function Chats() {
                 )}
 
                 <div
-                  className={`chat-bubble ${isSelf ? "chat-bubble-self" : ""} ${
-                    m.pending ? "chat-bubble-pending" : ""
-                  } ${m.failed ? "chat-bubble-failed" : ""} px-3.5 py-2.5 leading-relaxed relative`}
+                  className={`chat-bubble px-3.5 py-2.5 leading-relaxed relative ${
+                    isSelf ? "chat-bubble-self shadow-md shadow-accent/20" : ""
+                  } ${m.pending ? "chat-bubble-pending" : ""} ${m.failed ? "chat-bubble-failed" : ""}`}
                   style={{ fontSize: `${15 * textScale}px` }}
                 >
                   {m.text}

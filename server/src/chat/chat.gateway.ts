@@ -18,10 +18,13 @@ const randomName = () =>
 
 export interface ChatMessage {
   id: string;
+  tempId?: string;
+  senderId?: string;
   name: string;
   text: string;
   ts: number;
   reactions?: Record<string, number>;
+  replyTo?: { id: string; name: string; text: string };
 }
 
 @WebSocketGateway({ cors: { origin: "*" } })
@@ -57,6 +60,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.emit("chat:presence", { online: this.onlineCount });
   }
 
+  @SubscribeMessage("chat:join")
+  handleJoin(@ConnectedSocket() client: Socket) {
+    let guestName = (client as any).guestName;
+    if (!guestName) {
+      guestName = randomName();
+      (client as any).guestName = guestName;
+    }
+    client.emit("chat:init", { name: guestName, history: this.chatHistory });
+    client.emit("chat:presence", { online: this.onlineCount });
+  }
+
   @SubscribeMessage("chat:rename")
   handleRename(@ConnectedSocket() client: Socket, @MessageBody() newName: string) {
     const clean = String(newName || "").trim().slice(0, 20);
@@ -66,18 +80,29 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage("chat:message")
   handleMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() text: string
+    @MessageBody() payload: any
   ) {
-    const clean = String(text || "").trim().slice(0, 500);
+    const textRaw = typeof payload === "string" ? payload : payload?.text;
+    const clean = String(textRaw || "").trim().slice(0, 500);
     if (!clean) return { ok: false, error: "empty" };
 
-    const name = (client as any).guestName || "Anonymous";
+    const customName = typeof payload === "object" && payload?.senderName ? String(payload.senderName).trim().slice(0, 20) : "";
+    const name = customName || (client as any).guestName || "Anonymous";
+    if (customName) (client as any).guestName = customName;
+
+    const senderId = (typeof payload === "object" && payload?.senderId) ? String(payload.senderId) : client.id;
+    const tempId = (typeof payload === "object" && payload?.tempId) ? String(payload.tempId) : undefined;
+    const replyTo = (typeof payload === "object" && payload?.replyTo) ? payload.replyTo : undefined;
+
     const msg: ChatMessage = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      tempId,
+      senderId,
       name,
       text: clean,
       ts: Date.now(),
-      reactions: {}
+      reactions: {},
+      replyTo
     };
 
     this.chatHistory.push(msg);
@@ -91,8 +116,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage("chat:react")
   handleReact(@MessageBody() payload: { id: string; emoji: string }) {
-    const validEmojis = ["❤️", "👍", "🔥", "🚀", "😂"];
-    if (!payload?.id || !validEmojis.includes(payload.emoji)) return;
+    if (!payload?.id || !payload?.emoji) return;
     const msg = this.chatHistory.find((m) => m.id === payload.id);
     if (msg) {
       if (!msg.reactions) msg.reactions = {};
