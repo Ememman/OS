@@ -1,12 +1,13 @@
 import { useOS } from "../store/useOS";
 import StarfieldCanvas from "./StarfieldCanvas";
+import { getAssetUrl } from "../lib/assets";
 
-// Custom image wallpapers, served from /public/wallpapers so they work
-// identically in `npm run dev` and in a production build.
+// Custom image wallpapers, resolved with getAssetUrl so they work
+// identically in local dev and subpath production deployments (GitHub Pages).
 const IMAGE_SRC = {
-  bg1: "/wallpapers/BG_1.jpg",
-  bg2: "/wallpapers/BG_2.png",
-  bg3: "/wallpapers/BG_3.jpg",
+  bg1: getAssetUrl("wallpapers/BG_1.jpg"),
+  bg2: getAssetUrl("wallpapers/BG_2.png"),
+  bg3: getAssetUrl("wallpapers/BG_3.jpg"),
 };
 
 const FALLBACK_GRADIENT = {

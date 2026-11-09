@@ -248,11 +248,14 @@ export default function Library() {
                   }}
                   className="rounded-2xl overflow-hidden border border-white/10 bg-white/5 hover:border-accent/60 transition-colors group cursor-pointer flex flex-col justify-between hover:shadow-xl hover:shadow-black/40"
                 >
-                  <div className="relative h-36 overflow-hidden">
+                  <div className="relative h-36 overflow-hidden bg-gradient-to-br from-slate-900 to-indigo-950">
                     <img
                       src={p.cover}
                       alt={p.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     
@@ -341,8 +344,15 @@ export default function Library() {
             </div>
 
             {/* Modal Image */}
-            <div className="relative h-44 rounded-2xl overflow-hidden mb-3 border border-white/10 shrink-0">
-              <img src={active.cover} alt={active.title} className="w-full h-full object-cover" />
+            <div className="relative h-44 rounded-2xl overflow-hidden mb-3 border border-white/10 shrink-0 bg-gradient-to-br from-slate-900 to-indigo-950">
+              <img
+                src={active.cover}
+                alt={active.title}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             </div>
 
