@@ -18,6 +18,8 @@ import {
   GIconThumbsUp,
   GIconRocket,
   GIconSmile,
+  GIconThunderbolt,
+  GIconRotateLeft,
 } from "../icons/GravityIcons";
 import { getSocket, getCachedChatInit } from "../../lib/socket";
 import { useOS } from "../../store/useOS";
@@ -64,11 +66,12 @@ const BG_OPTIONS = [
 ];
 
 const CHAT_REACTIONS = [
-  { id: "heart", label: "Heart", Icon: GIconHeart, color: "text-rose-400" },
-  { id: "thumbsup", label: "Thumbs Up", Icon: GIconThumbsUp, color: "text-emerald-400" },
-  { id: "flame", label: "Fire", Icon: GIconFlame, color: "text-amber-400" },
-  { id: "rocket", label: "Rocket", Icon: GIconRocket, color: "text-purple-400" },
-  { id: "smile", label: "Smile", Icon: GIconSmile, color: "text-sky-400" },
+  { id: "heart", label: "Love", Icon: GIconHeart, color: "text-rose-500", glow: "shadow-rose-500/50" },
+  { id: "thumbsup", label: "Like", Icon: GIconThumbsUp, color: "text-sky-400", glow: "shadow-sky-400/50" },
+  { id: "smile", label: "Haha", Icon: GIconSmile, color: "text-amber-400", glow: "shadow-amber-400/50" },
+  { id: "flame", label: "Fire", Icon: GIconFlame, color: "text-orange-500", glow: "shadow-orange-500/50" },
+  { id: "rocket", label: "Rocket", Icon: GIconRocket, color: "text-purple-400", glow: "shadow-purple-400/50" },
+  { id: "zap", label: "Zap", Icon: GIconThunderbolt, color: "text-yellow-400", glow: "shadow-yellow-400/50" },
 ];
 
 const QUICK_RESPONSES = [
@@ -81,12 +84,13 @@ const QUICK_RESPONSES = [
 ];
 
 function ReactionIcon({ emo, size = 12 }: { emo: string; size?: number }) {
-  if (emo === "❤️" || emo === "heart") return <GIconHeart size={size} className="text-rose-400" />;
-  if (emo === "👍" || emo === "thumbsup") return <GIconThumbsUp size={size} className="text-emerald-400" />;
-  if (emo === "🔥" || emo === "flame") return <GIconFlame size={size} className="text-amber-400" />;
+  if (emo === "❤️" || emo === "heart") return <GIconHeart size={size} className="text-rose-500" />;
+  if (emo === "👍" || emo === "thumbsup") return <GIconThumbsUp size={size} className="text-sky-400" />;
+  if (emo === "🔥" || emo === "flame") return <GIconFlame size={size} className="text-orange-500" />;
   if (emo === "🚀" || emo === "rocket") return <GIconRocket size={size} className="text-purple-400" />;
-  if (emo === "smile") return <GIconSmile size={size} className="text-sky-400" />;
-  return <GIconSmile size={size} className="text-sky-400" />;
+  if (emo === "⚡" || emo === "zap") return <GIconThunderbolt size={size} className="text-yellow-400" />;
+  if (emo === "smile" || emo === "😂") return <GIconSmile size={size} className="text-amber-400" />;
+  return <GIconSmile size={size} className="text-amber-400" />;
 }
 
 const ACK_TIMEOUT_MS = 6000;
@@ -240,6 +244,10 @@ export default function Chats() {
   const [searchQuery, setSearchQuery] = useState("");
   const [replyTarget, setReplyTarget] = useState<{ id: string; name: string; text: string } | null>(null);
 
+  // Messenger Reaction States
+  const [activeReactionMenu, setActiveReactionMenu] = useState<string | null>(null);
+  const [bursts, setBursts] = useState<Array<{ id: string; messageId: string; emoji: string; xOffset: number }>>([]);
+
   const listRef = useRef<HTMLDivElement>(null);
   const typingTimeout = useRef<any>(null);
   const themeButtonRef = useRef<HTMLButtonElement>(null);
@@ -303,6 +311,18 @@ export default function Chats() {
       }
     };
     const onReacted = ({ id, emoji, reactions }: any) => {
+      // Trigger burst on incoming reaction from other users too
+      const burstId = `burst-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      setBursts((prev) => [
+        ...prev,
+        { id: burstId, messageId: id, emoji: emoji || "heart", xOffset: (Math.random() - 0.5) * 24 },
+      ]);
+      setTimeout(() => {
+        setBursts((prev) => prev.filter((b) => b.id !== burstId));
+      }, 900);
+
+      if (chatSound) soundFx.playPop();
+
       setMessages((m) =>
         m.map((x) => {
           if (x.id !== id) return x;
@@ -389,8 +409,39 @@ export default function Chats() {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [bgPickerOpen]);
 
+  useEffect(() => {
+    if (!activeReactionMenu) return;
+    const handleClose = () => setActiveReactionMenu(null);
+    window.addEventListener("click", handleClose);
+    return () => window.removeEventListener("click", handleClose);
+  }, [activeReactionMenu]);
+
+  const scrollToMessage = (targetId: string) => {
+    const el = document.getElementById(`msg-${targetId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-accent", "ring-offset-2", "ring-offset-black");
+      setTimeout(() => {
+        el.classList.remove("ring-2", "ring-accent", "ring-offset-2", "ring-offset-black");
+      }, 1600);
+    }
+  };
+
   const reactToMessage = (id: string, emoji: string) => {
     getSocket().emit("chat:react", { id, emoji });
+
+    // Messenger burst animation on the message
+    const burstId = `burst-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    setBursts((prev) => [
+      ...prev,
+      { id: burstId, messageId: id, emoji, xOffset: (Math.random() - 0.5) * 24 },
+    ]);
+    setTimeout(() => {
+      setBursts((prev) => prev.filter((b) => b.id !== burstId));
+    }, 900);
+
+    soundFx.playPop();
+
     // Optimistic local update
     setMessages((m) =>
       m.map((x) => {
@@ -765,7 +816,8 @@ export default function Chats() {
           return (
             <div
               key={m.id || m.tempId}
-              className={`group flex items-end gap-2 max-w-[90%] sm:max-w-[80%] chat-message-in ${
+              id={`msg-${m.id || m.tempId}`}
+              className={`group flex items-end gap-2 max-w-[90%] sm:max-w-[80%] chat-message-in transition-all duration-300 rounded-2xl ${
                 isSelf ? "ml-auto flex-row-reverse" : "mr-auto flex-row"
               }`}
             >
@@ -785,79 +837,205 @@ export default function Chats() {
                   {isPinned && <GIconPin size={10} className="text-amber-400" />}
                 </div>
 
-                {/* Quoted Message in Reply */}
+                {/* Quoted Message in Reply with Click to Jump */}
                 {m.replyTo && (
-                  <div
-                    className={`text-[11px] p-1.5 mb-1 rounded-lg border border-[var(--chat-border)] bg-[var(--chat-panel)]/80 text-[var(--chat-muted)] truncate flex items-center gap-1 max-w-full ${
+                  <button
+                    type="button"
+                    onClick={() => scrollToMessage(m.replyTo.id)}
+                    className={`text-[11px] p-1.5 mb-1 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-panel)]/80 text-[var(--chat-muted)] hover:border-accent/40 hover:bg-[var(--chat-panel)] transition truncate flex items-center gap-1.5 max-w-full cursor-pointer group/quote ${
                       isSelf ? "justify-end" : "justify-start"
                     }`}
+                    title="Jump to quoted message"
                   >
+                    <GIconRotateLeft size={11} className="text-accent shrink-0 group-hover/quote:-rotate-45 transition-transform" />
                     <span className="font-semibold text-accent">@{m.replyTo.name}:</span>
-                    <span className="truncate">{m.replyTo.text}</span>
-                  </div>
+                    <span className="truncate opacity-80">{m.replyTo.text}</span>
+                  </button>
                 )}
 
-                <div
-                  className={`chat-bubble px-3.5 py-2.5 leading-relaxed relative ${
-                    isSelf ? "chat-bubble-self shadow-md shadow-accent/20" : ""
-                  } ${m.pending ? "chat-bubble-pending" : ""} ${m.failed ? "chat-bubble-failed" : ""}`}
-                  style={{ fontSize: `${15 * textScale}px` }}
-                >
-                  {m.text}
+                {/* Bubble Container & Messenger Action Bar */}
+                <div className="relative group/bubble flex items-center gap-1">
+                  {/* Action Bar for Own Message (left of bubble) */}
+                  {isSelf && (
+                    <div className="opacity-0 group-hover/bubble:opacity-100 focus-within:opacity-100 flex items-center gap-0.5 transition-opacity duration-150 order-first">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveReactionMenu(activeReactionMenu === m.id ? null : m.id);
+                        }}
+                        className="p-1 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                        title="React"
+                        aria-label="React"
+                      >
+                        <GIconSmile size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setReplyTarget({ id: m.id, name: m.name, text: m.text })}
+                        className="p-1 rounded-full text-white/50 hover:text-accent hover:bg-white/10 transition cursor-pointer"
+                        title="Reply"
+                        aria-label="Reply"
+                      >
+                        <GIconRotateLeft size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => togglePinMessage(m.id)}
+                        className="p-1 rounded-full text-white/50 hover:text-amber-400 hover:bg-white/10 transition cursor-pointer"
+                        title={isPinned ? "Unpin message" : "Pin message"}
+                        aria-label="Pin"
+                      >
+                        <GIconPin size={12} className={isPinned ? "text-amber-400" : ""} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Floating Messenger Reaction Tray */}
+                  <AnimatePresence>
+                    {activeReactionMenu === m.id && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.6, y: 8 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.6, y: 8 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                        className={`absolute -top-12 ${
+                          isSelf ? "right-0" : "left-0"
+                        } z-40 bg-[#121927]/95 backdrop-blur-2xl border border-white/20 shadow-[0_12px_36px_rgba(0,0,0,0.6)] rounded-full px-2 py-1 flex items-center gap-1 select-none`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {CHAT_REACTIONS.map((r, idx) => {
+                          const IconComp = r.Icon;
+                          return (
+                            <motion.button
+                              key={r.id}
+                              initial={{ scale: 0, y: 4 }}
+                              animate={{ scale: 1, y: 0 }}
+                              transition={{ delay: idx * 0.03, type: "spring", stiffness: 450, damping: 20 }}
+                              whileHover={{ scale: 1.45, y: -6 }}
+                              whileTap={{ scale: 0.85 }}
+                              onClick={() => {
+                                reactToMessage(m.id, r.id);
+                                setActiveReactionMenu(null);
+                              }}
+                              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/15 transition-colors relative group/emo cursor-pointer"
+                              title={r.label}
+                              aria-label={`React with ${r.label}`}
+                            >
+                              <IconComp size={18} className={r.color} />
+                              <span className="absolute -top-7 opacity-0 group-hover/emo:opacity-100 transition-opacity bg-black/90 text-[10px] text-white font-medium px-1.5 py-0.5 rounded shadow pointer-events-none whitespace-nowrap">
+                                {r.label}
+                              </span>
+                            </motion.button>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Floating Burst Particles on Reaction */}
+                  <AnimatePresence>
+                    {bursts
+                      .filter((b) => b.messageId === m.id)
+                      .map((b) => {
+                        const reactionDef = CHAT_REACTIONS.find((r) => r.id === b.emoji) || CHAT_REACTIONS[0];
+                        const BurstIcon = reactionDef.Icon;
+
+                        return (
+                          <motion.div
+                            key={b.id}
+                            initial={{ opacity: 1, scale: 0.3, y: 0, x: b.xOffset }}
+                            animate={{
+                              opacity: [1, 1, 0],
+                              scale: [0.3, 1.6, 1.2],
+                              y: -64,
+                              x: b.xOffset + (Math.random() - 0.5) * 12,
+                            }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                            className="absolute pointer-events-none z-50 flex items-center justify-center -top-2 left-1/2 -translate-x-1/2"
+                          >
+                            <div className="relative flex items-center justify-center">
+                              <div className={`w-11 h-11 rounded-full flex items-center justify-center bg-black/60 backdrop-blur-md shadow-2xl border border-white/25 ${reactionDef.color}`}>
+                                <BurstIcon size={24} />
+                              </div>
+                              <div className="absolute inset-0 rounded-full bg-accent/40 blur-md animate-ping" />
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                  </AnimatePresence>
+
+                  {/* The Chat Bubble */}
+                  <div
+                    onDoubleClick={() => reactToMessage(m.id, "heart")}
+                    className={`chat-bubble px-3.5 py-2.5 leading-relaxed relative transition-shadow ${
+                      isSelf ? "chat-bubble-self shadow-md shadow-accent/20" : ""
+                    } ${m.pending ? "chat-bubble-pending" : ""} ${m.failed ? "chat-bubble-failed" : ""}`}
+                    style={{ fontSize: `${15 * textScale}px` }}
+                    title="Double-click to Love (❤️)"
+                  >
+                    {m.text}
+                  </div>
+
+                  {/* Action Bar for Incoming Message (right of bubble) */}
+                  {!isSelf && (
+                    <div className="opacity-0 group-hover/bubble:opacity-100 focus-within:opacity-100 flex items-center gap-0.5 transition-opacity duration-150 order-last">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveReactionMenu(activeReactionMenu === m.id ? null : m.id);
+                        }}
+                        className="p-1 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                        title="React"
+                        aria-label="React"
+                      >
+                        <GIconSmile size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setReplyTarget({ id: m.id, name: m.name, text: m.text })}
+                        className="p-1 rounded-full text-white/50 hover:text-accent hover:bg-white/10 transition cursor-pointer"
+                        title="Reply"
+                        aria-label="Reply"
+                      >
+                        <GIconRotateLeft size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => togglePinMessage(m.id)}
+                        className="p-1 rounded-full text-white/50 hover:text-amber-400 hover:bg-white/10 transition cursor-pointer"
+                        title={isPinned ? "Unpin message" : "Pin message"}
+                        aria-label="Pin"
+                      >
+                        <GIconPin size={12} className={isPinned ? "text-amber-400" : ""} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {/* Reaction Badges */}
+                {/* Reaction Badges under Bubble */}
                 {m.reactions && Object.keys(m.reactions).length > 0 && (
                   <div className={`flex flex-wrap gap-1 mt-1 ${isSelf ? "justify-end" : "justify-start"}`}>
                     {Object.entries(m.reactions).map(([emo, count]: any) =>
                       count > 0 ? (
-                        <button
+                        <motion.button
                           key={emo}
+                          whileHover={{ scale: 1.15 }}
+                          whileTap={{ scale: 0.88 }}
+                          transition={{ type: "spring", stiffness: 450, damping: 15 }}
                           onClick={() => reactToMessage(m.id, emo)}
-                          className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-full border border-[var(--chat-border)] bg-[var(--chat-panel)] text-[var(--chat-text)] hover:scale-105 transition cursor-pointer"
+                          className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border border-white/15 bg-[#1b2438]/90 backdrop-blur-md text-white/90 shadow-sm hover:border-accent/40 transition cursor-pointer"
+                          title={`Reacted ${count} time(s). Click to react!`}
                         >
-                          <ReactionIcon emo={emo} size={11} />
+                          <ReactionIcon emo={emo} size={12} />
                           <span className="font-semibold text-[10px]">{count}</span>
-                        </button>
+                        </motion.button>
                       ) : null
                     )}
                   </div>
                 )}
-
-                {/* Hover Quick Bar: Reply, Pin, Reactions */}
-                <div
-                  className={`opacity-0 group-hover:opacity-100 flex items-center gap-1.5 transition-opacity ${
-                    isSelf ? "justify-end" : "justify-start"
-                  } mt-0.5 px-1`}
-                >
-                  <button
-                    onClick={() => setReplyTarget({ id: m.id, name: m.name, text: m.text })}
-                    className="text-[10px] hover:text-accent transition text-[var(--chat-muted)] mr-1 cursor-pointer"
-                    title="Reply to message"
-                  >
-                    Reply
-                  </button>
-                  <button
-                    onClick={() => togglePinMessage(m.id)}
-                    className="text-[10px] hover:text-amber-500 transition text-[var(--chat-muted)] mr-1 cursor-pointer"
-                    title={isPinned ? "Unpin message" : "Pin message"}
-                  >
-                    <GIconPin size={10} className={isPinned ? "text-amber-500" : ""} />
-                  </button>
-                  {CHAT_REACTIONS.map((r) => {
-                    const ReactionComp = r.Icon;
-                    return (
-                      <button
-                        key={r.id}
-                        onClick={() => reactToMessage(m.id, r.id)}
-                        className="p-1 hover:scale-125 transition-transform rounded hover:bg-[var(--chat-bg)] cursor-pointer"
-                        title={`React with ${r.label}`}
-                      >
-                        <ReactionComp size={12} className={r.color} />
-                      </button>
-                    );
-                  })}
-                </div>
 
                 {m.pending && <div role="status" className="chat-muted text-xs mt-1">Sending…</div>}
                 {m.failed && (
@@ -873,16 +1051,27 @@ export default function Chats() {
           );
         })}
 
+        {/* Messenger Animated Typing Indicator */}
         {typingName && typingName !== name && (
-          <div role="status" className="chat-muted flex items-center gap-1.5 text-sm pl-10">
-            <span className="font-semibold">{typingName}</span>
-            is typing
-            <span aria-hidden="true" className="chat-typing-dots inline-flex gap-0.5">
-              <span className="w-1 h-1 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="w-1 h-1 rounded-full animate-bounce" style={{ animationDelay: "120ms" }} />
-              <span className="w-1 h-1 rounded-full animate-bounce" style={{ animationDelay: "240ms" }} />
-            </span>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            className="flex items-end gap-2 max-w-[80%] mr-auto pl-1"
+          >
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm"
+              style={{ background: nameColor(typingName) }}
+            >
+              {typingName?.[0]?.toUpperCase() || "?"}
+            </div>
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl rounded-bl-xs px-3.5 py-2.5 flex items-center gap-1.5 border border-white/10 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+            <span className="text-[11px] text-white/40 pb-1 italic">{typingName} is typing…</span>
+          </motion.div>
         )}
       </div>
 
@@ -1006,14 +1195,43 @@ export default function Chats() {
           placeholder={connected ? "Write a message… (Enter to send)" : "Chat with Portfolio Bot…"}
           className="chat-input min-h-11 max-h-28 flex-1 resize-y rounded-xl px-3 py-2.5 text-sm"
         />
-        <button
-          type="submit"
-          disabled={!text.trim()}
-          className="chat-send-button inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <GIconPaperPlane size={16} aria-hidden="true" />
-          <span>Send</span>
-        </button>
+        <AnimatePresence mode="wait">
+          {!text.trim() ? (
+            <motion.button
+              key="quick-like"
+              type="button"
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.7, opacity: 0 }}
+              whileHover={{ scale: 1.15, rotate: -8 }}
+              whileTap={{ scale: 0.85 }}
+              transition={{ type: "spring", stiffness: 500, damping: 20 }}
+              onClick={() => {
+                sendText("👍");
+                soundFx.playPop();
+              }}
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl bg-accent/20 hover:bg-accent text-accent hover:text-white transition-all shadow-sm cursor-pointer shrink-0"
+              title="Send Quick Like (Messenger style)"
+              aria-label="Send Like"
+            >
+              <GIconThumbsUp size={20} />
+            </motion.button>
+          ) : (
+            <motion.button
+              key="send-btn"
+              type="submit"
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.7, opacity: 0 }}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.94 }}
+              className="chat-send-button inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 font-semibold shadow-md shadow-accent/20 cursor-pointer shrink-0"
+            >
+              <GIconPaperPlane size={16} aria-hidden="true" />
+              <span>Send</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
       </form>
     </div>
   );
