@@ -301,8 +301,8 @@ export default function Updates() {
 
   return (
     <div className="flex flex-col h-full bg-slate-950/40 text-white select-text">
-      {/* Top Header Bar */}
-      <div className="shrink-0 p-4 border-b border-white/10 bg-white/[0.02]">
+      {/* Top Header Bar (Sticky) */}
+      <div className="shrink-0 p-3 sm:p-4 border-b border-white/10 bg-[#070a12]/95 backdrop-blur-md sticky top-0 z-20 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div>
             <div className="flex items-center gap-2">

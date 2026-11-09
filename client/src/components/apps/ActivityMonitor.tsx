@@ -359,8 +359,8 @@ export default function ActivityMonitor() {
 
   return (
     <div className="flex flex-col h-full select-none bg-black/40 text-white text-xs">
-      {/* Tab Navigation */}
-      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 bg-white/5 gap-2">
+      {/* Tab Navigation (Sticky Header) */}
+      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 bg-[#0d1017]/95 backdrop-blur-md gap-2 shrink-0 sticky top-0 z-20 shadow-sm">
         <div className="flex-1 flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
           <button
             onClick={() => setActiveTab("processes")}

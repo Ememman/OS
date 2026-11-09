@@ -89,13 +89,14 @@ export default function Gallery() {
   const currentFilterStyle = PHOTO_FILTERS.find((f) => f.id === activeFilter)?.style || "none";
 
   return (
-    <div className="p-4 text-white select-none">
-      <div className="flex items-center justify-between mb-3.5">
+    <div className="flex flex-col h-full bg-[#0a0a0f] text-white select-none">
+      {/* Sticky Gallery Header & Filter Pills */}
+      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2.5 p-3 sm:p-4 border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-md sticky top-0 z-20 shrink-0 shadow-sm">
         <div>
-          <h2 className="font-display text-lg font-semibold text-white">Gallery</h2>
-          <p className="text-[11px] text-white/50">Curated showcase and media library</p>
+          <h2 className="font-display text-base sm:text-lg font-semibold text-white">Gallery</h2>
+          <p className="text-[10px] sm:text-[11px] text-white/50">Curated showcase and media library</p>
         </div>
-        <div className="flex gap-1 flex-wrap justify-end">
+        <div className="flex gap-1 overflow-x-auto no-scrollbar py-0.5">
           {tags.map((t) => (
             <button
               key={t}
@@ -103,7 +104,7 @@ export default function Gallery() {
                 if (systemSounds) soundFx.playClick();
                 setTag(t);
               }}
-              className={`text-[11px] px-2.5 py-1 rounded-full border flex items-center gap-1.5 transition ${
+              className={`text-[11px] px-2.5 py-1 rounded-full border flex items-center gap-1.5 transition shrink-0 cursor-pointer whitespace-nowrap ${
                 tag === t
                   ? "bg-accent border-accent text-white shadow-sm shadow-accent/20"
                   : "border-white/15 text-white/60 hover:text-white hover:bg-white/5"
@@ -116,8 +117,8 @@ export default function Gallery() {
         </div>
       </div>
 
-      {/* Masonry / Grid */}
-      <div className="[column-fill:balance] sm:columns-3 columns-2 gap-2 space-y-2">
+      {/* Masonry / Grid Container */}
+      <div className="flex-1 overflow-y-auto thin-scroll p-3 sm:p-4 [column-fill:balance] sm:columns-3 columns-2 gap-2 space-y-2">
         {shown.map((g, i) => (
           <motion.button
             key={g.id}

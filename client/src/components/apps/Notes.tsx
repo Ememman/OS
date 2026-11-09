@@ -902,7 +902,7 @@ export default function Notes() {
 
       {/* Sidebar: Notes List */}
       <div className={`w-full sm:w-64 border-r border-white/10 flex flex-col shrink-0 bg-black/25 ${mobileView === "list" ? "flex" : "hidden sm:flex"}`}>
-        <div className="p-2.5 border-b border-white/10 flex items-center justify-between">
+        <div className="p-2.5 border-b border-white/10 flex items-center justify-between sticky top-0 z-10 bg-[#0a0a0f]/95 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-2">
             <GIconNotes size={16} className="text-amber-400" />
             <span className="text-xs font-semibold text-white/85">Notes</span>
@@ -914,7 +914,7 @@ export default function Notes() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="p-1 rounded-md text-white/50 hover:text-white hover:bg-white/10 transition"
+              className="p-1 rounded-md text-white/50 hover:text-white hover:bg-white/10 transition cursor-pointer"
               title="Import .md / .txt file"
             >
               <GIconUpload size={13} />
@@ -930,8 +930,8 @@ export default function Notes() {
           </div>
         </div>
 
-        {/* Search bar */}
-        <div className="p-2 border-b border-white/10 space-y-2">
+        {/* Search bar & Tag Filters (Sticky header) */}
+        <div className="p-2 border-b border-white/10 space-y-2 sticky top-[41px] z-10 bg-[#0a0a0f]/95 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5 border border-white/10">
             <GIconSearch size={12} className="text-white/40 shrink-0" />
             <input
@@ -1051,16 +1051,17 @@ export default function Notes() {
       {/* Editor Body */}
       {activeNote ? (
         <div className={`flex-1 flex flex-col min-w-0 bg-[#0d0e15] ${mobileView === "editor" ? "flex" : "hidden sm:flex"}`}>
-          {/* Editor Header Bar */}
-          <div className="px-3 sm:px-3.5 py-2 border-b border-white/10 flex flex-wrap items-center justify-between gap-2 bg-black/15">
-            <div className="flex items-center gap-2 flex-1 min-w-[180px]">
+          {/* Sticky Editor Header Bar (Organized & Uncrowded) */}
+          <div className="sticky top-0 z-20 shrink-0 px-2.5 sm:px-4 py-2 bg-[#0c0d14]/95 backdrop-blur-md border-b border-white/10 flex items-center justify-between gap-2 shadow-sm">
+            {/* Left Section: Back on mobile, color, title, and tag */}
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
               {/* Back to list button on mobile */}
               <button
                 onClick={() => {
                   if (systemSounds) soundFx.playClick();
                   setMobileView("list");
                 }}
-                className="sm:hidden px-2 py-1 -ml-1 text-white/70 hover:text-white rounded-lg hover:bg-white/10 flex items-center gap-1 text-xs font-medium cursor-pointer shrink-0"
+                className="sm:hidden px-2 py-1 text-white/80 hover:text-white rounded-lg bg-white/10 hover:bg-white/15 flex items-center gap-1 text-xs font-medium cursor-pointer shrink-0"
                 title="Back to notes list"
               >
                 <GIconChevronLeft size={14} />
@@ -1083,19 +1084,20 @@ export default function Notes() {
                 ))}
               </div>
 
+              {/* Note Title Input with guaranteed truncation & zero-overlap layout */}
               <input
                 type="text"
                 value={activeNote.title}
                 onChange={(e) => updateActiveNote({ title: e.target.value })}
                 placeholder="Note Title"
-                className="bg-transparent text-sm sm:text-base font-semibold text-white outline-none flex-1 placeholder:text-white/30 truncate"
+                className="bg-transparent text-xs sm:text-base font-semibold text-white outline-none flex-1 min-w-0 placeholder:text-white/30 truncate"
               />
 
               {/* Tag Selector Pill */}
               <select
                 value={activeNote.tag || "ideas"}
                 onChange={(e) => updateActiveNote({ tag: e.target.value })}
-                className="text-[10px] bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-white/70 focus:outline-none focus:border-accent"
+                className="text-[10px] bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-white/70 focus:outline-none focus:border-accent shrink-0 hidden xs:inline-block"
               >
                 <option value="ideas">💡 #ideas</option>
                 <option value="work">💼 #work</option>
@@ -1105,34 +1107,34 @@ export default function Notes() {
               </select>
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
+            {/* Right Action Tools: Compact & Organized (No collisions) */}
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
               {/* Cloud Sync Status Button */}
               <button
                 onClick={syncWithCloud}
                 disabled={isSyncing}
-                className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-xs text-white/75 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-xs text-white/75 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                 title="Sync and backup notes to server"
               >
                 <GIconRotateRight size={12} className={isSyncing ? "animate-spin text-accent" : "text-white/60"} />
-                <span className="hidden sm:inline">
-                  {isSyncing ? "Syncing..." : lastSyncedAt ? "Synced" : "Cloud Sync"}
+                <span className="hidden md:inline">
+                  {isSyncing ? "Syncing..." : lastSyncedAt ? "Synced" : "Sync"}
                 </span>
               </button>
 
               {/* Copy Button */}
               <button
                 onClick={copyNote}
-                className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-xs text-white/75 transition flex items-center gap-1 cursor-pointer"
-                title="Copy note markdown text"
+                className="w-7 h-7 aspect-square rounded-lg bg-white/10 hover:bg-white/15 text-white/75 hover:text-white transition flex items-center justify-center cursor-pointer shrink-0"
+                title={copied ? "Copied to clipboard" : "Copy markdown"}
               >
-                {copied ? <GIconCheck size={12} className="text-emerald-400" /> : <GIconCopy size={12} />}
-                <span>{copied ? "Copied" : "Copy"}</span>
+                {copied ? <GIconCheck size={13} className="text-emerald-400" /> : <GIconCopy size={13} />}
               </button>
 
               {/* Download / Export Button */}
               <button
                 onClick={exportNote}
-                className="w-7 h-7 aspect-square shrink-0 rounded-lg flex items-center justify-center bg-white/10 hover:bg-white/15 text-white/75 hover:text-white transition cursor-pointer"
+                className="w-7 h-7 aspect-square rounded-lg bg-white/10 hover:bg-white/15 text-white/75 hover:text-white transition flex items-center justify-center cursor-pointer shrink-0"
                 title="Download as .md file"
               >
                 <GIconDownload size={13} />
@@ -1140,8 +1142,8 @@ export default function Notes() {
             </div>
           </div>
 
-          {/* Rich Editing & Formatting Toolbar */}
-          <div className="px-3 py-1.5 bg-white/[0.03] border-b border-white/5 flex items-center justify-between gap-1 overflow-x-auto no-scrollbar text-xs">
+          {/* Sticky Formatting Toolbar */}
+          <div className="sticky top-[41px] sm:top-[45px] z-10 shrink-0 px-2.5 py-1.5 bg-[#0b0c13]/95 backdrop-blur-sm border-b border-white/5 flex items-center justify-between gap-1 overflow-x-auto no-scrollbar touch-pan-x text-xs">
             {/* Left Tools Group */}
             <div className="flex items-center gap-0.5 shrink-0">
               {/* Templates Dropdown Button */}

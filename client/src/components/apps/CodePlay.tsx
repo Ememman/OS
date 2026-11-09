@@ -366,8 +366,8 @@ export default function CodePlay() {
 
   return (
     <div className="flex flex-col h-full bg-[#0a0a0f] text-white select-none">
-      {/* 1. TOP HEADER & CONTROLS */}
-      <div className="px-3.5 py-2.5 border-b border-white/10 flex flex-wrap items-center justify-between gap-2 bg-black/35 backdrop-blur-md">
+      {/* 1. TOP HEADER & CONTROLS (Sticky Header) */}
+      <div className="px-3 sm:px-3.5 py-2 border-b border-white/10 flex items-center justify-between gap-2 bg-[#0a0a0f]/95 backdrop-blur-md shrink-0 sticky top-0 z-20 shadow-sm">
         {/* Title & Info */}
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center text-accent shrink-0">

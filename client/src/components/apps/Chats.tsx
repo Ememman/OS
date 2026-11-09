@@ -461,8 +461,8 @@ export default function Chats() {
       data-chat-bg={chatBg}
       className={`flex flex-col h-full chat-surface chat-theme--${chatBg} relative select-none`}
     >
-      {/* Chat Topbar */}
-      <div className="chat-topbar chat-header flex items-center justify-between px-3.5 py-2.5 border-b border-[var(--chat-border)] bg-[var(--chat-panel)] gap-2">
+      {/* Chat Topbar (Sticky Header) */}
+      <div className="chat-topbar chat-header flex items-center justify-between px-3.5 py-2.5 border-b border-[var(--chat-border)] bg-[var(--chat-panel)] gap-2 shrink-0 sticky top-0 z-20 shadow-sm">
         <div className="flex items-center gap-2">
           <div className="relative">
             <span

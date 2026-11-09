@@ -456,7 +456,7 @@ export default function Guestbook() {
   return (
     <div className="flex flex-col h-full bg-[#0c0e14] text-white text-xs select-none overflow-hidden">
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between border-b border-white/[0.08] px-4 py-3 bg-white/[0.015] shrink-0">
+      <div className="sticky top-0 z-20 flex items-center justify-between border-b border-white/[0.08] px-4 py-3 bg-[#0c0e14]/95 backdrop-blur-md shrink-0">
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
             <GIconBookOpen size={16} className="text-white/80" />
@@ -495,7 +495,7 @@ export default function Guestbook() {
       </div>
 
       {/* Mobile Segmented View Switcher */}
-      <div className="lg:hidden flex items-center p-2 border-b border-white/[0.08] bg-white/[0.02] shrink-0 gap-1.5">
+      <div className="lg:hidden sticky top-[57px] z-10 flex items-center p-2 border-b border-white/[0.08] bg-[#0c0e14]/95 backdrop-blur-md shrink-0 gap-1.5">
         <button
           type="button"
           onClick={() => {

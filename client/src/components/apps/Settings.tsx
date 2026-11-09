@@ -160,12 +160,14 @@ export default function Settings() {
   const handleImageError = (id) => setImageErrors((prev) => ({ ...prev, [id]: true }));
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-5 bg-[#0a0a0f] min-h-screen">
-      {/* Header */}
-      <div className="space-y-1">
-        <h1 className="font-display text-lg sm:text-xl font-semibold text-white">Settings</h1>
-        <p className="text-xs sm:text-sm text-white/50">Make this desktop yours.</p>
+    <div className="flex flex-col h-full bg-[#0a0a0f] text-white select-none">
+      {/* Sticky Header */}
+      <div className="p-3 sm:p-4 border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-md sticky top-0 z-20 shrink-0 shadow-sm">
+        <h1 className="font-display text-base sm:text-lg font-semibold text-white">Settings</h1>
+        <p className="text-[11px] text-white/50">Personalize wallpaper, accents, and system preferences.</p>
       </div>
+
+      <div className="flex-1 overflow-y-auto thin-scroll p-3 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
 
       {/* ============ APPEARANCE ============ */}
       <GroupHeader icon={GIconSliders} label="Appearance" />
@@ -504,6 +506,7 @@ export default function Settings() {
         </div>
         <p className="text-[9px] sm:text-[10px] text-white/20 text-center">Current wallpaper preview</p>
       </section>
+      </div>
     </div>
   );
 }

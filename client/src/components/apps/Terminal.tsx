@@ -496,7 +496,7 @@ export default function Terminal() {
       )}
 
       {/* Terminal Header */}
-      <div className="relative z-10 flex items-center justify-between px-3 py-1.5 bg-[#05070c] border-b border-white/10 select-none">
+      <div className="relative z-10 sticky top-0 flex items-center justify-between px-3 py-1.5 bg-[#05070c]/95 backdrop-blur-md border-b border-white/10 shrink-0 select-none">
         <div className="flex items-center gap-2">
           <GIconTerminal size={14} className="text-emerald-400" />
           <span className="text-[11px] text-white/70 font-semibold">bron@portfolio-os:~ (portfolio-sh)</span>

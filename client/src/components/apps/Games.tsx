@@ -25,7 +25,7 @@ export default function Games() {
   if (open === "minesweeper") {
     return (
       <div className="h-full flex flex-col">
-        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
+        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-[#0a0a0f]/95 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setOpen(null)}
@@ -74,7 +74,7 @@ export default function Games() {
   if (open === "blockblast") {
     return (
       <div className="h-full flex flex-col">
-        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
+        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-[#0a0a0f]/95 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setOpen(null)}
@@ -123,7 +123,7 @@ export default function Games() {
   if (open === "2048") {
     return (
       <div className="h-full flex flex-col">
-        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
+        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-[#0a0a0f]/95 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setOpen(null)}
@@ -172,7 +172,7 @@ export default function Games() {
   if (open === "snake") {
     return (
       <div className="h-full flex flex-col">
-        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
+        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-[#0a0a0f]/95 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setOpen(null)}
