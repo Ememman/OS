@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useOS } from "./store/useOS";
 import { applyHarmonizedPaletteToDoc } from "./lib/colorHarmonizer";
 import { useIsMobile, useIsTablet } from "./lib/useMediaQuery";
@@ -26,21 +26,22 @@ import AgendaWidget from "./components/widgets/AgendaWidget";
 import NoteWidget from "./components/widgets/NoteWidget";
 import ShortcutTiles from "./components/widgets/ShortcutTiles";
 
-import Library from "./components/apps/Library";
-import Music from "./components/apps/Music";
-import Updates from "./components/apps/Updates";
-import Chats from "./components/apps/Chats";
-import Gallery from "./components/apps/Gallery";
-import Games from "./components/apps/Games";
-import Files from "./components/apps/Files";
-import Settings from "./components/apps/Settings";
-import Resume from "./components/apps/Resume";
-import Terminal from "./components/apps/Terminal";
-import Calculator from "./components/apps/Calculator";
-import Notes from "./components/apps/Notes";
-import ActivityMonitor from "./components/apps/ActivityMonitor";
-import Guestbook from "./components/apps/Guestbook";
-import CodePlay from "./components/apps/CodePlay";
+// Lazy-loaded application components for high-speed mobile booting & low memory footprint
+const Library = lazy(() => import("./components/apps/Library"));
+const Music = lazy(() => import("./components/apps/Music"));
+const Updates = lazy(() => import("./components/apps/Updates"));
+const Chats = lazy(() => import("./components/apps/Chats"));
+const Gallery = lazy(() => import("./components/apps/Gallery"));
+const Games = lazy(() => import("./components/apps/Games"));
+const Files = lazy(() => import("./components/apps/Files"));
+const Settings = lazy(() => import("./components/apps/Settings"));
+const Resume = lazy(() => import("./components/apps/Resume"));
+const Terminal = lazy(() => import("./components/apps/Terminal"));
+const Calculator = lazy(() => import("./components/apps/Calculator"));
+const Notes = lazy(() => import("./components/apps/Notes"));
+const ActivityMonitor = lazy(() => import("./components/apps/ActivityMonitor"));
+const Guestbook = lazy(() => import("./components/apps/Guestbook"));
+const CodePlay = lazy(() => import("./components/apps/CodePlay"));
 import MissionControl from "./components/MissionControl";
 
 import {
@@ -194,7 +195,16 @@ export default function App() {
         if (!Comp) return null;
         return (
           <Window key={win.id} win={win}>
-            <Comp />
+            <Suspense
+              fallback={
+                <div className="flex-1 flex flex-col items-center justify-center p-8 gap-2.5 text-white/50 select-none">
+                  <div className="w-5 h-5 border-2 border-white/20 border-t-accent rounded-full animate-spin" />
+                  <span className="text-[11px] font-mono">Loading {win.title}...</span>
+                </div>
+              }
+            >
+              <Comp />
+            </Suspense>
           </Window>
         );
       })}

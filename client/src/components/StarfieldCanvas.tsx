@@ -15,6 +15,7 @@ export default function StarfieldCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const particlesEnabled = useOS((s: any) => s.particlesEnabled);
   const reduceMotion = useOS((s: any) => s.reduceMotion);
+  const windows = useOS((s: any) => s.windows);
 
   useEffect(() => {
     if (!particlesEnabled) return;
@@ -26,25 +27,28 @@ export default function StarfieldCanvas() {
     let animId: number;
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
+    let isMobile = width < 768;
 
     const onResize = () => {
       if (!canvas) return;
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
+      isMobile = width < 768;
     };
-    window.addEventListener("resize", onResize);
+    window.addEventListener("resize", onResize, { passive: true });
 
-    const particleCount = width < 768 ? 35 : 75;
+    // On mobile screens, use 16 gentle stars; on desktop, 65 particles
+    const particleCount = isMobile ? 16 : 65;
     const particles: Particle[] = [];
 
     for (let i = 0; i < particleCount; i++) {
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        vx: (Math.random() - 0.5) * (reduceMotion ? 0.05 : 0.35),
-        vy: (Math.random() - 0.5) * (reduceMotion ? 0.05 : 0.35),
-        size: Math.random() * 1.8 + 0.6,
-        baseAlpha: Math.random() * 0.5 + 0.25,
+        vx: (Math.random() - 0.5) * (reduceMotion || isMobile ? 0.08 : 0.32),
+        vy: (Math.random() - 0.5) * (reduceMotion || isMobile ? 0.08 : 0.32),
+        size: Math.random() * 1.6 + 0.6,
+        baseAlpha: Math.random() * 0.45 + 0.2,
         phase: Math.random() * Math.PI * 2,
       });
     }
@@ -56,28 +60,48 @@ export default function StarfieldCanvas() {
       mouseX = e.clientX;
       mouseY = e.clientY;
     };
-    window.addEventListener("mousemove", onMouseMove);
+    if (!isMobile) {
+      window.addEventListener("mousemove", onMouseMove, { passive: true });
+    }
 
     let tick = 0;
+    let frameCount = 0;
+
     const render = () => {
+      // Pause drawing on mobile if a fullscreen window is currently covering the screen
+      const hasFullscreenWindow = isMobile && windows.some((w: any) => !w.minimized);
+      if (hasFullscreenWindow) {
+        animId = requestAnimationFrame(render);
+        return;
+      }
+
+      frameCount++;
+      // On mobile, render at 30fps (every 2nd tick) to save GPU fill rate & battery
+      if (isMobile && frameCount % 2 !== 0) {
+        animId = requestAnimationFrame(render);
+        return;
+      }
+
       tick += 0.02;
       ctx.clearRect(0, 0, width, height);
 
-      // Draw constellation connections
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+      // Draw constellation connections ONLY on desktop screens (heavy O(N^2) GPU draw on mobile)
+      if (!isMobile) {
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < 100) {
-            const alpha = (1 - dist / 100) * 0.12;
-            ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-            ctx.lineWidth = 0.6;
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.stroke();
+            if (dist < 90) {
+              const alpha = (1 - dist / 90) * 0.1;
+              ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+              ctx.lineWidth = 0.5;
+              ctx.beginPath();
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.stroke();
+            }
           }
         }
       }
@@ -96,13 +120,16 @@ export default function StarfieldCanvas() {
           if (p.y > height) p.y = 0;
         }
 
-        // Mouse proximity glow
-        const mdx = mouseX - p.x;
-        const mdy = mouseY - p.y;
-        const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
-        const mouseBonus = mdist < 140 ? (1 - mdist / 140) * 0.4 : 0;
+        // Mouse proximity glow (desktop only)
+        let mouseBonus = 0;
+        if (!isMobile && mouseX !== -1000) {
+          const mdx = mouseX - p.x;
+          const mdy = mouseY - p.y;
+          const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
+          if (mdist < 120) mouseBonus = (1 - mdist / 120) * 0.35;
+        }
 
-        const pulse = Math.sin(tick + p.phase) * 0.2;
+        const pulse = Math.sin(tick + p.phase) * 0.18;
         const currentAlpha = Math.min(1, Math.max(0.1, p.baseAlpha + pulse + mouseBonus));
 
         ctx.fillStyle = `rgba(255, 255, 255, ${currentAlpha})`;
@@ -119,9 +146,11 @@ export default function StarfieldCanvas() {
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", onResize);
-      window.removeEventListener("mousemove", onMouseMove);
+      if (!isMobile) {
+        window.removeEventListener("mousemove", onMouseMove);
+      }
     };
-  }, [particlesEnabled, reduceMotion]);
+  }, [particlesEnabled, reduceMotion, windows]);
 
   if (!particlesEnabled) return null;
 
@@ -133,4 +162,3 @@ export default function StarfieldCanvas() {
     />
   );
 }
-

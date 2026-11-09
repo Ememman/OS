@@ -392,6 +392,29 @@ body {
   transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
 }
 
+/* Mobile GPU Performance Enhancements:
+   Lightweight blur without multi-pass saturation, hardware-accelerated transforms,
+   and optimized shadow overhead for smooth 60fps scrolling & window handling */
+@media (max-width: 768px) {
+  :root {
+    --surface-shadow: 0 12px 28px rgba(0, 0, 0, 0.38);
+  }
+
+  .glass {
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    background: rgba(var(--glass), 0.90);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
+    transform: translateZ(0);
+  }
+
+  /* Disable heavy looping pulse-glow filters on mobile to prevent GPU thermal throttling */
+  .animate-pulse-glow {
+    animation: none !important;
+    opacity: 0.3 !important;
+  }
+}
+
 .no-select { user-select: none; }
 .allow-select { user-select: text; }
 ::selection { background: rgba(var(--accent), 0.35); }

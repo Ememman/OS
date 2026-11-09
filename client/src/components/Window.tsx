@@ -375,7 +375,11 @@ export default function Window({ win, children }) {
     <div
       ref={windowRef}
       className={`absolute glass shadow-2xl flex flex-col overflow-hidden transition-shadow ${isWin ? "rounded-lg" : "rounded-2xl"} ${
-        isFocused ? "ring-1 ring-white/15" : "brightness-[0.82] saturate-[0.85]"
+        isFocused
+          ? "ring-1 ring-white/15"
+          : isMobile
+            ? "opacity-95"
+            : "brightness-[0.82] saturate-[0.85]"
       }`}
       style={style}
       onPointerDown={() => focusWindow(win.id)}
