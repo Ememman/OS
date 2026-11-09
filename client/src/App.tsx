@@ -19,6 +19,7 @@ import SpotlightSearch from "./components/SpotlightSearch";
 import ControlCenter from "./components/ControlCenter";
 import NotificationToast from "./components/NotificationToast";
 import DesktopContextMenu from "./components/DesktopContextMenu";
+import { touchChatActivity } from "./lib/chatSession";
 import PhotoWidget from "./components/widgets/PhotoWidget";
 import WeatherWidget from "./components/widgets/WeatherWidget";
 import ClockWidget from "./components/widgets/ClockWidget";
@@ -113,6 +114,25 @@ export default function App() {
   useEffect(() => {
     document.documentElement.style.setProperty("--glass-alpha", String(glassAlpha));
   }, [glassAlpha]);
+
+  // Keep chat session active while user is interacting with the OS (1hr inactivity timeout)
+  useEffect(() => {
+    let lastTouched = 0;
+    const onUserInteraction = () => {
+      const now = Date.now();
+      if (now - lastTouched > 30000) {
+        lastTouched = now;
+        touchChatActivity();
+      }
+    };
+    onUserInteraction();
+    window.addEventListener("pointerdown", onUserInteraction, { passive: true });
+    window.addEventListener("keydown", onUserInteraction, { passive: true });
+    return () => {
+      window.removeEventListener("pointerdown", onUserInteraction);
+      window.removeEventListener("keydown", onUserInteraction);
+    };
+  }, []);
 
   // Global Spotlight Keyboard Shortcut (Cmd+K / Ctrl+K)
   useEffect(() => {

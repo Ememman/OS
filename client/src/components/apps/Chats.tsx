@@ -22,6 +22,7 @@ import {
   GIconRotateLeft,
 } from "../icons/GravityIcons";
 import { getSocket, getCachedChatInit } from "../../lib/socket";
+import { getChatSession, touchChatActivity, saveChatName } from "../../lib/chatSession";
 import { useOS } from "../../store/useOS";
 import { useOutsideClick } from "../../lib/useOutsideClick";
 import { soundFx } from "../../lib/soundFx";
@@ -214,26 +215,22 @@ export default function Chats() {
   const setChatBg = useOS((s) => s.setChatBg);
   const notify = useOS((s) => s.notify);
 
-  const clientId = useMemo(() => {
-    let id = localStorage.getItem("os_chat_client_id");
-    if (!id) {
-      id = "c_" + Math.random().toString(36).slice(2, 10);
-      localStorage.setItem("os_chat_client_id", id);
-    }
-    return id;
-  }, []);
+  const session = useMemo(() => getChatSession(), []);
+  const clientId = session.clientId;
 
   const cached = getCachedChatInit();
   const [connected, setConnected] = useState(() => getSocket().connected);
   const [connecting, setConnecting] = useState(() => !getSocket().connected);
-  const [name, setName] = useState(() => localStorage.getItem("os_chat_name") || cached?.name || "");
+  const [name, setName] = useState(() => session.name || cached?.name || "");
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [messages, setMessages] = useState<any[]>(() => cached?.history || []);
   const [pinnedList, setPinnedList] = useState<any[]>(() => cached?.pinned || []);
   const [activeUsers, setActiveUsers] = useState<any[]>(() => cached?.users || []);
   const [showUsersModal, setShowUsersModal] = useState(false);
-  const [online, setOnline] = useState<number>(() => (typeof cached?.online === "number" ? cached.online : 0));
+  const [online, setOnline] = useState<number>(() =>
+    typeof cached?.online === "number" ? Math.max(1, cached.online) : 1
+  );
   const [text, setText] = useState("");
   const [typingName, setTypingName] = useState<string | null>(null);
   const [bgPickerOpen, setBgPickerOpen] = useState(false);
@@ -263,26 +260,28 @@ export default function Chats() {
     const socket = getSocket();
 
     const onConnect = () => {
+      touchChatActivity();
       setConnected(true);
       setConnecting(false);
-      socket.emit("chat:join");
-      const savedName = localStorage.getItem("os_chat_name");
-      if (savedName) socket.emit("chat:rename", savedName);
+      const cur = getChatSession();
+      socket.emit("chat:join", { clientId: cur.clientId, name: cur.name });
+      if (cur.name) socket.emit("chat:rename", cur.name);
     };
     const onDisconnect = () => setConnected(false);
     const onConnecting = () => setConnecting(true);
     const onInit = ({ name: serverName, history, pinned, users, online: onlineCount }: any) => {
+      touchChatActivity();
       setConnected(true);
       setConnecting(false);
-      const chosenName = localStorage.getItem("os_chat_name") || serverName || "Guest";
+      const cur = getChatSession();
+      const chosenName = cur.name || serverName || "Guest";
       setName(chosenName);
-      if (!localStorage.getItem("os_chat_name") && serverName) {
-        localStorage.setItem("os_chat_name", serverName);
-      }
-      setMessages(history || []);
+      saveChatName(chosenName);
+
+      if (history) setMessages(history);
       if (pinned) setPinnedList(pinned);
-      if (users) setActiveUsers(users);
-      if (typeof onlineCount === "number") setOnline(onlineCount);
+      if (users && Array.isArray(users)) setActiveUsers(users);
+      if (typeof onlineCount === "number") setOnline(Math.max(1, onlineCount));
     };
     const onMessage = (msg: any) => {
       setMessages((m) => {
@@ -334,7 +333,10 @@ export default function Chats() {
         })
       );
     };
-    const onPresence = ({ online }: any) => setOnline(online);
+    const onPresence = ({ online: count, users }: any) => {
+      if (typeof count === "number") setOnline(Math.max(1, count));
+      if (users && Array.isArray(users)) setActiveUsers(users);
+    };
     const onUsersUpdated = (userList: any[]) => setActiveUsers(userList || []);
     const onPinned = ({ pinnedList: updatedList }: any) => {
       if (updatedList) setPinnedList(updatedList);
@@ -428,6 +430,7 @@ export default function Chats() {
   };
 
   const reactToMessage = (id: string, emoji: string) => {
+    touchChatActivity();
     getSocket().emit("chat:react", { id, emoji });
 
     // Messenger burst animation on the message
@@ -467,8 +470,9 @@ export default function Chats() {
   };
 
   const sendText = (t: string) => {
+    touchChatActivity();
     const tempId = `temp-${Date.now()}`;
-    const currentName = name || localStorage.getItem("os_chat_name") || "Guest";
+    const currentName = name || getChatSession().name || "Guest";
 
     // Local fallback bot when offline
     if (!connected) {
@@ -574,7 +578,7 @@ export default function Chats() {
     if (clean) {
       getSocket().emit("chat:rename", clean);
       setName(clean);
-      localStorage.setItem("os_chat_name", clean);
+      saveChatName(clean);
     }
     setEditingName(false);
   };
@@ -653,12 +657,17 @@ export default function Chats() {
           {/* Active Participants Button */}
           <div className="relative">
             <button
-              onClick={() => setShowUsersModal(!showUsersModal)}
-              className="chat-icon-button !min-h-7 !h-7 !min-w-0 px-2 rounded-full text-xs gap-1 cursor-pointer"
+              onClick={() => {
+                setShowUsersModal(!showUsersModal);
+                touchChatActivity();
+              }}
+              className="chat-icon-button !min-h-7 !h-7 !min-w-0 px-2.5 rounded-full text-xs gap-1.5 cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10"
               title="View online guests"
+              aria-label="View online guests"
             >
+              <span className={`w-2 h-2 rounded-full ${connected ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
               <GIconPersons size={12} aria-hidden="true" />
-              <span>{connected ? online : 1}</span>
+              <span className="font-semibold">{connected ? Math.max(1, online) : 1}</span>
             </button>
 
             {/* Active Users Dropdown */}
@@ -670,27 +679,56 @@ export default function Chats() {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -4 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-full mt-1.5 w-48 rounded-xl bg-slate-900 border border-white/15 p-2 shadow-2xl z-50 text-xs text-white"
+                  className="absolute right-0 top-full mt-1.5 w-56 rounded-xl bg-slate-900/95 backdrop-blur-2xl border border-white/15 p-2.5 shadow-2xl z-50 text-xs text-white"
                 >
-                  <div className="font-semibold text-[11px] text-white/50 px-1 pb-1 border-b border-white/10 mb-1">
-                    Online Visitors ({activeUsers.length || 1})
+                  <div className="font-semibold text-[11px] text-white/60 px-1 pb-1.5 border-b border-white/10 mb-1.5 flex items-center justify-between">
+                    <span>Active People</span>
+                    <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px]">
+                      {connected ? Math.max(1, online) : 1} online
+                    </span>
                   </div>
-                  <div className="max-h-36 overflow-y-auto thin-scroll space-y-1">
-                    {activeUsers.length > 0 ? (
-                      activeUsers.map((u, i) => (
-                        <div key={i} className="flex items-center gap-2 px-1.5 py-1 rounded bg-white/5">
-                          <span
-                            className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
-                            style={{ background: nameColor(u.name) }}
+                  <div className="max-h-44 overflow-y-auto thin-scroll space-y-1">
+                    {activeUsers && activeUsers.length > 0 ? (
+                      activeUsers.map((u, i) => {
+                        const isMe = (u.clientId && u.clientId === clientId) || u.name === name;
+                        return (
+                          <div
+                            key={u.clientId || i}
+                            className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border ${
+                              isMe ? "bg-accent/15 border-accent/30" : "bg-white/5 border-white/5"
+                            }`}
                           >
-                            {u.name?.[0]?.toUpperCase()}
-                          </span>
-                          <span className="truncate text-white/80">{u.name}</span>
-                          {u.name === name && <span className="text-[9px] text-accent ml-auto">(you)</span>}
-                        </div>
-                      ))
+                            <span
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-sm"
+                              style={{ background: isMe ? "var(--color-accent, #38bdf8)" : nameColor(u.name) }}
+                            >
+                              {isMe ? "Y" : (u.name?.[0]?.toUpperCase() || "?")}
+                            </span>
+                            <span className="truncate text-white/90 font-medium">
+                              {u.name}
+                            </span>
+                            {isMe ? (
+                              <span className="text-[10px] text-accent font-semibold ml-auto shrink-0 bg-accent/20 px-1.5 py-0.2 rounded">
+                                you
+                              </span>
+                            ) : (
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 ml-auto" />
+                            )}
+                          </div>
+                        );
+                      })
                     ) : (
-                      <div className="text-white/40 text-[10px] p-1">1 active session</div>
+                      <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-accent/15 border border-accent/30">
+                        <span
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-sm bg-accent"
+                        >
+                          Y
+                        </span>
+                        <span className="truncate text-white/90 font-medium">{name || "Guest"}</span>
+                        <span className="text-[10px] text-accent font-semibold ml-auto shrink-0 bg-accent/20 px-1.5 py-0.2 rounded">
+                          you
+                        </span>
+                      </div>
                     )}
                   </div>
                 </motion.div>
@@ -1184,6 +1222,7 @@ export default function Chats() {
           value={text}
           onChange={(e) => {
             setText(e.target.value);
+            touchChatActivity();
             if (connected) getSocket().emit("chat:typing");
           }}
           onKeyDown={(e) => {
