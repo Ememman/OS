@@ -1,10 +1,15 @@
+<<<<<<< HEAD:.github/workflows/deploy-client.yml
 name: Deploy Client to GitHub Pages (Actions Environment)
+=======
+name: Deploy Portfolio OS
+>>>>>>> origin/main:.github/workflows/deploy.yml
 
 on:
   push:
     branches:
       - main
       - dev
+<<<<<<< HEAD:.github/workflows/deploy-client.yml
       - fix/rework-workflow
   workflow_dispatch:
     inputs:
@@ -12,10 +17,12 @@ on:
         description: "Backend API URL"
         required: false
         default: "https://portfolio-os-api-5c7z.onrender.com"
+=======
+  workflow_dispatch:
+>>>>>>> origin/main:.github/workflows/deploy.yml
 
-# Permissions required to deploy to GitHub Pages
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -25,45 +32,80 @@ concurrency:
 
 jobs:
   build:
+<<<<<<< HEAD:.github/workflows/deploy-client.yml
     name: Build Client SPA
+=======
+    name: Build & Prepare
+>>>>>>> origin/main:.github/workflows/deploy.yml
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./client
+
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
+<<<<<<< HEAD:.github/workflows/deploy-client.yml
           node-version: "22"
           cache: "npm"
           cache-dependency-path: client/package-lock.json
 
       - name: Install dependencies
+=======
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install Dependencies
+>>>>>>> origin/main:.github/workflows/deploy.yml
         run: npm ci || npm install
 
-      - name: Build client with Vite
+      - name: Build Client SPA
         env:
+<<<<<<< HEAD:.github/workflows/deploy-client.yml
           VITE_API_URL: ${{ inputs.vite_api_url || 'https://portfolio-os-api-5c7z.onrender.com' }}
         run: npm run build
 
       - name: Add .nojekyll and 404.html
+=======
+          VITE_API_URL: "https://portfolio-os-api-5c7z.onrender.com"
+        run: npm run build
+
+      - name: Add .nojekyll and 404 fallback
+>>>>>>> origin/main:.github/workflows/deploy.yml
         run: |
           touch dist/.nojekyll
           cp dist/index.html dist/404.html
 
+<<<<<<< HEAD:.github/workflows/deploy-client.yml
+=======
+      - name: Publish to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./client/dist
+          publish_branch: gh-pages
+          commit_message: "deploy: build Portfolio OS [skip ci]"
+
+>>>>>>> origin/main:.github/workflows/deploy.yml
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload GitHub Pages artifact
+      - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: client/dist
 
   deploy:
+<<<<<<< HEAD:.github/workflows/deploy-client.yml
     name: Deploy to Pages
+=======
+    name: Deploy to GitHub Pages
+>>>>>>> origin/main:.github/workflows/deploy.yml
     needs: build
     runs-on: ubuntu-latest
     environment:
