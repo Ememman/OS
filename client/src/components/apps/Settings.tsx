@@ -3,7 +3,8 @@ import { useOS } from "../../store/useOS";
 import type { DockPosition, OSMode } from "../../types/os";
 import {
   GIconCheck,
-  GIconSparkles,
+  GIconCpu,
+  GIconLayoutHeader,
   GIconSliders,
   GIconVolume,
   GIconTrash,
@@ -283,7 +284,7 @@ export default function Settings() {
       </section>
 
       {/* ============ NEXT-GEN SYSTEM & GRAVITY UI ============ */}
-      <GroupHeader icon={GIconSparkles} label="Next-Gen Features & Gravity UI" />
+      <GroupHeader icon={GIconCpu} label="Next-Gen Features & Gravity UI" />
       <section className="space-y-3">
         <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 space-y-3">
           <div className="flex items-center justify-between">
@@ -361,7 +362,7 @@ export default function Settings() {
       </section>
 
       {/* ============ WIDGETS ============ */}
-      <GroupHeader icon={GIconSparkles} label="Widgets" />
+      <GroupHeader icon={GIconLayoutHeader} label="Widgets" />
 
       <section className="space-y-2">
         <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Photo</h3>

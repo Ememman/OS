@@ -7,7 +7,7 @@ import {
   GIconHeart,
   GIconStar,
   GIconClose,
-  GIconSparkles,
+  GIconCode,
   GIconPaperPlane,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
@@ -171,8 +171,8 @@ export default function Library() {
 
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-white/40 flex items-center gap-1 bg-white/5 border border-white/10 px-2.5 py-1 rounded-xl">
-              <GIconStar size={12} className="text-amber-400" />
-              <span>{totalLikes} Stars Received</span>
+              <GIconHeart size={12} className="text-rose-400" />
+              <span>{totalLikes} Endorsements</span>
             </span>
           </div>
         </div>
@@ -446,7 +446,7 @@ export default function Library() {
                         key={s}
                         className="px-3 py-1.5 rounded-xl bg-white/8 border border-white/10 flex items-center gap-1.5 font-medium text-white/90"
                       >
-                        <GIconSparkles size={12} className="text-accent" />
+                        <GIconCode size={12} className="text-accent" />
                         <span>{s}</span>
                       </div>
                     ))}

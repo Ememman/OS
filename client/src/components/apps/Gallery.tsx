@@ -8,7 +8,7 @@ import {
   GIconDownload,
   GIconCopy,
   GIconCheck,
-  GIconSparkles,
+  GIconSliders,
 } from "../icons/GravityIcons";
 import { galleryItems } from "../../data/gallery";
 import { soundFx } from "../../lib/soundFx";
@@ -169,7 +169,7 @@ export default function Gallery() {
           >
             {/* Filter Pills */}
             <div className="flex items-center gap-1 bg-white/10 p-1 rounded-xl backdrop-blur-md overflow-x-auto no-scrollbar">
-              <GIconSparkles size={13} className="text-accent ml-1.5 mr-0.5 shrink-0" />
+              <GIconSliders size={13} className="text-accent ml-1.5 mr-0.5 shrink-0" />
               {PHOTO_FILTERS.map((f) => (
                 <button
                   key={f.id}

@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   GIconWrench,
-  GIconSparkles,
+  GIconUpdates,
+  GIconTrophy,
   GIconRocket,
   GIconSearch,
   GIconPlus,
@@ -39,7 +40,7 @@ export interface DetailedReaction {
 }
 
 const TAG_META: Record<string, { label: string; Icon: any; color: string; bg: string }> = {
-  feature: { label: "Feature", Icon: GIconSparkles, color: "#5FBF7C", bg: "rgba(95, 191, 124, 0.15)" },
+  feature: { label: "Feature", Icon: GIconPlus, color: "#5FBF7C", bg: "rgba(95, 191, 124, 0.15)" },
   fix: { label: "Fix", Icon: GIconWrench, color: "#D98A4E", bg: "rgba(217, 138, 78, 0.15)" },
   launch: { label: "Launch", Icon: GIconRocket, color: "#8E7BE0", bg: "rgba(142, 123, 224, 0.15)" },
   announcement: { label: "Notice", Icon: GIconCircleInfo, color: "#38BDF8", bg: "rgba(56, 189, 248, 0.15)" },
@@ -50,7 +51,7 @@ const REACTION_BUTTONS = [
   { type: "heart" as const, Icon: GIconHeart, label: "Love", color: "text-rose-400" },
   { type: "fire" as const, Icon: GIconFlame, label: "Fire", color: "text-amber-400" },
   { type: "rocket" as const, Icon: GIconRocket, label: "Shipped", color: "text-purple-400" },
-  { type: "party" as const, Icon: GIconSparkles, label: "Celebrate", color: "text-emerald-400" },
+  { type: "party" as const, Icon: GIconTrophy, label: "Celebrate", color: "text-amber-400" },
 ];
 
 export default function Updates() {
@@ -309,7 +310,7 @@ export default function Updates() {
           <div>
             <div className="flex items-center gap-2">
               <span className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                <GIconSparkles size={16} />
+                <GIconUpdates size={16} />
               </span>
               <h2 className="font-display text-lg font-bold tracking-tight text-white">Changelog & System Updates</h2>
             </div>
@@ -558,7 +559,7 @@ export default function Updates() {
         {/* Empty State */}
         {!loading && filteredUpdates.length === 0 && (
           <div className="text-center py-12 px-4 rounded-xl border border-white/5 bg-white/[0.02]">
-            <GIconSparkles size={28} className="mx-auto text-white/30 mb-2" />
+            <GIconUpdates size={28} className="mx-auto text-white/30 mb-2" />
             <div className="text-sm font-medium text-white/70">No updates matching your search</div>
             <p className="text-xs text-white/40 mt-1 max-w-sm mx-auto">
               Try clearing filters or search keywords, or compose a new update to broadcast to all visitors.

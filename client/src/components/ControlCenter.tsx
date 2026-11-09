@@ -9,7 +9,7 @@ import {
   GIconVolumeMute,
   GIconSignal,
   GIconSun,
-  GIconSparkles,
+  GIconDisplayPulse,
   GIconSliders,
   GIconPower,
   GIconPlay,
@@ -132,7 +132,7 @@ export default function ControlCenter() {
                 : "bg-white/5 border-white/10 text-white/60 hover:text-white"
             }`}
           >
-            <GIconSparkles size={14} />
+            <GIconDisplayPulse size={14} />
             <span className="text-[10px] font-medium leading-tight">Starfield</span>
           </button>
 

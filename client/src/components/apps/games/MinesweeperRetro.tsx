@@ -9,7 +9,6 @@ import {
   GIconFlag,
   GIconRotateRight,
   GIconSmile,
-  GIconSparkles,
 } from "../../icons/GravityIcons";
 
 type Difficulty = "beginner" | "intermediate" | "expert";

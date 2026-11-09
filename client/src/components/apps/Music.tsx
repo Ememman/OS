@@ -11,7 +11,8 @@ import {
   GIconCheck,
   GIconExternalLink,
   GIconLoader,
-  GIconSparkles,
+  GIconHeart,
+  GIconFolder,
   GIconMusic,
   GIconBarsPlay,
   GIconList,
@@ -361,7 +362,7 @@ export default function Music() {
                 : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
-            <GIconSparkles size={11} className="text-amber-400" />
+            <GIconHeart size={11} className="text-amber-400" />
             <span>My Mix ({myMix.length})</span>
           </button>
         )}
@@ -402,7 +403,7 @@ export default function Music() {
           {myMix.length > 0 && (
             <>
               <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-white/40 mt-3 mb-1 px-1">
-                <GIconSparkles size={12} /> Library
+                <GIconFolder size={12} /> Library
               </div>
               <button
                 onClick={() => openPlaylist("mymix")}
@@ -412,7 +413,7 @@ export default function Music() {
                     : "text-white/60 hover:bg-white/5"
                 }`}
               >
-                <GIconSparkles size={12} className="shrink-0 text-amber-400" />
+                <GIconHeart size={12} className="shrink-0 text-amber-400" />
                 <span className="truncate">My Mix ({myMix.length})</span>
               </button>
             </>
@@ -637,7 +638,7 @@ export default function Music() {
           <div className="flex-1 p-2.5 sm:p-3 overflow-auto thin-scroll space-y-1 bg-black/10 pb-6">
             {currentPlaylistTracks.length === 0 && (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-white/40">
-                <GIconSparkles size={28} className="mb-2 text-white/20" />
+                <GIconMusic size={28} className="mb-2 text-white/20" />
                 <p className="text-xs">
                   Your mix is empty. Search for songs and tap <GIconPlus size={12} className="inline text-accent" /> to add them here!
                 </p>

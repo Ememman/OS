@@ -10,7 +10,6 @@ import {
   GIconTrash,
   GIconEye,
   GIconLayoutColumns,
-  GIconSparkles,
   GIconClock,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
@@ -519,7 +518,7 @@ export default function CodePlay() {
       {availableTemplates.length > 0 && (
         <div className="px-3 py-1.5 bg-black/25 border-b border-white/5 flex items-center gap-1.5 overflow-x-auto thin-scroll">
           <span className="text-[10px] uppercase font-mono text-white/40 mr-1 shrink-0 flex items-center gap-1">
-            <GIconSparkles size={11} className="text-accent" />
+            <GIconCode size={11} className="text-accent" />
             Templates:
           </span>
           {availableTemplates.map((t) => {

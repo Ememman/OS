@@ -23,7 +23,7 @@ import {
   GIconFontCursor,
   GIconRotateRight,
   GIconUpload,
-  GIconSparkles,
+  GIconFileText,
   GIconChevronLeft,
 } from "../icons/GravityIcons";
 import { soundFx } from "../../lib/soundFx";
@@ -1151,7 +1151,7 @@ export default function Notes() {
                   className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-[11px] text-white/70 hover:text-white transition cursor-pointer"
                   title="Insert Note Template"
                 >
-                  <GIconSparkles size={12} className="text-amber-400" />
+                  <GIconFileText size={12} className="text-amber-400" />
                   <span>Templates</span>
                 </button>
                 {templateMenuOpen && (

@@ -5,7 +5,8 @@ import {
   GIconMail,
   GIconMapPin,
   GIconCheck,
-  GIconSparkles,
+  GIconCode,
+  GIconCpu,
   GIconPaperPlane,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
@@ -437,7 +438,7 @@ export default function Resume() {
             <div className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3.5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2 border-b border-white/5">
                 <div className="flex items-center gap-2">
-                  <GIconSparkles size={15} className="text-accent" />
+                  <GIconCode size={15} className="text-accent" />
                   <h3 className="font-display font-semibold text-sm text-white/95">
                     Core Production Tech Stack
                   </h3>
@@ -472,7 +473,7 @@ export default function Resume() {
             {SKILL_CATEGORIES.map((cat, idx) => (
               <div key={idx} className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
                 <div className="flex items-center gap-2">
-                  <GIconSparkles size={14} className="text-accent" />
+                  <GIconCpu size={14} className="text-accent" />
                   <h3 className="font-display font-semibold text-sm text-white/90">{cat.title}</h3>
                 </div>
 

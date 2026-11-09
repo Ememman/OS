@@ -17,7 +17,7 @@ import {
   GIconFlame,
   GIconThumbsUp,
   GIconRocket,
-  GIconSparkles,
+  GIconSmile,
 } from "../icons/GravityIcons";
 import { getSocket } from "../../lib/socket";
 import { useOS } from "../../store/useOS";
@@ -68,7 +68,7 @@ const CHAT_REACTIONS = [
   { id: "thumbsup", label: "Thumbs Up", Icon: GIconThumbsUp, color: "text-emerald-400" },
   { id: "flame", label: "Fire", Icon: GIconFlame, color: "text-amber-400" },
   { id: "rocket", label: "Rocket", Icon: GIconRocket, color: "text-purple-400" },
-  { id: "sparkles", label: "Sparkles", Icon: GIconSparkles, color: "text-sky-400" },
+  { id: "smile", label: "Smile", Icon: GIconSmile, color: "text-sky-400" },
 ];
 
 const QUICK_RESPONSES = [
@@ -85,8 +85,8 @@ function ReactionIcon({ emo, size = 12 }: { emo: string; size?: number }) {
   if (emo === "👍" || emo === "thumbsup") return <GIconThumbsUp size={size} className="text-emerald-400" />;
   if (emo === "🔥" || emo === "flame") return <GIconFlame size={size} className="text-amber-400" />;
   if (emo === "🚀" || emo === "rocket") return <GIconRocket size={size} className="text-purple-400" />;
-  if (emo === "✨" || emo === "sparkles") return <GIconSparkles size={size} className="text-sky-400" />;
-  return <GIconSparkles size={size} className="text-sky-400" />;
+  if (emo === "smile") return <GIconSmile size={size} className="text-sky-400" />;
+  return <GIconSmile size={size} className="text-sky-400" />;
 }
 
 const ACK_TIMEOUT_MS = 6000;
