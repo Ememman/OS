@@ -17,30 +17,50 @@ This guide covers how to deploy both the **Client (Frontend)** and **Server (Bac
 
 The client is configured with relative base paths (`base: './'`), meaning it works on any root domain or GitHub Pages subpath (e.g. `https://<username>.github.io/<repo>/`).
 
-### Step 1: Enable GitHub Actions as Pages Source
-1. On GitHub, navigate to your repository.
-2. Go to **Settings** → **Pages** (in the left sidebar).
-3. Under **Build and deployment** → **Source**, select **GitHub Actions**.
+We provide two workflows:
+* **Workflow A (Recommended): `Deploy to GitHub Pages (gh-pages branch)`** (`deploy-gh-pages.yml`) — builds the app and publishes it directly to a dedicated `gh-pages` branch.
+* **Workflow B: `Deploy Client to GitHub Pages (Actions Environment)`** (`deploy-client.yml`) — deploys via GitHub's native Actions Pages runner.
 
-### Step 2: (Optional) Set the Backend Server URL
-If your backend server is deployed live (e.g., on Render or Railway):
+---
+
+### Method A: Deploy via `gh-pages` Branch (Most Reliable & Recommended)
+
+#### Step 1: Run the Workflow
+1. Go to the **Actions** tab on GitHub (`https://github.com/Ememman/OS/actions`).
+2. Select **Deploy to GitHub Pages (gh-pages branch)** in the left sidebar.
+3. Click **Run workflow** (your Render URL `https://portfolio-os-api-5c7z.onrender.com` is already pre-configured as the default).
+4. Wait ~1 minute for the green checkmark. This creates/updates the `gh-pages` branch.
+
+#### Step 2: Configure Pages to Serve from `gh-pages`
+1. Go to **Settings** → **Pages** (in the left sidebar).
+2. Under **Build and deployment** → **Source**, select **Deploy from a branch**.
+3. Under **Branch**:
+   - Select **`gh-pages`**
+   - Folder: **`/ (root)`**
+4. Click **Save**.
+
+Your site will immediately be live at:
+🌐 **`https://ememman.github.io/OS/`**
+
+---
+
+### Method B: Deploy via GitHub Actions Environment
+
+If you prefer GitHub's native Actions Pages deployment:
+1. Go to **Settings** → **Pages**.
+2. Under **Build and deployment** → **Source**, select **GitHub Actions**.
+3. Go to the **Actions** tab → select **Deploy Client to GitHub Pages (Actions Environment)**.
+4. Click **Run workflow**.
+
+---
+
+### 🔑 Setting the Backend Server URL (Optional)
+Both workflows are already pre-configured to default to your live Render backend (`https://portfolio-os-api-5c7z.onrender.com`). If you ever change your backend URL:
 1. In your GitHub repository, go to **Settings** → **Secrets and variables** → **Actions**.
 2. Click the **Variables** tab → **New repository variable**.
 3. Set:
    - **Name**: `VITE_API_URL`
-   - **Value**: `https://your-server-app.onrender.com` (your live server URL)
-
-### Step 3: Trigger the Deployment
-- Push to the `main` branch touching the `client/` folder:
-  ```bash
-  git push origin main
-  ```
-- Or trigger it manually:
-  1. Go to the **Actions** tab in GitHub.
-  2. Select **Deploy Client to GitHub Pages** in the left sidebar.
-  3. Click **Run workflow** (you can optionally supply a custom `VITE_API_URL` directly in the prompt).
-
-Your site will be live at `https://<username>.github.io/<repo-name>/`!
+   - **Value**: `https://portfolio-os-api-5c7z.onrender.com`
 
 ---
 
