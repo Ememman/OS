@@ -5,7 +5,7 @@ import {
   GIconHistory,
   GIconTrash,
   GIconDownload,
-  GIconSparkles,
+  GIconPercent,
   GIconClose,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
@@ -370,8 +370,8 @@ export default function Calculator() {
 
   return (
     <div className="flex flex-col h-full bg-[#0a0a0f] p-3 text-white select-none relative">
-      {/* Top Header Mode Bar */}
-      <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10 text-xs gap-1.5">
+      {/* Top Header Mode Bar (Sticky) */}
+      <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10 text-xs gap-1.5 shrink-0 sticky top-0 bg-[#0a0a0f]/95 backdrop-blur-md z-10">
         <div className="flex items-center gap-1 bg-white/5 p-0.5 rounded-lg border border-white/10 text-[10px] overflow-x-auto no-scrollbar">
           {(["standard", "scientific", "converter", "programmer"] as CalcMode[]).map((m) => (
             <button
@@ -402,7 +402,7 @@ export default function Calculator() {
             className="p-1 rounded bg-white/10 hover:bg-white/15 text-white/70 hover:text-white transition"
             title="Math & Physics Constants"
           >
-            <GIconSparkles size={12} className="text-amber-400" />
+            <GIconPercent size={12} className="text-amber-400" />
           </button>
 
           <button
@@ -428,7 +428,7 @@ export default function Calculator() {
         <div className="absolute top-12 left-3 right-3 p-3 bg-slate-900 border border-white/20 rounded-xl shadow-2xl z-50 animate-scaleIn">
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10">
             <span className="text-xs font-bold text-accent flex items-center gap-1.5">
-              <GIconSparkles size={13} /> Scientific Constants
+              <GIconPercent size={13} /> Scientific Constants
             </span>
             <button onClick={() => setShowConstants(false)} className="text-white/50 hover:text-white">
               <GIconClose size={12} />

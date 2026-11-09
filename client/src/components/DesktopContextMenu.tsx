@@ -5,7 +5,7 @@ import {
   GIconTerminal,
   GIconNotes,
   GIconSliders,
-  GIconSparkles,
+  GIconDisplayPulse,
   GIconPower,
   GIconClose,
   GIconMinus,
@@ -183,7 +183,7 @@ export default function DesktopContextMenu({ x, y, onClose, widgetsVisible }: Co
         }}
         className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors text-left"
       >
-        <GIconSparkles size={14} className="text-cyan-400" />
+        <GIconDisplayPulse size={14} className="text-cyan-400" />
         <span className="flex-1 font-medium">
           {particlesEnabled ? "Hide Starfield" : "Show Starfield"}
         </span>

@@ -33,7 +33,7 @@ export default function Terminal() {
   const [history, setHistory] = useState<TerminalEntry[]>([
     { type: "banner", content: BANNER },
     { type: "system", content: "Portfolio OS Kernel v2.4.0 (Gravity Edition) initialized." },
-    { type: "system", content: "Logged in as bron@portfolio-os. Type 'help' to start." },
+    { type: "system", content: "Logged in as emman@portfolio-os. Type 'help' to start." },
   ]);
   const [inputVal, setInputVal] = useState("");
   const [cmdHistory, setCmdHistory] = useState<string[]>([]);
@@ -210,10 +210,10 @@ export default function Terminal() {
       case "whoami":
         output = (
           <div className="space-y-1.5 py-1 text-xs text-white/90">
-            <p><span className="text-emerald-400 font-semibold">Name:</span> Bron Mendoza</p>
+            <p><span className="text-emerald-400 font-semibold">Name:</span> James Mendoza</p>
             <p><span className="text-emerald-400 font-semibold">Role:</span> Full-Stack Developer & Software Engineer</p>
             <p><span className="text-emerald-400 font-semibold">Location:</span> Manila, Philippines</p>
-            <p><span className="text-emerald-400 font-semibold">Specialization:</span> MERN Stack, React Native/Expo, PHP MVC, Real-time WebSockets</p>
+            <p><span className="text-emerald-400 font-semibold">Specialization:</span> MERN Stack, React Native/Expo, NextJS, NestJS, PHP MVC, Real-time WebSockets</p>
             <p className="text-white/60 leading-relaxed pt-1">
               Passionate about building refined, responsive user interfaces, modular backend APIs,
               and interactive desktop-style web systems. Currently engineering the SandreaLee Salon mobile and dashboard ecosystem.
@@ -326,7 +326,7 @@ export default function Terminal() {
 
       case "cat":
         if (!args[0]) {
-          output = <p className="text-amber-400">Usage: cat &lt;filename&gt; (e.g. cat About_Bron.txt, cat Skills.txt)</p>;
+          output = <p className="text-amber-400">Usage: cat &lt;filename&gt; (e.g. cat About_James.txt, cat Skills.txt)</p>;
         } else {
           const targetName = args[0].toLowerCase();
           const found = fileTree.children.find((f) => f.name.toLowerCase() === targetName);
@@ -353,7 +353,7 @@ export default function Terminal() {
    OS 2.4`}
             </pre>
             <div className="space-y-1 text-white/90">
-              <p><span className="text-accent font-bold">bron@portfolio-os</span></p>
+              <p><span className="text-accent font-bold">james@portfolio-os</span></p>
               <p className="text-white/40">-----------------------------</p>
               <p><span className="text-accent font-semibold">OS:</span> Portfolio OS (Web / React 19)</p>
               <p><span className="text-accent font-semibold">Host:</span> {osMode === "win" ? "Windows 11 Fluent Edition" : "macOS Sonoma Glass Edition"}</p>
@@ -496,10 +496,10 @@ export default function Terminal() {
       )}
 
       {/* Terminal Header */}
-      <div className="relative z-10 flex items-center justify-between px-3 py-1.5 bg-[#05070c] border-b border-white/10 select-none">
+      <div className="relative z-10 sticky top-0 flex items-center justify-between px-3 py-1.5 bg-[#05070c]/95 backdrop-blur-md border-b border-white/10 shrink-0 select-none">
         <div className="flex items-center gap-2">
           <GIconTerminal size={14} className="text-emerald-400" />
-          <span className="text-[11px] text-white/70 font-semibold">bron@portfolio-os:~ (portfolio-sh)</span>
+          <span className="text-[11px] text-white/70 font-semibold">james@portfolio-os:~ (portfolio-sh)</span>
         </div>
         <div className="flex items-center gap-3 text-[10px] text-white/40">
           <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> bash 5.2</span>
@@ -527,7 +527,7 @@ export default function Terminal() {
           if (item.type === "prompt") {
             return (
               <div key={idx} className="flex items-start gap-1.5 sm:gap-2 text-[11px] sm:text-[12px] pt-1">
-                <span className="text-accent font-semibold shrink-0 hidden sm:inline">bron@portfolio-os:~$</span>
+                <span className="text-accent font-semibold shrink-0 hidden sm:inline">james@portfolio-os:~$</span>
                 <span className="text-accent font-semibold shrink-0 sm:hidden">os:~$</span>
                 <span className="text-white font-medium">{item.cmd}</span>
               </div>
@@ -545,7 +545,7 @@ export default function Terminal() {
 
         {/* Current prompt line */}
         <div className="flex items-center gap-1.5 sm:gap-2 pt-1">
-          <span className="text-accent font-semibold shrink-0 hidden sm:inline">bron@portfolio-os:~$</span>
+          <span className="text-accent font-semibold shrink-0 hidden sm:inline">james@portfolio-os:~$</span>
           <span className="text-accent font-semibold shrink-0 sm:hidden">os:~$</span>
           <input
             ref={inputRef}

@@ -13,6 +13,11 @@ import {
   GIconPin,
   GIconDownload,
   GIconClose,
+  GIconHeart,
+  GIconFlame,
+  GIconThumbsUp,
+  GIconRocket,
+  GIconSmile,
 } from "../icons/GravityIcons";
 import { getSocket } from "../../lib/socket";
 import { useOS } from "../../store/useOS";
@@ -58,8 +63,31 @@ const BG_OPTIONS = [
   },
 ];
 
-const EMOJI_REACTIONS = ["❤️", "👍", "🔥", "🚀", "😂", "🎉"];
-const QUICK_EMOJIS = ["👍", "❤️", "🔥", "🚀", "😂", "🎉", "✨", "💻", "👋"];
+const CHAT_REACTIONS = [
+  { id: "heart", label: "Heart", Icon: GIconHeart, color: "text-rose-400" },
+  { id: "thumbsup", label: "Thumbs Up", Icon: GIconThumbsUp, color: "text-emerald-400" },
+  { id: "flame", label: "Fire", Icon: GIconFlame, color: "text-amber-400" },
+  { id: "rocket", label: "Rocket", Icon: GIconRocket, color: "text-purple-400" },
+  { id: "smile", label: "Smile", Icon: GIconSmile, color: "text-sky-400" },
+];
+
+const QUICK_RESPONSES = [
+  "Hello!",
+  "Great work!",
+  "Looking good!",
+  "Let's connect",
+  "Awesome",
+  "Nice project!",
+];
+
+function ReactionIcon({ emo, size = 12 }: { emo: string; size?: number }) {
+  if (emo === "❤️" || emo === "heart") return <GIconHeart size={size} className="text-rose-400" />;
+  if (emo === "👍" || emo === "thumbsup") return <GIconThumbsUp size={size} className="text-emerald-400" />;
+  if (emo === "🔥" || emo === "flame") return <GIconFlame size={size} className="text-amber-400" />;
+  if (emo === "🚀" || emo === "rocket") return <GIconRocket size={size} className="text-purple-400" />;
+  if (emo === "smile") return <GIconSmile size={size} className="text-sky-400" />;
+  return <GIconSmile size={size} className="text-sky-400" />;
+}
 
 const ACK_TIMEOUT_MS = 6000;
 
@@ -362,7 +390,7 @@ export default function Chats() {
           name: "Portfolio Bot",
           text: reply,
           ts: Date.now(),
-          reactions: { "❤️": 1 }
+          reactions: { heart: 1 }
         };
         setMessages((m) => [...m, botMsg]);
         if (chatSound) playPing();
@@ -461,8 +489,8 @@ export default function Chats() {
       data-chat-bg={chatBg}
       className={`flex flex-col h-full chat-surface chat-theme--${chatBg} relative select-none`}
     >
-      {/* Chat Topbar */}
-      <div className="chat-topbar chat-header flex items-center justify-between px-3.5 py-2.5 border-b border-[var(--chat-border)] bg-[var(--chat-panel)] gap-2">
+      {/* Chat Topbar (Sticky Header) */}
+      <div className="chat-topbar chat-header flex items-center justify-between px-3.5 py-2.5 border-b border-[var(--chat-border)] bg-[var(--chat-panel)] gap-2 shrink-0 sticky top-0 z-20 shadow-sm">
         <div className="flex items-center gap-2">
           <div className="relative">
             <span
@@ -701,7 +729,7 @@ export default function Chats() {
                           onClick={() => reactToMessage(m.id, emo)}
                           className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-full border border-[var(--chat-border)] bg-[var(--chat-panel)] text-[var(--chat-text)] hover:scale-105 transition cursor-pointer"
                         >
-                          <span>{emo}</span>
+                          <ReactionIcon emo={emo} size={11} />
                           <span className="font-semibold text-[10px]">{count}</span>
                         </button>
                       ) : null
@@ -729,16 +757,19 @@ export default function Chats() {
                   >
                     <GIconPin size={10} className={isPinned ? "text-amber-500" : ""} />
                   </button>
-                  {EMOJI_REACTIONS.map((emo) => (
-                    <button
-                      key={emo}
-                      onClick={() => reactToMessage(m.id, emo)}
-                      className="hover:scale-125 transition-transform text-xs cursor-pointer"
-                      title={`React with ${emo}`}
-                    >
-                      {emo}
-                    </button>
-                  ))}
+                  {CHAT_REACTIONS.map((r) => {
+                    const ReactionComp = r.Icon;
+                    return (
+                      <button
+                        key={r.id}
+                        onClick={() => reactToMessage(m.id, r.id)}
+                        className="p-1 hover:scale-125 transition-transform rounded hover:bg-[var(--chat-bg)] cursor-pointer"
+                        title={`React with ${r.label}`}
+                      >
+                        <ReactionComp size={12} className={r.color} />
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {m.pending && <div role="status" className="chat-muted text-xs mt-1">Sending…</div>}
@@ -785,17 +816,17 @@ export default function Chats() {
         </div>
       )}
 
-      {/* Quick Emojis Bar */}
+      {/* Quick Responses Bar */}
       <div className="chat-quick-bar px-3 py-1.5 border-t border-[var(--chat-border)] bg-[var(--chat-panel)] flex items-center gap-1.5 overflow-x-auto thin-scroll">
-        <span className="text-[10px] text-[var(--chat-muted)] uppercase font-mono mr-1">Quick:</span>
-        {QUICK_EMOJIS.map((em) => (
+        <span className="text-[10px] text-[var(--chat-muted)] uppercase font-mono mr-1 shrink-0">Quick:</span>
+        {QUICK_RESPONSES.map((phrase) => (
           <button
-            key={em}
+            key={phrase}
             type="button"
-            onClick={() => setText((prev) => prev + em)}
-            className="text-xs hover:scale-125 transition-transform px-1 py-0.5 rounded hover:bg-[var(--chat-bg)] cursor-pointer text-[var(--chat-text)]"
+            onClick={() => setText((prev) => (prev ? `${prev} ${phrase}` : phrase))}
+            className="text-[11px] font-medium px-2 py-0.5 rounded-full border border-[var(--chat-border)] bg-[var(--chat-bg)] hover:border-accent text-[var(--chat-text)] hover:text-accent transition shrink-0 cursor-pointer"
           >
-            {em}
+            {phrase}
           </button>
         ))}
       </div>

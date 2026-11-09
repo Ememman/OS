@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GIconArrowLeft, GIconPuzzle, GIconLock, GIconTrophy, GIconPlay } from "../icons/GravityIcons";
+import { GIconArrowLeft, GIconPuzzle, GIconLock, GIconTrophy, GIconPlay, GIconFlag } from "../icons/GravityIcons";
 import BlockBlast from "./games/BlockBlast";
 import Game2048 from "./games/Game2048";
 import SnakeRetro from "./games/SnakeRetro";
@@ -25,7 +25,7 @@ export default function Games() {
   if (open === "minesweeper") {
     return (
       <div className="h-full flex flex-col">
-        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
+        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-[#0a0a0f]/95 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setOpen(null)}
@@ -74,7 +74,7 @@ export default function Games() {
   if (open === "blockblast") {
     return (
       <div className="h-full flex flex-col">
-        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
+        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-[#0a0a0f]/95 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setOpen(null)}
@@ -88,9 +88,10 @@ export default function Games() {
           <div className="flex items-center gap-2 text-[11px]">
             <button
               onClick={() => setOpen("minesweeper")}
-              className="text-white/60 hover:text-white px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition"
+              className="text-white/60 hover:text-white px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition flex items-center gap-1"
             >
-              💣 Minesweeper
+              <GIconFlag size={11} className="text-rose-400" />
+              <span>Minesweeper</span>
             </button>
             <button
               onClick={() => setOpen("2048")}
@@ -123,7 +124,7 @@ export default function Games() {
   if (open === "2048") {
     return (
       <div className="h-full flex flex-col">
-        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
+        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-[#0a0a0f]/95 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setOpen(null)}
@@ -137,9 +138,10 @@ export default function Games() {
           <div className="flex items-center gap-2 text-[11px]">
             <button
               onClick={() => setOpen("minesweeper")}
-              className="text-white/60 hover:text-white px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition"
+              className="text-white/60 hover:text-white px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition flex items-center gap-1"
             >
-              💣 Minesweeper
+              <GIconFlag size={11} className="text-rose-400" />
+              <span>Minesweeper</span>
             </button>
             <button
               onClick={() => setOpen("blockblast")}
@@ -172,7 +174,7 @@ export default function Games() {
   if (open === "snake") {
     return (
       <div className="h-full flex flex-col">
-        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between">
+        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-[#0a0a0f]/95 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setOpen(null)}
@@ -186,9 +188,10 @@ export default function Games() {
           <div className="flex items-center gap-2 text-[11px]">
             <button
               onClick={() => setOpen("minesweeper")}
-              className="text-white/60 hover:text-white px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition"
+              className="text-white/60 hover:text-white px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 transition flex items-center gap-1"
             >
-              💣 Minesweeper
+              <GIconFlag size={11} className="text-rose-400" />
+              <span>Minesweeper</span>
             </button>
             <button
               onClick={() => setOpen("blockblast")}
@@ -239,8 +242,8 @@ export default function Games() {
           onClick={() => setOpen("minesweeper")}
           className="flex flex-col items-start gap-2.5 p-3.5 rounded-2xl border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/15 transition-all text-left group"
         >
-          <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform text-xl">
-            💣
+          <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform text-rose-400">
+            <GIconFlag size={20} />
           </div>
           <div>
             <div className="text-sm font-semibold text-white">Minesweeper Retro</div>

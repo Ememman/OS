@@ -11,7 +11,8 @@ import {
   GIconCheck,
   GIconExternalLink,
   GIconLoader,
-  GIconSparkles,
+  GIconHeart,
+  GIconFolder,
   GIconMusic,
   GIconBarsPlay,
   GIconList,
@@ -311,22 +312,22 @@ export default function Music() {
       : playlists.find((p) => p.id === playlistId)?.tracks || [];
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0f] text-white">
-      {/* Top Visualizer Bar */}
+    <div className="flex flex-col h-full bg-[#0a0a0f] text-white select-none relative overflow-hidden">
+      {/* Top Visualizer Bar (Responsive height) */}
       <div
-        className={`px-3 pt-2.5 pb-2 border-b border-white/10 flex items-center gap-2.5 transition-colors ${
+        className={`px-3 py-1.5 sm:py-2 border-b border-white/10 flex items-center gap-2 transition-colors shrink-0 ${
           playing ? "bg-accent/10" : "bg-black/20"
         }`}
       >
         <GIconDisplayPulse
-          size={16}
+          size={15}
           className={`shrink-0 transition-colors ${playing ? "text-accent" : "text-white/30"}`}
         />
-        <canvas ref={canvasRef} width={600} height={46} className="w-full h-\[46px]" />
+        <canvas ref={canvasRef} width={600} height={32} className="w-full h-5 sm:h-7" />
       </div>
 
-      {/* Mobile Navigation Bar */}
-      <div className="sm:hidden flex items-center gap-1.5 px-3 py-2 border-b border-white/10 bg-black/35 overflow-x-auto no-scrollbar shrink-0">
+      {/* Mobile Navigation Bar (Sticky top) */}
+      <div className="sm:hidden flex items-center gap-1.5 px-3 py-1.5 border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-md sticky top-0 z-20 overflow-x-auto no-scrollbar shrink-0">
         <button
           onClick={() => setMode("search")}
           className={`flex items-center gap-1.5 text-xs px-3 py-1 rounded-full whitespace-nowrap transition-colors shrink-0 cursor-pointer ${
@@ -361,13 +362,13 @@ export default function Music() {
                 : "bg-white/5 text-white/60 hover:text-white"
             }`}
           >
-            <GIconSparkles size={11} className="text-amber-400" />
+            <GIconHeart size={11} className="text-amber-400" />
             <span>My Mix ({myMix.length})</span>
           </button>
         )}
       </div>
 
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 relative">
         {/* Desktop Sidebar */}
         <div className="hidden sm:block sm:w-44 border-r border-white/10 p-3 space-y-1 shrink-0 overflow-y-auto thin-scroll bg-black/25">
           <button
@@ -402,7 +403,7 @@ export default function Music() {
           {myMix.length > 0 && (
             <>
               <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-white/40 mt-3 mb-1 px-1">
-                <GIconSparkles size={12} /> Library
+                <GIconFolder size={12} /> Library
               </div>
               <button
                 onClick={() => openPlaylist("mymix")}
@@ -412,7 +413,7 @@ export default function Music() {
                     : "text-white/60 hover:bg-white/5"
                 }`}
               >
-                <GIconSparkles size={12} className="shrink-0 text-amber-400" />
+                <GIconHeart size={12} className="shrink-0 text-amber-400" />
                 <span className="truncate">My Mix ({myMix.length})</span>
               </button>
             </>
@@ -421,23 +422,23 @@ export default function Music() {
 
         {/* Content Pane */}
         {mode === "search" ? (
-          <div className="flex-1 flex flex-col min-h-0 bg-black/10">
-            {/* Search Input Bar */}
-            <div className="p-3 border-b border-white/10 shrink-0">
-              <div className="flex gap-1 mb-2.5 bg-white/5 rounded-lg p-1 w-fit">
+          <div className="flex-1 flex flex-col min-h-0 bg-black/10 overflow-hidden">
+            {/* Search Input Bar (Sticky on scroll) */}
+            <div className="p-2.5 sm:p-3 border-b border-white/10 shrink-0 sticky top-0 z-10 bg-[#0a0a0f]/95 backdrop-blur-md">
+              <div className="flex gap-1 mb-2 bg-white/5 rounded-lg p-0.5 w-fit">
                 <button
                   onClick={() => setSearchSource("preview")}
-                  className={`flex items-center gap-1.5 text-xs px-3 py-1 rounded-md transition-colors ${
+                  className={`flex items-center gap-1.5 text-[11px] sm:text-xs px-2.5 py-1 rounded-md transition-colors ${
                     searchSource === "preview"
                       ? "bg-accent text-white"
                       : "text-white/50 hover:text-white"
                   }`}
                 >
-                  <GIconBarsPlay size={12} /> Audio Previews
+                  <GIconBarsPlay size={12} /> Previews
                 </button>
                 <button
                   onClick={() => setSearchSource("youtube")}
-                  className={`flex items-center gap-1.5 text-xs px-3 py-1 rounded-md transition-colors ${
+                  className={`flex items-center gap-1.5 text-[11px] sm:text-xs px-2.5 py-1 rounded-md transition-colors ${
                     searchSource === "youtube"
                       ? "bg-accent text-white"
                       : "text-white/50 hover:text-white"
@@ -452,31 +453,31 @@ export default function Music() {
                   e.preventDefault();
                   runSearch();
                 }}
-                className="flex items-center gap-2.5 bg-white/10 rounded-xl px-3 h-10 border border-white/10 focus-within:border-accent transition-colors"
+                className="flex items-center gap-2 bg-white/10 rounded-xl px-2.5 h-9 sm:h-10 border border-white/10 focus-within:border-accent transition-colors"
               >
-                <GIconSearch size={15} className="text-white/40 shrink-0" />
+                <GIconSearch size={14} className="text-white/40 shrink-0" />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={
                     searchSource === "youtube"
-                      ? "Search any artist or song — full length playback"
-                      : "Search any song, artist or genre — instant Apple Music stream"
+                      ? "Search artist or song..."
+                      : "Search song, artist, genre..."
                   }
                   className="bg-transparent outline-none text-xs w-full placeholder:text-white/35"
                 />
                 {(searchSource === "youtube" ? ytLoading : searchLoading) && (
-                  <GIconLoader size={15} className="text-white/60 shrink-0" />
+                  <GIconLoader size={14} className="text-white/60 shrink-0 animate-spin" />
                 )}
               </form>
 
-              {/* Quick Suggestions */}
-              <div className="flex flex-wrap gap-1.5 mt-2.5">
+              {/* Quick Suggestions (Horizontal scroll on mobile) */}
+              <div className="flex items-center gap-1.5 mt-2 overflow-x-auto no-scrollbar py-0.5">
                 {QUICK_SEARCHES.map((q) => (
                   <button
                     key={q}
                     onClick={() => runSearch(q)}
-                    className="text-[10px] px-2.5 py-1 rounded-full border border-white/15 text-white/60 hover:border-accent hover:text-white transition-all bg-white/5"
+                    className="text-[10px] px-2.5 py-0.5 rounded-full border border-white/15 text-white/60 hover:border-accent hover:text-white transition-all bg-white/5 shrink-0 whitespace-nowrap"
                   >
                     {q}
                   </button>
@@ -484,9 +485,9 @@ export default function Music() {
               </div>
             </div>
 
-            {/* Results */}
+            {/* Results with safe bottom padding */}
             {searchSource === "youtube" ? (
-              <div className="flex-1 overflow-auto thin-scroll p-3 flex flex-col min-h-0">
+              <div className="flex-1 overflow-auto thin-scroll p-3 flex flex-col min-h-0 pb-6">
                 {!ytQuery && (
                   <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-white/40">
                     <GIconMusic size={32} className="mb-2 text-white/20" />
@@ -557,7 +558,7 @@ export default function Music() {
                 )}
               </div>
             ) : (
-              <div className="flex-1 overflow-auto thin-scroll p-3 space-y-1.5">
+              <div className="flex-1 overflow-auto thin-scroll p-3 space-y-1.5 pb-6">
                 {searchError && (
                   <p className="text-xs text-rose-300 text-center mt-6 px-4">{searchError}</p>
                 )}
@@ -580,51 +581,53 @@ export default function Music() {
                   return (
                     <div
                       key={r.id}
-                      className={`w-full flex items-center gap-3 text-left px-3 py-2 rounded-xl transition-all group ${
+                      className={`w-full flex items-center justify-between gap-2 text-left px-2.5 py-1.5 rounded-xl transition-all group ${
                         isCurrent ? "bg-white/15" : "hover:bg-white/5"
                       }`}
                     >
                       <button
                         onClick={() => startPlaying(results.map(toTrack), i)}
-                        className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                        className="flex items-center gap-2.5 flex-1 min-w-0 text-left"
                       >
                         <img
                           src={r.cover}
                           alt=""
-                          className="w-10 h-10 rounded-lg object-cover shrink-0 shadow-md"
+                          className="w-9 h-9 rounded-lg object-cover shrink-0 shadow-md"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="text-xs font-semibold truncate text-white">{r.title}</div>
-                          <div className="text-[11px] text-white/50 truncate">
+                          <div className="text-[10px] text-white/50 truncate">
                             {r.artist} · {r.genre}
                           </div>
                         </div>
                         {isCurrent && playing && <EqualizerBars className="shrink-0" />}
                       </button>
 
-                      <button
-                        onClick={() => toggleMix(r)}
-                        title={inMix(t.id) ? "Remove from My Mix" : "Add to My Mix"}
-                        className={`w-7 h-7 aspect-square shrink-0 rounded-full flex items-center justify-center transition-colors ${
-                          inMix(t.id)
-                            ? "bg-accent text-white"
-                            : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
-                        }`}
-                      >
-                        {inMix(t.id) ? <GIconCheck size={12} /> : <GIconPlus size={12} />}
-                      </button>
-
-                      {r.storeUrl && (
-                        <a
-                          href={r.storeUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          title="Open full album"
-                          className="w-7 h-7 aspect-square shrink-0 rounded-full flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => toggleMix(r)}
+                          title={inMix(t.id) ? "Remove from My Mix" : "Add to My Mix"}
+                          className={`w-7 h-7 aspect-square shrink-0 rounded-full flex items-center justify-center transition-colors ${
+                            inMix(t.id)
+                              ? "bg-accent text-white"
+                              : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
+                          }`}
                         >
-                          <GIconExternalLink size={12} />
-                        </a>
-                      )}
+                          {inMix(t.id) ? <GIconCheck size={12} /> : <GIconPlus size={12} />}
+                        </button>
+
+                        {r.storeUrl && (
+                          <a
+                            href={r.storeUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Open full album"
+                            className="w-7 h-7 aspect-square shrink-0 rounded-full flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+                          >
+                            <GIconExternalLink size={12} />
+                          </a>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -632,10 +635,10 @@ export default function Music() {
             )}
           </div>
         ) : (
-          <div className="flex-1 p-3 overflow-auto thin-scroll space-y-1.5 bg-black/10">
+          <div className="flex-1 p-2.5 sm:p-3 overflow-auto thin-scroll space-y-1 bg-black/10 pb-6">
             {currentPlaylistTracks.length === 0 && (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-white/40">
-                <GIconSparkles size={28} className="mb-2 text-white/20" />
+                <GIconMusic size={28} className="mb-2 text-white/20" />
                 <p className="text-xs">
                   Your mix is empty. Search for songs and tap <GIconPlus size={12} className="inline text-accent" /> to add them here!
                 </p>
@@ -647,23 +650,23 @@ export default function Music() {
                 <button
                   key={t.id}
                   onClick={() => startPlaying(currentPlaylistTracks, i)}
-                  className={`w-full flex items-center gap-3 text-left px-3 py-2 rounded-xl transition-all ${
+                  className={`w-full flex items-center gap-2.5 text-left px-2.5 py-1.5 rounded-xl transition-all ${
                     isCurrent ? "bg-white/15" : "hover:bg-white/5"
                   }`}
                 >
                   <img
                     src={t.cover}
                     alt=""
-                    className="w-10 h-10 rounded-lg object-cover shadow-md shrink-0"
+                    className="w-9 h-9 rounded-lg object-cover shadow-md shrink-0"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-semibold truncate text-white">{t.title}</div>
-                    <div className="text-[11px] text-white/50 truncate">
+                    <div className="text-[10px] text-white/50 truncate">
                       {t.artist} · {t.genre}
                     </div>
                   </div>
                   {t.isPreview && (
-                    <span className="text-[9px] text-white/40 bg-white/5 px-1.5 py-0.5 rounded font-mono shrink-0">
+                    <span className="text-[8.5px] text-white/40 bg-white/5 px-1.5 py-0.5 rounded font-mono shrink-0">
                       stream
                     </span>
                   )}
@@ -675,65 +678,68 @@ export default function Music() {
         )}
       </div>
 
-      {/* Bottom Transport Controls */}
-      <div className="border-t border-white/10 p-2.5 sm:p-3 bg-black/45 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-        {/* Track Info & Transport Buttons */}
-        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-          <div
-            className={`relative w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl overflow-hidden shadow-lg ${
-              playing ? "ring-2 ring-accent" : ""
-            } transition-all`}
-          >
-            <img
-              src={track?.cover || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300"}
-              alt=""
-              className="w-full h-full object-cover"
-            />
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <div className="text-xs font-semibold truncate text-white">
-                {track?.title || "Ready to play"}
-              </div>
-              {playing && <EqualizerBars className="shrink-0" />}
+      {/* Bottom Transport Controls (Strictly non-overlapping & sticky) */}
+      <div className="border-t border-white/10 p-2 sm:p-2.5 bg-[#0a0a0f]/95 backdrop-blur-xl shrink-0 sticky bottom-0 z-20 flex flex-col gap-1.5 shadow-2xl">
+        {/* Row 1: Track Info & Playback Buttons */}
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          {/* Left: Track Info */}
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div
+              className={`relative w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-lg overflow-hidden shadow-md ${
+                playing ? "ring-2 ring-accent" : ""
+              } transition-all`}
+            >
+              <img
+                src={track?.cover || "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=300"}
+                alt=""
+                className="w-full h-full object-cover"
+              />
             </div>
-            <div className="text-[10px] text-white/40 truncate">{track?.artist || "Select a song"}</div>
+
+            <div className="min-w-0 flex-1 pr-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold truncate text-white block">
+                  {track?.title || "Ready to play"}
+                </span>
+                {playing && <EqualizerBars className="shrink-0" />}
+              </div>
+              <span className="text-[10px] text-white/40 truncate block">{track?.artist || "Select a song"}</span>
+            </div>
           </div>
 
-          {/* Playback Buttons */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Right: Transport Controls */}
+          <div className="flex items-center gap-1 shrink-0">
             <button
               onClick={prev}
               disabled={!queue.length}
-              className="w-8 h-8 aspect-square shrink-0 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-30 text-white/80 hover:text-white"
+              className="w-7 h-7 aspect-square shrink-0 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-30 text-white/80 hover:text-white"
               title="Previous"
             >
-              <GIconBackward size={14} />
+              <GIconBackward size={13} />
             </button>
 
             <button
               onClick={handleTogglePlay}
-              className="w-9 h-9 sm:w-10 sm:h-10 aspect-square shrink-0 rounded-full flex items-center justify-center bg-accent hover:brightness-110 active:scale-95 transition text-white shadow-lg shadow-accent/30"
+              className="w-8 h-8 sm:w-9 sm:h-9 aspect-square shrink-0 rounded-full flex items-center justify-center bg-accent hover:brightness-110 active:scale-95 transition text-white shadow-md shadow-accent/30"
               title={playing ? "Pause" : "Play"}
             >
-              {playing ? <GIconPause size={14} /> : <GIconPlay size={14} className="ml-0.5" />}
+              {playing ? <GIconPause size={13} /> : <GIconPlay size={13} className="ml-0.5" />}
             </button>
 
             <button
               onClick={next}
               disabled={!queue.length}
-              className="w-8 h-8 aspect-square shrink-0 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-30 text-white/80 hover:text-white"
+              className="w-7 h-7 aspect-square shrink-0 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors disabled:opacity-30 text-white/80 hover:text-white"
               title="Next"
             >
-              <GIconForward size={14} />
+              <GIconForward size={13} />
             </button>
           </div>
         </div>
 
-        {/* Scrubber / Progress Bar & Volume */}
-        <div className="flex items-center gap-2 text-[10px] text-white/50 w-full sm:flex-1 sm:max-w-xs md:max-w-md">
-          <span className="font-mono text-[9px] sm:text-[10px]">{fmt(progress)}</span>
+        {/* Row 2: Scrubber & Progress Bar */}
+        <div className="flex items-center gap-2 text-[10px] text-white/50 w-full">
+          <span className="font-mono text-[9px] shrink-0">{fmt(progress)}</span>
           <input
             type="range"
             min={0}
@@ -742,16 +748,16 @@ export default function Music() {
             onChange={(e) => seek(Number(e.target.value))}
             className="flex-1 accent-[rgb(var(--accent))] cursor-pointer h-1.5 bg-white/15 rounded-lg"
           />
-          <span className="font-mono text-[9px] sm:text-[10px]">{fmt(duration || track?.duration || 0)}</span>
+          <span className="font-mono text-[9px] shrink-0">{fmt(duration || track?.duration || 0)}</span>
 
-          {/* Volume Slider */}
-          <div className="hidden md:flex items-center gap-1.5 shrink-0 ml-1">
+          {/* Volume Slider (Desktop only) */}
+          <div className="hidden sm:flex items-center gap-1.5 shrink-0 ml-1">
             <button
               onClick={() => setVolume(volume > 0 ? 0 : 0.7)}
               className="w-6 h-6 aspect-square shrink-0 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors"
               title={volume === 0 ? "Unmute" : "Mute"}
             >
-              {volume === 0 ? <GIconVolumeMute size={14} /> : <GIconVolume size={14} />}
+              {volume === 0 ? <GIconVolumeMute size={13} /> : <GIconVolume size={13} />}
             </button>
             <input
               type="range"
@@ -760,7 +766,7 @@ export default function Music() {
               step={0.01}
               value={volume}
               onChange={(e) => setVolume(Number(e.target.value))}
-              className="w-16 accent-[rgb(var(--accent))] cursor-pointer h-1.5 bg-white/15 rounded-lg"
+              className="w-14 accent-[rgb(var(--accent))] cursor-pointer h-1.5 bg-white/15 rounded-lg"
             />
           </div>
         </div>

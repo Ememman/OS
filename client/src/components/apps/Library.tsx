@@ -7,7 +7,7 @@ import {
   GIconHeart,
   GIconStar,
   GIconClose,
-  GIconSparkles,
+  GIconCode,
   GIconPaperPlane,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
@@ -157,8 +157,8 @@ export default function Library() {
 
   return (
     <div className="flex flex-col h-full bg-black/40 text-white select-none">
-      {/* Top Bar with Search & Filters */}
-      <div className="p-4 sm:p-5 border-b border-white/10 bg-white/[0.02] space-y-3">
+      {/* Top Bar with Search & Filters (Sticky Header) */}
+      <div className="p-3 sm:p-5 border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-md space-y-2.5 sm:space-y-3 sticky top-0 z-20 shrink-0 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="font-display text-lg sm:text-xl font-bold tracking-tight">
@@ -171,8 +171,8 @@ export default function Library() {
 
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-white/40 flex items-center gap-1 bg-white/5 border border-white/10 px-2.5 py-1 rounded-xl">
-              <GIconStar size={12} className="text-amber-400" />
-              <span>{totalLikes} Stars Received</span>
+              <GIconHeart size={12} className="text-rose-400" />
+              <span>{totalLikes} Endorsements</span>
             </span>
           </div>
         </div>
@@ -446,7 +446,7 @@ export default function Library() {
                         key={s}
                         className="px-3 py-1.5 rounded-xl bg-white/8 border border-white/10 flex items-center gap-1.5 font-medium text-white/90"
                       >
-                        <GIconSparkles size={12} className="text-accent" />
+                        <GIconCode size={12} className="text-accent" />
                         <span>{s}</span>
                       </div>
                     ))}

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useOS } from "../../store/useOS";
 import type { DockPosition, OSMode } from "../../types/os";
-import Wallpaper from "../Wallpaper";
 import {
   GIconCheck,
-  GIconSparkles,
+  GIconCpu,
+  GIconLayoutHeader,
   GIconSliders,
   GIconVolume,
   GIconTrash,
@@ -160,12 +160,14 @@ export default function Settings() {
   const handleImageError = (id) => setImageErrors((prev) => ({ ...prev, [id]: true }));
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-5 bg-[#0a0a0f] min-h-screen">
-      {/* Header */}
-      <div className="space-y-1">
-        <h1 className="font-display text-lg sm:text-xl font-semibold text-white">Settings</h1>
-        <p className="text-xs sm:text-sm text-white/50">Make this desktop yours.</p>
+    <div className="min-h-full bg-[#0a0a0f] text-white select-none">
+      {/* Sticky Header */}
+      <div className="p-3 sm:p-4 border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-md sticky top-0 z-20 shrink-0 shadow-sm">
+        <h1 className="font-display text-base sm:text-lg font-semibold text-white">Settings</h1>
+        <p className="text-[11px] text-white/50">Personalize wallpaper, accents, and system preferences.</p>
       </div>
+
+      <div className="p-3 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
 
       {/* ============ APPEARANCE ============ */}
       <GroupHeader icon={GIconSliders} label="Appearance" />
@@ -282,7 +284,7 @@ export default function Settings() {
       </section>
 
       {/* ============ NEXT-GEN SYSTEM & GRAVITY UI ============ */}
-      <GroupHeader icon={GIconSparkles} label="Next-Gen Features & Gravity UI" />
+      <GroupHeader icon={GIconCpu} label="Next-Gen Features & Gravity UI" />
       <section className="space-y-3">
         <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 space-y-3">
           <div className="flex items-center justify-between">
@@ -360,7 +362,7 @@ export default function Settings() {
       </section>
 
       {/* ============ WIDGETS ============ */}
-      <GroupHeader icon={GIconSparkles} label="Widgets" />
+      <GroupHeader icon={GIconLayoutHeader} label="Widgets" />
 
       <section className="space-y-2">
         <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Photo</h3>
@@ -499,11 +501,27 @@ export default function Settings() {
       {/* Preview */}
       <section className="space-y-2">
         <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Preview</h3>
-        <div className="relative h-24 sm:h-28 md:h-32 rounded-xl overflow-hidden border border-white/10">
-          <Wallpaper />
+        <div className="relative h-24 sm:h-28 md:h-32 rounded-xl overflow-hidden border border-white/10 bg-black/40">
+          {PREVIEW_IMAGES[wallpaper] && !imageErrors[wallpaper] ? (
+            <img
+              src={PREVIEW_IMAGES[wallpaper]}
+              alt={getWallpaperInfo(wallpaper).name}
+              className="w-full h-full object-cover"
+              onError={() => handleImageError(wallpaper)}
+            />
+          ) : (
+            <div
+              className="w-full h-full"
+              style={{ background: PREVIEW_FALLBACK[wallpaper] || "#0a0a0f" }}
+            />
+          )}
+          <div className="absolute inset-0 bg-black/20 pointer-events-none" />
         </div>
-        <p className="text-[9px] sm:text-[10px] text-white/20 text-center">Current wallpaper preview</p>
+        <p className="text-[9px] sm:text-[10px] text-white/20 text-center">
+          Current wallpaper: <span className="text-white/60 font-medium">{getWallpaperInfo(wallpaper).name}</span>
+        </p>
       </section>
+      </div>
     </div>
   );
 }

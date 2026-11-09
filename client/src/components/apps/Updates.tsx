@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   GIconWrench,
-  GIconSparkles,
+  GIconUpdates,
+  GIconTrophy,
   GIconRocket,
   GIconSearch,
   GIconPlus,
@@ -13,6 +14,8 @@ import {
   GIconClose,
   GIconSliders,
   GIconCircleInfo,
+  GIconHeart,
+  GIconFlame,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
 import { getSocket } from "../../lib/socket";
@@ -37,18 +40,18 @@ export interface DetailedReaction {
 }
 
 const TAG_META: Record<string, { label: string; Icon: any; color: string; bg: string }> = {
-  feature: { label: "Feature", Icon: GIconSparkles, color: "#5FBF7C", bg: "rgba(95, 191, 124, 0.15)" },
+  feature: { label: "Feature", Icon: GIconPlus, color: "#5FBF7C", bg: "rgba(95, 191, 124, 0.15)" },
   fix: { label: "Fix", Icon: GIconWrench, color: "#D98A4E", bg: "rgba(217, 138, 78, 0.15)" },
   launch: { label: "Launch", Icon: GIconRocket, color: "#8E7BE0", bg: "rgba(142, 123, 224, 0.15)" },
   announcement: { label: "Notice", Icon: GIconCircleInfo, color: "#38BDF8", bg: "rgba(56, 189, 248, 0.15)" },
   performance: { label: "Perf", Icon: GIconSliders, color: "#FBBF24", bg: "rgba(251, 191, 36, 0.15)" },
 };
 
-const EMOJI_BUTTONS: { type: "heart" | "fire" | "rocket" | "party"; emoji: string; label: string }[] = [
-  { type: "heart", emoji: "❤️", label: "Love" },
-  { type: "fire", emoji: "🔥", label: "Fire" },
-  { type: "rocket", emoji: "🚀", label: "Shipped" },
-  { type: "party", emoji: "🎉", label: "Celebrate" },
+const REACTION_BUTTONS = [
+  { type: "heart" as const, Icon: GIconHeart, label: "Love", color: "text-rose-400" },
+  { type: "fire" as const, Icon: GIconFlame, label: "Fire", color: "text-amber-400" },
+  { type: "rocket" as const, Icon: GIconRocket, label: "Shipped", color: "text-purple-400" },
+  { type: "party" as const, Icon: GIconTrophy, label: "Celebrate", color: "text-amber-400" },
 ];
 
 export default function Updates() {
@@ -301,13 +304,13 @@ export default function Updates() {
 
   return (
     <div className="flex flex-col h-full bg-slate-950/40 text-white select-text">
-      {/* Top Header Bar */}
-      <div className="shrink-0 p-4 border-b border-white/10 bg-white/[0.02]">
+      {/* Top Header Bar (Sticky) */}
+      <div className="shrink-0 p-3 sm:p-4 border-b border-white/10 bg-[#070a12]/95 backdrop-blur-md sticky top-0 z-20 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div>
             <div className="flex items-center gap-2">
               <span className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                <GIconSparkles size={16} />
+                <GIconUpdates size={16} />
               </span>
               <h2 className="font-display text-lg font-bold tracking-tight text-white">Changelog & System Updates</h2>
             </div>
@@ -483,11 +486,11 @@ export default function Updates() {
                     onChange={(e) => setNewTag(e.target.value as any)}
                     className="w-full px-3 py-1.5 rounded-lg text-xs bg-black/40 border border-white/15 text-white focus:outline-none focus:border-accent"
                   >
-                    <option value="feature">✨ Feature</option>
-                    <option value="fix">🔧 Bug Fix</option>
-                    <option value="launch">🚀 Release / Launch</option>
-                    <option value="announcement">📢 Announcement</option>
-                    <option value="performance">⚡ Performance</option>
+                    <option value="feature">Feature</option>
+                    <option value="fix">Bug Fix</option>
+                    <option value="launch">Release / Launch</option>
+                    <option value="announcement">Announcement</option>
+                    <option value="performance">Performance</option>
                   </select>
                 </div>
 
@@ -556,7 +559,7 @@ export default function Updates() {
         {/* Empty State */}
         {!loading && filteredUpdates.length === 0 && (
           <div className="text-center py-12 px-4 rounded-xl border border-white/5 bg-white/[0.02]">
-            <GIconSparkles size={28} className="mx-auto text-white/30 mb-2" />
+            <GIconUpdates size={28} className="mx-auto text-white/30 mb-2" />
             <div className="text-sm font-medium text-white/70">No updates matching your search</div>
             <p className="text-xs text-white/40 mt-1 max-w-sm mx-auto">
               Try clearing filters or search keywords, or compose a new update to broadcast to all visitors.
@@ -658,23 +661,22 @@ export default function Updates() {
                 {/* Multi-Reaction Bar */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5">
                   <div className="flex items-center gap-1.5">
-                    {EMOJI_BUTTONS.map((btn) => {
+                    {REACTION_BUTTONS.map((btn) => {
                       const count = (itemReactions as any)[btn.type] || 0;
                       const isTarget = isJustReacted && justReacted?.type === btn.type;
+                      const BtnIcon = btn.Icon;
                       return (
                         <button
                           key={btn.type}
                           onClick={() => react(u.id, btn.type)}
                           title={`React with ${btn.label}`}
-                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition border ${
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition border cursor-pointer ${
                             count > 0
                               ? "bg-white/10 border-white/20 text-white hover:bg-white/15"
                               : "bg-white/[0.02] border-white/5 text-white/50 hover:bg-white/10 hover:text-white/80"
-                          } ${isTarget ? "scale-125 bg-accent/30 border-accent" : ""}`}
+                          } ${isTarget ? "scale-110 bg-accent/30 border-accent" : ""}`}
                         >
-                          <span className={`transition-transform ${isTarget ? "scale-125" : ""}`}>
-                            {btn.emoji}
-                          </span>
+                          <BtnIcon size={12} className={btn.color} />
                           <span className="text-[11px] font-medium">{count}</span>
                         </button>
                       );

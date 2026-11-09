@@ -4,7 +4,7 @@ import Wallpaper from "./Wallpaper";
 import { useOS } from "../store/useOS";
 import { soundFx } from "../lib/soundFx";
 import type { OSMode } from "../types/os";
-import { GIconCheck, GIconChevronRight, GIconSparkles } from "./icons/GravityIcons";
+import { GIconCheck, GIconChevronRight } from "./icons/GravityIcons";
 import macPreview from "../assets/macos.png";
 import windowsPreview from "../assets/windows.png";
 
@@ -147,8 +147,8 @@ export default function OsPicker() {
         >
           {/* Header */}
           <div className="space-y-1 mb-4">
-            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-accent text-[9.5px] font-semibold tracking-wider uppercase mb-0.5">
-              <GIconSparkles size={10} className="text-accent" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-accent/10 border border-accent/25 text-accent text-[10px] font-semibold tracking-wider uppercase mb-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
               <span>Portfolio OS</span>
             </div>
             <h1 className="font-display text-lg sm:text-2xl font-extrabold tracking-tight text-white">

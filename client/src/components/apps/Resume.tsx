@@ -5,7 +5,8 @@ import {
   GIconMail,
   GIconMapPin,
   GIconCheck,
-  GIconSparkles,
+  GIconCode,
+  GIconCpu,
   GIconPaperPlane,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
@@ -342,39 +343,39 @@ export default function Resume() {
             </a>
           </div>
         </div>
+      </div>
 
-        {/* Tab Navigation */}
-        <div className="flex items-center gap-1 mt-5 border-t border-white/5 pt-3 overflow-x-auto no-scrollbar">
-          {[
-            { id: "experience", label: "Work Experience" },
-            { id: "skills", label: "Tech Stack & Skills" },
-            { id: "education", label: "Education & Certifications" },
-            { id: "contact", label: "Hire / Contact Me" },
-          ].map((t) => {
-            const isActive = tab === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => {
-                  setTab(t.id as any);
-                  if (systemSounds) soundFx.playClick();
-                }}
-                className={`relative text-xs px-3.5 py-1.5 rounded-xl font-medium transition-colors shrink-0 cursor-pointer ${
-                  isActive ? "text-white" : "text-white/60 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="resumeActiveTab"
-                    className="absolute inset-0 bg-accent rounded-xl shadow-md shadow-accent/25"
-                    transition={{ type: "spring", stiffness: 450, damping: 30 }}
-                  />
-                )}
-                <span className="relative z-10">{t.label}</span>
-              </button>
-            );
-          })}
-        </div>
+      {/* Sticky Tab Navigation Bar */}
+      <div className="sticky top-0 z-10 shrink-0 px-3 sm:px-6 py-2 bg-[#0c0e14]/95 backdrop-blur-md border-b border-white/10 flex items-center gap-1 overflow-x-auto no-scrollbar shadow-sm">
+        {[
+          { id: "experience", label: "Work Experience" },
+          { id: "skills", label: "Tech Stack & Skills" },
+          { id: "education", label: "Education & Certifications" },
+          { id: "contact", label: "Hire / Contact Me" },
+        ].map((t) => {
+          const isActive = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => {
+                setTab(t.id as any);
+                if (systemSounds) soundFx.playClick();
+              }}
+              className={`relative text-xs px-3.5 py-1.5 rounded-xl font-medium transition-colors shrink-0 cursor-pointer ${
+                isActive ? "text-white" : "text-white/60 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="resumeActiveTab"
+                  className="absolute inset-0 bg-accent rounded-xl shadow-md shadow-accent/25"
+                  transition={{ type: "spring", stiffness: 450, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10">{t.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Main Content Pane */}
@@ -437,7 +438,7 @@ export default function Resume() {
             <div className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3.5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2 border-b border-white/5">
                 <div className="flex items-center gap-2">
-                  <GIconSparkles size={15} className="text-accent" />
+                  <GIconCode size={15} className="text-accent" />
                   <h3 className="font-display font-semibold text-sm text-white/95">
                     Core Production Tech Stack
                   </h3>
@@ -472,7 +473,7 @@ export default function Resume() {
             {SKILL_CATEGORIES.map((cat, idx) => (
               <div key={idx} className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
                 <div className="flex items-center gap-2">
-                  <GIconSparkles size={14} className="text-accent" />
+                  <GIconCpu size={14} className="text-accent" />
                   <h3 className="font-display font-semibold text-sm text-white/90">{cat.title}</h3>
                 </div>
 

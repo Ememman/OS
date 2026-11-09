@@ -6,7 +6,7 @@ import {
   GIconLayoutCells,
   GIconList,
   GIconHardDrive,
-  GIconStar,
+  GIconPin,
   GIconChevronRight,
   GIconTerminal,
   GIconCode,
@@ -374,7 +374,7 @@ export default function Files() {
         <div>
           <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-white/40 mb-2">
             <span className="flex items-center gap-1 font-semibold">
-              <GIconStar size={11} className="text-amber-400" /> Favorites
+              <GIconPin size={11} className="text-amber-400" /> Favorites
             </span>
             <button
               onClick={() => setMobileSidebar(false)}
@@ -423,7 +423,7 @@ export default function Files() {
       {/* Main File Browser Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Navigation & Controls Bar */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 shrink-0 gap-2 bg-white/5">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-3 py-2 border-b border-white/10 shrink-0 gap-2 bg-[#0c0d14]/95 backdrop-blur-md">
           {/* Breadcrumbs & Mobile Menu Toggle */}
           <div className="flex items-center gap-1.5 text-xs text-white/60 min-w-0 overflow-hidden">
             <button
@@ -431,7 +431,7 @@ export default function Files() {
               className="sm:hidden p-1 rounded-lg bg-white/10 hover:bg-white/15 text-white/80 shrink-0 cursor-pointer"
               title="Toggle Favorites"
             >
-              <GIconStar size={12} />
+              <GIconPin size={12} />
             </button>
             <button onClick={() => setPath([])} className="hover:text-white shrink-0 font-medium cursor-pointer">
               Root

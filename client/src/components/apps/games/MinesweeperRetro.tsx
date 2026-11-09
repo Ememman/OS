@@ -6,6 +6,9 @@ import {
   GIconTrophy,
   GIconSliders,
   GIconCheck,
+  GIconFlag,
+  GIconRotateRight,
+  GIconSmile,
 } from "../../icons/GravityIcons";
 
 type Difficulty = "beginner" | "intermediate" | "expert";
@@ -18,9 +21,9 @@ interface DifficultyConfig {
 }
 
 const DIFFICULTIES: Record<Difficulty, DifficultyConfig> = {
-  beginner: { rows: 9, cols: 9, mines: 10, label: "Beginner (9x9 · 10 💣)" },
-  intermediate: { rows: 16, cols: 16, mines: 40, label: "Intermediate (16x16 · 40 💣)" },
-  expert: { rows: 16, cols: 30, mines: 99, label: "Expert (16x30 · 99 💣)" },
+  beginner: { rows: 9, cols: 9, mines: 10, label: "Beginner (9x9 · 10 mines)" },
+  intermediate: { rows: 16, cols: 16, mines: 40, label: "Intermediate (16x16 · 40 mines)" },
+  expert: { rows: 16, cols: 30, mines: 99, label: "Expert (16x30 · 99 mines)" },
 };
 
 interface Cell {
@@ -221,7 +224,7 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
       setFaceState("won");
       setFlagsLeft(0);
       setShowSubmitModal(true);
-      notify("Clear Victory! 🏆", `All mines defused in ${elapsed}s! Submit your score!`, "success");
+      notify("Clear Victory!", `All mines defused in ${elapsed}s! Submit your score!`, "success");
     }
   };
 
@@ -364,7 +367,8 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
             }`}
             title="Toggle click mode between Dig and Flag"
           >
-            <span>🚩 Mode:</span>
+            <GIconFlag size={12} className="text-rose-400" />
+            <span>Mode:</span>
             <span className="font-bold">{flagMode ? "ON" : "OFF"}</span>
           </button>
 
@@ -390,18 +394,21 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
             {String(Math.max(-99, flagsLeft)).padStart(3, "0")}
           </div>
 
-          {/* Reset / Smiley Button */}
+          {/* Reset / Status Button */}
           <button
             onClick={() => initBoard(diff)}
             onMouseDown={() => setFaceState("surprised")}
             onMouseUp={() => setFaceState(status === "won" ? "won" : status === "lost" ? "lost" : "normal")}
-            className="w-10 h-10 rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 hover:from-amber-200 hover:to-amber-400 active:scale-95 text-xl flex items-center justify-center shadow-lg border-2 border-amber-600 transition"
+            className="w-10 h-10 rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 hover:from-amber-200 hover:to-amber-400 active:scale-95 flex items-center justify-center shadow-lg border-2 border-amber-600 transition text-slate-900 cursor-pointer"
             title="Click to Restart"
           >
-            {faceState === "normal" && "🙂"}
-            {faceState === "surprised" && "😮"}
-            {faceState === "won" && "😎"}
-            {faceState === "lost" && "😵"}
+            {faceState === "won" ? (
+              <GIconTrophy size={20} className="text-slate-900" />
+            ) : faceState === "lost" ? (
+              <GIconRotateRight size={20} className="text-slate-900" />
+            ) : (
+              <GIconSmile size={20} className="text-slate-900" />
+            )}
           </button>
 
           {/* Elapsed Timer */}
@@ -429,7 +436,7 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
                   onClick={() => handleCellClick(r, c)}
                   onContextMenu={(e) => toggleFlag(r, c, e)}
                   disabled={status === "won" || (status === "lost" && !cell.isMine)}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-xs font-mono font-bold transition-all rounded-[4px] ${
+                  className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-xs font-mono font-bold transition-all rounded-[4px] cursor-pointer ${
                     isRevealed
                       ? isMine
                         ? isExploded
@@ -441,14 +448,14 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
                 >
                   {isRevealed ? (
                     isMine ? (
-                      "💣"
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.9)]" />
                     ) : cell.neighborMines > 0 ? (
                       <span className={NUMBER_COLORS[cell.neighborMines]}>
                         {cell.neighborMines}
                       </span>
                     ) : null
                   ) : cell.flagged ? (
-                    <span className="text-rose-400 drop-shadow">🚩</span>
+                    <GIconFlag size={13} className="text-rose-400 drop-shadow" />
                   ) : null}
                 </button>
               );
@@ -461,7 +468,9 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
       {showSubmitModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-[#1c2230] border border-white/15 rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center">
-            <div className="text-4xl mb-2">🎉🏆</div>
+            <div className="flex justify-center mb-2 text-amber-400">
+              <GIconTrophy size={42} />
+            </div>
             <h3 className="text-lg font-bold text-white mb-1">Minefield Cleared!</h3>
             <p className="text-white/60 text-xs mb-4">
               You defused all mines in <span className="text-emerald-400 font-bold">{elapsed}s</span> on{" "}

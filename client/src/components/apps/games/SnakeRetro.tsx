@@ -334,8 +334,9 @@ export default function SnakeRetro() {
               Final Score: <span className="text-accent font-bold">{score}</span>
             </p>
             {score >= bestScore && score > 0 && (
-              <span className="text-[10px] text-amber-300 font-semibold mb-2 block">
-                🏆 New High Score!
+              <span className="inline-flex items-center gap-1 text-[10px] text-amber-300 font-semibold mb-2">
+                <GIconTrophy size={12} />
+                <span>New High Score!</span>
               </span>
             )}
 

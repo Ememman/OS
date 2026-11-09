@@ -9,6 +9,7 @@ import {
   GIconRotateRight,
   GIconTrash,
   GIconSearch,
+  GIconThunderbolt,
 } from "../icons/GravityIcons";
 
 interface SystemInfoData {
@@ -359,8 +360,8 @@ export default function ActivityMonitor() {
 
   return (
     <div className="flex flex-col h-full select-none bg-black/40 text-white text-xs">
-      {/* Tab Navigation */}
-      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 bg-white/5 gap-2">
+      {/* Tab Navigation (Sticky Header) */}
+      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 bg-[#0d1017]/95 backdrop-blur-md gap-2 shrink-0 sticky top-0 z-20 shadow-sm">
         <div className="flex-1 flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5">
           <button
             onClick={() => setActiveTab("processes")}
@@ -430,7 +431,8 @@ export default function ActivityMonitor() {
                 : "text-white/60 hover:text-white hover:bg-white/10"
             }`}
           >
-            ⚡ Benchmark
+            <GIconThunderbolt size={12} className="text-amber-400" />
+            <span>Benchmark</span>
           </button>
         </div>
 
@@ -976,7 +978,8 @@ export default function ActivityMonitor() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h4 className="font-display text-sm font-semibold text-white flex items-center gap-2">
-                    <span>⚡ Kernel Compute & Throughput Stress Benchmark</span>
+                    <GIconThunderbolt size={14} className="text-amber-400" />
+                    <span>Kernel Compute & Throughput Stress Benchmark</span>
                   </h4>
                   <p className="text-[11px] text-white/50 mt-0.5">
                     Evaluates prime computation speed, JSON serialization throughput, memory delta, and event loop latency.

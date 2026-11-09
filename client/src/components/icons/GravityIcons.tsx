@@ -145,6 +145,14 @@ export const GIconHistory = (props: any) => <GravityIcon icon={GIcons.Clock || G
 export const GIconPin = (props: any) => <GravityIcon icon={GIcons.Pin || GIcons.Star} {...props} />;
 export const GIconEye = (props: any) => <GravityIcon icon={GIcons.Eye || GIcons.Magnifier} {...props} />;
 export const GIconCopy = (props: any) => <GravityIcon icon={GIcons.Copy || GIcons.File} {...props} />;
+export const GIconFlame = (props: any) => <GravityIcon icon={(GIcons as any).Flame || GIcons.Star} {...props} />;
+export const GIconThumbsUp = (props: any) => <GravityIcon icon={(GIcons as any).ThumbsUp || GIcons.Check} {...props} />;
+export const GIconFlag = (props: any) => <GravityIcon icon={(GIcons as any).Flag} {...props} />;
+export const GIconBug = (props: any) => <GravityIcon icon={(GIcons as any).Bug || GIcons.Code} {...props} />;
+export const GIconTag = (props: any) => <GravityIcon icon={(GIcons as any).Tag || GIcons.Tags} {...props} />;
+export const GIconHashtag = (props: any) => <GravityIcon icon={(GIcons as any).Hashtag} {...props} />;
+export const GIconThunderbolt = (props: any) => <GravityIcon icon={(GIcons as any).Thunderbolt || GIcons.Sparkles} {...props} />;
+export const GIconDice5 = (props: any) => <GravityIcon icon={Dice5} {...props} />;
 
 export const GIconCamera = (props: any) => <GravityIcon icon={(GIcons as any).Camera} {...props} />;
 export const GIconGlobe = (props: any) => <GravityIcon icon={(GIcons as any).Globe} {...props} />;
