@@ -101,6 +101,9 @@ jobs:
           echo "Webhook deployment triggered successfully."
 
       - name: Deployment Summary & Cloud Setup Guide
+        env:
+          RENDER_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          DEPLOY_HOOK: ${{ secrets.DEPLOY_WEBHOOK_URL }}
         run: |
           echo "### 🚀 Portfolio OS Server Deployment Status" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -108,9 +111,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Container Image**: \`ghcr.io/${{ github.repository_owner }}/portfolio-os-server:latest\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -n "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+          if [ -n "$RENDER_HOOK" ]; then
             echo "- **Render Auto-Deploy**: Triggered via \`RENDER_DEPLOY_HOOK_URL\`." >> $GITHUB_STEP_SUMMARY
-          elif [ -n "${{ secrets.DEPLOY_WEBHOOK_URL }}" ]; then
+          elif [ -n "$DEPLOY_HOOK" ]; then
             echo "- **Custom Webhook**: Triggered via \`DEPLOY_WEBHOOK_URL\`." >> $GITHUB_STEP_SUMMARY
           else
             echo "💡 **Tip for 1-Click Live Cloud Hosting**:" >> $GITHUB_STEP_SUMMARY

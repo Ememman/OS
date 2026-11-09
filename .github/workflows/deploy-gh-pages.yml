@@ -44,7 +44,7 @@ jobs:
 
       - name: Build client with Vite
         env:
-          VITE_API_URL: ${{ inputs.vite_api_url || vars.VITE_API_URL || secrets.VITE_API_URL || 'https://portfolio-os-api-5c7z.onrender.com' }}
+          VITE_API_URL: ${{ inputs.vite_api_url || 'https://portfolio-os-api-5c7z.onrender.com' }}
         run: npm run build
 
       - name: Add .nojekyll and 404.html fallback
