@@ -1,3 +1,5 @@
+import { getAssetUrl } from "../lib/assets";
+
 export interface MusicTrack {
   id: string;
   title: string;
@@ -26,8 +28,8 @@ export const playlists: Playlist[] = [
         artist: "Lofi Jazz Terrace",
         genre: "Lo-fi",
         duration: 30,
-        src: "/audio/t1.m4a",
-        cover: "/covers/c1.jpg",
+        src: getAssetUrl("audio/t1.m4a"),
+        cover: getAssetUrl("covers/c1.jpg"),
         isPreview: false,
       },
       {
@@ -36,8 +38,8 @@ export const playlists: Playlist[] = [
         artist: "Lofi Jazz Terrace",
         genre: "Lo-fi",
         duration: 30,
-        src: "/audio/t2.m4a",
-        cover: "/covers/c2.jpg",
+        src: getAssetUrl("audio/t2.m4a"),
+        cover: getAssetUrl("covers/c2.jpg"),
         isPreview: false,
       },
       {
@@ -46,8 +48,8 @@ export const playlists: Playlist[] = [
         artist: "Creamy Panda",
         genre: "Lo-fi",
         duration: 30,
-        src: "/audio/t3.m4a",
-        cover: "/covers/c3.jpg",
+        src: getAssetUrl("audio/t3.m4a"),
+        cover: getAssetUrl("covers/c3.jpg"),
         isPreview: false,
       },
     ],
@@ -62,8 +64,8 @@ export const playlists: Playlist[] = [
         artist: "Aries Beats",
         genre: "Synthwave",
         duration: 30,
-        src: "/audio/t4.m4a",
-        cover: "/covers/c4.jpg",
+        src: getAssetUrl("audio/t4.m4a"),
+        cover: getAssetUrl("covers/c4.jpg"),
         isPreview: false,
       },
       {
@@ -72,8 +74,8 @@ export const playlists: Playlist[] = [
         artist: "Aries Beats",
         genre: "Synthwave",
         duration: 30,
-        src: "/audio/t5.m4a",
-        cover: "/covers/c5.jpg",
+        src: getAssetUrl("audio/t5.m4a"),
+        cover: getAssetUrl("covers/c5.jpg"),
         isPreview: false,
       },
       {
@@ -82,8 +84,8 @@ export const playlists: Playlist[] = [
         artist: "Synthwave Nation",
         genre: "Synthwave",
         duration: 30,
-        src: "/audio/t6.m4a",
-        cover: "/covers/c6.jpg",
+        src: getAssetUrl("audio/t6.m4a"),
+        cover: getAssetUrl("covers/c6.jpg"),
         isPreview: false,
       },
     ],
@@ -98,8 +100,8 @@ export const playlists: Playlist[] = [
         artist: "Acoustic Guitar Chill",
         genre: "Chill",
         duration: 30,
-        src: "/audio/t7.m4a",
-        cover: "/covers/c7.jpg",
+        src: getAssetUrl("audio/t7.m4a"),
+        cover: getAssetUrl("covers/c7.jpg"),
         isPreview: false,
       },
       {
@@ -108,8 +110,8 @@ export const playlists: Playlist[] = [
         artist: "Jazz Guitar Music Zone",
         genre: "Chill",
         duration: 30,
-        src: "/audio/t8.m4a",
-        cover: "/covers/c8.jpg",
+        src: getAssetUrl("audio/t8.m4a"),
+        cover: getAssetUrl("covers/c8.jpg"),
         isPreview: false,
       },
       {
@@ -118,8 +120,8 @@ export const playlists: Playlist[] = [
         artist: "Acoustic Guitar Chill",
         genre: "Chill",
         duration: 30,
-        src: "/audio/t9.m4a",
-        cover: "/covers/c9.jpg",
+        src: getAssetUrl("audio/t9.m4a"),
+        cover: getAssetUrl("covers/c9.jpg"),
         isPreview: false,
       },
     ],

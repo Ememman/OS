@@ -16,12 +16,13 @@ import {
   GIconHardDrive,
 } from "../icons/GravityIcons";
 import { soundFx } from "../../lib/soundFx";
+import { getAssetUrl } from "../../lib/assets";
 
-// Preview images for the wallpaper selector — served from /public/wallpapers
+// Preview images for the wallpaper selector — resolved with getAssetUrl for subpath compatibility
 const PREVIEW_IMAGES = {
-  bg1: "/wallpapers/BG_1.jpg",
-  bg2: "/wallpapers/BG_2.png",
-  bg3: "/wallpapers/BG_3.jpg",
+  bg1: getAssetUrl("wallpapers/BG_1.jpg"),
+  bg2: getAssetUrl("wallpapers/BG_2.png"),
+  bg3: getAssetUrl("wallpapers/BG_3.jpg"),
 };
 
 // Fallback gradients if images don't load

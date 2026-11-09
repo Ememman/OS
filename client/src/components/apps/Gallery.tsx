@@ -128,12 +128,15 @@ export default function Gallery() {
               if (systemSounds) soundFx.playClick();
               setOpenIdx(i);
             }}
-            className="relative rounded-xl overflow-hidden group block w-full break-inside-avoid border border-white/5 hover:border-accent/40 transition-colors cursor-pointer"
+            className="relative rounded-xl overflow-hidden group block w-full break-inside-avoid border border-white/5 hover:border-accent/40 transition-colors cursor-pointer bg-slate-900/80 min-h-[140px]"
           >
             <img
               src={g.type === "video" ? g.poster : g.src}
               alt={g.caption}
               className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500 block"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
             />
             {g.type === "video" && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/25">
