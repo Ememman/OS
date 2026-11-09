@@ -144,6 +144,17 @@ function addActivity(type, text) {
   logSystem("info", type.toUpperCase(), text);
 }
 
+// ---------- Root Landing Route ----------
+app.get("/", (req, res) => {
+  res.json({
+    ok: true,
+    service: "Portfolio OS Backend API & Real-time Server",
+    status: "online",
+    healthCheck: "/api/health",
+    spec: "/api/spec"
+  });
+});
+
 app.get("/api/activity/feed", (req, res) => res.json(activityFeed));
 
 // ---------- REST: projects / updates ----------
