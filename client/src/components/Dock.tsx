@@ -74,7 +74,7 @@ export default function Dock() {
     openApp(app);
   };
 
-  const hoverMotion = {
+  const hoverMotion = isMobile ? undefined : {
     scale: 1.22,
     y: vertical ? 0 : -8,
     x: vertical ? (position === "left" ? 6 : -6) : 0,

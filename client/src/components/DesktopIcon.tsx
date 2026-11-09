@@ -34,7 +34,7 @@ export default function DesktopIcon({ icon: Icon, label, onOpen, style, color }:
       onDoubleClick={onOpen}
       onBlur={() => setSelected(false)}
       style={style}
-      whileHover={{ scale: 1.07, y: -2 }}
+      whileHover={isMobile ? undefined : { scale: 1.07, y: -2 }}
       whileTap={{ scale: 0.94 }}
       transition={{ type: "spring", stiffness: 450, damping: 22 }}
       className={`group flex flex-col items-center gap-1 sm:gap-1.5 w-16 sm:w-20 py-1.5 sm:py-2 rounded-xl outline-none cursor-pointer select-none ${
@@ -45,7 +45,7 @@ export default function DesktopIcon({ icon: Icon, label, onOpen, style, color }:
         className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all duration-200 border ${
           selected
             ? "bg-white/25 border-accent shadow-lg shadow-accent/25"
-            : "bg-[#0c1220]/75 backdrop-blur-md border-white/15 group-hover:border-white/30 group-hover:bg-[#0c1220]/90 shadow-lg shadow-black/40"
+            : "bg-[#0c1220]/90 sm:bg-[#0c1220]/75 sm:backdrop-blur-md border-white/15 group-hover:border-white/30 group-hover:bg-[#0c1220]/90 shadow-lg shadow-black/40"
         }`}
         style={color ? { boxShadow: selected ? `0 0 16px ${color}55` : undefined } : undefined}
       >
