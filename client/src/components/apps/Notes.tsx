@@ -46,22 +46,22 @@ const NOTE_TEMPLATES = [
   {
     id: "standup",
     name: "Daily Standup & Agenda",
-    content: `## ☀️ Daily Standup & Agenda\n\n### 🎯 Top Priorities Today\n- [ ] Priority 1\n- [ ] Priority 2\n- [ ] Priority 3\n\n### 🔄 Completed Yesterday\n- [x] Feature implementation\n- [x] Code review\n\n### 🚧 Blockers & Notes\n> No current blockers. All tests passing.`
+    content: `## Daily Standup & Agenda\n\n### Top Priorities Today\n- [ ] Priority 1\n- [ ] Priority 2\n- [ ] Priority 3\n\n### Completed Yesterday\n- [x] Feature implementation\n- [x] Code review\n\n### Blockers & Notes\n> No current blockers. All tests passing.`
   },
   {
     id: "rfc",
     name: "Architecture RFC Spec",
-    content: `## 📐 RFC: Architecture Specification\n\n**Author:** Bron Mendoza\n**Status:** In Review\n\n### 1. Abstract\nHigh-level architectural proposal for the new system feature.\n\n### 2. Objectives & Non-Goals\n- [x] Zero-latency synchronization\n- [ ] Offline caching layer\n\n### 3. API Design\n\`\`\`typescript\ninterface ServiceResponse<T> {\n  ok: boolean;\n  data: T;\n  timestamp: number;\n}\n\`\`\`\n\n### 4. Security & Performance Considerations\nAll endpoints validate request bodies with strict length limits.`
+    content: `## RFC: Architecture Specification\n\n**Author:** Bron Mendoza\n**Status:** In Review\n\n### 1. Abstract\nHigh-level architectural proposal for the new system feature.\n\n### 2. Objectives & Non-Goals\n- [x] Zero-latency synchronization\n- [ ] Offline caching layer\n\n### 3. API Design\n\`\`\`typescript\ninterface ServiceResponse<T> {\n  ok: boolean;\n  data: T;\n  timestamp: number;\n}\n\`\`\`\n\n### 4. Security & Performance Considerations\nAll endpoints validate request bodies with strict length limits.`
   },
   {
     id: "bug",
     name: "Bug Report Ticket",
-    content: `## 🐛 Bug Report: [Short Title]\n\n**Severity:** High / Medium / Low\n**Environment:** Chrome 124 / Windows 11\n\n### Steps to Reproduce\n1. Navigate to ...\n2. Click on ...\n3. Observe unexpected behaviour\n\n### Expected vs Actual\n- **Expected:** Window smoothly opens\n- **Actual:** Console shows warning\n\n### Proposed Fix\nCheck boundary condition in render handler.`
+    content: `## Bug Report: [Short Title]\n\n**Severity:** High / Medium / Low\n**Environment:** Chrome 124 / Windows 11\n\n### Steps to Reproduce\n1. Navigate to ...\n2. Click on ...\n3. Observe unexpected behaviour\n\n### Expected vs Actual\n- **Expected:** Window smoothly opens\n- **Actual:** Console shows warning\n\n### Proposed Fix\nCheck boundary condition in render handler.`
   },
   {
     id: "scratchpad",
     name: "Quick Code Scratchpad",
-    content: `## ⚡ Quick Code Scratchpad\n\n\`\`\`javascript\n// Test snippet\nconst greet = (name) => \`Hello, \${name}! Welcome to Portfolio OS.\`;\nconsole.log(greet("Developer"));\n\`\`\`\n\n### Ideas\n- Integrate Web Worker for heavy tasks\n- Optimize bundle chunks`
+    content: `## Quick Code Scratchpad\n\n\`\`\`javascript\n// Test snippet\nconst greet = (name) => \`Hello, \${name}! Welcome to Portfolio OS.\`;\nconsole.log(greet("Developer"));\n\`\`\`\n\n### Ideas\n- Integrate Web Worker for heavy tasks\n- Optimize bundle chunks`
   }
 ];
 
@@ -1000,9 +1000,7 @@ export default function Notes() {
                   <div className="flex items-start justify-between gap-1">
                     <div className="flex items-center gap-1.5 min-w-0 flex-1">
                       {n.pinned && (
-                        <span className="text-amber-400 text-xs shrink-0" title="Pinned note">
-                          📌
-                        </span>
+                        <GIconPin size={11} className="text-amber-400 shrink-0" />
                       )}
                       <h4 className="text-xs font-medium text-white truncate flex-1">
                         {n.title || "Untitled Note"}
@@ -1099,11 +1097,11 @@ export default function Notes() {
                 onChange={(e) => updateActiveNote({ tag: e.target.value })}
                 className="text-[10px] bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-white/70 focus:outline-none focus:border-accent shrink-0 hidden xs:inline-block"
               >
-                <option value="ideas">💡 #ideas</option>
-                <option value="work">💼 #work</option>
-                <option value="code">⚡ #code</option>
-                <option value="todo">✅ #todo</option>
-                <option value="personal">🔒 #personal</option>
+                <option value="ideas">#ideas</option>
+                <option value="work">#work</option>
+                <option value="code">#code</option>
+                <option value="todo">#todo</option>
+                <option value="personal">#personal</option>
               </select>
             </div>
 

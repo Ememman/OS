@@ -9,6 +9,7 @@ import {
   GIconRotateRight,
   GIconTrash,
   GIconSearch,
+  GIconThunderbolt,
 } from "../icons/GravityIcons";
 
 interface SystemInfoData {
@@ -430,7 +431,8 @@ export default function ActivityMonitor() {
                 : "text-white/60 hover:text-white hover:bg-white/10"
             }`}
           >
-            ⚡ Benchmark
+            <GIconThunderbolt size={12} className="text-amber-400" />
+            <span>Benchmark</span>
           </button>
         </div>
 
@@ -976,7 +978,8 @@ export default function ActivityMonitor() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h4 className="font-display text-sm font-semibold text-white flex items-center gap-2">
-                    <span>⚡ Kernel Compute & Throughput Stress Benchmark</span>
+                    <GIconThunderbolt size={14} className="text-amber-400" />
+                    <span>Kernel Compute & Throughput Stress Benchmark</span>
                   </h4>
                   <p className="text-[11px] text-white/50 mt-0.5">
                     Evaluates prime computation speed, JSON serialization throughput, memory delta, and event loop latency.

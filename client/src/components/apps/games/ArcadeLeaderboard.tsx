@@ -5,6 +5,7 @@ import {
   GIconTrophy,
   GIconRotateRight,
   GIconClose,
+  GIconPuzzle,
 } from "../../icons/GravityIcons";
 
 interface LeaderboardEntry {
@@ -79,21 +80,21 @@ export default function ArcadeLeaderboard({ onClose }: { onClose?: () => void })
     if (idx === 0) {
       return (
         <span className="w-6 h-6 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/50 flex items-center justify-center text-xs font-black shadow-sm shadow-amber-400/30">
-          🥇
+          <GIconTrophy size={13} className="text-amber-400" />
         </span>
       );
     }
     if (idx === 1) {
       return (
         <span className="w-6 h-6 rounded-full bg-slate-300/20 text-slate-200 border border-slate-300/40 flex items-center justify-center text-xs font-black">
-          🥈
+          <GIconTrophy size={13} className="text-slate-300" />
         </span>
       );
     }
     if (idx === 2) {
       return (
-        <span className="w-6 h-6 rounded-full bg-amber-700/20 text-amber-600 border border-amber-700/40 flex items-center justify-center text-xs font-black">
-          🥉
+        <span className="w-6 h-6 rounded-full bg-amber-700/20 text-amber-500 border border-amber-700/40 flex items-center justify-center text-xs font-black">
+          <GIconTrophy size={13} className="text-amber-500" />
         </span>
       );
     }
@@ -168,7 +169,7 @@ export default function ArcadeLeaderboard({ onClose }: { onClose?: () => void })
           </div>
         ) : entries.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-white/40 text-xs">
-            <p className="text-2xl mb-1">🎮</p>
+            <GIconPuzzle size={28} className="mb-2 text-white/30" />
             <p>No recorded scores yet for this game.</p>
             <p className="text-[11px] text-white/30 mt-0.5">Be the first player to submit a record!</p>
           </div>

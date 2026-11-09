@@ -24,6 +24,7 @@ import {
   GIconMapPin,
   GIconClose,
   GIconDownload,
+  GIconCircleInfo,
 } from "../icons/GravityIcons";
 import {
   AVATAR_STYLES,
@@ -870,7 +871,7 @@ export default function Guestbook() {
             {/* Validation Error Alert */}
             {formError && (
               <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-[11px] flex items-start gap-2">
-                <span className="text-rose-400 font-bold shrink-0">⚠</span>
+                <GIconCircleInfo size={14} className="text-rose-400 shrink-0 mt-0.5" />
                 <span className="leading-tight">{formError}</span>
               </div>
             )}

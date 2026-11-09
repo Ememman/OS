@@ -13,6 +13,8 @@ import {
   GIconClose,
   GIconSliders,
   GIconCircleInfo,
+  GIconHeart,
+  GIconFlame,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
 import { getSocket } from "../../lib/socket";
@@ -44,11 +46,11 @@ const TAG_META: Record<string, { label: string; Icon: any; color: string; bg: st
   performance: { label: "Perf", Icon: GIconSliders, color: "#FBBF24", bg: "rgba(251, 191, 36, 0.15)" },
 };
 
-const EMOJI_BUTTONS: { type: "heart" | "fire" | "rocket" | "party"; emoji: string; label: string }[] = [
-  { type: "heart", emoji: "❤️", label: "Love" },
-  { type: "fire", emoji: "🔥", label: "Fire" },
-  { type: "rocket", emoji: "🚀", label: "Shipped" },
-  { type: "party", emoji: "🎉", label: "Celebrate" },
+const REACTION_BUTTONS = [
+  { type: "heart" as const, Icon: GIconHeart, label: "Love", color: "text-rose-400" },
+  { type: "fire" as const, Icon: GIconFlame, label: "Fire", color: "text-amber-400" },
+  { type: "rocket" as const, Icon: GIconRocket, label: "Shipped", color: "text-purple-400" },
+  { type: "party" as const, Icon: GIconSparkles, label: "Celebrate", color: "text-emerald-400" },
 ];
 
 export default function Updates() {
@@ -483,11 +485,11 @@ export default function Updates() {
                     onChange={(e) => setNewTag(e.target.value as any)}
                     className="w-full px-3 py-1.5 rounded-lg text-xs bg-black/40 border border-white/15 text-white focus:outline-none focus:border-accent"
                   >
-                    <option value="feature">✨ Feature</option>
-                    <option value="fix">🔧 Bug Fix</option>
-                    <option value="launch">🚀 Release / Launch</option>
-                    <option value="announcement">📢 Announcement</option>
-                    <option value="performance">⚡ Performance</option>
+                    <option value="feature">Feature</option>
+                    <option value="fix">Bug Fix</option>
+                    <option value="launch">Release / Launch</option>
+                    <option value="announcement">Announcement</option>
+                    <option value="performance">Performance</option>
                   </select>
                 </div>
 
@@ -658,23 +660,22 @@ export default function Updates() {
                 {/* Multi-Reaction Bar */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5">
                   <div className="flex items-center gap-1.5">
-                    {EMOJI_BUTTONS.map((btn) => {
+                    {REACTION_BUTTONS.map((btn) => {
                       const count = (itemReactions as any)[btn.type] || 0;
                       const isTarget = isJustReacted && justReacted?.type === btn.type;
+                      const BtnIcon = btn.Icon;
                       return (
                         <button
                           key={btn.type}
                           onClick={() => react(u.id, btn.type)}
                           title={`React with ${btn.label}`}
-                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition border ${
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition border cursor-pointer ${
                             count > 0
                               ? "bg-white/10 border-white/20 text-white hover:bg-white/15"
                               : "bg-white/[0.02] border-white/5 text-white/50 hover:bg-white/10 hover:text-white/80"
-                          } ${isTarget ? "scale-125 bg-accent/30 border-accent" : ""}`}
+                          } ${isTarget ? "scale-110 bg-accent/30 border-accent" : ""}`}
                         >
-                          <span className={`transition-transform ${isTarget ? "scale-125" : ""}`}>
-                            {btn.emoji}
-                          </span>
+                          <BtnIcon size={12} className={btn.color} />
                           <span className="text-[11px] font-medium">{count}</span>
                         </button>
                       );

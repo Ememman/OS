@@ -11,6 +11,7 @@ import {
   GIconEye,
   GIconLayoutColumns,
   GIconSparkles,
+  GIconClock,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
 import { soundFx } from "../../lib/soundFx";
@@ -659,8 +660,9 @@ export default function CodePlay() {
               )}
 
               {execTime !== null && (
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 font-mono">
-                  ⏱️ {execTime} ms
+                <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-mono">
+                  <GIconClock size={10} />
+                  <span>{execTime} ms</span>
                 </span>
               )}
             </div>

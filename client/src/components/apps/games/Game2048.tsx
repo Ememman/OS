@@ -321,7 +321,9 @@ export default function Game2048() {
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center p-4 text-center z-20 animate-fade-in">
             {won && !keepPlaying ? (
               <>
-                <div className="text-3xl mb-1">🎉</div>
+                <div className="flex justify-center mb-1 text-amber-400">
+                  <GIconTrophy size={36} />
+                </div>
                 <h4 className="font-display text-xl font-bold text-amber-300 mb-1">You reached 2048!</h4>
                 <p className="text-xs text-white/60 mb-4">Legendary puzzle mastery achieved.</p>
                 <div className="flex gap-2">

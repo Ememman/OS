@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useOS } from "../../store/useOS";
 import type { DockPosition, OSMode } from "../../types/os";
-import Wallpaper from "../Wallpaper";
 import {
   GIconCheck,
   GIconSparkles,
@@ -160,14 +159,14 @@ export default function Settings() {
   const handleImageError = (id) => setImageErrors((prev) => ({ ...prev, [id]: true }));
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0f] text-white select-none">
+    <div className="min-h-full bg-[#0a0a0f] text-white select-none">
       {/* Sticky Header */}
       <div className="p-3 sm:p-4 border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-md sticky top-0 z-20 shrink-0 shadow-sm">
         <h1 className="font-display text-base sm:text-lg font-semibold text-white">Settings</h1>
         <p className="text-[11px] text-white/50">Personalize wallpaper, accents, and system preferences.</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto thin-scroll p-3 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
+      <div className="p-3 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
 
       {/* ============ APPEARANCE ============ */}
       <GroupHeader icon={GIconSliders} label="Appearance" />
@@ -501,10 +500,25 @@ export default function Settings() {
       {/* Preview */}
       <section className="space-y-2">
         <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Preview</h3>
-        <div className="relative h-24 sm:h-28 md:h-32 rounded-xl overflow-hidden border border-white/10">
-          <Wallpaper />
+        <div className="relative h-24 sm:h-28 md:h-32 rounded-xl overflow-hidden border border-white/10 bg-black/40">
+          {PREVIEW_IMAGES[wallpaper] && !imageErrors[wallpaper] ? (
+            <img
+              src={PREVIEW_IMAGES[wallpaper]}
+              alt={getWallpaperInfo(wallpaper).name}
+              className="w-full h-full object-cover"
+              onError={() => handleImageError(wallpaper)}
+            />
+          ) : (
+            <div
+              className="w-full h-full"
+              style={{ background: PREVIEW_FALLBACK[wallpaper] || "#0a0a0f" }}
+            />
+          )}
+          <div className="absolute inset-0 bg-black/20 pointer-events-none" />
         </div>
-        <p className="text-[9px] sm:text-[10px] text-white/20 text-center">Current wallpaper preview</p>
+        <p className="text-[9px] sm:text-[10px] text-white/20 text-center">
+          Current wallpaper: <span className="text-white/60 font-medium">{getWallpaperInfo(wallpaper).name}</span>
+        </p>
       </section>
       </div>
     </div>
