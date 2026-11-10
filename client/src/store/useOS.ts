@@ -86,6 +86,8 @@ interface OSState {
   toggleCompact: () => void;
   dockPosition: DockPosition;
   setDockPosition: (pos: DockPosition) => void;
+  windowIndicators: boolean;
+  toggleWindowIndicators: () => void;
   unreadChatCount: number;
   incrementUnreadChat: () => void;
   clearUnreadChat: () => void;
@@ -403,7 +405,7 @@ export const useOS = create<OSState>((set, get) => ({
   togglePowerDialog: () => set((s) => ({ powerDialogOpen: !s.powerDialogOpen })),
 
   resetDefaults: () => {
-    ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift"].forEach((k) =>
+    ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift", "os_window_indicators"].forEach((k) =>
       localStorage.removeItem(k)
     );
     window.location.reload();
@@ -420,6 +422,13 @@ export const useOS = create<OSState>((set, get) => ({
   setDockPosition: (pos) => {
     localStorage.setItem("os_dock_position", pos);
     set({ dockPosition: pos });
+  },
+
+  windowIndicators: localStorage.getItem("os_window_indicators") === "on",
+  toggleWindowIndicators: () => {
+    const next = !get().windowIndicators;
+    localStorage.setItem("os_window_indicators", next ? "on" : "off");
+    set({ windowIndicators: next });
   },
 
   unreadChatCount: 0,
