@@ -12,6 +12,7 @@ import {
 import { soundFx } from "../../../lib/soundFx";
 import { useOS } from "../../../store/useOS";
 import { API_URL } from "../../../lib/config";
+import { getEffectiveChatName, saveChatName } from "../../../lib/chatSession";
 
 type Point = { x: number; y: number };
 type Direction = "UP" | "DOWN" | "LEFT" | "RIGHT";
@@ -58,7 +59,7 @@ export default function SnakeRetro() {
     }
   });
 
-  const [playerName, setPlayerName] = useState(() => localStorage.getItem("os_player_name") || "Pilot");
+  const [playerName, setPlayerName] = useState(() => getEffectiveChatName());
   const [submittingScore, setSubmittingScore] = useState(false);
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
 
@@ -88,7 +89,9 @@ export default function SnakeRetro() {
     if (!playerName.trim() || submittingScore || scoreSubmitted || score <= 0) return;
 
     setSubmittingScore(true);
-    localStorage.setItem("os_player_name", playerName.trim());
+    const cleanName = playerName.trim() || getEffectiveChatName();
+    saveChatName(cleanName);
+    localStorage.setItem("os_player_name", cleanName);
 
     try {
       const res = await fetch(`${API_URL}/api/games/leaderboard`, {
@@ -96,7 +99,7 @@ export default function SnakeRetro() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           game: "snake",
-          player: playerName.trim(),
+          player: cleanName,
           score,
           details: `${score / 10} Apples (${SPEEDS[speedIdx].label})`
         })

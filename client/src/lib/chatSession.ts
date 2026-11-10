@@ -61,3 +61,29 @@ export function saveChatName(name: string): void {
     touchChatActivity();
   }
 }
+
+const ADJECTIVES = ["Swift", "Quiet", "Amber", "Cosmic", "Lucky", "Nimble", "Gentle", "Bright", "Wandering", "Velvet"];
+const ANIMALS = ["Falcon", "Otter", "Lynx", "Comet", "Heron", "Fox", "Whale", "Sparrow", "Marlin", "Wren"];
+
+export function generateRandomGuestName(): string {
+  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+  const animal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
+  const num = Math.floor(100 + Math.random() * 900);
+  return `${adj}${animal}${num}`;
+}
+
+/**
+ * Returns the user's active chat name / nickname.
+ * If not set yet, automatically establishes an identical random nickname (e.g. SwiftFalcon123)
+ * and saves it into localStorage (`os_chat_name`), ensuring 100% sync across Chats and Games.
+ */
+export function getEffectiveChatName(): string {
+  if (typeof window === "undefined") return "Player";
+  const session = getChatSession();
+  if (session.name && session.name.trim()) return session.name.trim();
+  const cached = localStorage.getItem("os_chat_name");
+  if (cached && cached.trim()) return cached.trim();
+  const generated = generateRandomGuestName();
+  saveChatName(generated);
+  return generated;
+}
