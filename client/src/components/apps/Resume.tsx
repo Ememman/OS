@@ -560,7 +560,7 @@ export default function Resume() {
       </div>
 
       {/* Main Content Pane */}
-      <div className="flex-1 p-4 sm:p-6 space-y-6">
+      <div className="flex-1 p-4 sm:p-6 pb-20 sm:pb-14 space-y-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={tab}

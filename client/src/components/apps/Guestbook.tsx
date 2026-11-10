@@ -22,7 +22,6 @@ import {
   GIconLink,
   GIconUpload,
   GIconMapPin,
-  GIconClose,
   GIconDownload,
   GIconCircleInfo,
 } from "../icons/GravityIcons";
@@ -531,54 +530,62 @@ export default function Guestbook() {
 
       {/* Main 2-Column Body */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
-        {/* Left Column: Profile & Sign Form */}
-        <div className={`lg:col-span-5 p-4 border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-y-auto thin-scroll space-y-4 bg-white/[0.01] ${
-          mobileTab === "sign" ? "block" : "hidden lg:block"
-        }`}>
-          <div className="flex items-center justify-between pb-1">
-            <span className="font-semibold text-white/90 flex items-center gap-1.5 text-xs">
-              <GIconPencil size={13} className="text-white/70" />
-              <span>Your Profile & Signature</span>
-            </span>
-            <span className="text-[10px] text-white/40 font-mono">
-              Saved locally
+        {/* Left Column: Profile & Sign Form (Clean, Spacious & Organized) */}
+        <div
+          className={`lg:col-span-5 p-4 sm:p-5 border-b lg:border-b-0 lg:border-r border-white/[0.08] overflow-y-auto thin-scroll space-y-4 bg-white/[0.01] pb-24 lg:pb-6 ${
+            mobileTab === "sign" ? "block" : "hidden lg:block"
+          }`}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between pb-1 border-b border-white/[0.06]">
+            <div>
+              <h3 className="font-semibold text-white/95 text-xs flex items-center gap-1.5">
+                <GIconPencil size={13} className="text-accent" />
+                <span>Sign Visitor Ledger</span>
+              </h3>
+              <p className="text-[11px] text-white/45 mt-0.5">
+                Customize your avatar, role, and leave a permanent note.
+              </p>
+            </div>
+            <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono shrink-0">
+              Live
             </span>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            {/* Profile Picture & Avatar Studio Card */}
-            <div className="p-3 rounded-2xl border border-white/[0.08] bg-white/[0.02] space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* 1. Avatar Studio */}
+            <div className="p-3.5 rounded-2xl border border-white/[0.08] bg-white/[0.02] space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-medium text-white/90">Profile Picture</span>
+                <span className="text-[11px] font-semibold text-white/90">1. Avatar Appearance</span>
 
-                {/* Profile Mode Toggle */}
-                <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-black/40 border border-white/[0.08] text-[10px]">
+                {/* Vector vs Photo Mode Toggle */}
+                <div className="flex items-center gap-1 p-0.5 rounded-lg bg-black/40 border border-white/[0.08] text-[10px]">
                   <button
                     type="button"
                     onClick={() => setProfileMode("avatar")}
                     className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
                       profileMode === "avatar"
-                        ? "bg-white/15 text-white font-medium border border-white/10"
+                        ? "bg-white/15 text-white font-medium shadow-sm"
                         : "text-white/50 hover:text-white"
                     }`}
                   >
-                    Vector Avatar
+                    Vector
                   </button>
                   <button
                     type="button"
                     onClick={() => setProfileMode("photo")}
                     className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
                       profileMode === "photo"
-                        ? "bg-white/15 text-white font-medium border border-white/10"
+                        ? "bg-white/15 text-white font-medium shadow-sm"
                         : "text-white/50 hover:text-white"
                     }`}
                   >
-                    Custom Photo
+                    Photo
                   </button>
                 </div>
               </div>
 
-              {/* Avatar / Photo Header Row */}
+              {/* Avatar Row */}
               <div className="flex items-center gap-3">
                 <div
                   onClick={() => {
@@ -588,190 +595,132 @@ export default function Guestbook() {
                       fileInputRef.current?.click();
                     }
                   }}
-                  title={profileMode === "avatar" ? "Click to roll new seed" : "Click to upload image"}
-                  className="relative w-14 h-14 aspect-square rounded-2xl border border-white/10 bg-black/40 p-1 shrink-0 overflow-hidden shadow-inner group cursor-pointer hover:border-white/30 transition"
+                  title={profileMode === "avatar" ? "Click to roll a new random avatar" : "Click to upload a custom photo"}
+                  className="relative w-14 h-14 aspect-square rounded-2xl border border-white/15 bg-black/50 p-1 shrink-0 overflow-hidden shadow-inner group cursor-pointer hover:border-accent transition"
                 >
                   <img
                     src={activePreviewSrc}
                     alt="Profile Preview"
                     className="w-full h-full object-cover rounded-xl"
                   />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl">
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl">
                     {profileMode === "avatar" ? (
-                      <GIconRotateRight size={14} className="text-white" />
+                      <GIconRotateRight size={15} className="text-white" />
                     ) : (
-                      <GIconCamera size={14} className="text-white" />
+                      <GIconCamera size={15} className="text-white" />
                     )}
                   </div>
                 </div>
 
-                <div className="flex-1 min-w-0 space-y-1">
+                <div className="flex-1 min-w-0 space-y-2">
                   {profileMode === "avatar" ? (
                     <>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-white/70">DiceBear Generator</span>
+                      {/* Avatar Style Pills */}
+                      <div className="flex items-center gap-1 overflow-x-auto thin-scroll pb-0.5">
+                        {AVATAR_STYLES.map((st) => (
+                          <button
+                            key={st.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedStyle(st.id);
+                              const presets = PRESET_SEEDS[st.id] || PRESET_SEEDS.lorelei;
+                              setSeed(presets[0]);
+                              setCustomSeedInput("");
+                            }}
+                            className={`px-2 py-0.5 rounded-lg text-[10px] font-medium whitespace-nowrap transition cursor-pointer border ${
+                              selectedStyle === st.id
+                                ? "bg-white/15 border-white/25 text-white"
+                                : "border-transparent text-white/50 hover:text-white hover:bg-white/[0.04]"
+                            }`}
+                          >
+                            {st.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Quick Action Button & Custom Seed */}
+                      <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={handleRandomizeAvatar}
-                          title="Roll a random avatar seed"
-                          className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-white/70 hover:text-white text-[10px] font-medium transition cursor-pointer"
+                          title="Generate random seed"
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-white/80 hover:text-white text-[10px] font-medium transition cursor-pointer shrink-0"
                         >
                           <GIconRotateRight size={11} />
                           <span>Roll Seed</span>
                         </button>
+                        <input
+                          type="text"
+                          maxLength={24}
+                          value={customSeedInput}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setCustomSeedInput(val);
+                            setSeed(val.trim() || activePresets[0]);
+                          }}
+                          placeholder="Or type custom handle..."
+                          className="flex-1 min-w-0 bg-black/30 border border-white/[0.08] rounded-lg px-2 py-1 text-[10px] text-white placeholder:text-white/30 outline-none focus:border-accent/40"
+                        />
                       </div>
-                      <p className="text-[10px] text-white/40 leading-snug">
-                        Pick a vector style or type your handle to generate.
-                      </p>
                     </>
                   ) : (
                     <>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-white/70">Upload or URL</span>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex-1 flex items-center justify-center gap-1 px-2.5 py-1 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-white text-[10px] font-medium transition cursor-pointer"
+                        >
+                          <GIconUpload size={11} />
+                          <span>Upload Image</span>
+                        </button>
+                        {photoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setCustomPhoto(photoUrl)}
+                            className="px-2 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white/70 text-[10px] transition cursor-pointer"
+                          >
+                            OS Photo
+                          </button>
+                        )}
                         {customPhoto && (
                           <button
                             type="button"
                             onClick={() => setCustomPhoto("")}
-                            className="flex items-center gap-1 text-[10px] text-rose-400 hover:underline cursor-pointer"
+                            className="px-2 py-1 text-[10px] text-rose-400 hover:underline cursor-pointer"
                           >
-                            <GIconClose size={10} />
-                            <span>Clear</span>
+                            Reset
                           </button>
                         )}
                       </div>
-                      <p className="text-[10px] text-white/40 leading-snug">
-                        Use your own personal headshot, GitHub avatar, or photo.
-                      </p>
+                      <input
+                        type="url"
+                        value={customPhoto.startsWith("data:") ? "" : customPhoto}
+                        onChange={(e) => setCustomPhoto(e.target.value)}
+                        placeholder="Or paste direct image URL..."
+                        className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-2 py-1 text-[10px] text-white placeholder:text-white/30 outline-none focus:border-accent/40"
+                      />
                     </>
                   )}
                 </div>
               </div>
-
-              {/* Vector Mode Controls */}
-              {profileMode === "avatar" && (
-                <div className="space-y-2.5 pt-1 border-t border-white/[0.04]">
-                  {/* Style Switcher */}
-                  <div className="flex items-center gap-1 p-0.5 rounded-xl bg-black/30 border border-white/[0.08] overflow-x-auto thin-scroll">
-                    {AVATAR_STYLES.map((st) => (
-                      <button
-                        key={st.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedStyle(st.id);
-                          const presets = PRESET_SEEDS[st.id] || PRESET_SEEDS.lorelei;
-                          setSeed(presets[0]);
-                          setCustomSeedInput("");
-                        }}
-                        className={`px-2 py-1 rounded-lg text-[10px] font-medium whitespace-nowrap transition cursor-pointer ${
-                          selectedStyle === st.id
-                            ? "bg-white/15 text-white shadow-sm border border-white/10"
-                            : "text-white/50 hover:text-white hover:bg-white/[0.04]"
-                        }`}
-                      >
-                        {st.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Preset Seed Chips */}
-                  <div className="space-y-1">
-                    <span className="text-[9px] uppercase tracking-wider text-white/40 font-mono">
-                      Presets
-                    </span>
-                    <div className="flex flex-wrap gap-1">
-                      {activePresets.map((preset) => (
-                        <button
-                          key={preset}
-                          type="button"
-                          onClick={() => {
-                            setSeed(preset);
-                            setCustomSeedInput("");
-                          }}
-                          className={`px-2 py-0.5 rounded-lg border text-[10px] transition cursor-pointer ${
-                            seed === preset && !customSeedInput
-                              ? "bg-white/15 border-white/30 text-white font-medium"
-                              : "bg-white/[0.02] border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.05]"
-                          }`}
-                        >
-                          {preset}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Custom Seed Input */}
-                  <div>
-                    <input
-                      type="text"
-                      maxLength={24}
-                      value={customSeedInput}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setCustomSeedInput(val);
-                        setSeed(val.trim() || activePresets[0]);
-                      }}
-                      placeholder="Or enter custom seed name..."
-                      className="w-full bg-black/25 border border-white/[0.08] rounded-xl px-2.5 py-1 text-[11px] text-white placeholder:text-white/30 outline-none focus:border-white/20 transition"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Custom Photo Mode Controls */}
-              {profileMode === "photo" && (
-                <div className="space-y-2 pt-1 border-t border-white/[0.04]">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    className="hidden"
-                  />
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-white text-[11px] font-medium transition cursor-pointer"
-                    >
-                      <GIconUpload size={12} />
-                      <span>Upload Local Photo</span>
-                    </button>
-
-                    {photoUrl && (
-                      <button
-                        type="button"
-                        onClick={() => setCustomPhoto(photoUrl)}
-                        className="px-2.5 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.08] text-white/70 hover:text-white text-[11px] transition cursor-pointer"
-                        title="Use desktop profile photo"
-                      >
-                        Use OS Photo
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Or paste photo URL */}
-                  <div>
-                    <input
-                      type="url"
-                      value={customPhoto.startsWith("data:") ? "" : customPhoto}
-                      onChange={(e) => setCustomPhoto(e.target.value)}
-                      placeholder="Or paste direct image URL (e.g. GitHub/LinkedIn avatar)..."
-                      className="w-full bg-black/25 border border-white/[0.08] rounded-xl px-2.5 py-1 text-[11px] text-white placeholder:text-white/30 outline-none focus:border-white/20 transition"
-                    />
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Profile Identity Details */}
-            <div className="space-y-3 p-3 rounded-2xl border border-white/[0.08] bg-white/[0.015]">
-              <div className="text-[11px] font-medium text-white/90">Identity & Links</div>
+            {/* 2. Identity Details */}
+            <div className="p-3.5 rounded-2xl border border-white/[0.08] bg-white/[0.02] space-y-3">
+              <span className="text-[11px] font-semibold text-white/90 block">2. Identity & Background</span>
 
               {/* Name */}
               <div className="space-y-1">
-                <label className="text-[10px] text-white/50 uppercase tracking-wide block font-mono">
-                  Your Name *
+                <label className="text-[10px] text-white/50 block font-medium">
+                  Your Full Name <span className="text-rose-400">*</span>
                 </label>
                 <input
                   ref={nameInputRef}
@@ -780,17 +729,17 @@ export default function Guestbook() {
                   maxLength={36}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Alex River"
-                  className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-1.5 text-xs text-white placeholder:text-white/30 outline-none focus:border-white/25 focus:bg-white/[0.05] transition"
+                  placeholder="e.g. Alex Rivera"
+                  className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-1.5 text-xs text-white placeholder:text-white/30 outline-none focus:border-accent/40 focus:bg-white/[0.05] transition"
                 />
               </div>
 
-              {/* Role Selection */}
+              {/* Role Selection Chips */}
               <div className="space-y-1">
-                <label className="text-[10px] text-white/50 uppercase tracking-wide block font-mono">
-                  Role or Background
+                <label className="text-[10px] text-white/50 block font-medium">
+                  Role
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   {ROLE_OPTIONS.map((opt) => {
                     const Icon = opt.Icon;
                     const isSelected = role === opt.id;
@@ -799,24 +748,24 @@ export default function Guestbook() {
                         key={opt.id}
                         type="button"
                         onClick={() => setRole(opt.id)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[11px] transition cursor-pointer ${
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl border text-[11px] transition cursor-pointer ${
                           isSelected
-                            ? "bg-white/12 border-white/25 text-white font-medium shadow-sm"
-                            : "bg-white/[0.02] border-white/[0.08] text-white/60 hover:text-white hover:bg-white/[0.05]"
+                            ? "bg-white/15 border-white/30 text-white font-medium shadow-sm"
+                            : "bg-white/[0.02] border-white/[0.07] text-white/50 hover:text-white hover:bg-white/[0.04]"
                         }`}
                       >
-                        <Icon size={12} className={isSelected ? "text-white" : "text-white/50"} />
-                        <span className="truncate">{opt.label}</span>
+                        <Icon size={11} className={isSelected ? "text-accent" : "text-white/40"} />
+                        <span>{opt.label}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Optional Profile Website / Link & Location */}
+              {/* Website & Location (Clean 2-Column Row) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
                 <div className="space-y-1">
-                  <label className="text-[10px] text-white/50 uppercase tracking-wide font-mono flex items-center gap-1">
+                  <label className="text-[10px] text-white/50 flex items-center gap-1 font-medium">
                     <GIconLink size={10} />
                     <span>Website or GitHub</span>
                   </label>
@@ -825,13 +774,13 @@ export default function Guestbook() {
                     maxLength={100}
                     value={link}
                     onChange={(e) => setLink(e.target.value)}
-                    placeholder="e.g. github.com/username"
-                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1 text-[11px] text-white placeholder:text-white/30 outline-none focus:border-white/20 transition"
+                    placeholder="github.com/username"
+                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-[11px] text-white placeholder:text-white/30 outline-none focus:border-accent/40 transition"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] text-white/50 uppercase tracking-wide block font-mono items-center gap-1">
+                  <label className="text-[10px] text-white/50 flex items-center gap-1 font-medium">
                     <GIconMapPin size={10} />
                     <span>Location / Company</span>
                   </label>
@@ -840,18 +789,18 @@ export default function Guestbook() {
                     maxLength={60}
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    placeholder="e.g. San Francisco or Vercel"
-                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1 text-[11px] text-white placeholder:text-white/30 outline-none focus:border-white/20 transition"
+                    placeholder="e.g. San Francisco or Meta"
+                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-[11px] text-white placeholder:text-white/30 outline-none focus:border-accent/40 transition"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Message Body */}
-            <div className="space-y-1">
+            {/* 3. Message Body */}
+            <div className="p-3.5 rounded-2xl border border-white/[0.08] bg-white/[0.02] space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-[11px] text-white/60 font-medium block">
-                  Guestbook Message *
+                <label className="text-[11px] text-white/90 font-semibold block">
+                  3. Your Note <span className="text-rose-400">*</span>
                 </label>
                 <span className="text-[10px] text-white/40 font-mono">
                   {message.length} / 400
@@ -863,8 +812,8 @@ export default function Guestbook() {
                 maxLength={400}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Leave an encouraging message, feedback, inquiry, or note..."
-                className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl p-2.5 text-xs text-white placeholder:text-white/30 outline-none focus:border-white/25 focus:bg-white/[0.05] resize-none thin-scroll transition leading-relaxed"
+                placeholder="Share thoughts, project feedback, or a friendly hello for Emman..."
+                className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-xs text-white placeholder:text-white/30 outline-none focus:border-accent/40 focus:bg-white/[0.05] resize-none thin-scroll transition leading-relaxed"
               />
             </div>
 

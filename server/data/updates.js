@@ -1,42 +1,57 @@
 export const updates = [
   {
-    id: "u5",
-    date: "2026-07-01",
-    tag: "fix",
-    title: "Fixed Deployed Devices CRUD routing in Straive IMS",
-    body:
-      "The custom router only handled two-segment controller/method paths, but the Deployed Devices forms posted to nested three-segment routes. Added flat-named controller methods and updated form action URLs to resolve it."
-  },
-  {
-    id: "u4",
-    date: "2026-06-20",
+    id: "gh-58d153b",
+    date: "2026-11-10",
     tag: "feature",
-    title: "Leaderboard gamification for staff",
-    body:
-      "Points for quiz completions, bookings, and attendance now feed a live leaderboard on the staff app home screen."
+    title: "Portfolio OS — Real-time Desktop Web Operating System",
+    body: "Built full desktop environment with multi-window compositor, active docks, real-time live chat with Socket.IO, audio engine, interactive retro games suite, and GitHub integration.",
+    pinned: true,
+    repo: "Ememman/OS",
+    url: "https://github.com/Ememman/OS"
   },
   {
-    id: "u3",
-    date: "2026-06-08",
+    id: "gh-8d1542f",
+    date: "2026-11-10",
     tag: "fix",
-    title: "Rating system overhaul",
-    body:
-      "Fixed route ordering and aggregation queries that referenced the wrong fields, corrected an entity-type mismatch (ratings belong to bookings, not services), and fixed a logout-on-submit bug."
+    title: "Fixes & Enhancements: Interactive Curriculum Vitae & Resume",
+    body: "Updated experience, tech stacks, responsive mobile views, Dowinn Group frontend role badge, and streamlined section navigation.",
+    repo: "Ememman/OS",
+    url: "https://github.com/Ememman/OS/commit/8d1542f"
   },
   {
-    id: "u2",
-    date: "2026-05-22",
+    id: "gh-b5c1455",
+    date: "2026-11-10",
     tag: "feature",
-    title: "Admin dashboard: real-time updates",
-    body:
-      "Wired Socket.IO into the admin dashboard so appointment and payment changes reflect instantly without a refresh."
+    title: "Chats & Real-Time Presence Upgrades",
+    body: "Added active participant tracking, responsive username formatting, reaction tray positioning, and interactive emoji animations.",
+    repo: "Ememman/OS",
+    url: "https://github.com/Ememman/OS/commit/b5c1455"
   },
   {
-    id: "u1",
-    date: "2026-05-02",
+    id: "gh-flash-cards",
+    date: "2026-11-07",
     tag: "launch",
-    title: "Portfolio OS — this site",
-    body:
-      "Rebuilt the portfolio as a desktop-style experience: windows, a dock, widgets, and a live guest chat."
+    title: "Launched Flash-Cards Study Platform",
+    body: "Created a responsive flashcard application built with React.js, Vite, and Tailwind CSS. Create, organize, and review flashcards interactively.",
+    repo: "Ememman/Flash-Cards",
+    url: "https://github.com/Ememman/Flash-Cards"
+  },
+  {
+    id: "gh-quiz-app",
+    date: "2026-11-07",
+    tag: "launch",
+    title: "Launched Quiz-App Timed Challenge",
+    body: "Sleek browser-based quiz application with custom Letter 'Q' ribbon logo, instant answer validation, 60-second timed challenges, and live scoring.",
+    repo: "Ememman/Quiz-App",
+    url: "https://github.com/Ememman/Quiz-App"
+  },
+  {
+    id: "gh-terminal-assessment",
+    date: "2025-09-23",
+    tag: "feature",
+    title: "Terminal Assessment CLI Suite",
+    body: "Built structured CLI assessment application in PHP with automated testing, input parsing, and modular architecture.",
+    repo: "Ememman/TerminalAssesment2",
+    url: "https://github.com/Ememman/TerminalAssesment2"
   }
 ];

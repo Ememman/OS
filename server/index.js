@@ -166,10 +166,10 @@ const updateReactions = {};
 
 // Initialize default reactions for updates
 liveUpdates.forEach((u, idx) => {
-  const baseHeart = 3 + (idx % 4) * 2;
-  const baseFire = 1 + (idx % 3);
-  const baseRocket = 1 + (idx % 2);
-  const baseParty = idx % 2;
+  const baseHeart = 1 + (idx % 3);
+  const baseFire = idx % 2;
+  const baseRocket = idx % 2;
+  const baseParty = 0;
   updateReactions[u.id] = {
     heart: baseHeart,
     fire: baseFire,
@@ -179,7 +179,60 @@ liveUpdates.forEach((u, idx) => {
   };
 });
 
-app.get("/api/updates", (req, res) => {
+// Real-time GitHub synchronizer for Ememman repositories and commits
+let lastGithubSync = 0;
+async function syncGithubUpdates() {
+  if (Date.now() - lastGithubSync < 60000) return; // 1-minute rate-limit guard
+  lastGithubSync = Date.now();
+  try {
+    const res = await fetch("https://api.github.com/repos/Ememman/OS/commits?per_page=15", {
+      headers: { "User-Agent": "PortfolioOS-Server", Accept: "application/vnd.github.v3+json" }
+    });
+    if (!res.ok) return;
+    const commits = await res.json();
+    if (!Array.isArray(commits)) return;
+
+    for (const c of commits) {
+      const shaShort = c.sha?.slice(0, 7) || "commit";
+      const id = `gh-${shaShort}`;
+      if (liveUpdates.some((u) => u.id === id)) continue;
+
+      const fullMsg = c.commit?.message || "Repository update";
+      const lines = fullMsg.split("\n").filter((l) => l.trim().length > 0);
+      const title = lines[0]?.slice(0, 120) || "Codebase commit";
+      const body = lines.slice(1).join(" ").trim() || `Commit ${shaShort} on Ememman/OS by ${c.commit?.author?.name || "Emman"}.`;
+
+      let tag = "feature";
+      const lower = title.toLowerCase();
+      if (/fix|bug|patch|resolve|correct|clean/.test(lower)) tag = "fix";
+      else if (/launch|initial|release|v\d/.test(lower)) tag = "launch";
+      else if (/perf|speed|optimiz|fast/.test(lower)) tag = "performance";
+      else if (/modifi|update|enhance|improve|merge/.test(lower)) tag = "feature";
+
+      const commitItem = {
+        id,
+        date: c.commit?.author?.date ? c.commit.author.date.slice(0, 10) : new Date().toISOString().slice(0, 10),
+        tag,
+        title,
+        body,
+        pinned: false,
+        repo: "Ememman/OS",
+        url: c.html_url
+      };
+
+      liveUpdates.push(commitItem);
+      if (!updateReactions[id]) {
+        updateReactions[id] = { heart: 1, fire: 0, rocket: 0, party: 0, total: 1 };
+      }
+    }
+  } catch {
+    // network or offline fallback
+  }
+}
+syncGithubUpdates().catch(() => {});
+
+app.get("/api/updates", async (req, res) => {
+  await syncGithubUpdates().catch(() => {});
   const { tag, q, sort } = req.query;
   let list = [...liveUpdates];
   if (tag && tag !== "all") {
@@ -204,6 +257,12 @@ app.get("/api/updates", (req, res) => {
     });
   }
   res.json(list);
+});
+
+app.post("/api/updates/sync", async (req, res) => {
+  lastGithubSync = 0; // force fresh sync
+  await syncGithubUpdates().catch(() => {});
+  res.json({ ok: true, count: liveUpdates.length, updates: liveUpdates });
 });
 
 // Create new update with validation
@@ -302,22 +361,24 @@ app.delete("/api/updates/:id", (req, res) => {
   res.status(404).json({ error: "Update not found" });
 });
 
-// In-memory project star/like reactions
-const projectLikes = {
-  "sandrealee-customer": 29,
-  "sandrealee-staff": 21,
-  "sandrealee-admin": 36,
-  "straive-ims": 18
-};
+// In-memory project star/like reactions (starts empty, zero hardcoding)
+const projectLikes = {};
 
 app.get("/api/projects/likes", (req, res) => res.json(projectLikes));
 
 app.post("/api/projects/:id/like", (req, res) => {
   const { id } = req.params;
-  projectLikes[id] = (projectLikes[id] || 0) + 1;
+  const { action } = req.body || {};
+  if (action === "unlike") {
+    projectLikes[id] = Math.max(0, (projectLikes[id] || 1) - 1);
+  } else {
+    projectLikes[id] = (projectLikes[id] || 0) + 1;
+  }
   io.emit("project:liked", { id, count: projectLikes[id] });
   const p = projects.find((item) => item.id === id);
-  addActivity("project", `Project "${p ? p.title : id}" received a star!`);
+  if (action !== "unlike") {
+    addActivity("project", `Project "${p ? p.title : id}" received a star!`);
+  }
   res.json({ id, count: projectLikes[id] });
 });
 
@@ -2223,7 +2284,7 @@ io.on("connection", (socket) => {
     if (typeof ack === "function") ack({ ok: true, message: msg });
   });
 
-  // Chat message emoji reaction
+  // Chat message emoji reaction & removal
   socket.on("chat:react", (data) => {
     if (!data || !data.id) return;
     const rawEmoji = String(data.emoji || data.key || "").trim();
@@ -2236,8 +2297,28 @@ io.on("connection", (socket) => {
       if (!msg.reactions) msg.reactions = {};
       if (!msg.userReactions) msg.userReactions = {};
 
-      // If user has already reacted to this message, they can no longer react using any other emoji
-      if (msg.userReactions[senderId]) {
+      const current = msg.userReactions[senderId];
+      const isRemove = data.action === "remove" || (current === canonicalKey && data.action !== "add");
+
+      if (isRemove) {
+        delete msg.userReactions[senderId];
+        if (msg.reactions[canonicalKey]) {
+          msg.reactions[canonicalKey] = Math.max(0, msg.reactions[canonicalKey] - 1);
+          if (msg.reactions[canonicalKey] === 0) delete msg.reactions[canonicalKey];
+        }
+        io.emit("chat:reacted", {
+          id: data.id,
+          emoji: canonicalKey,
+          reactions: msg.reactions,
+          senderId,
+          userReactions: msg.userReactions,
+          removed: true
+        });
+        return;
+      }
+
+      // If user has already reacted to this message with another emoji, don't allow changing
+      if (current && current !== canonicalKey) {
         return;
       }
 
@@ -2248,7 +2329,8 @@ io.on("connection", (socket) => {
         emoji: canonicalKey,
         reactions: msg.reactions,
         senderId,
-        userReactions: msg.userReactions
+        userReactions: msg.userReactions,
+        removed: false
       });
     }
   });
