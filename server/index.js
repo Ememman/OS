@@ -1981,7 +1981,7 @@ function getUserList() {
     const key = u.clientId || u.name;
     if (!seen.has(key)) {
       seen.add(key);
-      list.push({ name: u.name, clientId: u.clientId });
+      list.push({ name: u.name, clientId: u.clientId, lastActive: u.lastActive || Date.now() });
     }
   }
   return list;
@@ -2234,12 +2234,21 @@ io.on("connection", (socket) => {
     const msg = chatHistory.find((m) => m.id === data.id);
     if (msg) {
       if (!msg.reactions) msg.reactions = {};
+      if (!msg.userReactions) msg.userReactions = {};
+
+      // If user has already reacted to this message, they can no longer react using any other emoji
+      if (msg.userReactions[senderId]) {
+        return;
+      }
+
+      msg.userReactions[senderId] = canonicalKey;
       msg.reactions[canonicalKey] = (msg.reactions[canonicalKey] || 0) + 1;
       io.emit("chat:reacted", {
         id: data.id,
         emoji: canonicalKey,
         reactions: msg.reactions,
-        senderId
+        senderId,
+        userReactions: msg.userReactions
       });
     }
   });
