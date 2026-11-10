@@ -4,12 +4,12 @@
 export const initialCloudFiles = [
   {
     id: "file-about",
-    name: "About_Bron.txt",
+    name: "About_Emman.txt",
     path: "/",
     type: "text",
     size: 264,
     mimeType: "text/plain",
-    content: "Bron Mendoza\nFull-stack developer based in Manila, Philippines.\n\nWorks across the MERN stack, React Native/Expo, and PHP MVC — mobile apps, admin dashboards, and backend systems. Currently building out the SandreaLee Salon ecosystem and maintaining Straive IMS.",
+    content: "Emman Mendoza\nFull-stack developer based in Manila, Philippines.\n\nWorks across the MERN stack, React Native/Expo, and PHP MVC — mobile apps, admin dashboards, and backend systems. Currently building out the SandreaLee Salon ecosystem and maintaining Straive IMS.",
     updatedAt: Date.now() - 86400000 * 3,
     readOnly: true
   },

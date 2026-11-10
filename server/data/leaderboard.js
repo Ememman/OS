@@ -16,7 +16,7 @@ export const initialLeaderboard = [
     id: "lb-2",
     game: "blockblast",
     gameName: "Block Blast",
-    player: "DevBron",
+    player: "DevEmman",
     score: 3950,
     details: "14 Combo Clears",
     ts: Date.now() - 86400000 * 4,
