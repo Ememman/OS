@@ -225,7 +225,20 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
       setFaceState("won");
       setFlagsLeft(0);
       setShowSubmitModal(true);
-      notify("Clear Victory!", `All mines defused in ${elapsed}s! Submit your score!`, "success");
+      notify("Clear Victory!", `All mines defused in ${elapsed}s! Score synced to leaderboard!`, "success");
+
+      // Auto-submit victory clear time in real-time
+      const cleanName = getEffectiveChatName();
+      fetch(`${API_URL}/api/games/leaderboard`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          game: "minesweeper",
+          player: cleanName,
+          score: elapsed,
+          details: `${config.label.split(" ")[0]} Clear (${elapsed}s)`
+        })
+      }).then((r) => r.ok && setSubmitted(true)).catch(() => {});
     }
   };
 

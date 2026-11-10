@@ -95,6 +95,7 @@ setInterval(() => {
 
 const generalLimiter = createRateLimiter({ windowMs: 60000, max: 200, message: "General API rate limit reached. Please wait a minute." });
 const strictSubmissionLimiter = createRateLimiter({ windowMs: 60000, max: 25, message: "Submission frequency limit reached. Please wait a minute before trying again." });
+const leaderboardLimiter = createRateLimiter({ windowMs: 60000, max: 240, message: "Leaderboard update rate limit reached." });
 
 app.use("/api", generalLimiter);
 
@@ -1040,7 +1041,7 @@ app.get("/api/games/leaderboard", (req, res) => {
   });
 });
 
-app.post("/api/games/leaderboard", strictSubmissionLimiter, (req, res) => {
+app.post("/api/games/leaderboard", leaderboardLimiter, (req, res) => {
   const { game, player, score, details } = req.body || {};
   const cleanPlayer = sanitizePlain(player, 25) || "Anonymous Pilot";
   const cleanGame = String(game || "").trim().toLowerCase();
@@ -1079,6 +1080,28 @@ app.post("/api/games/leaderboard", strictSubmissionLimiter, (req, res) => {
     if (numScore >= 300) badge = "🏆 Anaconda";
     else if (numScore >= 150) badge = "🥈 Viper";
     else badge = "🥉 Cobra";
+  }
+
+  // Check if player already has a record for this game — update it if current score is better
+  const existingIdx = arcadeLeaderboard.findIndex(
+    (e) => e.game === cleanGame && e.player.toLowerCase() === cleanPlayer.toLowerCase()
+  );
+
+  if (existingIdx !== -1) {
+    const existing = arcadeLeaderboard[existingIdx];
+    const isMines = cleanGame === "minesweeper";
+    const isBetter = isMines ? numScore < existing.score : numScore >= existing.score;
+
+    if (isBetter) {
+      existing.score = numScore;
+      if (cleanDetails) existing.details = cleanDetails;
+      existing.ts = Date.now();
+      existing.badge = badge;
+      io.emit("game:score_submitted", existing);
+      return res.status(200).json({ ok: true, entry: existing, updated: true });
+    } else {
+      return res.status(200).json({ ok: true, entry: existing, updated: false });
+    }
   }
 
   const newEntry = {

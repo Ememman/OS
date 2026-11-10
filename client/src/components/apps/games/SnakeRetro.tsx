@@ -84,11 +84,10 @@ export default function SnakeRetro() {
     setScoreSubmitted(false);
   }, [systemSounds]);
 
-  const handleSubmitScore = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!playerName.trim() || submittingScore || scoreSubmitted || score <= 0) return;
+  const syncTimerRef = useRef<any>(null);
 
-    setSubmittingScore(true);
+  const syncScoreToBackend = useCallback(async (scoreToSync: number) => {
+    if (scoreToSync <= 0) return;
     const cleanName = playerName.trim() || getEffectiveChatName();
     saveChatName(cleanName);
     localStorage.setItem("os_player_name", cleanName);
@@ -100,20 +99,44 @@ export default function SnakeRetro() {
         body: JSON.stringify({
           game: "snake",
           player: cleanName,
-          score,
-          details: `${score / 10} Apples (${SPEEDS[speedIdx].label})`
+          score: scoreToSync,
+          details: `${scoreToSync / 10} Apples (${SPEEDS[speedIdx].label})`
         })
       });
+      if (res.ok) setScoreSubmitted(true);
+    } catch {}
+  }, [playerName, speedIdx]);
 
-      if (res.ok) {
-        setScoreSubmitted(true);
-        notify("Score Posted!", `Your Snake score of ${score} was added to the leaderboard!`, "success");
-      }
-    } catch {
-      notify("Network Error", "Could not reach leaderboard API.", "warning");
-    } finally {
-      setSubmittingScore(false);
+  useEffect(() => {
+    if (score > 0) {
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+      syncTimerRef.current = setTimeout(() => {
+        syncScoreToBackend(score);
+      }, 1200);
     }
+    return () => {
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+    };
+  }, [score, syncScoreToBackend]);
+
+  useEffect(() => {
+    if (isGameOver && score > 0) {
+      syncScoreToBackend(score);
+    }
+  }, [isGameOver, score, syncScoreToBackend]);
+
+  const handleSubmitScore = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!playerName.trim() || submittingScore || score <= 0) return;
+
+    setSubmittingScore(true);
+    const cleanName = playerName.trim() || getEffectiveChatName();
+    saveChatName(cleanName);
+    localStorage.setItem("os_player_name", cleanName);
+
+    await syncScoreToBackend(score);
+    setSubmittingScore(false);
+    notify("Score Posted!", `Your Snake score of ${score} is live on the leaderboard!`, "success");
   };
 
   const changeDirection = useCallback(
