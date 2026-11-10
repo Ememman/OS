@@ -83,7 +83,7 @@ console.log("✅ Total Pipeline Revenue: $" + completed.reduce((sum, o) => sum +
 console.log("🧠 Testing LRU Cache (Capacity = 3)...");
 const lru = new LRUCache(3);
 
-lru.put("auth:token_1", { user: "Bron", role: "admin" });
+lru.put("auth:token_1", { user: "Emman", role: "admin" });
 lru.put("auth:token_2", { user: "Sarah", role: "editor" });
 lru.put("auth:token_3", { user: "Alex", role: "viewer" });
 

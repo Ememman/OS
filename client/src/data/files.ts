@@ -67,10 +67,10 @@ export const fileTree: FolderNode = {
       children: [{ name: "Now Playing.link", type: "app-link", app: "music" }]
     },
     {
-      name: "About_Bron.txt",
+      name: "About_Emman.txt",
       type: "text",
       content:
-        "Bron Mendoza\nFull-stack developer based in Manila, Philippines.\n\nWorks across the MERN stack, React Native/Expo, and PHP MVC — mobile apps, admin dashboards, and backend systems. Currently building out the SandreaLee Salon ecosystem and maintaining Straive IMS."
+        "Emman Mendoza\nFull-stack developer based in Manila, Philippines.\n\nWorks across the MERN stack, React Native/Expo, and PHP MVC — mobile apps, admin dashboards, and backend systems. Currently building out the SandreaLee Salon ecosystem and maintaining Straive IMS."
     },
     {
       name: "Skills.txt",
