@@ -13,7 +13,7 @@ import {
   GIconBriefcase,
   GIconGraduationCap,
   GIconCopy,
-  GIconSparkles,
+  GIconLayoutCells,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
 import { useOS } from "../../store/useOS";
@@ -23,6 +23,20 @@ const GITHUB_URL = "https://github.com/Ememman";
 const CONTACT_EMAIL = "mendozajamesemmanuel@gmail.com";
 
 const EXPERIENCE = [
+  {
+    role: "Front-End Developer",
+    company: "Dowinn Group",
+    period: "2025 — Present",
+    tag: "Enterprise Web & Mobile",
+    location: "Manila, Philippines",
+    points: [
+      "Engineered high-performance web applications and responsive front-end architectures using React, TypeScript, and modern styling solutions.",
+      "Collaborated with product, design, and backend engineering teams to build scalable, secure user interfaces and operational platforms.",
+      "Optimized client-side rendering performance, state workflows, and accessibility across multi-device production deployments."
+    ],
+    highlights: ["Enterprise Front-End", "React & TypeScript", "High-Performance Systems"],
+    stack: ["React 19", "TypeScript", "Next.js", "Tailwind CSS", "REST APIs", "Git"]
+  },
   {
     role: "Full-Stack Developer",
     company: "SandreaLee Salon Digital Ecosystem",
@@ -400,9 +414,9 @@ export default function Resume() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0d14] text-white select-none">
+    <div className="h-full overflow-y-auto thin-scroll bg-[#0a0d14] text-white select-none flex flex-col">
       {/* Executive Header */}
-      <div className="p-4 sm:p-6 border-b border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent">
+      <div className="p-4 sm:p-6 border-b border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent shrink-0">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -414,7 +428,7 @@ export default function Resume() {
               </span>
               <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Available for Hire
+                FrontEnd Developer at Dowinn Group
               </span>
             </div>
 
@@ -492,7 +506,7 @@ export default function Resume() {
         {/* Highlight Stack Marquee Chips */}
         <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-white/5">
           <span className="text-[10px] uppercase tracking-wider font-semibold text-white/40 mr-1 shrink-0 flex items-center gap-1">
-            <GIconSparkles size={11} className="text-accent" />
+            <GIconLayoutCells size={11} className="text-accent" />
             Core Stack:
           </span>
           <div className="flex flex-wrap items-center gap-1.5">
@@ -511,7 +525,7 @@ export default function Resume() {
       </div>
 
       {/* Sticky Tab Navigation Bar */}
-      <div className="sticky top-0 z-10 shrink-0 px-3 sm:px-6 py-2 bg-[#090c12]/95 backdrop-blur-md border-b border-white/10 flex items-center gap-1 overflow-x-auto thin-scroll shadow-sm">
+      <div className="sticky top-0 z-20 shrink-0 px-3 sm:px-6 py-2.5 bg-[#090c12]/95 backdrop-blur-md border-b border-white/10 flex items-center gap-1 overflow-x-auto thin-scroll shadow-md">
         {[
           { id: "experience", label: "Work Experience", Icon: GIconBriefcase },
           { id: "skills", label: "Tech Stack & Skills", Icon: GIconCode },
@@ -546,7 +560,7 @@ export default function Resume() {
       </div>
 
       {/* Main Content Pane */}
-      <div className="flex-1 overflow-auto thin-scroll p-4 sm:p-6 space-y-6">
+      <div className="flex-1 p-4 sm:p-6 space-y-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={tab}
@@ -940,7 +954,7 @@ export default function Resume() {
       </div>
 
       {/* Footer bar */}
-      <div className="border-t border-white/10 px-4 py-2.5 bg-white/[0.02] flex items-center justify-between text-[11px] text-white/50">
+      <div className="border-t border-white/10 px-4 py-3 bg-white/[0.02] flex items-center justify-between text-[11px] text-white/50 shrink-0 mt-auto">
         <span>Emman Mendoza · Curriculum Vitae</span>
         <div className="flex items-center gap-3">
           <a

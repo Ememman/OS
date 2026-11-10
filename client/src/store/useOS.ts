@@ -113,7 +113,7 @@ export const APPS: Record<string, AppMetadata> = {
   games: { title: "Games", w: 560, h: 700 },
   files: { title: "Files", w: 780, h: 540 },
   settings: { title: "Settings", w: 640, h: 520 },
-  resume: { title: "Resume", w: 720, h: 640 },
+  resume: { title: "Resume", w: 820, h: 740 },
 };
 
 const DEFAULT_ACCENT = "59 130 246"; // System Electric Blue calibrated for active, click, and hover
