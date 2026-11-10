@@ -1950,13 +1950,70 @@ const randomName = () =>
 
 const MAX_HISTORY = 100;
 let chatHistory = [];
-let onlineCount = 0;
 let pinnedChatMessages = [];
 const connectedUsers = new Map();
 const socketFloodTracker = new Map();
+const knownSessions = new Map();
+const SESSION_TTL = 60 * 60 * 1000;
+
+function pruneExpiredSessions() {
+  const now = Date.now();
+  for (const [id, session] of knownSessions.entries()) {
+    if (now - session.lastActive > SESSION_TTL) {
+      knownSessions.delete(id);
+    }
+  }
+}
+
+function getRealOnlineCount() {
+  const uniqueClients = new Set();
+  for (const u of connectedUsers.values()) {
+    if (u.clientId) uniqueClients.add(u.clientId);
+  }
+  const socketCount = io?.engine?.clientsCount || io?.sockets?.sockets?.size || connectedUsers.size;
+  return Math.max(uniqueClients.size, socketCount, 1);
+}
+
+function getUserList() {
+  const seen = new Set();
+  const list = [];
+  for (const u of connectedUsers.values()) {
+    const key = u.clientId || u.name;
+    if (!seen.has(key)) {
+      seen.add(key);
+      list.push({ name: u.name, clientId: u.clientId });
+    }
+  }
+  return list;
+}
+
+function broadcastPresence() {
+  const online = getRealOnlineCount();
+  const users = getUserList();
+  io.emit("chat:presence", { online, users });
+  io.emit("chat:users_updated", users);
+}
+
+const EMOJI_MAP = {
+  heart: "heart",
+  "❤️": "heart",
+  thumbsup: "thumbsup",
+  "👍": "thumbsup",
+  smile: "smile",
+  "😂": "smile",
+  "😆": "smile",
+  flame: "flame",
+  "🔥": "flame",
+  rocket: "rocket",
+  "🚀": "rocket",
+  zap: "zap",
+  "⚡": "zap",
+  party: "zap",
+  "🎉": "zap"
+};
 
 app.get("/api/chat/users", (req, res) => {
-  res.json(Array.from(connectedUsers.values()));
+  res.json(getUserList());
 });
 
 app.get("/api/chat/pinned", (req, res) => {
@@ -2002,40 +2059,100 @@ app.get("/api/chat/export", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-  const guestName = randomName();
+  pruneExpiredSessions();
+
+  const auth = socket.handshake?.auth || {};
+  const query = socket.handshake?.query || {};
+  const incomingClientId = String(auth.clientId || query.clientId || socket.id);
+  const incomingName = sanitizePlain(auth.name || query.name || "", 20);
+
+  let guestName = incomingName;
+  if (!guestName && knownSessions.has(incomingClientId)) {
+    guestName = knownSessions.get(incomingClientId).name;
+  }
+  if (!guestName) {
+    guestName = randomName();
+  }
+
   socket.data.name = guestName;
   socket.data.id = socket.id;
+  socket.data.clientId = incomingClientId;
   socket.data.joinedAt = Date.now();
 
+  knownSessions.set(incomingClientId, { name: guestName, lastActive: Date.now() });
   connectedUsers.set(socket.id, {
     id: socket.id,
+    clientId: incomingClientId,
     name: guestName,
-    joinedAt: socket.data.joinedAt
+    joinedAt: socket.data.joinedAt,
+    lastActive: Date.now()
   });
 
-  onlineCount++;
   totalVisitorSessions++;
 
   socket.emit("chat:init", {
     name: guestName,
     history: chatHistory,
     pinned: pinnedChatMessages,
-    users: Array.from(connectedUsers.values())
+    online: getRealOnlineCount(),
+    users: getUserList()
   });
 
-  io.emit("chat:presence", { online: onlineCount });
-  io.emit("chat:users_updated", Array.from(connectedUsers.values()));
+  broadcastPresence();
   addActivity("visitor", `Visitor ${guestName} joined the desktop session`);
+
+  socket.on("chat:join", (payload) => {
+    pruneExpiredSessions();
+
+    const cId = (typeof payload === "object" && payload?.clientId)
+      ? String(payload.clientId)
+      : socket.data.clientId || socket.id;
+    const cName = (typeof payload === "object" && payload?.name)
+      ? sanitizePlain(payload.name, 20)
+      : "";
+
+    let resolvedName = cName || socket.data.name;
+    if (!resolvedName && knownSessions.has(cId)) {
+      resolvedName = knownSessions.get(cId).name;
+    }
+    if (!resolvedName) resolvedName = randomName();
+
+    socket.data.name = resolvedName;
+    socket.data.clientId = cId;
+
+    knownSessions.set(cId, { name: resolvedName, lastActive: Date.now() });
+    connectedUsers.set(socket.id, {
+      id: socket.id,
+      clientId: cId,
+      name: resolvedName,
+      joinedAt: socket.data.joinedAt || Date.now(),
+      lastActive: Date.now()
+    });
+
+    socket.emit("chat:init", {
+      name: resolvedName,
+      history: chatHistory,
+      pinned: pinnedChatMessages,
+      online: getRealOnlineCount(),
+      users: getUserList()
+    });
+
+    broadcastPresence();
+  });
 
   socket.on("chat:rename", (newName) => {
     const clean = sanitizePlain(newName, 20);
     if (clean) {
       socket.data.name = clean;
+      const cId = socket.data.clientId || socket.id;
+      knownSessions.set(cId, { name: clean, lastActive: Date.now() });
+
       const user = connectedUsers.get(socket.id);
       if (user) {
         user.name = clean;
-        io.emit("chat:users_updated", Array.from(connectedUsers.values()));
+        user.lastActive = Date.now();
       }
+      broadcastPresence();
     }
   });
 
@@ -2064,9 +2181,27 @@ io.on("connection", (socket) => {
       return;
     }
 
+    const senderId = (isObj && data.senderId) ? String(data.senderId) : socket.data.clientId || socket.id;
+    const tempId = (isObj && data.tempId) ? String(data.tempId) : undefined;
+    const customName = (isObj && data.senderName) ? sanitizePlain(data.senderName, 20) : "";
+    const authorName = customName || socket.data.name || "Anonymous";
+    if (customName) socket.data.name = customName;
+
+    if (knownSessions.has(senderId)) {
+      knownSessions.get(senderId).lastActive = Date.now();
+      if (customName) knownSessions.get(senderId).name = customName;
+    }
+    const user = connectedUsers.get(socket.id);
+    if (user) {
+      user.lastActive = Date.now();
+      if (customName) user.name = customName;
+    }
+
     const msg = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      name: socket.data.name,
+      tempId,
+      senderId,
+      name: authorName,
       text: clean,
       ts: Date.now(),
       reactions: {},
@@ -2084,19 +2219,28 @@ io.on("connection", (socket) => {
     if (chatHistory.length > MAX_HISTORY) chatHistory = chatHistory.slice(-MAX_HISTORY);
 
     io.emit("chat:message", msg);
-    addActivity("chat", `${socket.data.name} sent a message in Chat`);
+    addActivity("chat", `${authorName} sent a message in Chat`);
     if (typeof ack === "function") ack({ ok: true, message: msg });
   });
 
   // Chat message emoji reaction
-  socket.on("chat:react", ({ id, emoji }) => {
-    const validEmojis = ["❤️", "👍", "🔥", "🚀", "😂", "🎉"];
-    if (!id || !validEmojis.includes(emoji)) return;
-    const msg = chatHistory.find((m) => m.id === id);
+  socket.on("chat:react", (data) => {
+    if (!data || !data.id) return;
+    const rawEmoji = String(data.emoji || data.key || "").trim();
+    const canonicalKey = EMOJI_MAP[rawEmoji] || rawEmoji;
+    if (!canonicalKey) return;
+
+    const senderId = data.senderId || socket.data.clientId || socket.id;
+    const msg = chatHistory.find((m) => m.id === data.id);
     if (msg) {
       if (!msg.reactions) msg.reactions = {};
-      msg.reactions[emoji] = (msg.reactions[emoji] || 0) + 1;
-      io.emit("chat:reacted", { id, emoji, reactions: msg.reactions });
+      msg.reactions[canonicalKey] = (msg.reactions[canonicalKey] || 0) + 1;
+      io.emit("chat:reacted", {
+        id: data.id,
+        emoji: canonicalKey,
+        reactions: msg.reactions,
+        senderId
+      });
     }
   });
 
@@ -2117,9 +2261,7 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     connectedUsers.delete(socket.id);
     socketFloodTracker.delete(socket.id);
-    onlineCount = Math.max(0, onlineCount - 1);
-    io.emit("chat:presence", { online: onlineCount });
-    io.emit("chat:users_updated", Array.from(connectedUsers.values()));
+    broadcastPresence();
   });
 });
 

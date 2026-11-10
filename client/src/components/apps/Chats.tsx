@@ -84,6 +84,45 @@ const QUICK_RESPONSES = [
   "Nice project!",
 ];
 
+const KEY_TO_UNICODE: Record<string, string> = {
+  heart: "❤️",
+  thumbsup: "👍",
+  smile: "😂",
+  flame: "🔥",
+  rocket: "🚀",
+  zap: "🎉",
+};
+
+const UNICODE_TO_KEY: Record<string, string> = {
+  "❤️": "heart",
+  "👍": "thumbsup",
+  "😂": "smile",
+  "😆": "smile",
+  "🔥": "flame",
+  "🚀": "rocket",
+  "🎉": "zap",
+  "⚡": "zap",
+  heart: "heart",
+  thumbsup: "thumbsup",
+  smile: "smile",
+  flame: "flame",
+  rocket: "rocket",
+  zap: "zap",
+};
+
+function normalizeReactions(raw: Record<string, number> | undefined): Record<string, number> {
+  if (!raw || typeof raw !== "object") return {};
+  const normalized: Record<string, number> = {};
+  for (const [k, count] of Object.entries(raw)) {
+    const key = UNICODE_TO_KEY[k] || k;
+    const num = Number(count || 0);
+    if (num > 0) {
+      normalized[key] = (normalized[key] || 0) + num;
+    }
+  }
+  return normalized;
+}
+
 function ReactionIcon({ emo, size = 12 }: { emo: string; size?: number }) {
   if (emo === "❤️" || emo === "heart") return <GIconHeart size={size} className="text-rose-500" />;
   if (emo === "👍" || emo === "thumbsup") return <GIconThumbsUp size={size} className="text-sky-400" />;
@@ -253,6 +292,8 @@ export default function Chats() {
   nameRef.current = name;
   const clientIdRef = useRef(clientId);
   clientIdRef.current = clientId;
+  const mySentIds = useRef<Set<string>>(new Set());
+  const pendingTexts = useRef<Array<{ tempId: string; text: string; ts: number }>>([]);
 
   useOutsideClick(usersModalRef, () => setShowUsersModal(false));
 
@@ -267,7 +308,10 @@ export default function Chats() {
       socket.emit("chat:join", { clientId: cur.clientId, name: cur.name });
       if (cur.name) socket.emit("chat:rename", cur.name);
     };
-    const onDisconnect = () => setConnected(false);
+    const onDisconnect = () => {
+      setConnected(false);
+      setConnecting(false);
+    };
     const onConnecting = () => setConnecting(true);
     const onInit = ({ name: serverName, history, pinned, users, online: onlineCount }: any) => {
       touchChatActivity();
@@ -278,63 +322,115 @@ export default function Chats() {
       setName(chosenName);
       saveChatName(chosenName);
 
-      if (history) setMessages(history);
+      if (history) {
+        setMessages(
+          history.map((h: any) => ({
+            ...h,
+            reactions: normalizeReactions(h.reactions),
+          }))
+        );
+      }
       if (pinned) setPinnedList(pinned);
       if (users && Array.isArray(users)) setActiveUsers(users);
-      if (typeof onlineCount === "number") setOnline(Math.max(1, onlineCount));
+
+      const realOnline =
+        typeof onlineCount === "number"
+          ? Math.max(1, onlineCount)
+          : Array.isArray(users) && users.length > 0
+          ? Math.max(1, users.length)
+          : 1;
+      setOnline(realOnline);
     };
     const onMessage = (msg: any) => {
+      touchChatActivity();
       setMessages((m) => {
         // If we already have this exact server message id, don't duplicate
         if (m.some((x) => x.id === msg.id)) return m;
-        // If we have an optimistic pending message from this client, replace it with server record
+
+        // Check if this incoming message corresponds to one sent by this client
+        const isFromThisClient = Boolean(
+          (msg.tempId && mySentIds.current.has(msg.tempId)) ||
+          (msg.senderId && msg.senderId === clientIdRef.current) ||
+          pendingTexts.current.some(
+            (p) => p.text === msg.text && Math.abs(msg.ts - p.ts) < 30000
+          )
+        );
+
+        if (isFromThisClient) {
+          mySentIds.current.add(msg.id);
+          pendingTexts.current = pendingTexts.current.filter(
+            (p) => !(p.text === msg.text && Math.abs(msg.ts - p.ts) < 30000)
+          );
+        }
+
+        const normalizedMsg = {
+          ...msg,
+          senderId: msg.senderId || (isFromThisClient ? clientIdRef.current : undefined),
+          reactions: normalizeReactions(msg.reactions),
+        };
+
+        // Find pending optimistic message placeholder to replace
         const pendingIdx = m.findIndex(
           (x) =>
             x.pending &&
             ((msg.tempId && (x.id === msg.tempId || x.tempId === msg.tempId)) ||
-              (x.text === msg.text &&
-                (x.senderId === msg.senderId ||
-                  msg.senderId === clientIdRef.current ||
-                  x.name === msg.name ||
-                  Date.now() - x.ts < 12000)))
+              (isFromThisClient && x.text === msg.text))
         );
+
         if (pendingIdx !== -1) {
           const copy = [...m];
-          copy[pendingIdx] = msg;
+          copy[pendingIdx] = normalizedMsg;
           return copy;
         }
-        return [...m, msg];
+
+        return [...m, normalizedMsg];
       });
-      if (chatSound && msg.senderId !== clientIdRef.current && msg.name !== nameRef.current) {
+
+      if (chatSound && msg.senderId !== clientIdRef.current && !mySentIds.current.has(msg.id)) {
         playPing();
       }
     };
-    const onReacted = ({ id, emoji, reactions }: any) => {
-      // Trigger burst on incoming reaction from other users too
-      const burstId = `burst-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      setBursts((prev) => [
-        ...prev,
-        { id: burstId, messageId: id, emoji: emoji || "heart", xOffset: (Math.random() - 0.5) * 24 },
-      ]);
-      setTimeout(() => {
-        setBursts((prev) => prev.filter((b) => b.id !== burstId));
-      }, 900);
+    const onReacted = ({ id, emoji, reactions, senderId }: any) => {
+      touchChatActivity();
+      const canonicalKey = UNICODE_TO_KEY[emoji] || emoji || "heart";
 
-      if (chatSound) soundFx.playPop();
+      // If sent by this client, we already triggered local burst and sound in reactToMessage
+      const isFromMe = Boolean(senderId && senderId === clientIdRef.current);
+      if (!isFromMe) {
+        const burstId = `burst-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        setBursts((prev) => [
+          ...prev,
+          { id: burstId, messageId: id, emoji: canonicalKey, xOffset: (Math.random() - 0.5) * 24 },
+        ]);
+        setTimeout(() => {
+          setBursts((prev) => prev.filter((b) => b.id !== burstId));
+        }, 900);
+
+        if (chatSound) soundFx.playPop();
+      }
 
       setMessages((m) =>
         m.map((x) => {
           if (x.id !== id) return x;
-          const nextReactions = reactions || { ...(x.reactions || {}) };
-          if (emoji && !reactions) {
-            nextReactions[emoji] = (nextReactions[emoji] || 0) + 1;
+          let nextReactions: Record<string, number>;
+          if (reactions) {
+            nextReactions = normalizeReactions(reactions);
+          } else {
+            nextReactions = normalizeReactions(x.reactions);
+            nextReactions[canonicalKey] = (nextReactions[canonicalKey] || 0) + 1;
           }
           return { ...x, reactions: nextReactions };
         })
       );
     };
     const onPresence = ({ online: count, users }: any) => {
-      if (typeof count === "number") setOnline(Math.max(1, count));
+      const realOnline =
+        typeof count === "number"
+          ? Math.max(1, count)
+          : Array.isArray(users) && users.length > 0
+          ? Math.max(1, users.length)
+          : 1;
+      setOnline(realOnline);
       if (users && Array.isArray(users)) setActiveUsers(users);
     };
     const onUsersUpdated = (userList: any[]) => setActiveUsers(userList || []);
@@ -429,15 +525,24 @@ export default function Chats() {
     }
   };
 
-  const reactToMessage = (id: string, emoji: string) => {
+  const reactToMessage = (id: string, rawKey: string) => {
     touchChatActivity();
-    getSocket().emit("chat:react", { id, emoji });
+    const canonicalKey = UNICODE_TO_KEY[rawKey] || rawKey;
+    const unicodeEmoji = KEY_TO_UNICODE[canonicalKey] || canonicalKey;
+
+    // Send both unicode and key so BOTH old Render server (expects ❤️) and new server accept it!
+    getSocket().emit("chat:react", {
+      id,
+      emoji: unicodeEmoji,
+      key: canonicalKey,
+      senderId: clientIdRef.current,
+    });
 
     // Messenger burst animation on the message
     const burstId = `burst-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     setBursts((prev) => [
       ...prev,
-      { id: burstId, messageId: id, emoji, xOffset: (Math.random() - 0.5) * 24 },
+      { id: burstId, messageId: id, emoji: canonicalKey, xOffset: (Math.random() - 0.5) * 24 },
     ]);
     setTimeout(() => {
       setBursts((prev) => prev.filter((b) => b.id !== burstId));
@@ -445,13 +550,13 @@ export default function Chats() {
 
     soundFx.playPop();
 
-    // Optimistic local update
+    // Optimistic local update with normalized key
     setMessages((m) =>
       m.map((x) => {
         if (x.id === id) {
-          const reactions = { ...(x.reactions || {}) };
-          reactions[emoji] = (reactions[emoji] || 0) + 1;
-          return { ...x, reactions };
+          const current = normalizeReactions(x.reactions);
+          current[canonicalKey] = (current[canonicalKey] || 0) + 1;
+          return { ...x, reactions: current };
         }
         return x;
       })
@@ -471,11 +576,14 @@ export default function Chats() {
 
   const sendText = (t: string) => {
     touchChatActivity();
-    const tempId = `temp-${Date.now()}`;
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const currentName = name || getChatSession().name || "Guest";
 
-    // Local fallback bot when offline
-    if (!connected) {
+    mySentIds.current.add(tempId);
+    pendingTexts.current.push({ tempId, text: t, ts: Date.now() });
+
+    // Local fallback bot ONLY when completely offline and not connecting
+    if (!connected && !connecting) {
       const localMsg = {
         id: tempId,
         senderId: clientId,
@@ -490,7 +598,7 @@ export default function Chats() {
 
       setTimeout(() => {
         const lower = t.toLowerCase();
-        let reply = "Hello! I am Portfolio Bot. The live Socket.IO chat server is currently unreachable, but feel free to explore the desktop apps!";
+        let reply = "Hello! I am Portfolio Bot. The live Socket.IO chat server is currently reconnecting, but feel free to explore the desktop apps!";
         if (lower.includes("project") || lower.includes("work")) {
           reply = "Check out the Library app to view all featured projects, or open Resume to see work experience!";
         } else if (lower.includes("music") || lower.includes("song")) {
@@ -536,6 +644,10 @@ export default function Chats() {
     setReplyTarget(null);
 
     const socket = getSocket();
+    if (!socket.connected) {
+      socket.connect();
+    }
+
     let settled = false;
     const timeout = setTimeout(() => {
       if (settled) return;
@@ -548,12 +660,18 @@ export default function Chats() {
       settled = true;
       clearTimeout(timeout);
       if (res?.ok && res.message) {
+        mySentIds.current.add(res.message.id);
+        const resolved = {
+          ...res.message,
+          senderId: res.message.senderId || clientIdRef.current,
+          reactions: normalizeReactions(res.message.reactions)
+        };
         setMessages((m) => {
           const hasRealMsg = m.some((x) => x.id === res.message.id);
           if (hasRealMsg) {
             return m.filter((x) => x.id !== tempId);
           }
-          return m.map((x) => (x.id === tempId ? res.message : x));
+          return m.map((x) => (x.id === tempId ? resolved : x));
         });
       } else {
         setMessages((m) => m.map((x) => (x.id === tempId ? { ...x, pending: false, failed: true } : x)));
@@ -846,6 +964,8 @@ export default function Chats() {
         {displayedMessages.map((m) => {
           const isSelf = Boolean(
             (m.senderId && m.senderId === clientId) ||
+            mySentIds.current.has(m.id) ||
+            (m.tempId && mySentIds.current.has(m.tempId)) ||
             (!m.senderId && name && name.toLowerCase() !== "guest" && m.name === name)
           );
           const color = nameColor(m.name);
@@ -976,7 +1096,9 @@ export default function Chats() {
                     {bursts
                       .filter((b) => b.messageId === m.id)
                       .map((b) => {
-                        const reactionDef = CHAT_REACTIONS.find((r) => r.id === b.emoji) || CHAT_REACTIONS[0];
+                        const reactionDef =
+                          CHAT_REACTIONS.find((r) => r.id === b.emoji || r.id === UNICODE_TO_KEY[b.emoji]) ||
+                          CHAT_REACTIONS[0];
                         const BurstIcon = reactionDef.Icon;
 
                         return (

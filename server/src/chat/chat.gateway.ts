@@ -243,13 +243,43 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage("chat:react")
-  handleReact(@MessageBody() payload: { id: string; emoji: string }) {
-    if (!payload?.id || !payload?.emoji) return;
+  handleReact(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { id: string; emoji?: string; key?: string; senderId?: string }
+  ) {
+    if (!payload?.id) return;
+    const rawEmoji = String(payload.emoji || payload.key || "").trim();
+    const EMOJI_MAP: Record<string, string> = {
+      heart: "heart",
+      "❤️": "heart",
+      thumbsup: "thumbsup",
+      "👍": "thumbsup",
+      smile: "smile",
+      "😂": "smile",
+      "😆": "smile",
+      flame: "flame",
+      "🔥": "flame",
+      rocket: "rocket",
+      "🚀": "rocket",
+      zap: "zap",
+      "⚡": "zap",
+      party: "zap",
+      "🎉": "zap",
+    };
+    const canonicalKey = EMOJI_MAP[rawEmoji] || rawEmoji;
+    if (!canonicalKey) return;
+
+    const senderId = payload.senderId || (client as any).clientId || client.id;
     const msg = this.chatHistory.find((m) => m.id === payload.id);
     if (msg) {
       if (!msg.reactions) msg.reactions = {};
-      msg.reactions[payload.emoji] = (msg.reactions[payload.emoji] || 0) + 1;
-      this.server.emit("chat:reacted", { id: payload.id, emoji: payload.emoji, reactions: msg.reactions });
+      msg.reactions[canonicalKey] = (msg.reactions[canonicalKey] || 0) + 1;
+      this.server.emit("chat:reacted", {
+        id: payload.id,
+        emoji: canonicalKey,
+        reactions: msg.reactions,
+        senderId,
+      });
     }
   }
 
