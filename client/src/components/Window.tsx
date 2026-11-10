@@ -248,23 +248,28 @@ export default function Window({ win, children }) {
   if (win.minimized) return null;
 
   const forceFull = win.maximized || isMobile;
-  // A left/right-docked Dock (macOS only) eats into the maximize bounds on that side.
-  const dockClearance = !isWin && !isMobile && dockPosition !== "bottom" ? 96 : 8;
-  const macLeft = !isWin && dockPosition === "left" && !isMobile ? dockClearance : 8;
-  const macRight = !isWin && dockPosition === "right" && !isMobile ? dockClearance : 8;
+  const isMac = !isWin;
+  const dockBottomClearance = isMobile ? 0 : isWin ? 64 : dockPosition === "bottom" ? 76 : 8;
+  const dockLeftClearance = isMac && !isMobile && dockPosition === "left" ? 96 : 8;
+  const dockRightClearance = isMac && !isMobile && dockPosition === "right" ? 96 : 8;
+
+  const safeDesktopTop = Math.max(isWin ? 6 : 32, Math.min(win.y, window.innerHeight - 160));
+  const maxAllowedH = Math.max(260, window.innerHeight - safeDesktopTop - dockBottomClearance);
+  const safeDesktopHeight = Math.min(win.h, maxAllowedH);
+
   const baseStyle = forceFull
     ? isMobile
       ? { top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%", zIndex: win.z }
       : isWin
         ? { top: 8, left: 8, right: 8, bottom: 64, width: "auto", height: "auto", zIndex: win.z }
-        : { top: 30, left: macLeft, right: macRight, bottom: 8, width: "auto", height: "auto", zIndex: win.z }
+        : { top: 30, left: dockLeftClearance, right: dockRightClearance, bottom: dockBottomClearance, width: "auto", height: "auto", zIndex: win.z }
     : {
-        top: Math.min(win.y, window.innerHeight - 120),
-        left: Math.min(win.x, window.innerWidth - 120),
-        width: Math.min(win.w, window.innerWidth - 20),
-        height: Math.min(win.h, window.innerHeight - (isWin ? 68 : 84)),
+        top: safeDesktopTop,
+        left: Math.max(8, Math.min(win.x, window.innerWidth - 120)),
+        width: Math.min(win.w, window.innerWidth - 16),
+        height: safeDesktopHeight,
         maxWidth: "calc(100vw - 16px)",
-        maxHeight: "calc(100vh - 64px)",
+        maxHeight: `calc(100vh - ${isWin ? 72 : dockPosition === "bottom" ? 88 : 44}px)`,
         zIndex: win.z,
       };
 
@@ -534,7 +539,7 @@ export default function Window({ win, children }) {
         )}
       </div>
       {renderSnapFlyout()}
-      <div className={`flex-1 min-h-0 thin-scroll overflow-auto allow-select ${isInteracting ? "pointer-events-none select-none" : ""}`}>{children}</div>
+      <div className={`flex-1 min-h-0 thin-scroll overflow-y-auto overscroll-contain pb-6 sm:pb-2 allow-select ${isInteracting ? "pointer-events-none select-none" : ""}`}>{children}</div>
       {!win.maximized && !isMobile && (
         <div
           onPointerDown={onResizeStart}

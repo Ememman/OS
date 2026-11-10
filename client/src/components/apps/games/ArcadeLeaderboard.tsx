@@ -59,7 +59,12 @@ export default function ArcadeLeaderboard({ onClose }: { onClose?: () => void })
         if (selectedGame !== "all" && newScore.game !== selectedGame) {
           return prev;
         }
-        const updated = [newScore, ...prev.filter((e) => e.id !== newScore.id)];
+        const filtered = prev.filter(
+          (e) =>
+            e.id !== newScore.id &&
+            !(e.game === newScore.game && e.player.toLowerCase() === newScore.player.toLowerCase())
+        );
+        const updated = [newScore, ...filtered];
         updated.sort((a, b) => {
           if (a.game === "minesweeper" && b.game === "minesweeper") {
             return a.score - b.score;

@@ -248,7 +248,49 @@ export default function BlockBlast() {
     setTimeout(() => setPopups((p) => p.filter((x) => x.id !== id)), 700);
   };
 
+  const syncTimerRef = useRef<any>(null);
+
+  const syncScoreToBackend = useCallback(async (scoreToSync: number) => {
+    if (scoreToSync <= 0) return;
+    const cleanName = playerName.trim() || getEffectiveChatName();
+    saveChatName(cleanName);
+    localStorage.setItem("os_player_name", cleanName);
+
+    try {
+      const res = await fetch(`${API_URL}/api/games/leaderboard`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          game: "blockblast",
+          player: cleanName,
+          score: scoreToSync,
+          details: `${scoreToSync} pts · Best ${Math.max(scoreToSync, best)}`
+        })
+      });
+      if (res.ok) setScoreSubmitted(true);
+    } catch {}
+  }, [playerName, best]);
+
+  useEffect(() => {
+    if (score > 0) {
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+      syncTimerRef.current = setTimeout(() => {
+        syncScoreToBackend(score);
+      }, 1000);
+    }
+    return () => {
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+    };
+  }, [score, syncScoreToBackend]);
+
+  useEffect(() => {
+    if (gameOver && score > 0) {
+      syncScoreToBackend(score);
+    }
+  }, [gameOver, score, syncScoreToBackend]);
+
   const reset = () => {
+    if (score > 0) syncScoreToBackend(score);
     setGrid(emptyGrid());
     setTray([randomPiece(nextId.current++), randomPiece(nextId.current++), randomPiece(nextId.current++)]);
     setSelected(null);
@@ -263,34 +305,16 @@ export default function BlockBlast() {
 
   const handleSubmitScore = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (submittingScore || scoreSubmitted || score <= 0) return;
+    if (submittingScore || score <= 0) return;
 
     setSubmittingScore(true);
     const cleanName = playerName.trim() || getEffectiveChatName();
     saveChatName(cleanName);
     localStorage.setItem("os_player_name", cleanName);
 
-    try {
-      const res = await fetch(`${API_URL}/api/games/leaderboard`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          game: "blockblast",
-          player: cleanName,
-          score,
-          details: `${score} pts · Best ${Math.max(score, best)}`
-        })
-      });
-
-      if (res.ok) {
-        setScoreSubmitted(true);
-        notify("Score Posted!", `Your Block Blast score of ${score} was added to the leaderboard!`, "success");
-      }
-    } catch {
-      notify("Network Error", "Could not reach leaderboard API.", "warning");
-    } finally {
-      setSubmittingScore(false);
-    }
+    await syncScoreToBackend(score);
+    setSubmittingScore(false);
+    notify("Score Posted!", `Your Block Blast score of ${score} is live on the leaderboard!`, "success");
   };
 
   const previewCells = new Set();
