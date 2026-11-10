@@ -502,7 +502,7 @@ export default function Terminal() {
           <span className="text-[11px] text-white/70 font-semibold">james@portfolio-os:~ (portfolio-sh)</span>
         </div>
         <div className="flex items-center gap-3 text-[10px] text-white/40">
-          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> bash 5.2</span>
+          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" /> bash 5.2</span>
           <span>UTF-8</span>
         </div>
       </div>

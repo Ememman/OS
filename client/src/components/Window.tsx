@@ -20,6 +20,7 @@ export default function Window({ win, children }) {
     osMode,
     windows,
     dockPosition,
+    windowIndicators,
   } = useOS();
   const isWin = osMode === "win";
   const isMobile = useIsMobile();
@@ -253,7 +254,7 @@ export default function Window({ win, children }) {
   const macRight = !isWin && dockPosition === "right" && !isMobile ? dockClearance : 8;
   const baseStyle = forceFull
     ? isMobile
-      ? { top: isWin ? 4 : 32, left: 4, right: 4, bottom: isWin ? 52 : 68, width: "auto", height: "auto", zIndex: win.z }
+      ? { top: isWin ? 4 : 36, left: 4, right: 4, bottom: isWin ? 54 : 76, width: "auto", height: "auto", zIndex: win.z }
       : isWin
         ? { top: 8, left: 8, right: 8, bottom: 64, width: "auto", height: "auto", zIndex: win.z }
         : { top: 30, left: macLeft, right: macRight, bottom: 8, width: "auto", height: "auto", zIndex: win.z }
@@ -459,19 +460,21 @@ export default function Window({ win, children }) {
                 title="Close"
               >
                 <div className="w-3.5 h-3.5 sm:w-3 sm:h-3 rounded-full bg-[#ff5f56] border border-[#e0443e]/80 hover:brightness-95 active:brightness-90 flex items-center justify-center shadow-sm">
-                  <svg
-                    width="7"
-                    height="7"
-                    viewBox="0 0 10 10"
-                    fill="none"
-                    stroke="#4a0002"
-                    strokeWidth="1.3"
-                    strokeLinecap="round"
-                    className="opacity-75 group-hover/controls:opacity-100 transition-opacity"
-                  >
-                    <line x1="2" y1="2" x2="8" y2="8" />
-                    <line x1="8" y1="2" x2="2" y2="8" />
-                  </svg>
+                  {windowIndicators && (
+                    <svg
+                      width="7"
+                      height="7"
+                      viewBox="0 0 10 10"
+                      fill="none"
+                      stroke="#4a0002"
+                      strokeWidth="1.3"
+                      strokeLinecap="round"
+                      className="opacity-75 group-hover/controls:opacity-100 transition-opacity"
+                    >
+                      <line x1="2" y1="2" x2="8" y2="8" />
+                      <line x1="8" y1="2" x2="2" y2="8" />
+                    </svg>
+                  )}
                 </div>
               </button>
 
@@ -483,18 +486,20 @@ export default function Window({ win, children }) {
                 title="Minimize"
               >
                 <div className="w-3.5 h-3.5 sm:w-3 sm:h-3 rounded-full bg-[#ffbd2e] border border-[#dea123]/80 hover:brightness-95 active:brightness-90 flex items-center justify-center shadow-sm">
-                  <svg
-                    width="7"
-                    height="7"
-                    viewBox="0 0 10 10"
-                    fill="none"
-                    stroke="#613600"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    className="opacity-75 group-hover/controls:opacity-100 transition-opacity"
-                  >
-                    <line x1="1.5" y1="5" x2="8.5" y2="5" />
-                  </svg>
+                  {windowIndicators && (
+                    <svg
+                      width="7"
+                      height="7"
+                      viewBox="0 0 10 10"
+                      fill="none"
+                      stroke="#613600"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      className="opacity-75 group-hover/controls:opacity-100 transition-opacity"
+                    >
+                      <line x1="1.5" y1="5" x2="8.5" y2="5" />
+                    </svg>
+                  )}
                 </div>
               </button>
 
@@ -508,15 +513,17 @@ export default function Window({ win, children }) {
                   aria-label="Maximize window or hover for snap layouts"
                   title="Maximize"
                 >
-                  <svg
-                    width="7"
-                    height="7"
-                    viewBox="0 0 10 10"
-                    fill="#004800"
-                    className="opacity-75 group-hover/controls:opacity-100 transition-opacity"
-                  >
-                    <path d="M 2 3.8 L 2 8 L 6.2 8 Z M 3.8 2 L 8 2 L 8 6.2 Z" />
-                  </svg>
+                  {windowIndicators && (
+                    <svg
+                      width="7"
+                      height="7"
+                      viewBox="0 0 10 10"
+                      fill="#004800"
+                      className="opacity-75 group-hover/controls:opacity-100 transition-opacity"
+                    >
+                      <path d="M 2 3.8 L 2 8 L 6.2 8 Z M 3.8 2 L 8 2 L 8 6.2 Z" />
+                    </svg>
+                  )}
                 </button>
               )}
             </div>

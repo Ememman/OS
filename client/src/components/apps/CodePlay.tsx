@@ -659,7 +659,7 @@ export default function CodePlay() {
               )}
 
               {execTime !== null && (
-                <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-mono">
+                <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-accent/10 text-accent font-mono">
                   <GIconClock size={10} />
                   <span>{execTime} ms</span>
                 </span>

@@ -40,7 +40,6 @@ export default function Library() {
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  // Real-time project likes with zero hardcoding
   const [likes, setLikes] = useState<Record<string, number>>({});
   const [userLikes, setUserLikes] = useState<Record<string, boolean>>(() => {
     try {
@@ -51,7 +50,6 @@ export default function Library() {
   });
 
   useEffect(() => {
-    // Fetch project list from backend
     fetch(`${API_URL}/api/projects`)
       .then((r) => r.json())
       .then((data) => {
@@ -61,7 +59,6 @@ export default function Library() {
       })
       .catch(() => {});
 
-    // Also fetch GitHub repos for Ememman to dynamically include latest repositories
     fetch("https://api.github.com/users/Ememman/repos?sort=updated")
       .then((r) => r.json())
       .then((ghRepos) => {

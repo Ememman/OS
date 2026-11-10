@@ -14,6 +14,17 @@ import {
   GIconBars,
   GIconSliders,
   GIconLayoutCells,
+  GIconResume,
+  GIconChats,
+  GIconGames,
+  GIconTerminal,
+  GIconNotes,
+  GIconCalculator,
+  GIconActivity,
+  GIconLibrary,
+  GIconFolder,
+  GIconSettings,
+  GIconBookOpen,
 } from "./icons/GravityIcons";
 
 interface MenuDropdownProps {
@@ -36,7 +47,7 @@ function MenuDropdown({ label, isOpen, onToggle, onClose, children }: MenuDropdo
       </button>
       {isOpen && (
         <div
-          className="absolute top-full left-0 mt-1.5 min-w-[240px] glass rounded-lg border border-white/10 shadow-2xl py-1.5 z-[1300] origin-top-left"
+          className="absolute top-full left-0 mt-1.5 min-w-[240px] max-w-[calc(100vw-24px)] max-h-[80vh] overflow-y-auto thin-scroll glass rounded-lg border border-white/10 shadow-2xl py-1.5 z-[1300] origin-top-left"
           style={{ animation: "menuOpen 130ms cubic-bezier(.16,1,.3,1) both" }}>
           {children}
         </div>
@@ -175,8 +186,17 @@ export default function MenuBar() {
     onClose: () => setOpenMenu((o) => (o === name ? null : o)),
   });
 
+  const handleAppleToggle = () => {
+    if (typeof window !== "undefined" && window.innerWidth < 640) {
+      setMobileSheetOpen((prev) => !prev);
+      setOpenMenu(null);
+    } else {
+      setOpenMenu((o) => (o === "apple" ? null : "apple"));
+    }
+  };
+
   return (
-    <div className="absolute top-0 left-0 right-0 h-8 z-[999] glass flex items-center justify-between px-3 sm:px-4 text-[14px] text-white/95 select-none shadow-md">
+    <div className="fixed top-0 left-0 right-0 h-8 z-[999] glass flex items-center justify-between px-3 sm:px-4 text-[14px] text-white/95 select-none shadow-md">
       <div className="flex items-center gap-3 sm:gap-4 min-w-0">
         {/* Apple-style OS Logo using Gravity UI */}
         <MenuDropdown
@@ -186,7 +206,9 @@ export default function MenuBar() {
               <span className="hidden xs:inline text-[13px] font-semibold">Portfolio OS</span>
             </div>
           }
-          {...m("apple")}
+          isOpen={openMenu === "apple"}
+          onToggle={handleAppleToggle}
+          onClose={() => setOpenMenu(null)}
         >
           <MenuItem
             onClick={() => {
@@ -272,11 +294,11 @@ export default function MenuBar() {
         </MenuDropdown>
 
         <button
-          onClick={() => setMobileSheetOpen(true)}
-          className="sm:hidden p-1 -ml-1 hover:bg-white/10 rounded text-white"
+          onClick={() => setMobileSheetOpen((prev) => !prev)}
+          className="sm:hidden p-1.5 -ml-1 hover:bg-white/10 active:bg-white/20 rounded-lg text-white transition-colors cursor-pointer"
           aria-label="Open mobile menu"
         >
-          <GIconBars size={16} />
+          <GIconBars size={18} />
         </button>
 
         <div className="hidden sm:flex items-center gap-1">
@@ -528,10 +550,10 @@ export default function MenuBar() {
             >
               <div className="flex items-center justify-between pb-2 border-b border-white/10">
                 <div className="flex items-center gap-2 font-semibold">
-                  <GIconSignal size={14} className="text-emerald-400" />
+                  <GIconSignal size={14} className="text-accent" />
                   <span>Wi-Fi Network</span>
                 </div>
-                <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/25">
+                <span className="text-[10px] text-accent font-mono bg-accent/15 px-2 py-0.5 rounded-full border border-accent/25">
                   Connected
                 </span>
               </div>
@@ -542,7 +564,7 @@ export default function MenuBar() {
                     <div className="font-medium text-white/90">Portfolio-OS-Fiber</div>
                     <div className="text-[10px] text-white/45">5 GHz · 100% Signal Quality</div>
                   </div>
-                  <GIconCheck size={14} className="text-emerald-400" />
+                  <GIconCheck size={14} className="text-accent" />
                 </div>
 
                 <div className="flex justify-between text-[11px] text-white/50 px-1 pt-1">
@@ -602,140 +624,161 @@ export default function MenuBar() {
         </div>
       </div>
 
-      {mobileSheetOpen && (
-        <div
-          className="fixed inset-0 z-[2000] bg-black/60 flex items-end sm:items-center justify-center"
-          onClick={() => setMobileSheetOpen(false)}>
+      {mobileSheetOpen &&
+        createPortal(
           <div
-            className="glass rounded-t-2xl sm:rounded-2xl w-full sm:w-80 max-h-[75vh] overflow-y-auto thin-scroll border border-white/10 p-2"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              animation: "menuOpen 160ms cubic-bezier(.16,1,.3,1) both",
-            }}>
-            <div className="flex items-center justify-between px-2 py-2">
-              <span className="text-xs font-semibold text-white/60 uppercase tracking-wide">
-                Menu
-              </span>
-              <button
-                onClick={() => setMobileSheetOpen(false)}
-                className="p-1 hover:bg-white/10 rounded text-white/60 hover:text-white">
-                <GIconClose size={14} />
-              </button>
-            </div>
+            className="fixed inset-0 z-[10000] bg-black/75 backdrop-blur-md flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 select-none"
+            onClick={() => setMobileSheetOpen(false)}>
+            <div
+              className="w-full max-w-lg bg-[#0e1422] border-t sm:border border-white/15 rounded-t-3xl sm:rounded-2xl max-h-[88dvh] flex flex-col shadow-2xl overflow-hidden pb-6 sm:pb-3"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                animation: "sheetSlideUp 220ms cubic-bezier(0.16, 1, 0.3, 1) both",
+              }}>
+              {/* Drag Handle */}
+              <div className="w-12 h-1 bg-white/25 rounded-full mx-auto mt-3 mb-1 shrink-0" />
 
-            <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-white/35">
-              System
-            </div>
-            <MenuItem
-              onClick={() => {
-                openSpotlight();
-                setMobileSheetOpen(false);
-              }}>
-              Spotlight Search (⌘K)
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                toggleControlCenter();
-                setMobileSheetOpen(false);
-              }}>
-              Control Center
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                openApp("terminal");
-                setMobileSheetOpen(false);
-              }}>
-              Terminal
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                openApp("notes");
-                setMobileSheetOpen(false);
-              }}>
-              Notes
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                openApp("calculator");
-                setMobileSheetOpen(false);
-              }}>
-              Calculator
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                openApp("activity");
-                setMobileSheetOpen(false);
-              }}>
-              Activity Monitor
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                openApp("guestbook");
-                setMobileSheetOpen(false);
-              }}>
-              Guestbook & Ledger
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                openApp("files");
-                setMobileSheetOpen(false);
-              }}>
-              Files
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                openApp("resume");
-                setMobileSheetOpen(false);
-              }}>
-              Resume
-            </MenuItem>
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center text-accent">
+                    <GIconCode size={15} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-white leading-tight">Portfolio OS</h3>
+                    <p className="text-[10px] text-white/50">Emman Mendoza · System Menu</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMobileSheetOpen(false)}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 active:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition cursor-pointer"
+                  aria-label="Close menu">
+                  <GIconClose size={15} />
+                </button>
+              </div>
 
-            <div className="px-2 py-1 mt-1 text-[10px] uppercase tracking-wide text-white/35">
-              View
-            </div>
-            <MenuItem
-              onClick={() => {
-                toggleFullscreen();
-                setMobileSheetOpen(false);
-              }}>
-              {fullscreen ? "Exit Full Screen" : "Enter Full Screen"}
-            </MenuItem>
-            <MenuItem
-              checked={reduceMotion}
-              onClick={() => {
-                toggleMotion();
-                setMobileSheetOpen(false);
-              }}>
-              Reduce Motion
-            </MenuItem>
+              {/* Scrollable Body */}
+              <div className="overflow-y-auto thin-scroll p-4 space-y-4 flex-1">
+                {/* Apps Grid */}
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-white/40 mb-2.5 px-0.5">
+                    Applications
+                  </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { id: "resume", name: "Resume", icon: GIconResume, color: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
+                      { id: "chats", name: "Chats", icon: GIconChats, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
+                      { id: "games", name: "Games", icon: GIconGames, color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
+                      { id: "codeplay", name: "CodePlay", icon: GIconCode, color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" },
+                      { id: "terminal", name: "Terminal", icon: GIconTerminal, color: "text-green-400 bg-green-500/10 border-green-500/20" },
+                      { id: "notes", name: "Notes", icon: GIconNotes, color: "text-orange-400 bg-orange-500/10 border-orange-500/20" },
+                      { id: "calculator", name: "Calculator", icon: GIconCalculator, color: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" },
+                      { id: "activity", name: "Activity", icon: GIconActivity, color: "text-purple-400 bg-purple-500/10 border-purple-500/20" },
+                      { id: "guestbook", name: "Guestbook", icon: GIconBookOpen, color: "text-pink-400 bg-pink-500/10 border-pink-500/20" },
+                      { id: "files", name: "Files", icon: GIconFolder, color: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20" },
+                      { id: "library", name: "Library", icon: GIconLibrary, color: "text-teal-400 bg-teal-500/10 border-teal-500/20" },
+                      { id: "settings", name: "Settings", icon: GIconSettings, color: "text-slate-300 bg-slate-500/10 border-slate-500/20" },
+                    ].map((app) => {
+                      const Icon = app.icon;
+                      return (
+                        <button
+                          key={app.id}
+                          onClick={() => {
+                            openApp(app.id as any);
+                            setMobileSheetOpen(false);
+                          }}
+                          className="flex flex-col items-center justify-center p-2 rounded-xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.08] active:scale-95 transition cursor-pointer">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center border mb-1 ${app.color}`}>
+                            <Icon size={18} />
+                          </div>
+                          <span className="text-[10px] text-white/85 font-medium truncate max-w-full text-center">
+                            {app.name}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-            <div className="px-2 py-1 mt-1 text-[10px] uppercase tracking-wide text-white/35">
-              Power & Session
+                {/* System Controls */}
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-white/40 mb-2 px-0.5">
+                    System Tools
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/[0.02] divide-y divide-white/5 overflow-hidden">
+                    <MenuItem
+                      onClick={() => {
+                        openSpotlight();
+                        setMobileSheetOpen(false);
+                      }}>
+                      Spotlight Search (⌘K)
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        toggleControlCenter();
+                        setMobileSheetOpen(false);
+                      }}>
+                      Control Center
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        toggleFullscreen();
+                        setMobileSheetOpen(false);
+                      }}>
+                      {fullscreen ? "Exit Full Screen" : "Enter Full Screen"}
+                    </MenuItem>
+                    <MenuItem
+                      checked={reduceMotion}
+                      onClick={() => {
+                        toggleMotion();
+                        setMobileSheetOpen(false);
+                      }}>
+                      Reduce Motion
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        setModal("about");
+                        setMobileSheetOpen(false);
+                      }}>
+                      About Portfolio OS
+                    </MenuItem>
+                  </div>
+                </div>
+
+                {/* Session & Power */}
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-white/40 mb-2 px-0.5">
+                    Session & Power
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/[0.02] divide-y divide-white/5 overflow-hidden">
+                    <MenuItem
+                      onClick={() => {
+                        setMobileSheetOpen(false);
+                        reopenPicker();
+                      }}>
+                      Switch OS Style
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        setMobileSheetOpen(false);
+                        restart();
+                      }}>
+                      Restart System
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        setMobileSheetOpen(false);
+                        powerOff();
+                      }}>
+                      <span className="text-rose-400">Shut Down</span>
+                    </MenuItem>
+                  </div>
+                </div>
+              </div>
             </div>
-            <MenuItem
-              onClick={() => {
-                setMobileSheetOpen(false);
-                reopenPicker();
-              }}>
-              Switch OS Style
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setMobileSheetOpen(false);
-                restart();
-              }}>
-              Restart System
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setMobileSheetOpen(false);
-                powerOff();
-              }}>
-              Shut Down
-            </MenuItem>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
       {modal === "about" && (
         <InfoModal title="About Portfolio OS" onClose={() => setModal(null)}>

@@ -153,6 +153,15 @@ export default function Guestbook() {
     return "";
   });
 
+  // User reactions tracked locally so they can react once and remove their reaction
+  const [userReactions, setUserReactions] = useState<Record<string, boolean>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("os_guestbook_user_reactions") || "{}");
+    } catch {
+      return {};
+    }
+  });
+
   const [customPhoto, setCustomPhoto] = useState(() => {
     try {
       const saved = localStorage.getItem("os_guestbook_profile");
@@ -378,10 +387,50 @@ export default function Guestbook() {
     }
   };
 
-  // Heart an entry
+  // Heart an entry or toggle off/remove reaction
   const handleReact = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (systemSounds) soundFx.playPop();
+
+    const alreadyReacted = Boolean(userReactions[id]);
+
+    if (alreadyReacted) {
+      // User removes reaction
+      setUserReactions((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        try {
+          localStorage.setItem("os_guestbook_user_reactions", JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      setEntries((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, reactions: Math.max(0, (item.reactions || 1) - 1) } : item
+        )
+      );
+
+      try {
+        await fetch(`${API_URL}/api/guestbook/${id}/react`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "unlike" }),
+        });
+      } catch {}
+
+      notify("Reaction Removed", "Removed reaction from signature.", "info", 1800);
+      return;
+    }
+
+    // User adds reaction (react once, cannot duplicate)
+    setUserReactions((prev) => {
+      const next = { ...prev, [id]: true };
+      try {
+        localStorage.setItem("os_guestbook_user_reactions", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
 
     setEntries((prev) =>
       prev.map((item) =>
@@ -390,8 +439,14 @@ export default function Guestbook() {
     );
 
     try {
-      await fetch(`${API_URL}/api/guestbook/${id}/react`, { method: "POST" });
+      await fetch(`${API_URL}/api/guestbook/${id}/react`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "like" }),
+      });
     } catch {}
+
+    notify("Heart Added", "Thank you for supporting this signature!", "add", 1800);
   };
 
   // Delete an entry
@@ -470,15 +525,10 @@ export default function Guestbook() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.03] border border-white/[0.08] text-white/60 text-[11px]">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="hidden sm:inline">Live synced</span>
-          </div>
-
           <button
             onClick={exportGuestbook}
             title="Export Guestbook Signatures (.json)"
-            className="flex items-center gap-1 px-2 py-1 rounded-lg border border-white/[0.08] hover:bg-white/[0.06] text-white/60 hover:text-white transition cursor-pointer text-xs"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-white/[0.08] hover:bg-white/[0.06] text-white/60 hover:text-white transition cursor-pointer text-xs"
           >
             <GIconDownload size={13} />
             <span className="hidden sm:inline">Export</span>
@@ -547,9 +597,6 @@ export default function Guestbook() {
                 Customize your avatar, role, and leave a permanent note.
               </p>
             </div>
-            <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono shrink-0">
-              Live
-            </span>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -762,19 +809,19 @@ export default function Guestbook() {
                 </div>
               </div>
 
-              {/* Website & Location (Clean 2-Column Row) */}
+              {/* Website & Location (Clean 2-Column Row - Completely Optional) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
                 <div className="space-y-1">
                   <label className="text-[10px] text-white/50 flex items-center gap-1 font-medium">
                     <GIconLink size={10} />
-                    <span>Website or GitHub</span>
+                    <span>Website or GitHub (Optional)</span>
                   </label>
                   <input
                     type="text"
                     maxLength={100}
                     value={link}
                     onChange={(e) => setLink(e.target.value)}
-                    placeholder="github.com/username"
+                    placeholder="github.com/username (optional)"
                     className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-[11px] text-white placeholder:text-white/30 outline-none focus:border-accent/40 transition"
                   />
                 </div>
@@ -782,14 +829,14 @@ export default function Guestbook() {
                 <div className="space-y-1">
                   <label className="text-[10px] text-white/50 flex items-center gap-1 font-medium">
                     <GIconMapPin size={10} />
-                    <span>Location / Company</span>
+                    <span>Location / Company (Optional)</span>
                   </label>
                   <input
                     type="text"
                     maxLength={60}
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    placeholder="e.g. San Francisco or Meta"
+                    placeholder="e.g. San Francisco (optional)"
                     className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-[11px] text-white placeholder:text-white/30 outline-none focus:border-accent/40 transition"
                   />
                 </div>
@@ -1082,16 +1129,25 @@ export default function Guestbook() {
 
                       <button
                         onClick={(e) => handleReact(item.id, e)}
-                        title="Heart this message"
+                        title={userReactions[item.id] ? "Tap to remove heart reaction" : "Heart this message"}
+                        aria-label={userReactions[item.id] ? "Remove heart reaction" : "Heart this message"}
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition cursor-pointer ${
-                          item.reactions > 0
+                          userReactions[item.id]
+                            ? "bg-rose-500/25 border-rose-500/50 text-rose-200 shadow-sm shadow-rose-500/20"
+                            : item.reactions > 0
                             ? "bg-rose-500/10 border-rose-500/30 text-rose-300 hover:bg-rose-500/20"
                             : "bg-white/[0.02] border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.06]"
                         }`}
                       >
                         <GIconHeart
                           size={12}
-                          className={item.reactions > 0 ? "text-rose-400" : "text-white/40"}
+                          className={
+                            userReactions[item.id]
+                              ? "text-rose-400 fill-rose-400 scale-110"
+                              : item.reactions > 0
+                              ? "text-rose-400"
+                              : "text-white/40"
+                          }
                         />
                         <span className="font-mono text-[10px] font-semibold">
                           {item.reactions || 0}

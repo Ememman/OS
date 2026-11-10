@@ -42,20 +42,20 @@ const DOCK_ITEMS = [
 ];
 
 const POSITION_CLASSES = {
-  bottom: "bottom-1 sm:bottom-2 left-1/2 -translate-x-1/2 max-w-[calc(100vw-16px)]",
+  bottom: "bottom-1.5 sm:bottom-2 left-1/2 -translate-x-1/2 max-w-[calc(100vw-12px)] sm:max-w-[calc(100vw-16px)]",
   left: "left-1 sm:left-2 top-1/2 -translate-y-1/2 max-h-[calc(100vh-56px)]",
   right: "right-1 sm:right-2 top-1/2 -translate-y-1/2 max-h-[calc(100vh-56px)]",
 };
 
 export default function Dock() {
-  const { openApp, windows, closeWindow, compact, dockPosition, toggleMissionControl, missionControlOpen, systemSounds } = useOS();
+  const { openApp, windows, closeWindow, compact, dockPosition, toggleMissionControl, missionControlOpen, systemSounds, unreadChatCount } = useOS();
   const isMobile = useIsMobile();
   const position = isMobile ? "bottom" : dockPosition;
   const vertical = position === "left" || position === "right";
-  const effectiveCompact = compact || isMobile;
+  const effectiveCompact = compact && !isMobile;
   const openApps = new Set(windows.map((w) => w.app));
-  const size = effectiveCompact ? "w-9 h-9 sm:w-10 sm:h-10" : "w-12 h-12";
-  const iconSize = effectiveCompact ? 16 : 22;
+  const size = isMobile ? "w-11 h-11" : effectiveCompact ? "w-10 h-10" : "w-12 h-12";
+  const iconSize = isMobile ? 22 : effectiveCompact ? 16 : 22;
   const [hoveredApp, setHoveredApp] = useState<string | null>(null);
 
   const tooltipPos = position === "left"
@@ -82,7 +82,7 @@ export default function Dock() {
   };
 
   return (
-    <div className={`absolute z-[900] ${POSITION_CLASSES[position]}`}>
+    <div className={`fixed z-[900] ${POSITION_CLASSES[position]}`}>
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -90,7 +90,7 @@ export default function Dock() {
         className={`glass rounded-2xl shadow-2xl border border-white/10 ${
           vertical
             ? "flex flex-col items-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-2 max-w-full overflow-y-auto thin-scroll touch-pan-y"
-            : "flex items-end gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-2 max-w-full overflow-x-auto no-scrollbar touch-pan-x"
+            : "flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-2.5 py-1.5 sm:py-2 max-w-full overflow-x-auto no-scrollbar touch-pan-x"
         }`}
       >
         {/* Mission Control button */}
@@ -144,9 +144,20 @@ export default function Dock() {
                 <motion.span
                   layoutId={`active-dot-${app}`}
                   className={`absolute rounded-full aspect-square shrink-0 bg-white/90 shadow-[0_0_6px_rgba(255,255,255,0.8)] ${
-                    vertical ? "w-1 h-1 left-0.5 top-1/2 -translate-y-1/2" : "w-1 h-1 -bottom-1"
+                    vertical ? "w-1 h-1 left-0.5 top-1/2 -translate-y-1/2" : isMobile ? "w-1.5 h-1.5 -bottom-0.5" : "w-1 h-1 -bottom-1"
                   }`}
                 />
+              )}
+              {app === "chats" && unreadChatCount > 0 && (
+                <motion.span
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                  className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow-lg shadow-rose-500/60 border border-white/30 z-20 pointer-events-none select-none"
+                >
+                  {unreadChatCount > 99 ? "99+" : unreadChatCount}
+                </motion.span>
               )}
             </motion.button>
 
@@ -180,7 +191,7 @@ export default function Dock() {
             className={`relative flex flex-col items-center justify-center shrink-0 ${size} rounded-2xl transition-colors cursor-pointer`}
             style={{ background: "linear-gradient(160deg, #8892a633, #8892a618)", border: "1px solid #8892a630" }}
           >
-            <GIconTrash size={effectiveCompact ? 15 : 20} color="#8892A6" />
+            <GIconTrash size={isMobile ? 20 : effectiveCompact ? 15 : 20} color="#8892A6" />
           </motion.button>
           <AnimatePresence>
             {hoveredApp === "trash" && !isMobile && (

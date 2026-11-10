@@ -98,6 +98,8 @@ export default function Settings() {
     toggleCompact,
     glassAlpha,
     setGlassAlpha,
+    windowIndicators,
+    toggleWindowIndicators,
     resetDefaults,
     openApp,
     openSpotlight,
@@ -223,6 +225,17 @@ export default function Settings() {
               </button>
             ))}
           </div>
+        </section>
+      )}
+
+      {/* Window Controls Indicators (macOS Traffic Light Symbols) */}
+      {osMode === "mac" && (
+        <section className="space-y-2">
+          <ToggleRow
+            label="Window button indicators (Show ×, −, + glyphs inside close, minimize & maximize buttons)"
+            checked={windowIndicators}
+            onToggle={toggleWindowIndicators}
+          />
         </section>
       )}
 

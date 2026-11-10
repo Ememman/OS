@@ -116,7 +116,6 @@ export default function ArcadeLeaderboard({ onClose }: { onClose?: () => void })
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
               <span>Global Arcade Leaderboard</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Live Synced via Socket.IO" />
             </h3>
             <p className="text-[11px] text-white/50">Real-time high scores across all Portfolio OS players</p>
           </div>

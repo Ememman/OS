@@ -93,14 +93,13 @@ export default function ControlCenter() {
           {/* API & Network Status */}
           <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <div className="w-7 h-7 aspect-square shrink-0 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+              <div className="w-7 h-7 aspect-square shrink-0 rounded-full bg-accent/20 text-accent flex items-center justify-center">
                 <GIconSignal size={14} />
               </div>
-              <span className="w-2 h-2 aspect-square shrink-0 rounded-full bg-emerald-400 animate-pulse" />
             </div>
             <div className="mt-2">
               <div className="font-semibold text-white/90 text-[11px]">API Gateway</div>
-              <div className="text-[10px] text-emerald-400/90 font-medium">Connected · Live</div>
+              <div className="text-[10px] text-accent font-medium">Connected · Ready</div>
             </div>
           </div>
 

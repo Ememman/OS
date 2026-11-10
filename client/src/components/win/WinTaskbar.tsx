@@ -242,7 +242,7 @@ function DateFlyout({ onClose }: { onClose: () => void }) {
 }
 
 export default function WinTaskbar() {
-  const { openApp, windows, focusWindow, toggleSpotlight, toggleControlCenter, controlCenterOpen, toggleMissionControl, missionControlOpen } = useOS();
+  const { openApp, windows, focusWindow, toggleSpotlight, toggleControlCenter, controlCenterOpen, toggleMissionControl, missionControlOpen, unreadChatCount } = useOS();
   const [panel, setPanel] = useState<"start" | "tray" | "weather" | "date" | null>(null);
   const isMobile = useIsMobile();
   const [time, setTime] = useState("");
@@ -272,11 +272,11 @@ export default function WinTaskbar() {
       ]
     : TASKBAR_ITEMS;
 
-  const btnSize = isMobile ? "w-8.5 h-8.5" : "w-10 h-10";
-  const iconSize = isMobile ? 15 : 18;
+  const btnSize = isMobile ? "w-10 h-10" : "w-10 h-10";
+  const iconSize = isMobile ? 20 : 18;
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 h-12 bg-[#0a0e1a]/92 backdrop-blur-2xl border-t border-white/10 flex items-center justify-between px-1.5 sm:px-3 z-[900] select-none">
+    <div className="fixed bottom-0 left-0 right-0 h-12 bg-[#0a0e1a]/92 backdrop-blur-2xl border-t border-white/10 flex items-center justify-between px-1.5 sm:px-3 z-[900] select-none">
       {/* 1. Left Section: Weather chip on desktop */}
       <div className="hidden md:flex items-center flex-1 min-w-0 basis-0">
         <button
@@ -351,6 +351,11 @@ export default function WinTaskbar() {
                 <Icon size={iconSize} color={color} />
                 {isOpen && (
                   <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-3.5 h-0.5 rounded-full bg-accent" />
+                )}
+                {app === "chats" && unreadChatCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center shadow-md shadow-rose-500/60 border border-white/20 z-20 pointer-events-none select-none">
+                    {unreadChatCount > 99 ? "99+" : unreadChatCount}
+                  </span>
                 )}
               </button>
             );

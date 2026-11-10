@@ -86,6 +86,11 @@ interface OSState {
   toggleCompact: () => void;
   dockPosition: DockPosition;
   setDockPosition: (pos: DockPosition) => void;
+  windowIndicators: boolean;
+  toggleWindowIndicators: () => void;
+  unreadChatCount: number;
+  incrementUnreadChat: () => void;
+  clearUnreadChat: () => void;
   setAccent: (value: string) => void;
   setWallpaper: (id: string) => void;
   toggleMotion: () => void;
@@ -400,7 +405,7 @@ export const useOS = create<OSState>((set, get) => ({
   togglePowerDialog: () => set((s) => ({ powerDialogOpen: !s.powerDialogOpen })),
 
   resetDefaults: () => {
-    ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift"].forEach((k) =>
+    ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift", "os_window_indicators"].forEach((k) =>
       localStorage.removeItem(k)
     );
     window.location.reload();
@@ -418,6 +423,17 @@ export const useOS = create<OSState>((set, get) => ({
     localStorage.setItem("os_dock_position", pos);
     set({ dockPosition: pos });
   },
+
+  windowIndicators: localStorage.getItem("os_window_indicators") === "on",
+  toggleWindowIndicators: () => {
+    const next = !get().windowIndicators;
+    localStorage.setItem("os_window_indicators", next ? "on" : "off");
+    set({ windowIndicators: next });
+  },
+
+  unreadChatCount: 0,
+  incrementUnreadChat: () => set((s) => ({ unreadChatCount: s.unreadChatCount + 1 })),
+  clearUnreadChat: () => set({ unreadChatCount: 0 }),
 
   setThemeMode: () => {
     const palette = harmonizeAccentColor(DEFAULT_ACCENT, true);
@@ -444,6 +460,9 @@ export const useOS = create<OSState>((set, get) => ({
 
   openApp: (app) => {
     if (get().systemSounds) soundFx.playOpen();
+    if (app === "chats") {
+      get().clearUnreadChat();
+    }
     const existing = get().windows.find((w) => w.app === app);
     if (existing) {
       get().focusWindow(existing.id);
@@ -483,6 +502,10 @@ export const useOS = create<OSState>((set, get) => ({
   focusWindow: (id) => {
     z += 1;
     const zz = z;
+    const targetWin = get().windows.find((w) => w.id === id);
+    if (targetWin?.app === "chats") {
+      get().clearUnreadChat();
+    }
     set({
       windows: get().windows.map((w) => (w.id === id ? { ...w, z: zz } : w)),
     });
