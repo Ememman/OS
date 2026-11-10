@@ -96,7 +96,6 @@ export default function ControlCenter() {
               <div className="w-7 h-7 aspect-square shrink-0 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
                 <GIconSignal size={14} />
               </div>
-              <span className="w-2 h-2 aspect-square shrink-0 rounded-full bg-emerald-400 animate-pulse" />
             </div>
             <div className="mt-2">
               <div className="font-semibold text-white/90 text-[11px]">API Gateway</div>
