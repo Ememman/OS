@@ -33,11 +33,11 @@ export default function DesktopIcon({ icon: Icon, label, onOpen, style, color }:
       onClick={handleClick}
       onDoubleClick={onOpen}
       onBlur={() => setSelected(false)}
-      style={style}
+      style={{ touchAction: "pan-y", ...style }}
       whileHover={isMobile ? undefined : { scale: 1.07, y: -2 }}
       whileTap={{ scale: 0.94 }}
       transition={{ type: "spring", stiffness: 450, damping: 22 }}
-      className={`group flex flex-col items-center gap-1 sm:gap-1.5 w-full max-w-[84px] sm:w-20 py-1.5 sm:py-2 rounded-xl outline-none cursor-pointer select-none ${
+      className={`group flex flex-col items-center gap-1 sm:gap-1.5 w-full max-w-[84px] sm:w-20 py-1.5 sm:py-2 rounded-xl outline-none cursor-pointer select-none touch-pan-y ${
         selected ? "bg-white/10 ring-1 ring-white/20" : "hover:bg-white/5"
       }`}
     >

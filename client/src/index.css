@@ -22,7 +22,8 @@
 }
 
 * { box-sizing: border-box; }
-html, body, #root { height: 100%; overscroll-behavior: none; overflow: hidden; }
+html, body { height: 100%; overscroll-behavior-y: none; }
+#root { height: 100%; width: 100%; overflow: hidden; position: relative; }
 
 body {
   margin: 0;
