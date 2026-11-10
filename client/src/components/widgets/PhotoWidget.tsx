@@ -9,8 +9,9 @@ export default function PhotoWidget() {
     <div className="w-full md:w-48 h-48 rounded-2xl overflow-hidden shadow-xl border border-white/10 relative group shrink-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-black">
       <img
         src={photoUrl || DEFAULT_PHOTO}
-        alt="Placeholder — swap with your own photo"
-        className="w-full h-full object-cover"
+        alt=""
+        draggable={false}
+        className="w-full h-full object-cover pointer-events-none select-none"
         onError={(e) => {
           e.currentTarget.style.display = "none";
         }}

@@ -153,8 +153,6 @@ export default function App() {
   if (!booted) return <BootScreen />;
   if (!osChosen) return <OsPicker />;
 
-  const hasActiveWindow = windows.some((w) => !w.minimized);
-
   return (
     <div
       onContextMenu={handleDesktopContextMenu}
@@ -162,19 +160,20 @@ export default function App() {
     >
       <Wallpaper />
       <GlobalAudioPlayer />
-      {!isWin && (!isMobile || !hasActiveWindow) && <MenuBar />}
+      {!isWin && <MenuBar />}
 
       {/* Desktop Content & Widgets */}
       {isTablet ? (
-        /* Mobile & Tablet: Unified scrollable desktop surface — desktop application icons are NOT fixed, they scroll naturally with all widgets */
+        /* Mobile & Tablet: Unified natural scroll container — desktop icons scroll with widgets and are NOT fixed */
         <div
           className={`absolute ${
-            !isWin && (!isMobile || !hasActiveWindow) ? "top-9" : "top-2"
-          } left-0 right-0 bottom-0 overflow-y-auto overscroll-contain thin-scroll px-3 pt-2 pb-28 flex flex-col items-center gap-4 z-10 pointer-events-auto`}
+            !isWin ? "top-8 sm:top-9" : "top-2"
+          } left-0 right-0 bottom-0 overflow-y-auto overscroll-contain thin-scroll px-3 pt-2 pb-44 flex flex-col items-center gap-4 z-10 pointer-events-auto`}
+          style={{ touchAction: "pan-y" }}
         >
-          {/* Applications on desktop — 4-column responsive grid that scrolls with content */}
+          {/* Applications on desktop — responsive grid that scrolls with content and is not fixed */}
           <div
-            className="grid grid-cols-4 items-center justify-items-center gap-2 w-full max-w-sm reveal"
+            className="grid grid-cols-4 min-[390px]:grid-cols-5 sm:flex sm:flex-wrap items-center justify-items-center gap-2 sm:gap-3 w-full max-w-sm sm:max-w-none reveal"
             style={{ animationDelay: "50ms" }}
           >
             <DesktopIcon icon={GIconResume} label="Resume" color="#4B5A73" onOpen={() => openApp("resume")} />
@@ -189,7 +188,7 @@ export default function App() {
 
           {/* Widget stack below icons — macOS style only */}
           {!isWin && widgetsVisible && (
-            <div className="w-full flex flex-col items-center gap-4 pb-8">
+            <div className="w-full flex flex-col items-center gap-4">
               <div className="reveal w-full flex justify-center" style={{ animationDelay: "120ms" }}><PhotoWidget /></div>
               <div className="reveal w-full flex justify-center" style={{ animationDelay: "150ms" }}><WeatherWidget /></div>
               <div className="reveal w-full flex justify-center" style={{ animationDelay: "180ms" }}><ClockWidget /></div>
@@ -198,6 +197,9 @@ export default function App() {
               <div className="reveal w-full flex justify-center" style={{ animationDelay: "270ms" }}><ShortcutTiles /></div>
             </div>
           )}
+
+          {/* Generous bottom scroll clearance so every widget sits completely clear of the fixed dock footer */}
+          <div className="h-28 shrink-0 w-full" aria-hidden="true" />
         </div>
       ) : (
         /* Desktop: Spacious multi-column layout with scrollable widget columns so lower widgets are never cut off */
@@ -223,14 +225,14 @@ export default function App() {
           {!isWin && widgetsVisible && (
             <>
               {/* Left column: photo, shortcuts below it, then note */}
-              <div className={`absolute top-36 ${macDockLeft ? "left-24" : "left-6"} flex flex-col gap-4 max-h-[calc(100vh-160px)] overflow-y-auto overscroll-contain thin-scroll pr-1 pb-16 pointer-events-auto`}>
+              <div className={`absolute top-36 ${macDockLeft ? "left-24" : "left-6"} flex flex-col gap-4 max-h-[calc(100vh-160px)] overflow-y-auto overscroll-contain thin-scroll pr-1 pb-20 pointer-events-auto`}>
                 <div className="reveal" style={{ animationDelay: "140ms" }}><PhotoWidget /></div>
                 <div className="reveal" style={{ animationDelay: "190ms" }}><ShortcutTiles /></div>
                 <div className="reveal" style={{ animationDelay: "240ms" }}><NoteWidget /></div>
               </div>
 
               {/* Right column: weather, clock, calendar */}
-              <div className={`absolute top-12 ${macDockRight ? "right-24" : "right-6"} flex flex-col gap-4 items-end max-h-[calc(100vh-100px)] overflow-y-auto overscroll-contain thin-scroll pl-1 pb-16 pointer-events-auto`}>
+              <div className={`absolute top-12 ${macDockRight ? "right-24" : "right-6"} flex flex-col gap-4 items-end max-h-[calc(100vh-100px)] overflow-y-auto overscroll-contain thin-scroll pl-1 pb-20 pointer-events-auto`}>
                 <div className="reveal" style={{ animationDelay: "170ms" }}><WeatherWidget /></div>
                 <div className="reveal" style={{ animationDelay: "220ms" }}><ClockWidget /></div>
                 <div className="reveal" style={{ animationDelay: "270ms" }}><AgendaWidget /></div>
@@ -260,7 +262,7 @@ export default function App() {
         );
       })}
 
-      {isWin ? (!isMobile || !hasActiveWindow) && <WinTaskbar /> : (!isMobile || !hasActiveWindow) && <Dock />}
+      {isWin ? <WinTaskbar /> : <Dock />}
       <MiniPlayer />
       <SpotlightSearch />
       <MissionControl />

@@ -86,36 +86,36 @@ const SKILL_CATEGORIES = [
     title: "Frontend & Mobile",
     description: "Component architecture, native bridges, state machines, and styling",
     skills: [
-      { name: "React 19 / Modern Hooks", level: 96, category: "Frontend" },
-      { name: "React Native & Expo", level: 93, category: "Mobile" },
-      { name: "TypeScript (Strict)", level: 92, category: "Language" },
-      { name: "Tailwind CSS v4 & Motion", level: 95, category: "Styling" },
-      { name: "Next.js & App Router", level: 86, category: "Framework" },
-      { name: "Zustand & Context API", level: 92, category: "State" },
+      { name: "React 19 / Modern Hooks", level: 60, category: "Frontend" },
+      { name: "React Native & Expo", level: 50, category: "Mobile" },
+      { name: "TypeScript (Strict)", level: 50, category: "Language" },
+      { name: "Tailwind CSS v4 & Motion", level: 40, category: "Styling" },
+      { name: "Next.js & App Router", level: 10, category: "Framework" },
+      { name: "Zustand & Context API", level: 20, category: "State" },
     ]
   },
   {
     title: "Backend & Distributed Systems",
     description: "Event-driven APIs, realtime sockets, auth protocols, and architectures",
     skills: [
-      { name: "Node.js & Express 5", level: 93, category: "Backend" },
-      { name: "Socket.IO WebSockets", level: 95, category: "Realtime" },
-      { name: "NestJS Modular Architecture", level: 88, category: "Architecture" },
-      { name: "PHP MVC Architecture", level: 87, category: "Backend" },
-      { name: "RESTful API Engineering", level: 95, category: "APIs" },
-      { name: "JWT & Role-Based Auth", level: 92, category: "Security" },
+      { name: "Node.js & Express 5", level: 50, category: "Backend" },
+      { name: "Socket.IO WebSockets", level: 50, category: "Realtime" },
+      { name: "NestJS Modular Architecture", level: 10, category: "Architecture" },
+      { name: "PHP MVC Architecture", level: 60, category: "Backend" },
+      { name: "RESTful API Engineering", level: 50, category: "APIs" },
+      { name: "JWT & Role-Based Auth", level: 20, category: "Security" },
     ]
   },
   {
     title: "Databases & DevOps",
     description: "Data modeling, query optimization, version control, and containerization",
     skills: [
-      { name: "MongoDB & Mongoose Aggregation", level: 92, category: "NoSQL" },
-      { name: "MySQL & Relational Schema", level: 89, category: "SQL" },
-      { name: "Git & GitHub Collaboration", level: 95, category: "VCS" },
-      { name: "Docker & Container Workflows", level: 83, category: "DevOps" },
-      { name: "Vite & Build Tooling", level: 95, category: "Tooling" },
-      { name: "Linux / POSIX Environments", level: 88, category: "System" },
+      { name: "MongoDB & Mongoose Aggregation", level: 50, category: "NoSQL" },
+      { name: "MySQL & Relational Schema", level: 50, category: "SQL" },
+      { name: "Git & GitHub Collaboration", level: 90, category: "VCS" },
+      { name: "Docker & Container Workflows", level: 10, category: "DevOps" },
+      { name: "Vite & Build Tooling", level: 50, category: "Tooling" },
+      { name: "Linux / POSIX Environments", level: 10, category: "System" },
     ]
   }
 ];
@@ -399,7 +399,7 @@ export default function Resume() {
         setSentSuccess(true);
         setContactErrors([]);
         if (systemSounds) soundFx.playNotification();
-        notify("Inquiry Sent!", "Thank you! Emman will review your message shortly.");
+        notify("Inquiry Sent!", "Thank you! James will review your message shortly.");
       } else {
         const errs = data.details || [data.error || "Failed to submit inquiry."];
         setContactErrors(errs);
@@ -407,7 +407,7 @@ export default function Resume() {
       }
     } catch {
       setSentSuccess(true);
-      notify("Inquiry Recorded", "Thank you! Message saved for Emman.");
+      notify("Inquiry Recorded", "Thank you! Message saved for James.");
     } finally {
       setSending(false);
     }
@@ -421,7 +421,7 @@ export default function Resume() {
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-white/95">
-                Emman Mendoza
+                James Mendoza
               </h1>
               <span className="text-xs text-white/50 font-medium hidden sm:inline">
                 (James Emmanuel Mendoza)
@@ -954,7 +954,7 @@ export default function Resume() {
 
       {/* Footer bar */}
       <div className="border-t border-white/10 px-4 py-3 bg-white/[0.02] flex items-center justify-between text-[11px] text-white/50 shrink-0 mb-16 sm:mb-4">
-        <span>Emman Mendoza · Curriculum Vitae</span>
+        <span>James Emmanuel Mendoza · Curriculum Vitae</span>
         <div className="flex items-center gap-3">
           <a
             href={GITHUB_URL}

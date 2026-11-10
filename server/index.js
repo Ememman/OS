@@ -95,7 +95,7 @@ setInterval(() => {
 
 const generalLimiter = createRateLimiter({ windowMs: 60000, max: 200, message: "General API rate limit reached. Please wait a minute." });
 const strictSubmissionLimiter = createRateLimiter({ windowMs: 60000, max: 25, message: "Submission frequency limit reached. Please wait a minute before trying again." });
-const leaderboardLimiter = createRateLimiter({ windowMs: 60000, max: 180, message: "Leaderboard update rate limit reached." });
+const leaderboardLimiter = createRateLimiter({ windowMs: 60000, max: 240, message: "Leaderboard update rate limit reached." });
 
 app.use("/api", generalLimiter);
 

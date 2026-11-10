@@ -22,7 +22,8 @@
 }
 
 * { box-sizing: border-box; }
-html, body, #root { height: 100%; overscroll-behavior: none; overflow: hidden; }
+html, body { height: 100%; overscroll-behavior-y: none; }
+#root { height: 100%; width: 100%; overflow: hidden; position: relative; }
 
 body {
   margin: 0;
@@ -419,7 +420,6 @@ body {
 .allow-select { user-select: text; }
 ::selection { background: rgba(var(--accent), 0.35); }
 
-.thin-scroll { -webkit-overflow-scrolling: touch; }
 .thin-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
 .thin-scroll::-webkit-scrollbar-track { background: transparent; }
 .thin-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 8px; }

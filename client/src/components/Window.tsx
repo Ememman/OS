@@ -249,7 +249,7 @@ export default function Window({ win, children }) {
 
   const forceFull = win.maximized || isMobile;
   const isMac = !isWin;
-  const dockBottomClearance = isMobile ? 0 : isWin ? 64 : dockPosition === "bottom" ? 76 : 8;
+  const dockBottomClearance = isMobile ? (isWin ? 54 : 70) : isWin ? 64 : dockPosition === "bottom" ? 76 : 8;
   const dockLeftClearance = isMac && !isMobile && dockPosition === "left" ? 96 : 8;
   const dockRightClearance = isMac && !isMobile && dockPosition === "right" ? 96 : 8;
 
@@ -259,7 +259,15 @@ export default function Window({ win, children }) {
 
   const baseStyle = forceFull
     ? isMobile
-      ? { top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%", zIndex: win.z }
+      ? {
+          top: isWin ? 0 : 32,
+          left: 0,
+          right: 0,
+          bottom: isWin ? 54 : 70,
+          width: "100%",
+          height: "auto",
+          zIndex: win.z,
+        }
       : isWin
         ? { top: 8, left: 8, right: 8, bottom: 64, width: "auto", height: "auto", zIndex: win.z }
         : { top: 30, left: dockLeftClearance, right: dockRightClearance, bottom: dockBottomClearance, width: "auto", height: "auto", zIndex: win.z }
