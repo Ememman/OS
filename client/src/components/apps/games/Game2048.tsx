@@ -131,8 +131,57 @@ export default function Game2048() {
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
 
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const syncTimerRef = useRef<any>(null);
+
+  const syncScoreToBackend = useCallback(async (scoreToSync: number) => {
+    if (scoreToSync <= 0) return;
+    const cleanName = playerName.trim() || getEffectiveChatName();
+    saveChatName(cleanName);
+    localStorage.setItem("os_player_name", cleanName);
+
+    const maxTile = Math.max(...board.flat(), 0);
+
+    try {
+      const res = await fetch(`${API_URL}/api/games/leaderboard`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          game: "2048",
+          player: cleanName,
+          score: scoreToSync,
+          details: `Max Tile: ${maxTile}`
+        })
+      });
+      if (res.ok) {
+        setScoreSubmitted(true);
+      }
+    } catch {}
+  }, [board, playerName]);
+
+  // Real-time automatic score syncing to global leaderboard as the user plays
+  useEffect(() => {
+    if (score > 0) {
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+      syncTimerRef.current = setTimeout(() => {
+        syncScoreToBackend(score);
+      }, 1000);
+    }
+    return () => {
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+    };
+  }, [score, syncScoreToBackend]);
+
+  // Immediate sync on Game Over or Reaching 2048
+  useEffect(() => {
+    if ((gameOver || won) && score > 0) {
+      syncScoreToBackend(score);
+    }
+  }, [gameOver, won, score, syncScoreToBackend]);
 
   const resetGame = () => {
+    if (score > 0) {
+      syncScoreToBackend(score);
+    }
     if (systemSounds) soundFx.playClick();
     let b = createEmptyBoard();
     b = spawnRandomTile(b);
@@ -147,36 +196,16 @@ export default function Game2048() {
 
   const handleSubmitScore = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (submittingScore || scoreSubmitted || score <= 0) return;
+    if (submittingScore || score <= 0) return;
 
     setSubmittingScore(true);
     const cleanName = playerName.trim() || getEffectiveChatName();
     saveChatName(cleanName);
     localStorage.setItem("os_player_name", cleanName);
 
-    const maxTile = Math.max(...board.flat(), 0);
-
-    try {
-      const res = await fetch(`${API_URL}/api/games/leaderboard`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          game: "2048",
-          player: cleanName,
-          score,
-          details: `Max Tile: ${maxTile} (${score} pts)`
-        })
-      });
-
-      if (res.ok) {
-        setScoreSubmitted(true);
-        notify("Score Posted!", `Your 2048 score of ${score} was added to the leaderboard!`, "success");
-      }
-    } catch {
-      notify("Network Error", "Could not reach leaderboard API.", "warning");
-    } finally {
-      setSubmittingScore(false);
-    }
+    await syncScoreToBackend(score);
+    setSubmittingScore(false);
+    notify("Score Posted!", `Your 2048 score of ${score} is live on the leaderboard!`, "success");
   };
 
   const move = useCallback(
