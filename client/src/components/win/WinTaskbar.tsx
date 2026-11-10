@@ -272,11 +272,11 @@ export default function WinTaskbar() {
       ]
     : TASKBAR_ITEMS;
 
-  const btnSize = isMobile ? "w-8.5 h-8.5" : "w-10 h-10";
-  const iconSize = isMobile ? 15 : 18;
+  const btnSize = isMobile ? "w-10 h-10" : "w-10 h-10";
+  const iconSize = isMobile ? 20 : 18;
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 h-12 bg-[#0a0e1a]/92 backdrop-blur-2xl border-t border-white/10 flex items-center justify-between px-1.5 sm:px-3 z-[900] select-none">
+    <div className="fixed bottom-0 left-0 right-0 h-12 bg-[#0a0e1a]/92 backdrop-blur-2xl border-t border-white/10 flex items-center justify-between px-1.5 sm:px-3 z-[900] select-none">
       {/* 1. Left Section: Weather chip on desktop */}
       <div className="hidden md:flex items-center flex-1 min-w-0 basis-0">
         <button

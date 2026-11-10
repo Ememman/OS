@@ -254,7 +254,7 @@ export default function Window({ win, children }) {
   const macRight = !isWin && dockPosition === "right" && !isMobile ? dockClearance : 8;
   const baseStyle = forceFull
     ? isMobile
-      ? { top: isWin ? 4 : 32, left: 4, right: 4, bottom: isWin ? 52 : 68, width: "auto", height: "auto", zIndex: win.z }
+      ? { top: isWin ? 4 : 36, left: 4, right: 4, bottom: isWin ? 54 : 76, width: "auto", height: "auto", zIndex: win.z }
       : isWin
         ? { top: 8, left: 8, right: 8, bottom: 64, width: "auto", height: "auto", zIndex: win.z }
         : { top: 30, left: macLeft, right: macRight, bottom: 8, width: "auto", height: "auto", zIndex: win.z }

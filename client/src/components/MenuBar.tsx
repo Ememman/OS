@@ -176,7 +176,7 @@ export default function MenuBar() {
   });
 
   return (
-    <div className="absolute top-0 left-0 right-0 h-8 z-[999] glass flex items-center justify-between px-3 sm:px-4 text-[14px] text-white/95 select-none shadow-md">
+    <div className="fixed top-0 left-0 right-0 h-8 z-[999] glass flex items-center justify-between px-3 sm:px-4 text-[14px] text-white/95 select-none shadow-md">
       <div className="flex items-center gap-3 sm:gap-4 min-w-0">
         {/* Apple-style OS Logo using Gravity UI */}
         <MenuDropdown
