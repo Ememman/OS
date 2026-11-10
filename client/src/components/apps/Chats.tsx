@@ -283,6 +283,14 @@ export default function Chats() {
   // Messenger Reaction States
   const [activeReactionMenu, setActiveReactionMenu] = useState<string | null>(null);
   const [bursts, setBursts] = useState<Array<{ id: string; messageId: string; emoji: string; xOffset: number }>>([]);
+  const [userReactions, setUserReactions] = useState<Record<string, string>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      return JSON.parse(localStorage.getItem("os_chat_user_reactions") || "{}");
+    } catch {
+      return {};
+    }
+  });
 
   const listRef = useRef<HTMLDivElement>(null);
   const typingTimeout = useRef<any>(null);
@@ -294,6 +302,42 @@ export default function Chats() {
   clientIdRef.current = clientId;
   const mySentIds = useRef<Set<string>>(new Set());
   const pendingTexts = useRef<Array<{ tempId: string; text: string; ts: number }>>([]);
+  const longPressTimer = useRef<any>(null);
+  const touchStartCoords = useRef<{ x: number; y: number } | null>(null);
+
+  const startLongPress = (id: string, e: React.TouchEvent | React.PointerEvent) => {
+    if ("button" in e && (e as React.PointerEvent).button !== 0) return;
+    const clientX = "touches" in e ? (e as React.TouchEvent).touches[0].clientX : (e as React.PointerEvent).clientX;
+    const clientY = "touches" in e ? (e as React.TouchEvent).touches[0].clientY : (e as React.PointerEvent).clientY;
+    touchStartCoords.current = { x: clientX, y: clientY };
+
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    longPressTimer.current = setTimeout(() => {
+      setActiveReactionMenu(id);
+      if (chatSound) soundFx.playPop();
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        try {
+          navigator.vibrate(35);
+        } catch {}
+      }
+    }, 380);
+  };
+
+  const cancelLongPressIfMoved = (e: React.TouchEvent | React.PointerEvent) => {
+    if (!touchStartCoords.current) return;
+    const clientX = "touches" in e ? (e as React.TouchEvent).touches[0].clientX : (e as React.PointerEvent).clientX;
+    const clientY = "touches" in e ? (e as React.TouchEvent).touches[0].clientY : (e as React.PointerEvent).clientY;
+    const dist = Math.hypot(clientX - touchStartCoords.current.x, clientY - touchStartCoords.current.y);
+    if (dist > 8) {
+      if (longPressTimer.current) clearTimeout(longPressTimer.current);
+      touchStartCoords.current = null;
+    }
+  };
+
+  const endLongPress = () => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    touchStartCoords.current = null;
+  };
 
   useOutsideClick(usersModalRef, () => setShowUsersModal(false));
 
@@ -323,6 +367,19 @@ export default function Chats() {
       saveChatName(chosenName);
 
       if (history) {
+        setUserReactions((prev) => {
+          const merged = { ...prev };
+          for (const h of history) {
+            if (h.userReactions && h.userReactions[cur.clientId]) {
+              merged[h.id] = h.userReactions[cur.clientId];
+            }
+          }
+          try {
+            localStorage.setItem("os_chat_user_reactions", JSON.stringify(merged));
+          } catch {}
+          return merged;
+        });
+
         setMessages(
           history.map((h: any) => ({
             ...h,
@@ -390,13 +447,20 @@ export default function Chats() {
         playPing();
       }
     };
-    const onReacted = ({ id, emoji, reactions, senderId }: any) => {
+    const onReacted = ({ id, emoji, reactions, senderId, userReactions: srvUserReactions }: any) => {
       touchChatActivity();
       const canonicalKey = UNICODE_TO_KEY[emoji] || emoji || "heart";
 
-      // If sent by this client, we already triggered local burst and sound in reactToMessage
       const isFromMe = Boolean(senderId && senderId === clientIdRef.current);
-      if (!isFromMe) {
+      if (isFromMe) {
+        setUserReactions((prev) => {
+          const next = { ...prev, [id]: canonicalKey };
+          try {
+            localStorage.setItem("os_chat_user_reactions", JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+      } else {
         const burstId = `burst-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
         setBursts((prev) => [
           ...prev,
@@ -419,7 +483,9 @@ export default function Chats() {
             nextReactions = normalizeReactions(x.reactions);
             nextReactions[canonicalKey] = (nextReactions[canonicalKey] || 0) + 1;
           }
-          return { ...x, reactions: nextReactions };
+          const nextUserReactions = { ...(srvUserReactions || x.userReactions || {}) };
+          if (senderId) nextUserReactions[senderId] = canonicalKey;
+          return { ...x, reactions: nextReactions, userReactions: nextUserReactions };
         })
       );
     };
@@ -528,6 +594,25 @@ export default function Chats() {
   const reactToMessage = (id: string, rawKey: string) => {
     touchChatActivity();
     const canonicalKey = UNICODE_TO_KEY[rawKey] || rawKey;
+    const currentReaction = userReactions[id];
+
+    // If the user already reacted on this message, they can no longer react using any other emojis
+    if (currentReaction) {
+      if (currentReaction !== canonicalKey) {
+        notify("Already Reacted", "You have already reacted to this message and cannot use other emojis.", "info", 2500);
+      }
+      return;
+    }
+
+    // Persist this user's reaction locally
+    setUserReactions((prev) => {
+      const next = { ...prev, [id]: canonicalKey };
+      try {
+        localStorage.setItem("os_chat_user_reactions", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
     const unicodeEmoji = KEY_TO_UNICODE[canonicalKey] || canonicalKey;
 
     // Send both unicode and key so BOTH old Render server (expects ❤️) and new server accept it!
@@ -556,7 +641,8 @@ export default function Chats() {
         if (x.id === id) {
           const current = normalizeReactions(x.reactions);
           current[canonicalKey] = (current[canonicalKey] || 0) + 1;
-          return { ...x, reactions: current };
+          const userRx = { ...(x.userReactions || {}), [clientIdRef.current]: canonicalKey };
+          return { ...x, reactions: current, userReactions: userRx };
         }
         return x;
       })
@@ -749,25 +835,18 @@ export default function Chats() {
       {/* Chat Topbar (Sticky Header) */}
       <div className="chat-topbar chat-header flex items-center justify-between px-3.5 py-2.5 border-b border-[var(--chat-border)] bg-[var(--chat-panel)] gap-2 shrink-0 sticky top-0 z-20 shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <span
-              role="status"
-              aria-label={connected ? "Connected" : connecting ? "Connecting" : "Offline"}
-              className={`block w-2.5 h-2.5 rounded-full ${
-                connected
-                  ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]"
-                  : connecting
-                  ? "bg-amber-400 animate-pulse"
-                  : "bg-zinc-400"
-              }`}
-            />
-          </div>
-          <div>
-            <div className="font-semibold text-xs leading-none text-[var(--chat-text)]">Chats</div>
-            <div className="text-[10px] chat-muted mt-0.5">
-              {connected ? "Live & connected" : connecting ? "Reconnecting…" : "Offline mode · Bot active"}
-            </div>
-          </div>
+          <div className="font-semibold text-xs leading-none text-[var(--chat-text)]">Chats</div>
+          <span
+            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+              connected
+                ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                : connecting
+                ? "bg-amber-500/15 text-amber-300 border-amber-500/30 animate-pulse"
+                : "bg-white/10 text-white/50 border-white/15"
+            }`}
+          >
+            {connected ? "Active" : connecting ? "Connecting…" : "Offline"}
+          </span>
         </div>
 
         {/* Right Tools Group */}
@@ -779,13 +858,12 @@ export default function Chats() {
                 setShowUsersModal(!showUsersModal);
                 touchChatActivity();
               }}
-              className="chat-icon-button !min-h-7 !h-7 !min-w-0 px-2.5 rounded-full text-xs gap-1.5 cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10"
-              title="View online guests"
-              aria-label="View online guests"
+              className="chat-icon-button !min-h-7 !h-7 !min-w-0 px-2.5 rounded-full text-xs gap-1.5 cursor-pointer bg-white/5 hover:bg-white/10 border border-white/10 transition"
+              title="View active guests"
+              aria-label="View active guests"
             >
-              <span className={`w-2 h-2 rounded-full ${connected ? "bg-emerald-400 animate-pulse" : "bg-amber-400"}`} />
-              <GIconPersons size={12} aria-hidden="true" />
-              <span className="font-semibold">{connected ? Math.max(1, online) : 1}</span>
+              <GIconPersons size={13} className={connected ? "text-emerald-400" : "text-amber-400"} aria-hidden="true" />
+              <span className="font-semibold">{connected ? Math.max(1, online, activeUsers.length) : 1}</span>
             </button>
 
             {/* Active Users Dropdown */}
@@ -801,14 +879,15 @@ export default function Chats() {
                 >
                   <div className="font-semibold text-[11px] text-white/60 px-1 pb-1.5 border-b border-white/10 mb-1.5 flex items-center justify-between">
                     <span>Active People</span>
-                    <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px]">
-                      {connected ? Math.max(1, online) : 1} online
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 text-[10px] font-medium">
+                      {connected ? Math.max(1, online, activeUsers.length) : 1} active
                     </span>
                   </div>
                   <div className="max-h-44 overflow-y-auto thin-scroll space-y-1">
                     {activeUsers && activeUsers.length > 0 ? (
                       activeUsers.map((u, i) => {
                         const isMe = (u.clientId && u.clientId === clientId) || u.name === name;
+                        const isIdle = Boolean(u.lastActive && Date.now() - u.lastActive > 120000);
                         return (
                           <div
                             key={u.clientId || i}
@@ -826,11 +905,19 @@ export default function Chats() {
                               {u.name}
                             </span>
                             {isMe ? (
-                              <span className="text-[10px] text-accent font-semibold ml-auto shrink-0 bg-accent/20 px-1.5 py-0.2 rounded">
-                                you
+                              <span className="text-[10px] text-accent font-semibold ml-auto shrink-0 bg-accent/15 border border-accent/25 px-2 py-0.5 rounded-full">
+                                Active · you
                               </span>
                             ) : (
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 ml-auto" />
+                              <span
+                                className={`text-[10px] font-medium ml-auto shrink-0 px-2 py-0.5 rounded-full border ${
+                                  isIdle
+                                    ? "text-amber-300/80 bg-amber-500/10 border-amber-500/20"
+                                    : "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+                                }`}
+                              >
+                                {isIdle ? "Idle" : "Active"}
+                              </span>
                             )}
                           </div>
                         );
@@ -843,8 +930,8 @@ export default function Chats() {
                           Y
                         </span>
                         <span className="truncate text-white/90 font-medium">{name || "Guest"}</span>
-                        <span className="text-[10px] text-accent font-semibold ml-auto shrink-0 bg-accent/20 px-1.5 py-0.2 rounded">
-                          you
+                        <span className="text-[10px] text-accent font-semibold ml-auto shrink-0 bg-accent/15 border border-accent/25 px-2 py-0.5 rounded-full">
+                          Active · you
                         </span>
                       </div>
                     )}
@@ -970,6 +1057,8 @@ export default function Chats() {
           );
           const color = nameColor(m.name);
           const isPinned = pinnedList.some((p) => p.id === m.id);
+          const myReactionOnMsg = userReactions[m.id] || (m.userReactions && m.userReactions[clientId]);
+          const hasAlreadyReacted = Boolean(myReactionOnMsg);
 
           return (
             <div
@@ -1059,30 +1148,58 @@ export default function Chats() {
                         transition={{ type: "spring", stiffness: 500, damping: 25 }}
                         className={`absolute -top-12 ${
                           isSelf ? "right-0" : "left-0"
-                        } z-40 bg-[#121927]/95 backdrop-blur-2xl border border-white/20 shadow-[0_12px_36px_rgba(0,0,0,0.6)] rounded-full px-2 py-1 flex items-center gap-1 select-none`}
+                        } z-40 bg-[#121927]/95 backdrop-blur-2xl border border-white/20 shadow-[0_12px_36px_rgba(0,0,0,0.6)] rounded-full px-2 py-1 flex items-center gap-1 select-none max-w-[calc(100vw-32px)]`}
                         onClick={(e) => e.stopPropagation()}
                       >
+                        {hasAlreadyReacted && (
+                          <span className="text-[10px] text-accent font-semibold px-2 py-0.5 bg-accent/15 border border-accent/25 rounded-full mr-0.5 shrink-0 select-none">
+                            Reacted
+                          </span>
+                        )}
                         {CHAT_REACTIONS.map((r, idx) => {
                           const IconComp = r.Icon;
+                          const isMyCurrentReaction = myReactionOnMsg === r.id;
+                          const isDisabled = hasAlreadyReacted && !isMyCurrentReaction;
+
                           return (
                             <motion.button
                               key={r.id}
                               initial={{ scale: 0, y: 4 }}
                               animate={{ scale: 1, y: 0 }}
                               transition={{ delay: idx * 0.03, type: "spring", stiffness: 450, damping: 20 }}
-                              whileHover={{ scale: 1.45, y: -6 }}
-                              whileTap={{ scale: 0.85 }}
+                              whileHover={isDisabled ? undefined : { scale: 1.45, y: -6 }}
+                              whileTap={isDisabled ? undefined : { scale: 0.85 }}
+                              disabled={isDisabled}
                               onClick={() => {
+                                if (isDisabled) return;
                                 reactToMessage(m.id, r.id);
                                 setActiveReactionMenu(null);
                               }}
-                              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/15 transition-colors relative group/emo cursor-pointer"
-                              title={r.label}
-                              aria-label={`React with ${r.label}`}
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all relative group/emo ${
+                                isMyCurrentReaction
+                                  ? "bg-accent/25 ring-2 ring-accent scale-110 cursor-default"
+                                  : isDisabled
+                                  ? "opacity-30 cursor-not-allowed grayscale-[0.6]"
+                                  : "hover:bg-white/15 cursor-pointer"
+                              }`}
+                              title={
+                                isMyCurrentReaction
+                                  ? `${r.label} (Your reaction)`
+                                  : isDisabled
+                                  ? "You have already reacted to this message"
+                                  : r.label
+                              }
+                              aria-label={
+                                isMyCurrentReaction
+                                  ? `${r.label} (Your reaction)`
+                                  : isDisabled
+                                  ? `Cannot react with ${r.label}`
+                                  : `React with ${r.label}`
+                              }
                             >
-                              <IconComp size={18} className={r.color} />
+                              <IconComp size={18} className={isMyCurrentReaction ? "text-accent" : r.color} />
                               <span className="absolute -top-7 opacity-0 group-hover/emo:opacity-100 transition-opacity bg-black/90 text-[10px] text-white font-medium px-1.5 py-0.5 rounded shadow pointer-events-none whitespace-nowrap">
-                                {r.label}
+                                {isMyCurrentReaction ? `${r.label} (You)` : isDisabled ? "Already reacted" : r.label}
                               </span>
                             </motion.button>
                           );
@@ -1128,12 +1245,27 @@ export default function Chats() {
 
                   {/* The Chat Bubble */}
                   <div
-                    onDoubleClick={() => reactToMessage(m.id, "heart")}
-                    className={`chat-bubble px-3.5 py-2.5 leading-relaxed relative transition-shadow ${
+                    onPointerDown={(e) => startLongPress(m.id, e)}
+                    onPointerMove={cancelLongPressIfMoved}
+                    onPointerUp={endLongPress}
+                    onPointerCancel={endLongPress}
+                    onContextMenu={(e) => {
+                      if (activeReactionMenu === m.id) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onDoubleClick={() => {
+                      if (hasAlreadyReacted && myReactionOnMsg !== "heart") {
+                        notify("Already Reacted", "You have already reacted to this message and cannot use other emojis.", "info", 2000);
+                        return;
+                      }
+                      reactToMessage(m.id, "heart");
+                    }}
+                    className={`chat-bubble px-3.5 py-2.5 leading-relaxed relative transition-shadow select-none ${
                       isSelf ? "chat-bubble-self shadow-md shadow-accent/20" : ""
                     } ${m.pending ? "chat-bubble-pending" : ""} ${m.failed ? "chat-bubble-failed" : ""}`}
-                    style={{ fontSize: `${15 * textScale}px` }}
-                    title="Double-click to Love (❤️)"
+                    style={{ fontSize: `${15 * textScale}px`, touchAction: "manipulation" }}
+                    title="Hold on mobile or double-click to react"
                   >
                     {m.text}
                   </div>
@@ -1178,22 +1310,33 @@ export default function Chats() {
                 {/* Reaction Badges under Bubble */}
                 {m.reactions && Object.keys(m.reactions).length > 0 && (
                   <div className={`flex flex-wrap gap-1 mt-1 ${isSelf ? "justify-end" : "justify-start"}`}>
-                    {Object.entries(m.reactions).map(([emo, count]: any) =>
-                      count > 0 ? (
+                    {Object.entries(m.reactions).map(([emo, count]: any) => {
+                      const isMyBadge = myReactionOnMsg === emo;
+                      return count > 0 ? (
                         <motion.button
                           key={emo}
                           whileHover={{ scale: 1.15 }}
                           whileTap={{ scale: 0.88 }}
                           transition={{ type: "spring", stiffness: 450, damping: 15 }}
-                          onClick={() => reactToMessage(m.id, emo)}
-                          className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border border-white/15 bg-[#1b2438]/90 backdrop-blur-md text-white/90 shadow-sm hover:border-accent/40 transition cursor-pointer"
-                          title={`Reacted ${count} time(s). Click to react!`}
+                          onClick={() => {
+                            if (hasAlreadyReacted && myReactionOnMsg !== emo) {
+                              notify("Already Reacted", "You have already reacted to this message and cannot use other emojis.", "info", 2000);
+                              return;
+                            }
+                            reactToMessage(m.id, emo);
+                          }}
+                          className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border backdrop-blur-md shadow-sm transition cursor-pointer ${
+                            isMyBadge
+                              ? "border-accent/80 bg-accent/20 text-accent font-semibold"
+                              : "border-white/15 bg-[#1b2438]/90 text-white/90 hover:border-accent/40"
+                          }`}
+                          title={`Reacted ${count} time(s). ${isMyBadge ? "(Your reaction)" : "Click to react!"}`}
                         >
                           <ReactionIcon emo={emo} size={12} />
                           <span className="font-semibold text-[10px]">{count}</span>
                         </motion.button>
-                      ) : null
-                    )}
+                      ) : null;
+                    })}
                   </div>
                 )}
 
