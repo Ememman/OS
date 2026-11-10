@@ -161,6 +161,16 @@ function nameColor(name: string) {
   return palette[Math.abs(hash) % palette.length];
 }
 
+// Truncates long usernames exceeding 10 characters so UI doesn't look crowded (e.g. "BrightCommet..." -> 10 chars + "...")
+function formatUsername(name?: string, max = 10): string {
+  if (!name) return "Guest";
+  const clean = name.trim();
+  if (clean.length > max) {
+    return `${clean.slice(0, max)}...`;
+  }
+  return clean;
+}
+
 function BgPicker({ current, onPick, onClose }: any) {
   const ref = useRef<HTMLDivElement>(null);
   const { systemSounds } = useOS();
@@ -282,6 +292,7 @@ export default function Chats() {
 
   // Messenger Reaction States
   const [activeReactionMenu, setActiveReactionMenu] = useState<string | null>(null);
+  const [reactionPlacement, setReactionPlacement] = useState<Record<string, "top" | "bottom">>({});
   const [bursts, setBursts] = useState<Array<{ id: string; messageId: string; emoji: string; xOffset: number }>>([]);
   const [userReactions, setUserReactions] = useState<Record<string, string>>(() => {
     if (typeof window === "undefined") return {};
@@ -305,6 +316,23 @@ export default function Chats() {
   const longPressTimer = useRef<any>(null);
   const touchStartCoords = useRef<{ x: number; y: number } | null>(null);
 
+  // Toggle reaction tray with smart vertical placement (avoids overlapping sticky topbar on mobile/desktop)
+  const toggleReactionMenu = (id: string) => {
+    setActiveReactionMenu((curr) => {
+      if (curr === id) return null;
+      const el = document.getElementById(`msg-${id}`);
+      const container = listRef.current;
+      if (el && container) {
+        const elRect = el.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        // If message bubble is within 90px of container top or near top of window, render below bubble
+        const isNearTop = (elRect.top - containerRect.top) < 90 || elRect.top < 115;
+        setReactionPlacement((prev) => ({ ...prev, [id]: isNearTop ? "bottom" : "top" }));
+      }
+      return id;
+    });
+  };
+
   const startLongPress = (id: string, e: React.TouchEvent | React.PointerEvent) => {
     if ("button" in e && (e as React.PointerEvent).button !== 0) return;
     const clientX = "touches" in e ? (e as React.TouchEvent).touches[0].clientX : (e as React.PointerEvent).clientX;
@@ -313,7 +341,7 @@ export default function Chats() {
 
     if (longPressTimer.current) clearTimeout(longPressTimer.current);
     longPressTimer.current = setTimeout(() => {
-      setActiveReactionMenu(id);
+      toggleReactionMenu(id);
       if (chatSound) soundFx.playPop();
       if (typeof navigator !== "undefined" && navigator.vibrate) {
         try {
@@ -901,8 +929,8 @@ export default function Chats() {
                             >
                               {isMe ? "Y" : (u.name?.[0]?.toUpperCase() || "?")}
                             </span>
-                            <span className="truncate text-white/90 font-medium">
-                              {u.name}
+                            <span className="truncate text-white/90 font-medium" title={u.name}>
+                              {formatUsername(u.name)}
                             </span>
                             {isMe ? (
                               <span className="text-[10px] text-accent font-semibold ml-auto shrink-0 bg-accent/15 border border-accent/25 px-2 py-0.5 rounded-full">
@@ -929,7 +957,7 @@ export default function Chats() {
                         >
                           Y
                         </span>
-                        <span className="truncate text-white/90 font-medium">{name || "Guest"}</span>
+                        <span className="truncate text-white/90 font-medium" title={name}>{formatUsername(name || "Guest")}</span>
                         <span className="text-[10px] text-accent font-semibold ml-auto shrink-0 bg-accent/15 border border-accent/25 px-2 py-0.5 rounded-full">
                           Active · you
                         </span>
@@ -1077,7 +1105,7 @@ export default function Chats() {
               </div>
               <div className={`min-w-0 flex flex-col ${isSelf ? "items-end text-right" : "items-start text-left"}`}>
                 <div className="chat-meta text-xs font-medium mb-1 flex items-center gap-1.5 opacity-80">
-                  <span className="font-semibold">{isSelf ? "You" : m.name}</span>
+                  <span className="font-semibold" title={m.name}>{isSelf ? "You" : formatUsername(m.name)}</span>
                   <time className="font-normal opacity-60 text-[10px]" dateTime={new Date(m.ts).toISOString()}>
                     · {new Date(m.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </time>
@@ -1095,7 +1123,7 @@ export default function Chats() {
                     title="Jump to quoted message"
                   >
                     <GIconRotateLeft size={11} className="text-accent shrink-0 group-hover/quote:-rotate-45 transition-transform" />
-                    <span className="font-semibold text-accent">@{m.replyTo.name}:</span>
+                    <span className="font-semibold text-accent" title={m.replyTo.name}>@{formatUsername(m.replyTo.name)}:</span>
                     <span className="truncate opacity-80">{m.replyTo.text}</span>
                   </button>
                 )}
@@ -1109,7 +1137,7 @@ export default function Chats() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setActiveReactionMenu(activeReactionMenu === m.id ? null : m.id);
+                          toggleReactionMenu(m.id);
                         }}
                         className="p-1 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition cursor-pointer"
                         title="React"
@@ -1146,7 +1174,9 @@ export default function Chats() {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.6, y: 8 }}
                         transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                        className={`absolute -top-12 ${
+                        className={`absolute ${
+                          (reactionPlacement[m.id] || "top") === "bottom" ? "top-full mt-2" : "-top-12"
+                        } ${
                           isSelf ? "right-0" : "left-0"
                         } z-40 bg-[#121927]/95 backdrop-blur-2xl border border-white/20 shadow-[0_12px_36px_rgba(0,0,0,0.6)] rounded-full px-2 py-1 flex items-center gap-1 select-none max-w-[calc(100vw-32px)]`}
                         onClick={(e) => e.stopPropagation()}
@@ -1175,7 +1205,7 @@ export default function Chats() {
                                 reactToMessage(m.id, r.id);
                                 setActiveReactionMenu(null);
                               }}
-                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all relative group/emo ${
+                              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all relative group/emo ${
                                 isMyCurrentReaction
                                   ? "bg-accent/25 ring-2 ring-accent scale-110 cursor-default"
                                   : isDisabled
@@ -1197,7 +1227,7 @@ export default function Chats() {
                                   : `React with ${r.label}`
                               }
                             >
-                              <IconComp size={18} className={isMyCurrentReaction ? "text-accent" : r.color} />
+                              <IconComp size={16} className={isMyCurrentReaction ? "text-accent" : r.color} />
                               <span className="absolute -top-7 opacity-0 group-hover/emo:opacity-100 transition-opacity bg-black/90 text-[10px] text-white font-medium px-1.5 py-0.5 rounded shadow pointer-events-none whitespace-nowrap">
                                 {isMyCurrentReaction ? `${r.label} (You)` : isDisabled ? "Already reacted" : r.label}
                               </span>
@@ -1277,7 +1307,7 @@ export default function Chats() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setActiveReactionMenu(activeReactionMenu === m.id ? null : m.id);
+                          toggleReactionMenu(m.id);
                         }}
                         className="p-1 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition cursor-pointer"
                         title="React"
@@ -1373,7 +1403,7 @@ export default function Chats() {
               <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" style={{ animationDelay: "150ms" }} />
               <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" style={{ animationDelay: "300ms" }} />
             </div>
-            <span className="text-[11px] text-white/40 pb-1 italic">{typingName} is typing…</span>
+            <span className="text-[11px] text-white/40 pb-1 italic">{formatUsername(typingName)} is typing…</span>
           </motion.div>
         )}
       </div>
@@ -1382,7 +1412,7 @@ export default function Chats() {
       {replyTarget && (
         <div className="px-3.5 py-1.5 bg-accent/15 border-t border-accent/30 flex items-center justify-between text-xs text-[var(--chat-text)]">
           <div className="truncate mr-2">
-            <span className="font-semibold text-accent">Replying to @{replyTarget.name}: </span>
+            <span className="font-semibold text-accent">Replying to @{formatUsername(replyTarget.name)}: </span>
             <span className="opacity-80 truncate">{replyTarget.text}</span>
           </div>
           <button
@@ -1443,8 +1473,9 @@ export default function Chats() {
               setEditingName(true);
             }}
             className="chat-link inline-flex items-center gap-1.5 rounded px-1 py-0.5 text-sm cursor-pointer"
+            title={`Click to change name (${name})`}
           >
-            <GIconPencil size={14} /> Chatting as <span className="font-semibold text-[var(--chat-text)]">{name || "guest"}</span>
+            <GIconPencil size={14} /> Chatting as <span className="font-semibold text-[var(--chat-text)]" title={name}>{formatUsername(name || "guest")}</span>
           </button>
         )}
         <div role="group" className="flex items-center gap-1" aria-label="Message text size">

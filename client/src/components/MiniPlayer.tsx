@@ -11,8 +11,6 @@ import {
   GIconMusic,
   GIconMinus,
   GIconClose,
-  GIconChevronDown,
-  GIconChevronUp,
 } from "./icons/GravityIcons";
 
 export default function MiniPlayer() {
@@ -24,73 +22,28 @@ export default function MiniPlayer() {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
-  // Re-arm player when track changes
+  // Re-arm player when track changes or music window opens
   useEffect(() => {
     setIsDismissed(false);
+    setIsMinimized(false);
   }, [track?.id, track?.title]);
 
   const musicWin = windows.find((w) => w.app === "music");
   const musicVisible = musicWin && !musicWin.minimized;
 
-  // Only surface when there is an active track, music window isn't currently open, and not dismissed
-  if (!track || musicVisible || isDismissed) return null;
+  // When user opens the Music app tab, reset minimized/dismissed state
+  useEffect(() => {
+    if (musicVisible) {
+      setIsMinimized(false);
+      setIsDismissed(false);
+    }
+  }, [musicVisible]);
+
+  // If track doesn't exist, music window is currently open, or player was minimized/dismissed:
+  // completely hide it (never leave a floating disc or mini widget on the screen)
+  if (!track || musicVisible || isDismissed || isMinimized) return null;
 
   const bottomClearance = osMode === "win" ? "bottom-[76px]" : "bottom-20";
-
-  // Minimized state: sleek floating disc/pill that never obstructs content
-  if (isMinimized) {
-    return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => setIsMinimized(false)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            setIsMinimized(false);
-          }
-        }}
-        className={`fixed ${
-          isMobile
-            ? "top-11 right-3"
-            : `${bottomClearance} left-1/2 -translate-x-1/2`
-        } z-[850] glass rounded-full border border-white/20 shadow-2xl pl-1.5 pr-2.5 py-1.5 flex items-center gap-2 backdrop-blur-xl transition-all duration-200 cursor-pointer select-none hover:border-white/35 active:scale-95`}
-        title={`${track.title} · ${track.artist} (Click to expand)`}
-        aria-label="Expand music player"
-      >
-        <div
-          className={`w-7 h-7 rounded-full overflow-hidden bg-white/10 shrink-0 relative flex items-center justify-center ${
-            playing ? "ring-2 ring-accent/80" : ""
-          }`}
-        >
-          {track.cover ? (
-            <img src={track.cover} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <GIconMusic size={12} className="text-white/60" />
-          )}
-        </div>
-
-        {playing && <EqualizerBars className="shrink-0" />}
-
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            togglePlay();
-          }}
-          className="w-6 h-6 rounded-full flex items-center justify-center bg-accent text-white shadow-md shadow-accent/30 hover:brightness-110 active:scale-90 transition cursor-pointer"
-          title={playing ? "Pause" : "Play"}
-          aria-label={playing ? "Pause" : "Play"}
-        >
-          {playing ? <GIconPause size={10} /> : <GIconPlay size={10} className="ml-0.5" />}
-        </button>
-
-        <span className="text-white/60 hover:text-white transition">
-          {isMobile ? <GIconChevronDown size={11} /> : <GIconChevronUp size={11} />}
-        </span>
-      </div>
-    );
-  }
 
   // Expanded state: full controls with minimize and dismiss actions
   return (
