@@ -75,28 +75,6 @@ export class GamesController {
       else badge = "🥉 Cobra";
     }
 
-    // Update existing record if player already has an entry for this game
-    const existingIdx = this.leaderboard.findIndex(
-      (e) => e.game === cleanGame && e.player.toLowerCase() === cleanPlayer.toLowerCase()
-    );
-
-    if (existingIdx !== -1) {
-      const existing = this.leaderboard[existingIdx];
-      const isMines = cleanGame === "minesweeper";
-      const isBetter = isMines ? numScore < existing.score : numScore >= existing.score;
-
-      if (isBetter) {
-        existing.score = numScore;
-        if (cleanDetails) existing.details = cleanDetails;
-        existing.ts = Date.now();
-        existing.badge = badge;
-        this.chatGateway.broadcast("game:score_submitted", existing);
-        return { ok: true, entry: existing, updated: true };
-      } else {
-        return { ok: true, entry: existing, updated: false };
-      }
-    }
-
     const newEntry = {
       id: `lb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       game: cleanGame,

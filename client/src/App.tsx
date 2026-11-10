@@ -164,80 +164,51 @@ export default function App() {
       <GlobalAudioPlayer />
       {!isWin && (!isMobile || !hasActiveWindow) && <MenuBar />}
 
-      {/* Desktop Content & Widgets */}
-      {isTablet ? (
-        /* Mobile & Tablet: Unified scrollable desktop surface — desktop application icons are NOT fixed, they scroll naturally with all widgets */
-        <div
-          className={`absolute ${
-            !isWin && (!isMobile || !hasActiveWindow) ? "top-9" : "top-2"
-          } left-0 right-0 bottom-0 overflow-y-auto overscroll-contain thin-scroll px-3 pt-2 pb-28 flex flex-col items-center gap-4 z-10 pointer-events-auto`}
-        >
-          {/* Applications on desktop — 4-column responsive grid that scrolls with content */}
-          <div
-            className="grid grid-cols-4 items-center justify-items-center gap-2 w-full max-w-sm reveal"
-            style={{ animationDelay: "50ms" }}
-          >
-            <DesktopIcon icon={GIconResume} label="Resume" color="#4B5A73" onOpen={() => openApp("resume")} />
-            <DesktopIcon icon={GIconGames} label="Games" color="#D98A4E" onOpen={() => openApp("games")} />
-            <DesktopIcon icon={GIconCode} label="CodePlay" color="#38bdf8" onOpen={() => openApp("codeplay")} />
-            <DesktopIcon icon={GIconTerminal} label="Terminal" color="#22c55e" onOpen={() => openApp("terminal")} />
-            <DesktopIcon icon={GIconNotes} label="Notes" color="#f59e0b" onOpen={() => openApp("notes")} />
-            <DesktopIcon icon={GIconCalculator} label="Calculator" color="#06b6d4" onOpen={() => openApp("calculator")} />
-            <DesktopIcon icon={GIconActivity} label={isWin ? "Task Manager" : "Activity"} color="#10b981" onOpen={() => openApp("activity")} />
-            <DesktopIcon icon={GIconBookOpen} label="Guestbook" color="#8b5cf6" onOpen={() => openApp("guestbook")} />
-          </div>
+      {/* Desktop icons - optimized 4-column mobile grid and responsive flex on desktop */}
+      <div
+        className={`absolute ${isWin ? "top-3" : "top-10 sm:top-12"} ${
+          macDockLeft ? "left-20 sm:left-24" : "left-3 sm:left-6"
+        } grid grid-cols-4 sm:flex sm:flex-wrap items-center justify-items-center gap-2 sm:gap-3 w-[calc(100vw-24px)] sm:w-auto max-w-[calc(100vw-24px)] z-10 pointer-events-auto reveal`}
+        style={{ animationDelay: "50ms" }}
+      >
+        <DesktopIcon icon={GIconResume} label="Resume" color="#4B5A73" onOpen={() => openApp("resume")} />
+        <DesktopIcon icon={GIconGames} label="Games" color="#D98A4E" onOpen={() => openApp("games")} />
+        <DesktopIcon icon={GIconCode} label="CodePlay" color="#38bdf8" onOpen={() => openApp("codeplay")} />
+        <DesktopIcon icon={GIconTerminal} label="Terminal" color="#22c55e" onOpen={() => openApp("terminal")} />
+        <DesktopIcon icon={GIconNotes} label="Notes" color="#f59e0b" onOpen={() => openApp("notes")} />
+        <DesktopIcon icon={GIconCalculator} label="Calculator" color="#06b6d4" onOpen={() => openApp("calculator")} />
+        <DesktopIcon icon={GIconActivity} label={isWin ? "Task Manager" : "Activity"} color="#10b981" onOpen={() => openApp("activity")} />
+        <DesktopIcon icon={GIconBookOpen} label="Guestbook" color="#8b5cf6" onOpen={() => openApp("guestbook")} />
+      </div>
 
-          {/* Widget stack below icons — macOS style only */}
-          {!isWin && widgetsVisible && (
-            <div className="w-full flex flex-col items-center gap-4 pb-8">
-              <div className="reveal w-full flex justify-center" style={{ animationDelay: "120ms" }}><PhotoWidget /></div>
-              <div className="reveal w-full flex justify-center" style={{ animationDelay: "150ms" }}><WeatherWidget /></div>
-              <div className="reveal w-full flex justify-center" style={{ animationDelay: "180ms" }}><ClockWidget /></div>
-              <div className="reveal w-full flex justify-center" style={{ animationDelay: "210ms" }}><AgendaWidget /></div>
-              <div className="reveal w-full flex justify-center" style={{ animationDelay: "240ms" }}><NoteWidget /></div>
-              <div className="reveal w-full flex justify-center" style={{ animationDelay: "270ms" }}><ShortcutTiles /></div>
+      {/* Widget stack — macOS style only */}
+      {!isWin && widgetsVisible && (
+        isTablet ? (
+          <div className={`absolute ${isMobile ? "top-52 min-[456px]:top-36" : "top-36"} left-0 right-0 bottom-24 flex flex-col items-center gap-4 overflow-y-auto thin-scroll px-4 pb-12`}>
+            <div className="reveal w-full flex justify-center" style={{ animationDelay: "120ms" }}><PhotoWidget /></div>
+            <div className="reveal w-full flex justify-center" style={{ animationDelay: "150ms" }}><WeatherWidget /></div>
+            <div className="reveal w-full flex justify-center" style={{ animationDelay: "180ms" }}><ClockWidget /></div>
+            <div className="reveal w-full flex justify-center" style={{ animationDelay: "210ms" }}><AgendaWidget /></div>
+            <div className="reveal w-full flex justify-center" style={{ animationDelay: "240ms" }}><NoteWidget /></div>
+            <div className="reveal w-full flex justify-center" style={{ animationDelay: "270ms" }}><ShortcutTiles /></div>
+          </div>
+        ) : (
+          <>
+            {/* Left column: photo, shortcuts below it, then note */}
+            <div className={`absolute top-36 ${macDockLeft ? "left-24" : "left-6"} flex flex-col gap-4`}>
+              <div className="reveal" style={{ animationDelay: "140ms" }}><PhotoWidget /></div>
+              <div className="reveal" style={{ animationDelay: "190ms" }}><ShortcutTiles /></div>
+              <div className="reveal" style={{ animationDelay: "240ms" }}><NoteWidget /></div>
             </div>
-          )}
-        </div>
-      ) : (
-        /* Desktop: Spacious multi-column layout with scrollable widget columns so lower widgets are never cut off */
-        <>
-          {/* Desktop application icons */}
-          <div
-            className={`absolute ${isWin ? "top-3" : "top-10 sm:top-12"} ${
-              macDockLeft ? "left-20 sm:left-24" : "left-3 sm:left-6"
-            } flex flex-wrap items-center gap-2 sm:gap-3 max-w-[calc(100vw-360px)] z-10 pointer-events-auto reveal`}
-            style={{ animationDelay: "50ms" }}
-          >
-            <DesktopIcon icon={GIconResume} label="Resume" color="#4B5A73" onOpen={() => openApp("resume")} />
-            <DesktopIcon icon={GIconGames} label="Games" color="#D98A4E" onOpen={() => openApp("games")} />
-            <DesktopIcon icon={GIconCode} label="CodePlay" color="#38bdf8" onOpen={() => openApp("codeplay")} />
-            <DesktopIcon icon={GIconTerminal} label="Terminal" color="#22c55e" onOpen={() => openApp("terminal")} />
-            <DesktopIcon icon={GIconNotes} label="Notes" color="#f59e0b" onOpen={() => openApp("notes")} />
-            <DesktopIcon icon={GIconCalculator} label="Calculator" color="#06b6d4" onOpen={() => openApp("calculator")} />
-            <DesktopIcon icon={GIconActivity} label={isWin ? "Task Manager" : "Activity"} color="#10b981" onOpen={() => openApp("activity")} />
-            <DesktopIcon icon={GIconBookOpen} label="Guestbook" color="#8b5cf6" onOpen={() => openApp("guestbook")} />
-          </div>
 
-          {/* Widget columns with scrollability — lower part is always accessible */}
-          {!isWin && widgetsVisible && (
-            <>
-              {/* Left column: photo, shortcuts below it, then note */}
-              <div className={`absolute top-36 ${macDockLeft ? "left-24" : "left-6"} flex flex-col gap-4 max-h-[calc(100vh-160px)] overflow-y-auto overscroll-contain thin-scroll pr-1 pb-16 pointer-events-auto`}>
-                <div className="reveal" style={{ animationDelay: "140ms" }}><PhotoWidget /></div>
-                <div className="reveal" style={{ animationDelay: "190ms" }}><ShortcutTiles /></div>
-                <div className="reveal" style={{ animationDelay: "240ms" }}><NoteWidget /></div>
-              </div>
-
-              {/* Right column: weather, clock, calendar */}
-              <div className={`absolute top-12 ${macDockRight ? "right-24" : "right-6"} flex flex-col gap-4 items-end max-h-[calc(100vh-100px)] overflow-y-auto overscroll-contain thin-scroll pl-1 pb-16 pointer-events-auto`}>
-                <div className="reveal" style={{ animationDelay: "170ms" }}><WeatherWidget /></div>
-                <div className="reveal" style={{ animationDelay: "220ms" }}><ClockWidget /></div>
-                <div className="reveal" style={{ animationDelay: "270ms" }}><AgendaWidget /></div>
-              </div>
-            </>
-          )}
-        </>
+            {/* Right column: weather, clock, calendar */}
+            <div className={`absolute top-12 ${macDockRight ? "right-24" : "right-6"} flex flex-col gap-4 items-end`}>
+              <div className="reveal" style={{ animationDelay: "170ms" }}><WeatherWidget /></div>
+              <div className="reveal" style={{ animationDelay: "220ms" }}><ClockWidget /></div>
+              <div className="reveal" style={{ animationDelay: "270ms" }}><AgendaWidget /></div>
+            </div>
+          </>
+        )
       )}
 
       {/* Windows */}
