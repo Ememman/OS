@@ -462,7 +462,6 @@ export default function ActivityMonitor() {
                   </p>
                 </div>
                 <span className="flex items-center gap-1.5 text-[11px] text-white/50">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   Live Reactive
                 </span>
               </div>

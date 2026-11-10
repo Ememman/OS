@@ -1415,9 +1415,7 @@ app.post("/api/guestbook", strictSubmissionLimiter, (req, res) => {
   if (!cleanMsg || cleanMsg.length < 3) {
     errors.push("Message must be between 3 and 500 characters.");
   }
-  if (cleanLink && !/^https?:\/\//i.test(cleanLink) && !cleanLink.startsWith("@") && !cleanLink.includes(".")) {
-    errors.push("Link must be a valid URL (starting with http:// or https://) or social handle.");
-  }
+  // Link and location are completely optional
 
   if (errors.length > 0) {
     return res.status(400).json({ ok: false, error: "Validation Error", details: errors });
@@ -1448,10 +1446,15 @@ app.post("/api/guestbook", strictSubmissionLimiter, (req, res) => {
 
 app.post("/api/guestbook/:id/react", (req, res) => {
   const { id } = req.params;
+  const { action } = req.body || {};
   const entry = guestbookEntries.find((e) => e.id === id);
   if (!entry) return res.status(404).json({ error: "Entry not found" });
 
-  entry.reactions = (entry.reactions || 0) + 1;
+  if (action === "unlike" || action === "remove") {
+    entry.reactions = Math.max(0, (entry.reactions || 1) - 1);
+  } else {
+    entry.reactions = (entry.reactions || 0) + 1;
+  }
   io.emit("guestbook:reacted", { id, reactions: entry.reactions });
   res.json({ id, reactions: entry.reactions });
 });
