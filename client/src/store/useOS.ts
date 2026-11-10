@@ -86,6 +86,9 @@ interface OSState {
   toggleCompact: () => void;
   dockPosition: DockPosition;
   setDockPosition: (pos: DockPosition) => void;
+  unreadChatCount: number;
+  incrementUnreadChat: () => void;
+  clearUnreadChat: () => void;
   setAccent: (value: string) => void;
   setWallpaper: (id: string) => void;
   toggleMotion: () => void;
@@ -419,6 +422,10 @@ export const useOS = create<OSState>((set, get) => ({
     set({ dockPosition: pos });
   },
 
+  unreadChatCount: 0,
+  incrementUnreadChat: () => set((s) => ({ unreadChatCount: s.unreadChatCount + 1 })),
+  clearUnreadChat: () => set({ unreadChatCount: 0 }),
+
   setThemeMode: () => {
     const palette = harmonizeAccentColor(DEFAULT_ACCENT, true);
     applyHarmonizedPaletteToDoc(palette, true);
@@ -444,6 +451,9 @@ export const useOS = create<OSState>((set, get) => ({
 
   openApp: (app) => {
     if (get().systemSounds) soundFx.playOpen();
+    if (app === "chats") {
+      get().clearUnreadChat();
+    }
     const existing = get().windows.find((w) => w.app === app);
     if (existing) {
       get().focusWindow(existing.id);
@@ -483,6 +493,10 @@ export const useOS = create<OSState>((set, get) => ({
   focusWindow: (id) => {
     z += 1;
     const zz = z;
+    const targetWin = get().windows.find((w) => w.id === id);
+    if (targetWin?.app === "chats") {
+      get().clearUnreadChat();
+    }
     set({
       windows: get().windows.map((w) => (w.id === id ? { ...w, z: zz } : w)),
     });

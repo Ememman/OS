@@ -48,7 +48,7 @@ const POSITION_CLASSES = {
 };
 
 export default function Dock() {
-  const { openApp, windows, closeWindow, compact, dockPosition, toggleMissionControl, missionControlOpen, systemSounds } = useOS();
+  const { openApp, windows, closeWindow, compact, dockPosition, toggleMissionControl, missionControlOpen, systemSounds, unreadChatCount } = useOS();
   const isMobile = useIsMobile();
   const position = isMobile ? "bottom" : dockPosition;
   const vertical = position === "left" || position === "right";
@@ -147,6 +147,17 @@ export default function Dock() {
                     vertical ? "w-1 h-1 left-0.5 top-1/2 -translate-y-1/2" : "w-1 h-1 -bottom-1"
                   }`}
                 />
+              )}
+              {app === "chats" && unreadChatCount > 0 && (
+                <motion.span
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                  className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow-lg shadow-rose-500/60 border border-white/30 z-20 pointer-events-none select-none"
+                >
+                  {unreadChatCount > 99 ? "99+" : unreadChatCount}
+                </motion.span>
               )}
             </motion.button>
 

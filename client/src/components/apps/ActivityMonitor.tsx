@@ -493,7 +493,7 @@ export default function ActivityMonitor() {
                             <span>{win.title}</span>
                           </td>
                           <td className="py-2 px-3">
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px]">
+                            <span className="px-2 py-0.5 rounded-full bg-accent/20 text-accent text-[10px]">
                               {win.minimized ? "Minimized" : "Active"}
                             </span>
                           </td>
@@ -858,7 +858,7 @@ export default function ActivityMonitor() {
                 <h4 className="font-display text-sm font-semibold text-white/90">
                   Host Network Interface &amp; Routing
                 </h4>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/20 text-accent font-mono">
                   Online
                 </span>
               </div>
@@ -906,7 +906,7 @@ export default function ActivityMonitor() {
 
               {pingLatency !== null && (
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-emerald-500/20 text-emerald-300 font-bold">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center bg-accent/20 text-accent font-bold">
                     ✓
                   </div>
                   <div>

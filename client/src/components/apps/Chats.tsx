@@ -255,6 +255,11 @@ export default function Chats() {
   const chatBg = useOS((s) => s.chatBg);
   const setChatBg = useOS((s) => s.setChatBg);
   const notify = useOS((s) => s.notify);
+  const clearUnreadChat = useOS((s) => s.clearUnreadChat);
+
+  useEffect(() => {
+    clearUnreadChat();
+  }, [clearUnreadChat]);
 
   // Word/name truncation: on mobile view truncates if > 10 chars (e.g. "BrightCommet..."),
   // on desktop view shows full name unless it exceeds 20 or more characters
@@ -345,14 +350,19 @@ export default function Chats() {
 
     if (longPressTimer.current) clearTimeout(longPressTimer.current);
     longPressTimer.current = setTimeout(() => {
+      if (typeof window !== "undefined") {
+        try {
+          window.getSelection()?.removeAllRanges();
+        } catch {}
+      }
       toggleReactionMenu(id);
       if (chatSound) soundFx.playPop();
       if (typeof navigator !== "undefined" && navigator.vibrate) {
         try {
-          navigator.vibrate(35);
+          navigator.vibrate(40);
         } catch {}
       }
-    }, 380);
+    }, 340);
   };
 
   const cancelLongPressIfMoved = (e: React.TouchEvent | React.PointerEvent) => {
@@ -878,7 +888,7 @@ export default function Chats() {
 
   const changeTextScale = (delta: number) => {
     setTextScale((prev) => {
-      const next = Math.max(1, Math.min(1.3, Math.round((prev + delta) * 10) / 10));
+      const next = Math.max(0.7, Math.min(1.3, Math.round((prev + delta) * 10) / 10));
       localStorage.setItem("os_chat_text_scale", String(next));
       return next;
     });
@@ -928,7 +938,7 @@ export default function Chats() {
           <span
             className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${
               connected
-                ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                ? "bg-accent/15 text-accent border-accent/30"
                 : connecting
                 ? "bg-amber-500/15 text-amber-300 border-amber-500/30 animate-pulse"
                 : "bg-white/10 text-white/50 border-white/15"
@@ -968,7 +978,7 @@ export default function Chats() {
                 >
                   <div className="font-semibold text-[11px] text-white/60 px-1 pb-1.5 border-b border-white/10 mb-1.5 flex items-center justify-between">
                     <span>Active People</span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 text-[10px] font-medium">
+                    <span className="px-2 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/25 text-[10px] font-medium">
                       {connected ? Math.max(1, online, activeUsers.length) : 1} active
                     </span>
                   </div>
@@ -1002,7 +1012,7 @@ export default function Chats() {
                                 className={`text-[10px] font-medium ml-auto shrink-0 px-2 py-0.5 rounded-full border ${
                                   isIdle
                                     ? "text-amber-300/80 bg-amber-500/10 border-amber-500/20"
-                                    : "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+                                    : "text-accent bg-accent/10 border-accent/20"
                                 }`}
                               >
                                 {isIdle ? "Idle" : "Active"}
@@ -1340,10 +1350,12 @@ export default function Chats() {
                     onPointerMove={cancelLongPressIfMoved}
                     onPointerUp={endLongPress}
                     onPointerCancel={endLongPress}
+                    onTouchStart={(e) => startLongPress(m.id, e)}
+                    onTouchMove={cancelLongPressIfMoved}
+                    onTouchEnd={endLongPress}
+                    onTouchCancel={endLongPress}
                     onContextMenu={(e) => {
-                      if (activeReactionMenu === m.id) {
-                        e.preventDefault();
-                      }
+                      e.preventDefault();
                     }}
                     onDoubleClick={() => {
                       if (hasAlreadyReacted && myReactionOnMsg !== "heart") {
@@ -1352,7 +1364,7 @@ export default function Chats() {
                       }
                       reactToMessage(m.id, "heart");
                     }}
-                    className={`chat-bubble px-3.5 py-2.5 leading-relaxed relative transition-shadow select-none ${
+                    className={`chat-bubble px-3.5 py-2.5 leading-relaxed relative transition-shadow select-none touch-manipulation [-webkit-touch-callout:none] [-webkit-user-select:none] [user-select:none] ${
                       isSelf ? "chat-bubble-self shadow-md shadow-accent/20" : ""
                     } ${m.pending ? "chat-bubble-pending" : ""} ${m.failed ? "chat-bubble-failed" : ""}`}
                     style={{ fontSize: `${15 * textScale}px`, touchAction: "manipulation" }}
@@ -1539,25 +1551,39 @@ export default function Chats() {
             <GIconPencil size={14} /> Chatting as <span className="font-semibold text-[var(--chat-text)]" title={name}>{formatUsername(name || "guest")}</span>
           </button>
         )}
-        <div role="group" className="flex items-center gap-1" aria-label="Message text size">
-          <span className="chat-muted text-xs mr-1">Text</span>
+        <div role="group" className="flex items-center gap-1 select-none" aria-label="Message text zoom">
+          <span className="chat-muted text-xs mr-0.5">Zoom</span>
           <button
             type="button"
             onClick={() => changeTextScale(-0.1)}
-            disabled={textScale <= 1}
-            aria-label="Decrease message text size"
+            disabled={textScale <= 0.7}
+            aria-label="Zoom out messages"
             className="chat-text-size-button"
+            title="Zoom out (−)"
           >
-            A−
+            −
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTextScale(1);
+              localStorage.setItem("os_chat_text_scale", "1");
+            }}
+            aria-label="Reset zoom"
+            className="text-[10px] font-mono text-[var(--chat-muted)] hover:text-[var(--chat-text)] px-1 py-0.5 rounded hover:bg-white/5 transition cursor-pointer"
+            title="Click to reset zoom (100%)"
+          >
+            {Math.round(textScale * 100)}%
           </button>
           <button
             type="button"
             onClick={() => changeTextScale(0.1)}
             disabled={textScale >= 1.3}
-            aria-label="Increase message text size"
+            aria-label="Zoom in messages"
             className="chat-text-size-button"
+            title="Zoom in (+)"
           >
-            A+
+            +
           </button>
         </div>
       </div>

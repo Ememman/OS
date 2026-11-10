@@ -242,7 +242,7 @@ function DateFlyout({ onClose }: { onClose: () => void }) {
 }
 
 export default function WinTaskbar() {
-  const { openApp, windows, focusWindow, toggleSpotlight, toggleControlCenter, controlCenterOpen, toggleMissionControl, missionControlOpen } = useOS();
+  const { openApp, windows, focusWindow, toggleSpotlight, toggleControlCenter, controlCenterOpen, toggleMissionControl, missionControlOpen, unreadChatCount } = useOS();
   const [panel, setPanel] = useState<"start" | "tray" | "weather" | "date" | null>(null);
   const isMobile = useIsMobile();
   const [time, setTime] = useState("");
@@ -351,6 +351,11 @@ export default function WinTaskbar() {
                 <Icon size={iconSize} color={color} />
                 {isOpen && (
                   <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-3.5 h-0.5 rounded-full bg-accent" />
+                )}
+                {app === "chats" && unreadChatCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center shadow-md shadow-rose-500/60 border border-white/20 z-20 pointer-events-none select-none">
+                    {unreadChatCount > 99 ? "99+" : unreadChatCount}
+                  </span>
                 )}
               </button>
             );
