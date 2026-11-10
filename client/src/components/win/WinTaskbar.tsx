@@ -385,6 +385,7 @@ export default function WinTaskbar() {
 
         <button
           onClick={toggleControlCenter}
+          data-control-center-trigger="true"
           title="Quick Settings (Volume, Wi-Fi, Display)"
           className={`hidden xs:flex items-center gap-1.5 px-2 h-7.5 rounded-lg transition-all shrink-0 cursor-pointer ${
             controlCenterOpen

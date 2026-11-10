@@ -153,6 +153,8 @@ export default function App() {
   if (!booted) return <BootScreen />;
   if (!osChosen) return <OsPicker />;
 
+  const hasActiveWindow = windows.some((w) => !w.minimized);
+
   return (
     <div
       onContextMenu={handleDesktopContextMenu}
@@ -160,13 +162,13 @@ export default function App() {
     >
       <Wallpaper />
       <GlobalAudioPlayer />
-      {!isWin && <MenuBar />}
+      {!isWin && (!isMobile || !hasActiveWindow) && <MenuBar />}
 
-      {/* Desktop icons - fully responsive flex layout with safe mobile wrapping */}
+      {/* Desktop icons - optimized 4-column mobile grid and responsive flex on desktop */}
       <div
         className={`absolute ${isWin ? "top-3" : "top-10 sm:top-12"} ${
           macDockLeft ? "left-20 sm:left-24" : "left-3 sm:left-6"
-        } flex flex-wrap items-center gap-2 sm:gap-3 max-w-[calc(100vw-24px)] z-10 pointer-events-auto reveal`}
+        } grid grid-cols-4 sm:flex sm:flex-wrap items-center justify-items-center gap-2 sm:gap-3 w-[calc(100vw-24px)] sm:w-auto max-w-[calc(100vw-24px)] z-10 pointer-events-auto reveal`}
         style={{ animationDelay: "50ms" }}
       >
         <DesktopIcon icon={GIconResume} label="Resume" color="#4B5A73" onOpen={() => openApp("resume")} />
@@ -182,7 +184,7 @@ export default function App() {
       {/* Widget stack — macOS style only */}
       {!isWin && widgetsVisible && (
         isTablet ? (
-          <div className={`absolute ${isMobile ? "top-56 min-[456px]:top-36" : "top-36"} left-0 right-0 bottom-24 flex flex-col items-center gap-4 overflow-y-auto thin-scroll px-4 pb-12`}>
+          <div className={`absolute ${isMobile ? "top-52 min-[456px]:top-36" : "top-36"} left-0 right-0 bottom-24 flex flex-col items-center gap-4 overflow-y-auto thin-scroll px-4 pb-12`}>
             <div className="reveal w-full flex justify-center" style={{ animationDelay: "120ms" }}><PhotoWidget /></div>
             <div className="reveal w-full flex justify-center" style={{ animationDelay: "150ms" }}><WeatherWidget /></div>
             <div className="reveal w-full flex justify-center" style={{ animationDelay: "180ms" }}><ClockWidget /></div>
@@ -229,7 +231,7 @@ export default function App() {
         );
       })}
 
-      {isWin ? <WinTaskbar /> : <Dock />}
+      {isWin ? (!isMobile || !hasActiveWindow) && <WinTaskbar /> : (!isMobile || !hasActiveWindow) && <Dock />}
       <MiniPlayer />
       <SpotlightSearch />
       <MissionControl />

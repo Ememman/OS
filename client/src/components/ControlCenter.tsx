@@ -2,7 +2,6 @@ import { useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useOS } from "../store/useOS";
 import { usePlayer } from "../store/usePlayer";
-import { useOutsideClick } from "../lib/useOutsideClick";
 import { soundFx } from "../lib/soundFx";
 import {
   GIconVolume,
@@ -15,6 +14,7 @@ import {
   GIconPlay,
   GIconPause,
   GIconLayoutCells,
+  GIconClose,
 } from "./icons/GravityIcons";
 
 export default function ControlCenter() {
@@ -39,7 +39,24 @@ export default function ControlCenter() {
   const currentTrack = queue[queueIdx];
 
   const panelRef = useRef<HTMLDivElement>(null);
-  useOutsideClick(panelRef, closeControlCenter);
+
+  // Close when clicking outside, but ignore clicking the toggle button itself so it cleanly toggles off
+  useEffect(() => {
+    if (!controlCenterOpen) return;
+    const handleOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (panelRef.current && panelRef.current.contains(target)) return;
+      if (target.closest("[data-control-center-trigger]")) return;
+      closeControlCenter();
+    };
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("touchstart", handleOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("touchstart", handleOutside);
+    };
+  }, [controlCenterOpen, closeControlCenter]);
 
   const isWin = osMode === "win";
 
@@ -74,17 +91,27 @@ export default function ControlCenter() {
         <span className="font-display font-semibold text-xs tracking-wide text-white/90 uppercase">
           {isWin ? "Quick Settings" : "Control Center"}
         </span>
-        <button
-          onClick={() => {
-            const next = isWin ? "mac" : "win";
-            setOsMode(next);
-            if (systemSounds) soundFx.playClick();
-          }}
-          className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-[10px] text-white/80 transition"
-        >
-          <GIconPower size={11} className="text-accent" />
-          <span>Switch to {isWin ? "macOS" : "Windows 11"}</span>
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => {
+              const next = isWin ? "mac" : "win";
+              setOsMode(next);
+              if (systemSounds) soundFx.playClick();
+            }}
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-[10px] text-white/80 transition cursor-pointer"
+          >
+            <GIconPower size={11} className="text-accent" />
+            <span className="hidden xs:inline">Switch to {isWin ? "macOS" : "Windows 11"}</span>
+          </button>
+          <button
+            onClick={closeControlCenter}
+            className="p-1 rounded-full hover:bg-white/15 text-white/60 hover:text-white transition cursor-pointer"
+            title="Close Control Center"
+            aria-label="Close"
+          >
+            <GIconClose size={13} />
+          </button>
+        </div>
       </div>
 
       <div className="space-y-3">
