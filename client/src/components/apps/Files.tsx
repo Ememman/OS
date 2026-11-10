@@ -553,7 +553,7 @@ export default function Files() {
         {/* Bottom Storage Utilization Bar */}
         <div className="px-3 py-1.5 border-t border-white/5 bg-black/20 flex items-center justify-between text-[11px] text-white/40 shrink-0">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="w-2 h-2 rounded-full bg-accent" />
             <span>
               Cloud Drive: {storageStats ? `${storageStats.totalKb} KB / ${storageStats.allocatedDriveMb} MB allocated` : "Online & Synced"}
             </span>

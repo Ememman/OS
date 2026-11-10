@@ -528,10 +528,10 @@ export default function MenuBar() {
             >
               <div className="flex items-center justify-between pb-2 border-b border-white/10">
                 <div className="flex items-center gap-2 font-semibold">
-                  <GIconSignal size={14} className="text-emerald-400" />
+                  <GIconSignal size={14} className="text-accent" />
                   <span>Wi-Fi Network</span>
                 </div>
-                <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/25">
+                <span className="text-[10px] text-accent font-mono bg-accent/15 px-2 py-0.5 rounded-full border border-accent/25">
                   Connected
                 </span>
               </div>
@@ -542,7 +542,7 @@ export default function MenuBar() {
                     <div className="font-medium text-white/90">Portfolio-OS-Fiber</div>
                     <div className="text-[10px] text-white/45">5 GHz · 100% Signal Quality</div>
                   </div>
-                  <GIconCheck size={14} className="text-emerald-400" />
+                  <GIconCheck size={14} className="text-accent" />
                 </div>
 
                 <div className="flex justify-between text-[11px] text-white/50 px-1 pt-1">

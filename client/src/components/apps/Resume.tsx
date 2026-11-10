@@ -426,7 +426,7 @@ export default function Resume() {
               <span className="text-xs text-white/50 font-medium hidden sm:inline">
                 (James Emmanuel Mendoza)
               </span>
-              <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+              <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30 shadow-[0_0_12px_rgba(56,189,248,0.2)]">
                 FrontEnd Developer at Dowinn Group
               </span>
             </div>
@@ -450,7 +450,7 @@ export default function Resume() {
                 <GIconMail size={13} className="text-accent group-hover:scale-110 transition-transform" />
                 <span className="font-mono text-[11px]">{CONTACT_EMAIL}</span>
                 {copiedEmail ? (
-                  <GIconCheck size={12} className="text-emerald-400 shrink-0" />
+                  <GIconCheck size={12} className="text-accent shrink-0" />
                 ) : (
                   <GIconCopy size={11} className="text-white/40 group-hover:text-white shrink-0" />
                 )}
@@ -502,21 +502,21 @@ export default function Resume() {
           </div>
         </div>
 
-        {/* Highlight Stack Marquee Chips */}
-        <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-white/5">
+        {/* Highlight Stack Chips (Smooth Horizontal Scroll to conserve vertical height) */}
+        <div className="flex items-center gap-1.5 mt-2.5 pt-2.5 border-t border-white/5 overflow-x-auto thin-scroll flex-nowrap py-0.5">
           <span className="text-[10px] uppercase tracking-wider font-semibold text-white/40 mr-1 shrink-0 flex items-center gap-1">
             <GIconLayoutCells size={11} className="text-accent" />
             Core Stack:
           </span>
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             {TECH_STACK.slice(0, 8).map((tech) => (
               <span
                 key={tech.name}
-                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/[0.04] border border-white/8 text-[11px] text-white/85 hover:border-white/20 transition-all cursor-default select-none"
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/[0.04] border border-white/8 text-[11px] text-white/85 hover:border-white/20 transition-all cursor-default select-none shrink-0"
                 title={`${tech.name} · ${tech.category}`}
               >
                 <span className="shrink-0 scale-90">{tech.icon}</span>
-                <span className="font-medium">{tech.name}</span>
+                <span className="font-medium whitespace-nowrap">{tech.name}</span>
               </span>
             ))}
           </div>
@@ -559,7 +559,7 @@ export default function Resume() {
       </div>
 
       {/* Main Content Pane */}
-      <div className="flex-1 p-4 sm:p-6 pb-20 sm:pb-14 space-y-6">
+      <div className="flex-1 p-4 sm:p-6 pb-10 sm:pb-8 space-y-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={tab}
@@ -605,9 +605,9 @@ export default function Resume() {
                         {e.highlights.map((h, i) => (
                           <span
                             key={i}
-                            className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-accent/10 text-accent border border-accent/20"
                           >
-                            <GIconCheck size={10} className="text-emerald-400" />
+                            <GIconCheck size={10} className="text-accent" />
                             {h}
                           </span>
                         ))}
@@ -791,7 +791,7 @@ export default function Resume() {
                         key={i}
                         className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.02] border border-white/8 hover:border-white/15 transition-colors"
                       >
-                        <span className="w-5 h-5 aspect-square shrink-0 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[11px] font-bold">
+                        <span className="w-5 h-5 aspect-square shrink-0 rounded-full bg-accent/20 text-accent flex items-center justify-center text-[11px] font-bold">
                           ✓
                         </span>
                         <div className="min-w-0 flex-1">
@@ -856,7 +856,7 @@ export default function Resume() {
 
                   {sentSuccess ? (
                     <div className="text-center py-8 space-y-2.5">
-                      <div className="w-12 h-12 aspect-square shrink-0 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mx-auto shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                      <div className="w-12 h-12 aspect-square shrink-0 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xl mx-auto shadow-[0_0_20px_rgba(56,189,248,0.25)]">
                         ✓
                       </div>
                       <h3 className="font-display font-semibold text-sm text-white">Message Dispatched!</h3>
@@ -953,7 +953,7 @@ export default function Resume() {
       </div>
 
       {/* Footer bar */}
-      <div className="border-t border-white/10 px-4 py-3 bg-white/[0.02] flex items-center justify-between text-[11px] text-white/50 shrink-0 mt-auto">
+      <div className="border-t border-white/10 px-4 py-3 bg-white/[0.02] flex items-center justify-between text-[11px] text-white/50 shrink-0 mb-16 sm:mb-4">
         <span>Emman Mendoza · Curriculum Vitae</span>
         <div className="flex items-center gap-3">
           <a
