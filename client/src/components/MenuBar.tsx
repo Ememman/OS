@@ -521,6 +521,7 @@ export default function MenuBar() {
         {/* macOS Control Center Trigger */}
         <button
           onClick={toggleControlCenter}
+          data-control-center-trigger="true"
           title="Control Center (Display, Sound & System)"
           className={`flex items-center justify-center p-1.5 rounded-lg transition-all cursor-pointer ${
             controlCenterOpen
