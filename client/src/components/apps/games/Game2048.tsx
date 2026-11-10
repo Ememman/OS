@@ -250,40 +250,40 @@ export default function Game2048() {
 
   return (
     <div
-      className="flex flex-col items-center justify-between h-full p-4 select-none touch-none bg-black/30 text-white"
+      className="flex flex-col items-center justify-start sm:justify-between h-full p-3 sm:p-4 select-none touch-none bg-black/30 text-white overflow-y-auto thin-scroll gap-2"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
       {/* Top scoreboard */}
-      <div className="w-full max-w-[340px] flex items-center justify-between mb-3">
+      <div className="w-full max-w-[min(86vw,320px)] flex items-center justify-between mb-1 sm:mb-2">
         <div>
-          <h3 className="font-display text-2xl font-bold tracking-tight">2048</h3>
+          <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight">2048</h3>
           <p className="text-[10px] text-white/40">Join tiles to reach 2048!</p>
         </div>
 
-        <div className="flex gap-2">
-          <div className="bg-white/10 px-3 py-1.5 rounded-xl text-center min-w-[54px] border border-white/5">
+        <div className="flex gap-1.5 sm:gap-2">
+          <div className="bg-white/10 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-center min-w-[50px] border border-white/5">
             <div className="text-[9px] uppercase tracking-wide text-white/50">Score</div>
-            <div className="font-mono font-bold text-sm text-white">{score}</div>
+            <div className="font-mono font-bold text-xs sm:text-sm text-white">{score}</div>
           </div>
-          <div className="bg-white/10 px-3 py-1.5 rounded-xl text-center min-w-[54px] border border-white/5">
+          <div className="bg-white/10 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-center min-w-[50px] border border-white/5">
             <div className="text-[9px] uppercase tracking-wide text-amber-400 flex items-center justify-center gap-0.5">
               <GIconTrophy size={10} /> Best
             </div>
-            <div className="font-mono font-bold text-sm text-amber-300">{bestScore}</div>
+            <div className="font-mono font-bold text-xs sm:text-sm text-amber-300">{bestScore}</div>
           </div>
           <button
             onClick={resetGame}
             title="Restart"
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition self-center"
+            className="p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/5 transition self-center cursor-pointer"
           >
-            <GIconRotateRight size={16} />
+            <GIconRotateRight size={15} />
           </button>
         </div>
       </div>
 
       {/* 4x4 Grid Board */}
-      <div className="relative w-full max-w-[340px] aspect-square bg-white/5 p-2.5 rounded-2xl border border-white/10 shadow-2xl flex flex-col justify-between">
+      <div className="relative w-full max-w-[min(86vw,320px)] aspect-square bg-white/5 p-2 sm:p-2.5 rounded-2xl border border-white/10 shadow-2xl flex flex-col justify-between">
         {board.map((row, r) => (
           <div key={r} className="flex justify-between h-[23%] gap-2">
             {row.map((val, c) => {

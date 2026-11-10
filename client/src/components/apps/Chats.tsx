@@ -25,6 +25,7 @@ import { getSocket, getCachedChatInit } from "../../lib/socket";
 import { getChatSession, touchChatActivity, saveChatName } from "../../lib/chatSession";
 import { useOS } from "../../store/useOS";
 import { useOutsideClick } from "../../lib/useOutsideClick";
+import { useIsMobile } from "../../lib/useMediaQuery";
 import { soundFx } from "../../lib/soundFx";
 import { API_URL } from "../../lib/config";
 
@@ -161,16 +162,6 @@ function nameColor(name: string) {
   return palette[Math.abs(hash) % palette.length];
 }
 
-// Truncates long usernames exceeding 10 characters so UI doesn't look crowded (e.g. "BrightCommet..." -> 10 chars + "...")
-function formatUsername(name?: string, max = 10): string {
-  if (!name) return "Guest";
-  const clean = name.trim();
-  if (clean.length > max) {
-    return `${clean.slice(0, max)}...`;
-  }
-  return clean;
-}
-
 function BgPicker({ current, onPick, onClose }: any) {
   const ref = useRef<HTMLDivElement>(null);
   const { systemSounds } = useOS();
@@ -257,12 +248,25 @@ function BgPicker({ current, onPick, onClose }: any) {
 }
 
 export default function Chats() {
+  const isMobile = useIsMobile();
   const chatSound = useOS((s) => s.chatSound);
   const toggleChatSound = useOS((s) => s.toggleChatSound);
   const reduceMotion = useOS((s) => s.reduceMotion);
   const chatBg = useOS((s) => s.chatBg);
   const setChatBg = useOS((s) => s.setChatBg);
   const notify = useOS((s) => s.notify);
+
+  // Word/name truncation: on mobile view truncates if > 10 chars (e.g. "BrightCommet..."),
+  // on desktop view shows full name unless it exceeds 20 or more characters
+  const formatUsername = (rawName?: string) => {
+    if (!rawName) return "Guest";
+    const clean = rawName.trim();
+    const max = isMobile ? 10 : 20;
+    if (clean.length > max) {
+      return `${clean.slice(0, max)}...`;
+    }
+    return clean;
+  };
 
   const session = useMemo(() => getChatSession(), []);
   const clientId = session.clientId;

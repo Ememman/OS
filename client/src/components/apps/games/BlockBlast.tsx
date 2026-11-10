@@ -263,8 +263,8 @@ export default function BlockBlast() {
   const validHover = selected !== null && hover && tray[selected] && canPlace(grid, tray[selected].shape, hover.r, hover.c);
 
   return (
-    <div className="p-4 flex flex-col items-center gap-3 select-none">
-      <div className="flex items-center justify-between w-full max-w-xs text-sm">
+    <div className="p-3 sm:p-4 flex flex-col items-center gap-2 sm:gap-3 select-none h-full overflow-y-auto thin-scroll">
+      <div className="flex items-center justify-between w-full max-w-[min(88vw,320px)] text-sm">
         <div>
           <div className="text-[10px] text-white/40 uppercase tracking-wide">Score</div>
           <div className="font-display font-semibold text-lg tabular-nums">{score}</div>
@@ -274,17 +274,17 @@ export default function BlockBlast() {
           <span className="font-mono text-xs">{best}</span>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={() => setSoundOn((s) => !s)} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors" title={soundOn ? "Mute" : "Unmute"}>
+          <button onClick={() => setSoundOn((s) => !s)} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors cursor-pointer" title={soundOn ? "Mute" : "Unmute"}>
             {soundOn ? <GIconVolume size={15} /> : <GIconVolumeMute size={15} className="text-white/40" />}
           </button>
-          <button onClick={reset} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors" title="Restart">
+          <button onClick={reset} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors cursor-pointer" title="Restart">
             <GIconRotateLeft size={15} />
           </button>
         </div>
       </div>
 
       <div
-        className={`relative grid gap-[3px] p-2 rounded-xl bg-white/5 border border-white/10 transition-transform w-full max-w-[320px] aspect-square ${shake ? "bb-shake" : ""}`}
+        className={`relative grid gap-[3px] p-2 rounded-xl bg-white/5 border border-white/10 transition-transform w-full max-w-[min(88vw,320px)] aspect-square ${shake ? "bb-shake" : ""}`}
         style={{ gridTemplateColumns: `repeat(${SIZE}, 1fr)`, gridTemplateRows: `repeat(${SIZE}, 1fr)` }}
       >
         {grid.map((row, r) =>
@@ -324,25 +324,35 @@ export default function BlockBlast() {
         ))}
       </div>
 
-      <div className="flex gap-3 mt-1">
+      <div className="flex justify-center items-center gap-2 sm:gap-3 mt-1 w-full max-w-[min(88vw,320px)]">
         {tray.map((p, i) =>
           p ? (
             <button
               key={p.id}
               onClick={() => setSelected(selected === i ? null : i)}
-              className={`p-2 rounded-lg border transition-all duration-150 hover:scale-105 active:scale-95 ${selected === i ? "border-white bg-white/10 scale-105" : "border-white/10"}`}
+              className={`p-2 rounded-xl border transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer ${
+                selected === i
+                  ? "border-accent bg-accent/20 ring-2 ring-accent/60 scale-105 shadow-md shadow-accent/20"
+                  : "border-white/10 bg-white/5 hover:border-white/25"
+              }`}
             >
               <MiniShape shape={p.shape} color={p.color} />
             </button>
           ) : (
-            <div key={i} className="w-14 h-14" />
+            <div key={i} className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl border border-dashed border-white/5" />
           )
         )}
       </div>
 
-      <p className="text-[11px] text-white/40 text-center max-w-xs">
-        Tap a piece, then tap a cell on the board to drop it. Clear full rows or columns for bonus points.
-      </p>
+      {selected !== null ? (
+        <span className="text-[10px] text-accent font-semibold px-2.5 py-0.5 rounded-full bg-accent/15 border border-accent/25 animate-pulse">
+          Tap board to place selected piece
+        </span>
+      ) : (
+        <p className="text-[10px] sm:text-[11px] text-white/40 text-center max-w-xs">
+          Tap a piece below, then tap a cell on the board to drop it.
+        </p>
+      )}
 
       {gameOver && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center" style={{ animation: "fadeInOpacity 200ms ease both" }}>
