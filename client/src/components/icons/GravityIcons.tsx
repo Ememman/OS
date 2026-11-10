@@ -120,6 +120,8 @@ export const GIconTrophy = (props: any) => <GravityIcon icon={GIcons.Cup || GIco
 export const GIconPuzzle = (props: any) => <GravityIcon icon={GIcons.Puzzle || GIcons.Cube} {...props} />;
 export const GIconPaperPlane = (props: any) => <GravityIcon icon={GIcons.PaperPlane} {...props} />;
 export const GIconPerson = (props: any) => <GravityIcon icon={GIcons.Person} {...props} />;
+export const GIconBriefcase = (props: any) => <GravityIcon icon={(GIcons as any).Briefcase || (GIcons as any).Suitcase || GIcons.Folder} {...props} />;
+export const GIconGraduationCap = (props: any) => <GravityIcon icon={(GIcons as any).GraduationCap || GIcons.BookOpen} {...props} />;
 export const GIconPersons = (props: any) => <GravityIcon icon={GIcons.Persons || GIcons.Person} {...props} />;
 export const GIconPencil = (props: any) => <GravityIcon icon={GIcons.Pencil} {...props} />;
 export const GIconExternalLink = (props: any) => <GravityIcon icon={GIcons.ArrowUpRightFromSquare || GIcons.Link} {...props} />;

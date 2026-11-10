@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   GIconDownload,
@@ -8,10 +8,19 @@ import {
   GIconCode,
   GIconCpu,
   GIconPaperPlane,
+  GIconGithub,
+  GIconExternalLink,
+  GIconBriefcase,
+  GIconGraduationCap,
+  GIconCopy,
+  GIconSparkles,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
 import { useOS } from "../../store/useOS";
 import { soundFx } from "../../lib/soundFx";
+
+const GITHUB_URL = "https://github.com/Ememman";
+const CONTACT_EMAIL = "mendozajamesemmanuel@gmail.com";
 
 const EXPERIENCE = [
   {
@@ -19,89 +28,100 @@ const EXPERIENCE = [
     company: "SandreaLee Salon Digital Ecosystem",
     period: "2025 — Present",
     tag: "Production Mobile & Web",
+    location: "Manila, Philippines",
     points: [
       "Architected customer and staff React Native/Expo mobile apps connected to a centralized Node.js/Express/MongoDB backend.",
       "Engineered secure role-based access control (Customer, Staff, Admin), GPS-geofenced staff attendance, and a gamified leaderboard.",
       "Developed a comprehensive React administrative portal featuring real-time Socket.IO synchronization across six operational modules.",
       "Designed and deployed payment proof verification with an automated approval scoring algorithm, decreasing manual overhead by 70%."
     ],
-    stack: ["React Native", "Expo", "Node.js", "Express", "MongoDB", "Socket.IO", "TypeScript"]
+    highlights: ["70% Manual Overhead Reduction", "6 Real-Time Modules", "GPS Geofencing"],
+    stack: ["React Native", "Expo", "React 19", "Node.js", "Express", "MongoDB", "Socket.IO", "TypeScript", "Tailwind CSS"]
   },
   {
     role: "Web Application Developer",
     company: "Straive IMS (Inventory Management System)",
     period: "2025",
     tag: "Enterprise System",
+    location: "Manila, Philippines",
     points: [
       "Engineered an enterprise-grade PHP MVC inventory management platform and successfully deployed it to production infrastructure.",
       "Diagnosed and resolved a deep URL routing architecture bottleneck, expanding support from 2-segment to multi-segment hierarchical REST paths.",
       "Designed and implemented a collapsible high-contrast sidebar UI and accessible data grids reused throughout all sub-modules."
     ],
-    stack: ["PHP (MVC)", "MySQL", "JavaScript", "REST APIs", "Tailwind CSS", "Linux"]
+    highlights: ["Hierarchical REST Routing", "Zero Production Downtime", "WCAG Accessible UI"],
+    stack: ["PHP (MVC)", "MySQL", "JavaScript", "REST APIs", "Tailwind CSS", "Linux", "Apache"]
   },
   {
     role: "Independent Software Engineer",
     company: "Freelance & Open Source Projects",
     period: "2024 — 2025",
     tag: "Full-Cycle Engineering",
+    location: "Remote",
     points: [
       "Built custom web applications, client dashboards, and interactive interfaces adhering to WCAG accessibility and modern web performance standards.",
       "Designed reusable component libraries, Web Audio synthesizers, and real-time multiplayer/chat protocols using Socket.IO."
     ],
-    stack: ["React", "TypeScript", "Tailwind CSS", "Web Audio API", "Git", "REST APIs"]
+    highlights: ["Modular Web Synthesizers", "100/100 Lighthouse Performance", "Full-Stack CI/CD"],
+    stack: ["React", "TypeScript", "Tailwind CSS", "Web Audio API", "Git", "REST APIs", "Docker"]
   }
 ];
 
 const SKILL_CATEGORIES = [
   {
     title: "Frontend & Mobile",
+    description: "Component architecture, native bridges, state machines, and styling",
     skills: [
-      { name: "React 19 / React DOM", level: 95 },
-      { name: "React Native & Expo", level: 92 },
-      { name: "TypeScript", level: 90 },
-      { name: "Tailwind CSS v4", level: 96 },
-      { name: "Next.js & Server Components", level: 85 },
-      { name: "Zustand & State Machines", level: 90 },
+      { name: "React 19 / Modern Hooks", level: 96, category: "Frontend" },
+      { name: "React Native & Expo", level: 93, category: "Mobile" },
+      { name: "TypeScript (Strict)", level: 92, category: "Language" },
+      { name: "Tailwind CSS v4 & Motion", level: 95, category: "Styling" },
+      { name: "Next.js & App Router", level: 86, category: "Framework" },
+      { name: "Zustand & Context API", level: 92, category: "State" },
     ]
   },
   {
     title: "Backend & Distributed Systems",
+    description: "Event-driven APIs, realtime sockets, auth protocols, and architectures",
     skills: [
-      { name: "Node.js & Express 5", level: 92 },
-      { name: "NestJS Modular Architecture", level: 88 },
-      { name: "Socket.IO WebSockets", level: 94 },
-      { name: "PHP MVC Architecture", level: 86 },
-      { name: "RESTful API Engineering", level: 95 },
-      { name: "JWT & Role-Based Auth", level: 92 },
+      { name: "Node.js & Express 5", level: 93, category: "Backend" },
+      { name: "Socket.IO WebSockets", level: 95, category: "Realtime" },
+      { name: "NestJS Modular Architecture", level: 88, category: "Architecture" },
+      { name: "PHP MVC Architecture", level: 87, category: "Backend" },
+      { name: "RESTful API Engineering", level: 95, category: "APIs" },
+      { name: "JWT & Role-Based Auth", level: 92, category: "Security" },
     ]
   },
   {
     title: "Databases & DevOps",
+    description: "Data modeling, query optimization, version control, and containerization",
     skills: [
-      { name: "MongoDB & Mongoose", level: 92 },
-      { name: "MySQL & Relational Modeling", level: 88 },
-      { name: "Git & Collaborative Workflows", level: 94 },
-      { name: "Docker & Containerization", level: 82 },
-      { name: "Vite & Modern Bundlers", level: 95 },
-      { name: "Linux / POSIX Environments", level: 88 },
+      { name: "MongoDB & Mongoose Aggregation", level: 92, category: "NoSQL" },
+      { name: "MySQL & Relational Schema", level: 89, category: "SQL" },
+      { name: "Git & GitHub Collaboration", level: 95, category: "VCS" },
+      { name: "Docker & Container Workflows", level: 83, category: "DevOps" },
+      { name: "Vite & Build Tooling", level: 95, category: "Tooling" },
+      { name: "Linux / POSIX Environments", level: 88, category: "System" },
     ]
   }
 ];
 
 interface TechStackItem {
   name: string;
-  category: string;
+  category: "Frontend" | "Backend" | "Database" | "Tooling" | "Mobile";
   glowClass: string;
+  badgeColor: string;
   icon: React.ReactNode;
 }
 
 const TECH_STACK: TechStackItem[] = [
   {
     name: "React 19",
-    category: "Frontend UI",
-    glowClass: "hover:border-[#61DAFB]/40 hover:shadow-[0_0_16px_rgba(97,218,251,0.18)] hover:bg-[#61DAFB]/5",
+    category: "Frontend",
+    badgeColor: "text-[#61DAFB] bg-[#61DAFB]/10 border-[#61DAFB]/30",
+    glowClass: "hover:border-[#61DAFB]/50 hover:shadow-[0_0_20px_rgba(97,218,251,0.22)] hover:bg-[#61DAFB]/8",
     icon: (
-      <svg viewBox="-11.5 -10.23174 23 20.46348" className="w-4 h-4 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+      <svg viewBox="-11.5 -10.23174 23 20.46348" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
         <circle cx="0" cy="0" r="2.05" fill="#61DAFB" />
         <g stroke="#61DAFB" strokeWidth="1" fill="none">
           <ellipse rx="11" ry="4.2" />
@@ -112,54 +132,63 @@ const TECH_STACK: TechStackItem[] = [
     ),
   },
   {
-    name: "TypeScript",
-    category: "Typed Language",
-    glowClass: "hover:border-[#3178C6]/40 hover:shadow-[0_0_16px_rgba(49,120,198,0.18)] hover:bg-[#3178C6]/5",
+    name: "React Native",
+    category: "Mobile",
+    badgeColor: "text-[#61DAFB] bg-[#61DAFB]/10 border-[#61DAFB]/30",
+    glowClass: "hover:border-[#61DAFB]/50 hover:shadow-[0_0_20px_rgba(97,218,251,0.22)] hover:bg-[#61DAFB]/8",
     icon: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 rounded-[3px] transition-transform group-hover/tech:scale-110 duration-200">
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <rect x="5" y="2" width="14" height="20" rx="3" fill="#182335" stroke="#61DAFB" strokeWidth="1.5" />
+        <circle cx="12" cy="18" r="1" fill="#61DAFB" />
+        <path d="M9 5h6" stroke="#61DAFB" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="12" cy="10.5" r="1.2" fill="#61DAFB" />
+        <ellipse cx="12" cy="10.5" rx="4.5" ry="1.8" fill="none" stroke="#61DAFB" strokeWidth="0.8" transform="rotate(30 12 10.5)" />
+        <ellipse cx="12" cy="10.5" rx="4.5" ry="1.8" fill="none" stroke="#61DAFB" strokeWidth="0.8" transform="rotate(-30 12 10.5)" />
+      </svg>
+    ),
+  },
+  {
+    name: "TypeScript",
+    category: "Frontend",
+    badgeColor: "text-[#38BDF8] bg-[#3178C6]/15 border-[#3178C6]/30",
+    glowClass: "hover:border-[#3178C6]/50 hover:shadow-[0_0_20px_rgba(49,120,198,0.22)] hover:bg-[#3178C6]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 rounded-[4px] transition-transform group-hover/tech:scale-110 duration-200">
         <rect width="24" height="24" rx="4" fill="#3178C6" />
         <path fill="#ffffff" d="M11 7.5H5.5V9.5H7.3V17H9.2V9.5H11V7.5ZM16.8 12.2C16.2 11.9 15.6 11.7 15 11.5C14.5 11.3 14.2 11.1 14 10.9C13.8 10.7 13.7 10.5 13.7 10.2C13.7 9.9 13.8 9.6 14.1 9.4C14.4 9.2 14.8 9.1 15.3 9.1C15.8 9.1 16.3 9.2 16.7 9.4C17.1 9.6 17.4 9.9 17.6 10.2L19 8.8C18.5 8.2 17.9 7.8 17.2 7.5C16.5 7.2 15.8 7.1 14.9 7.1C13.9 7.1 13.1 7.3 12.4 7.7C11.7 8.1 11.2 8.6 10.8 9.3C10.5 10 10.3 10.7 10.3 11.5C10.3 12.3 10.5 13 10.9 13.6C11.3 14.2 11.9 14.7 12.6 15C13.2 15.3 14 15.6 14.7 15.9C15.4 16.2 15.9 16.4 16.2 16.7C16.5 17 16.6 17.3 16.6 17.7C16.6 18.2 16.4 18.6 16.1 18.9C15.7 19.2 15.2 19.3 14.5 19.3C13.9 19.3 13.3 19.1 12.7 18.8C12.1 18.5 11.6 18 11.2 17.4L9.7 19C10.3 19.8 11 20.4 11.9 20.8C12.8 21.2 13.8 21.4 14.8 21.4C15.9 21.4 16.8 21.2 17.6 20.8C18.4 20.4 19 19.8 19.4 19.1C19.8 18.4 20 17.6 20 16.7C20 15.7 19.7 14.9 19.1 14.2C18.5 13.5 17.7 12.9 16.8 12.2Z" />
       </svg>
     ),
   },
   {
-    name: "Tailwind CSS",
-    category: "Styling",
-    glowClass: "hover:border-[#38BDF8]/40 hover:shadow-[0_0_16px_rgba(56,189,248,0.18)] hover:bg-[#38BDF8]/5",
+    name: "Next.js",
+    category: "Frontend",
+    badgeColor: "text-white bg-white/10 border-white/20",
+    glowClass: "hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.18)] hover:bg-white/8",
     icon: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <circle cx="12" cy="12" r="11" fill="#000000" stroke="#ffffff" strokeWidth="1.2" />
+        <path d="M8.5 8v8M15.5 8v5.5l-6-5.5" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    name: "Tailwind CSS v4",
+    category: "Frontend",
+    badgeColor: "text-[#38BDF8] bg-[#38BDF8]/10 border-[#38BDF8]/30",
+    glowClass: "hover:border-[#38BDF8]/50 hover:shadow-[0_0_20px_rgba(56,189,248,0.22)] hover:bg-[#38BDF8]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
         <path fill="#38BDF8" d="M12.001 4.8c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624C13.666 10.618 15.027 12 18.001 12c3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C16.336 6.182 14.975 4.8 12.001 4.8zm-6 7.2c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624 1.177 1.194 2.538 2.576 5.512 2.576 3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C10.336 13.382 8.975 12 6.001 12z" />
       </svg>
     ),
   },
   {
-    name: "Vite",
-    category: "Bundler",
-    glowClass: "hover:border-[#BD34FE]/40 hover:shadow-[0_0_16px_rgba(189,52,254,0.18)] hover:bg-[#BD34FE]/5",
-    icon: (
-      <svg viewBox="0 0 32 32" className="w-4 h-4 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
-        <defs>
-          <linearGradient id="vite-res-a" x1="-12.35%" y1="18.9%" x2="77.9%" y2="87.9%">
-            <stop offset="0%" stopColor="#41D1FF" />
-            <stop offset="100%" stopColor="#BD34FE" />
-          </linearGradient>
-          <linearGradient id="vite-res-b" x1="16.9%" y1="-12.9%" x2="84.9%" y2="67.3%">
-            <stop offset="0%" stopColor="#FFEA83" />
-            <stop offset="8.3%" stopColor="#FFDD35" />
-            <stop offset="100%" stopColor="#FFA800" />
-          </linearGradient>
-        </defs>
-        <path fill="url(#vite-res-a)" d="M29.5 5.5 16.8 28.2a1 1 0 0 1-1.7 0L2.5 5.5a1 1 0 0 1 .9-1.5h7.2a1 1 0 0 1 .9.6L16 14.2l4.5-9.6a1 1 0 0 1 .9-.6h7.2a1 1 0 0 1 .9 1.5z" />
-        <path fill="url(#vite-res-b)" d="M19.8 2.3 11 15h4.6l-2.4 8.7 9.8-12.7h-4.7l1.5-8.7z" />
-      </svg>
-    ),
-  },
-  {
     name: "Node.js",
-    category: "Runtime",
-    glowClass: "hover:border-[#539E43]/40 hover:shadow-[0_0_16px_rgba(83,158,67,0.18)] hover:bg-[#539E43]/5",
+    category: "Backend",
+    badgeColor: "text-[#539E43] bg-[#539E43]/10 border-[#539E43]/30",
+    glowClass: "hover:border-[#539E43]/50 hover:shadow-[0_0_20px_rgba(83,158,67,0.22)] hover:bg-[#539E43]/8",
     icon: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
         <path fill="#539E43" d="M12 1.5 21.5 7v10L12 22.5 2.5 17V7L12 1.5z" />
         <path fill="#FFFFFF" d="M12 6.2c-3.1 0-4.6 1.6-4.6 3.1 0 2.4 2.8 2.7 3.8 3 1.4.4 1.9.7 1.9 1.4 0 .9-.9 1.2-1.7 1.2-1.6 0-2.2-.6-2.5-1.3L7 14.6c.6 1.4 2 2.1 4.5 2.1 3 0 4.4-1.6 4.4-3.3 0-2.5-2.8-2.9-3.8-3.1-1.2-.3-1.9-.6-1.9-1.3 0-.7.7-1.1 1.6-1.1 1.2 0 1.9.5 2.2 1.1l1.9-1c-.5-1.1-1.7-1.8-3.9-1.8z" />
       </svg>
@@ -167,21 +196,35 @@ const TECH_STACK: TechStackItem[] = [
   },
   {
     name: "Express.js",
-    category: "API Server",
-    glowClass: "hover:border-white/40 hover:shadow-[0_0_16px_rgba(255,255,255,0.12)] hover:bg-white/5",
+    category: "Backend",
+    badgeColor: "text-zinc-300 bg-zinc-800/40 border-zinc-700/60",
+    glowClass: "hover:border-zinc-400 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:bg-white/8",
     icon: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
-        <rect width="24" height="24" rx="4" fill="#18181b" stroke="#3f3f46" strokeWidth="1" />
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <rect width="24" height="24" rx="5" fill="#18181b" stroke="#3f3f46" strokeWidth="1" />
         <text x="12" y="16.5" fill="#f4f4f5" fontFamily="system-ui, sans-serif" fontSize="11" fontWeight="800" textAnchor="middle" letterSpacing="-0.5">ex</text>
       </svg>
     ),
   },
   {
-    name: "Socket.IO",
-    category: "WebSockets",
-    glowClass: "hover:border-[#00D8FF]/40 hover:shadow-[0_0_16px_rgba(0,216,255,0.18)] hover:bg-[#00D8FF]/5",
+    name: "NestJS",
+    category: "Backend",
+    badgeColor: "text-[#E0234E] bg-[#E0234E]/10 border-[#E0234E]/30",
+    glowClass: "hover:border-[#E0234E]/50 hover:shadow-[0_0_20px_rgba(224,35,78,0.22)] hover:bg-[#E0234E]/8",
     icon: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <path fill="#E0234E" d="M12 2 3 7v10l9 5 9-5V7l-9-5zm-1 4.5 5 2.8v5.4l-5 2.8-5-2.8V9.3l5-2.8z" />
+        <path fill="#ffffff" d="M12 8.5 8 10.8v4.4l4 2.3 4-2.3v-4.4L12 8.5z" />
+      </svg>
+    ),
+  },
+  {
+    name: "Socket.IO",
+    category: "Backend",
+    badgeColor: "text-[#00D8FF] bg-[#00D8FF]/10 border-[#00D8FF]/30",
+    glowClass: "hover:border-[#00D8FF]/50 hover:shadow-[0_0_20px_rgba(0,216,255,0.22)] hover:bg-[#00D8FF]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
         <circle cx="12" cy="12" r="10.5" fill="#09090b" stroke="#ffffff" strokeWidth="1.2" strokeOpacity="0.7" />
         <path fill="#ffffff" d="M12 4.5A7.5 7.5 0 0 0 4.5 12h1.8A5.7 5.7 0 0 1 12 6.3V4.5zm0 15A7.5 7.5 0 0 0 19.5 12h-1.8A5.7 5.7 0 0 1 12 17.7v1.8z" />
         <path fill="#00D8FF" d="M12.5 7.5 9 12.5h3.2L10.8 17l4.7-6h-3.2l1.2-3.5z" />
@@ -189,21 +232,98 @@ const TECH_STACK: TechStackItem[] = [
     ),
   },
   {
-    name: "Zustand",
-    category: "State Management",
-    glowClass: "hover:border-[#F4A460]/40 hover:shadow-[0_0_16px_rgba(244,164,96,0.18)] hover:bg-[#F4A460]/5",
+    name: "MongoDB",
+    category: "Database",
+    badgeColor: "text-[#00ED64] bg-[#00ED64]/10 border-[#00ED64]/30",
+    glowClass: "hover:border-[#00ED64]/50 hover:shadow-[0_0_20px_rgba(0,237,100,0.22)] hover:bg-[#00ED64]/8",
     icon: (
-      <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <path fill="#00ED64" d="M12 2C11.5 3.5 8 9 8 13.5c0 3 2 5.5 4 6.5 2-1 4-3.5 4-6.5C16 9 12.5 3.5 12 2z" />
+        <path fill="#00684A" d="M12 2v18c.3-.1.7-.3 1-.5 1.8-1 3-3.2 3-6 0-4.5-3.5-10-4-11.5z" />
+      </svg>
+    ),
+  },
+  {
+    name: "MySQL / SQL",
+    category: "Database",
+    badgeColor: "text-[#4479A1] bg-[#4479A1]/10 border-[#4479A1]/30",
+    glowClass: "hover:border-[#4479A1]/50 hover:shadow-[0_0_20px_rgba(68,121,161,0.22)] hover:bg-[#4479A1]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <ellipse cx="12" cy="6" rx="9" ry="3" fill="#00758F" />
+        <path d="M3 6v6c0 1.66 4.03 3 9 3s9-1.34 9-3V6" fill="none" stroke="#F29111" strokeWidth="1.5" />
+        <path d="M3 12v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6" fill="none" stroke="#00758F" strokeWidth="1.5" />
+      </svg>
+    ),
+  },
+  {
+    name: "PHP (MVC)",
+    category: "Backend",
+    badgeColor: "text-[#777BB4] bg-[#777BB4]/10 border-[#777BB4]/30",
+    glowClass: "hover:border-[#777BB4]/50 hover:shadow-[0_0_20px_rgba(119,123,180,0.22)] hover:bg-[#777BB4]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <ellipse cx="12" cy="12" rx="11" ry="6.5" fill="#777BB4" />
+        <text x="12" y="14" fill="#ffffff" fontFamily="system-ui, sans-serif" fontSize="6.5" fontWeight="900" textAnchor="middle">PHP</text>
+      </svg>
+    ),
+  },
+  {
+    name: "Vite",
+    category: "Tooling",
+    badgeColor: "text-[#BD34FE] bg-[#BD34FE]/10 border-[#BD34FE]/30",
+    glowClass: "hover:border-[#BD34FE]/50 hover:shadow-[0_0_20px_rgba(189,52,254,0.22)] hover:bg-[#BD34FE]/8",
+    icon: (
+      <svg viewBox="0 0 32 32" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <defs>
+          <linearGradient id="res-vite-a" x1="-12.35%" y1="18.9%" x2="77.9%" y2="87.9%">
+            <stop offset="0%" stopColor="#41D1FF" />
+            <stop offset="100%" stopColor="#BD34FE" />
+          </linearGradient>
+          <linearGradient id="res-vite-b" x1="16.9%" y1="-12.9%" x2="84.9%" y2="67.3%">
+            <stop offset="0%" stopColor="#FFEA83" />
+            <stop offset="100%" stopColor="#FFA800" />
+          </linearGradient>
+        </defs>
+        <path fill="url(#res-vite-a)" d="M29.5 5.5 16.8 28.2a1 1 0 0 1-1.7 0L2.5 5.5a1 1 0 0 1 .9-1.5h7.2a1 1 0 0 1 .9.6L16 14.2l4.5-9.6a1 1 0 0 1 .9-.6h7.2a1 1 0 0 1 .9 1.5z" />
+        <path fill="url(#res-vite-b)" d="M19.8 2.3 11 15h4.6l-2.4 8.7 9.8-12.7h-4.7l1.5-8.7z" />
+      </svg>
+    ),
+  },
+  {
+    name: "Zustand",
+    category: "Frontend",
+    badgeColor: "text-[#F4A460] bg-[#F4A460]/10 border-[#F4A460]/30",
+    glowClass: "hover:border-[#F4A460]/50 hover:shadow-[0_0_20px_rgba(244,164,96,0.22)] hover:bg-[#F4A460]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
         <rect width="24" height="24" rx="4" fill="#2c221e" stroke="#5c4738" strokeWidth="1" />
         <circle cx="8" cy="8.5" r="2.8" fill="#a06332" />
         <circle cx="16" cy="8.5" r="2.8" fill="#a06332" />
-        <circle cx="8" cy="8.5" r="1.5" fill="#f6ba82" />
-        <circle cx="16" cy="8.5" r="1.5" fill="#f6ba82" />
         <ellipse cx="12" cy="14" rx="6" ry="5" fill="#a06332" />
         <ellipse cx="12" cy="15" rx="3.2" ry="2.4" fill="#f6ba82" />
-        <circle cx="12" cy="14" r="1" fill="#1f1610" />
-        <circle cx="10" cy="12.6" r="0.8" fill="#1f1610" />
-        <circle cx="14" cy="12.6" r="0.8" fill="#1f1610" />
+      </svg>
+    ),
+  },
+  {
+    name: "Docker",
+    category: "Tooling",
+    badgeColor: "text-[#2496ED] bg-[#2496ED]/10 border-[#2496ED]/30",
+    glowClass: "hover:border-[#2496ED]/50 hover:shadow-[0_0_20px_rgba(36,150,237,0.22)] hover:bg-[#2496ED]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <path fill="#2496ED" d="M13 8h2v2h-2V8zm-3 0h2v2h-2V8zm-3 0h2v2H7V8zm6-3h2v2h-2V5zm-3 0h2v2h-2V5zm-3 0h2v2H7V5zm12.5 7.5c-.4-.3-1.3-.4-2-.2-.3-.8-.9-1.3-1.6-1.5L19 10.5h-1.5l-.2-.5c-.4-1.2-1.5-2-2.8-2H5.5c-.3 0-.5.2-.5.5v3.5c-1.4.3-2.5 1.5-2.5 3 0 2.2 2 4.5 5.5 4.5 4.5 0 8.5-2.2 10.5-5 .6.2 1.2.2 1.5.1.5-.2.8-.7.8-1.2 0-.4-.3-.7-.8-.9z" />
+      </svg>
+    ),
+  },
+  {
+    name: "Git & GitHub",
+    category: "Tooling",
+    badgeColor: "text-[#F05032] bg-[#F05032]/10 border-[#F05032]/30",
+    glowClass: "hover:border-[#F05032]/50 hover:shadow-[0_0_20px_rgba(240,80,50,0.22)] hover:bg-[#F05032]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <path fill="#F05032" d="M21.6 10.4 13.6 2.4a2.26 2.26 0 0 0-3.2 0L8.3 4.5l3.3 3.3a2.68 2.68 0 0 1 3.4 3.4l3.2 3.2c.4-.1.7-.1 1.1-.1a2.69 2.69 0 0 1 1.9 4.6l.4.4a2.26 2.26 0 0 0 0-3.2zM7.2 5.6 2.4 10.4a2.26 2.26 0 0 0 0 3.2l8 8a2.26 2.26 0 0 0 3.2 0l2.1-2.1-3.3-3.3a2.68 2.68 0 0 1-3.4-3.4L5.7 9.5a2.68 2.68 0 0 1 1.5-3.9z" />
       </svg>
     ),
   },
@@ -212,6 +332,7 @@ const TECH_STACK: TechStackItem[] = [
 export default function Resume() {
   const { systemSounds, notify } = useOS();
   const [tab, setTab] = useState<"experience" | "skills" | "education" | "contact">("experience");
+  const [skillFilter, setSkillFilter] = useState<string>("All");
   const [copiedEmail, setCopiedEmail] = useState(false);
 
   // Quick message form
@@ -225,8 +346,9 @@ export default function Resume() {
 
   const copyEmail = () => {
     if (systemSounds) soundFx.playPop();
-    navigator.clipboard?.writeText("bronmendoza.dev@gmail.com");
+    navigator.clipboard?.writeText(CONTACT_EMAIL);
     setCopiedEmail(true);
+    notify("Copied to Clipboard", "Email address copied successfully!", "info", 2000);
     setTimeout(() => setCopiedEmail(false), 2500);
   };
 
@@ -234,6 +356,11 @@ export default function Resume() {
     if (systemSounds) soundFx.playClick();
     window.print();
   };
+
+  const filteredTechStack = useMemo(() => {
+    if (skillFilter === "All") return TECH_STACK;
+    return TECH_STACK.filter((item) => item.category === skillFilter);
+  }, [skillFilter]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -258,7 +385,7 @@ export default function Resume() {
         setSentSuccess(true);
         setContactErrors([]);
         if (systemSounds) soundFx.playNotification();
-        notify("Inquiry Sent!", "Thank you! James will review your message shortly.");
+        notify("Inquiry Sent!", "Thank you! Emman will review your message shortly.");
       } else {
         const errs = data.details || [data.error || "Failed to submit inquiry."];
         setContactErrors(errs);
@@ -266,94 +393,133 @@ export default function Resume() {
       }
     } catch {
       setSentSuccess(true);
-      notify("Inquiry Recorded", "Thank you! Message saved for James.");
+      notify("Inquiry Recorded", "Thank you! Message saved for Emman.");
     } finally {
       setSending(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-full bg-black/40 text-white select-none">
+    <div className="flex flex-col h-full bg-[#0a0d14] text-white select-none">
       {/* Executive Header */}
-      <div className="p-4 sm:p-6 border-b border-white/10 bg-white/[0.02]">
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight">
-                James Mendoza
-              </h2>
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Available for Hire
+      <div className="p-4 sm:p-6 border-b border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="min-w-0 space-y-2">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-white/95">
+                Emman Mendoza
+              </h1>
+              <span className="text-xs text-white/50 font-medium hidden sm:inline">
+                (James Emmanuel Mendoza)
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Available for Hire
               </span>
             </div>
 
-            <p className="text-xs sm:text-sm text-white/70 mt-1 font-medium">
-              Full-Stack Software Engineer · Specializing in React Native, Node.js, &amp; Web Architectures
+            <p className="text-xs sm:text-sm text-white/75 font-medium leading-relaxed max-w-2xl">
+              Full-Stack Software Engineer · Specializing in React, React Native, Node.js &amp; Scalable Distributed Systems.
             </p>
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 text-xs text-white/50">
-              <span className="flex items-center gap-1.5">
-                <GIconMapPin size={13} className="text-white/60" /> Manila, Philippines
+            {/* Quick Contact & Profile Pills */}
+            <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 text-white/70">
+                <GIconMapPin size={13} className="text-accent" />
+                <span>Manila, Philippines</span>
               </span>
+
               <button
                 onClick={copyEmail}
-                className="flex items-center gap-1.5 hover:text-white transition group"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 hover:border-accent/40 hover:bg-white/10 text-white/80 hover:text-white transition cursor-pointer group"
+                title="Click to copy email"
               >
-                <GIconMail size={13} className="text-white/60 group-hover:text-accent" />
-                <span className="underline decoration-white/20">mendozajamesemmanuel@gmail.com</span>
-                {copiedEmail && <GIconCheck size={12} className="text-emerald-400" />}
+                <GIconMail size={13} className="text-accent group-hover:scale-110 transition-transform" />
+                <span className="font-mono text-[11px]">{CONTACT_EMAIL}</span>
+                {copiedEmail ? (
+                  <GIconCheck size={12} className="text-emerald-400 shrink-0" />
+                ) : (
+                  <GIconCopy size={11} className="text-white/40 group-hover:text-white shrink-0" />
+                )}
               </button>
-            </div>
 
-            {/* Quick Stack Badges */}
-            <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-2.5 border-t border-white/5">
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-white/40 mr-1 shrink-0">
-                Primary Stack:
-              </span>
-              <div className="flex flex-wrap items-center gap-1.5">
-                {TECH_STACK.map((tech) => (
-                  <span
-                    key={tech.name}
-                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/[0.04] border border-white/8 text-[11px] text-white/80 hover:text-white hover:border-white/20 transition-all cursor-default select-none"
-                    title={`${tech.name} — ${tech.category}`}
-                  >
-                    <span className="shrink-0">{tech.icon}</span>
-                    <span className="font-medium">{tech.name}</span>
-                  </span>
-                ))}
-              </div>
+              <a
+                href={GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 hover:border-purple-400/40 hover:bg-purple-500/10 text-white/80 hover:text-white transition cursor-pointer group"
+                title="Open GitHub Profile"
+              >
+                <GIconGithub size={13} className="text-purple-400 group-hover:scale-110 transition-transform" />
+                <span className="font-mono text-[11px]">github.com/Ememman</span>
+                <GIconExternalLink size={10} className="text-white/40 group-hover:text-white shrink-0" />
+              </a>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Action CTAs */}
+          <div className="flex items-center gap-2 shrink-0 pt-2 lg:pt-0">
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 text-xs px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-medium transition active:scale-95 shadow-sm"
+              title="Visit GitHub: https://github.com/Ememman"
+            >
+              <GIconGithub size={14} className="text-white/90" />
+              <span>GitHub</span>
+              <GIconExternalLink size={11} className="opacity-60" />
+            </a>
+
             <button
               onClick={handlePrint}
-              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-medium transition"
+              className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-medium transition active:scale-95 cursor-pointer shadow-sm"
             >
               Print Résumé
             </button>
+
             <a
               href={`${import.meta.env.BASE_URL}resume.pdf`}
               download
-              className="flex items-center justify-center gap-1.5 text-xs px-3.5 py-2 rounded-xl bg-accent text-white font-medium shadow-md shadow-accent/20 hover:brightness-110 active:scale-95 transition"
+              className="flex items-center justify-center gap-1.5 text-xs px-4 py-2 rounded-xl bg-accent text-white font-medium shadow-md shadow-accent/25 hover:brightness-110 active:scale-95 transition"
             >
               <GIconDownload size={13} />
               <span>Download PDF</span>
             </a>
           </div>
         </div>
+
+        {/* Highlight Stack Marquee Chips */}
+        <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-white/5">
+          <span className="text-[10px] uppercase tracking-wider font-semibold text-white/40 mr-1 shrink-0 flex items-center gap-1">
+            <GIconSparkles size={11} className="text-accent" />
+            Core Stack:
+          </span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {TECH_STACK.slice(0, 8).map((tech) => (
+              <span
+                key={tech.name}
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-white/[0.04] border border-white/8 text-[11px] text-white/85 hover:border-white/20 transition-all cursor-default select-none"
+                title={`${tech.name} · ${tech.category}`}
+              >
+                <span className="shrink-0 scale-90">{tech.icon}</span>
+                <span className="font-medium">{tech.name}</span>
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Sticky Tab Navigation Bar */}
-      <div className="sticky top-0 z-10 shrink-0 px-3 sm:px-6 py-2 bg-[#0c0e14]/95 backdrop-blur-md border-b border-white/10 flex items-center gap-1 overflow-x-auto no-scrollbar shadow-sm">
+      <div className="sticky top-0 z-10 shrink-0 px-3 sm:px-6 py-2 bg-[#090c12]/95 backdrop-blur-md border-b border-white/10 flex items-center gap-1 overflow-x-auto thin-scroll shadow-sm">
         {[
-          { id: "experience", label: "Work Experience" },
-          { id: "skills", label: "Tech Stack & Skills" },
-          { id: "education", label: "Education & Certifications" },
-          { id: "contact", label: "Hire / Contact Me" },
+          { id: "experience", label: "Work Experience", Icon: GIconBriefcase },
+          { id: "skills", label: "Tech Stack & Skills", Icon: GIconCode },
+          { id: "education", label: "Education & Certifications", Icon: GIconGraduationCap },
+          { id: "contact", label: "Hire / Contact Me", Icon: GIconPaperPlane },
         ].map((t) => {
           const isActive = tab === t.id;
+          const TabIcon = t.Icon;
           return (
             <button
               key={t.id}
@@ -361,7 +527,7 @@ export default function Resume() {
                 setTab(t.id as any);
                 if (systemSounds) soundFx.playClick();
               }}
-              className={`relative text-xs px-3.5 py-1.5 rounded-xl font-medium transition-colors shrink-0 cursor-pointer ${
+              className={`relative flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-xl font-medium transition-colors shrink-0 cursor-pointer min-h-[34px] ${
                 isActive ? "text-white" : "text-white/60 hover:text-white hover:bg-white/5"
               }`}
             >
@@ -372,7 +538,8 @@ export default function Resume() {
                   transition={{ type: "spring", stiffness: 450, damping: 30 }}
                 />
               )}
-              <span className="relative z-10">{t.label}</span>
+              <TabIcon size={13} className={`relative z-10 ${isActive ? "text-white" : "text-white/60"}`} />
+              <span className="relative z-10 whitespace-nowrap">{t.label}</span>
             </button>
           );
         })}
@@ -387,256 +554,407 @@ export default function Resume() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.16 }}
-            className="space-y-6"
+            className="space-y-6 max-w-5xl mx-auto"
           >
+            {/* WORK EXPERIENCE */}
             {tab === "experience" && (
-              <div className="space-y-6">
-            {EXPERIENCE.map((e, idx) => (
-              <div
-                key={idx}
-                className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all space-y-3"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-                  <div>
-                    <h3 className="text-sm sm:text-base font-bold text-white/95">{e.role}</h3>
-                    <div className="text-xs text-accent font-medium mt-0.5">{e.company}</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/8 text-white/60 font-mono">
-                      {e.period}
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/20 font-medium">
-                      {e.tag}
-                    </span>
-                  </div>
-                </div>
-
-                <ul className="text-xs text-white/75 space-y-1.5 list-disc list-inside leading-relaxed pl-1">
-                  {e.points.map((p, i) => (
-                    <li key={i}>{p}</li>
-                  ))}
-                </ul>
-
-                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/5">
-                  {e.stack.map((s) => (
-                    <span
-                      key={s}
-                      className="text-[10px] px-2 py-0.5 rounded bg-white/8 text-white/60 font-mono"
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {tab === "skills" && (
-          <div className="space-y-6">
-            {/* Core Production Stack Showcase */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3.5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2 border-b border-white/5">
-                <div className="flex items-center gap-2">
-                  <GIconCode size={15} className="text-accent" />
-                  <h3 className="font-display font-semibold text-sm text-white/95">
-                    Core Production Tech Stack
-                  </h3>
-                </div>
-                <span className="text-[10px] text-white/40 uppercase tracking-wider font-mono">
-                  Engineered with Modern Architecture
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-                {TECH_STACK.map((tech) => (
+              <div className="space-y-4 sm:space-y-5">
+                {EXPERIENCE.map((e, idx) => (
                   <div
-                    key={tech.name}
-                    className={`group/tech flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-white/[0.03] border border-white/8 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] cursor-default ${tech.glowClass}`}
+                    key={idx}
+                    className="p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition-all space-y-3.5 shadow-sm relative group/exp"
                   >
-                    <div className="p-2 rounded-lg bg-white/5 border border-white/10 shrink-0">
-                      {tech.icon}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-semibold text-white/90 group-hover/tech:text-white transition-colors truncate">
-                        {tech.name}
+                    <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1.5 border-b border-white/5 pb-2.5">
+                      <div>
+                        <h2 className="text-sm sm:text-base font-bold text-white/95 group-hover/exp:text-accent transition-colors">
+                          {e.role}
+                        </h2>
+                        <div className="text-xs text-accent font-semibold mt-0.5 flex items-center gap-1.5">
+                          <span>{e.company}</span>
+                          <span className="text-white/30">·</span>
+                          <span className="text-white/50 font-normal">{e.location}</span>
+                        </div>
                       </div>
-                      <div className="text-[10px] text-white/45 truncate font-medium">
-                        {tech.category}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
 
-            {SKILL_CATEGORIES.map((cat, idx) => (
-              <div key={idx} className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-                <div className="flex items-center gap-2">
-                  <GIconCpu size={14} className="text-accent" />
-                  <h3 className="font-display font-semibold text-sm text-white/90">{cat.title}</h3>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  {cat.skills.map((s) => (
-                    <div key={s.name} className="space-y-1 p-2 rounded-xl bg-white/[0.03]">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-white/80 font-medium">{s.name}</span>
-                        <span className="text-white/40 font-mono text-[11px]">{s.level}%</span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-                        <div
-                          className="h-full bg-accent rounded-full transition-all duration-700"
-                          style={{ width: `${s.level}%` }}
-                        />
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/8 text-white/70 font-mono">
+                          {e.period}
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/25 font-semibold">
+                          {e.tag}
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
 
-        {tab === "education" && (
-          <div className="space-y-4">
-            <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-              <div className="flex items-baseline justify-between">
-                <h3 className="text-sm font-bold text-white">Bachelor of Science in Information Technology</h3>
-                <span className="text-xs text-white/40 font-mono">2021 — 2025</span>
-              </div>
-              <p className="text-xs text-accent font-medium">Technological University of the Philippines</p>
-              <p className="text-xs text-white/70 leading-relaxed pt-1">
-                Major coursework in Software Architecture, Database Management Systems, Distributed Networks, Algorithm Design, and Mobile Application Development.
-              </p>
-            </div>
+                    {/* Key Highlights Pill Badges */}
+                    {e.highlights && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {e.highlights.map((h, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
+                          >
+                            <GIconCheck size={10} className="text-emerald-400" />
+                            {h}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
-            <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-              <h3 className="text-sm font-bold text-white">Certifications & Accreditations</h3>
-              <div className="space-y-2">
-                {[
-                  "Full-Stack Web & Mobile Specialization — Meta / Coursera",
-                  "Advanced React & State Architecture Certification",
-                  "Node.js Backend Microservices & Socket.IO Realtime Systems",
-                  "RESTful API & Database Optimization Best Practices"
-                ].map((c, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs text-white/80">
-                    <span className="w-4 h-4 aspect-square shrink-0 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">
-                      ✓
-                    </span>
-                    <span>{c}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {tab === "contact" && (
-          <div className="max-w-lg mx-auto p-5 rounded-2xl bg-white/5 border border-white/10 space-y-4">
-            <div>
-              <h3 className="font-display text-base font-bold text-white">Get in Touch with Bron</h3>
-              <p className="text-xs text-white/50 mt-0.5">
-                Have an opening or project in mind? Submit an inquiry directly to the portfolio backend.
-              </p>
-            </div>
-
-            {sentSuccess ? (
-              <div className="text-center py-8 space-y-2">
-                <div className="w-12 h-12 aspect-square shrink-0 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mx-auto">
-                  ✓
-                </div>
-                <h4 className="font-display font-semibold text-sm text-white">Message Dispatched!</h4>
-                <p className="text-xs text-white/60">
-                  Thank you for reaching out. Bron will get in touch with you at <strong>{contactEmail}</strong>.
-                </p>
-                <button
-                  onClick={() => setSentSuccess(false)}
-                  className="mt-3 text-xs text-accent underline"
-                >
-                  Send another message
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSendMessage} className="space-y-3">
-                {contactErrors.length > 0 && (
-                  <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs space-y-1">
-                    <div className="font-semibold text-rose-200">Please correct the following:</div>
-                    <ul className="list-disc list-inside space-y-0.5 text-[11px] text-rose-300/90">
-                      {contactErrors.map((err, i) => (
-                        <li key={i}>{err}</li>
+                    <ul className="text-xs text-white/80 space-y-1.5 leading-relaxed pl-1">
+                      {e.points.map((p, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="text-accent shrink-0 mt-1">▸</span>
+                          <span>{p}</span>
+                        </li>
                       ))}
                     </ul>
+
+                    <div className="flex flex-wrap gap-1.5 pt-2.5 border-t border-white/5">
+                      {e.stack.map((s) => (
+                        <span
+                          key={s}
+                          className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-white/70 font-mono"
+                        >
+                          {s}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                )}
-
-                <div className="space-y-1">
-                  <label className="text-[10px] text-white/50 uppercase tracking-wide block">Your Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={contactName}
-                    onChange={(e) => setContactName(e.target.value)}
-                    placeholder="e.g. Sarah Jenkins"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/30 outline-none focus:border-accent"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] text-white/50 uppercase tracking-wide block">Your Email</label>
-                  <input
-                    type="email"
-                    required
-                    value={contactEmail}
-                    onChange={(e) => setContactEmail(e.target.value)}
-                    placeholder="sarah@company.com"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/30 outline-none focus:border-accent"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] text-white/50 uppercase tracking-wide block">Subject</label>
-                  <input
-                    type="text"
-                    value={contactSubject}
-                    onChange={(e) => setContactSubject(e.target.value)}
-                    placeholder="e.g. Full-Stack Role / Contract Work"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/30 outline-none focus:border-accent"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] text-white/50 uppercase tracking-wide block">Message</label>
-                  <textarea
-                    rows={4}
-                    required
-                    value={contactMessage}
-                    onChange={(e) => setContactMessage(e.target.value)}
-                    placeholder="Describe your project, timeline, or position details..."
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white placeholder:text-white/30 outline-none focus:border-accent resize-none thin-scroll"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={sending}
-                  className="w-full py-2.5 rounded-xl bg-accent hover:bg-accent/80 disabled:opacity-40 text-white font-medium transition shadow-lg shadow-accent/20 flex items-center justify-center gap-2 text-xs"
-                >
-                  <GIconPaperPlane size={14} />
-                  <span>{sending ? "Sending..." : "Submit Inquiry"}</span>
-                </button>
-              </form>
+                ))}
+              </div>
             )}
-          </div>
-        )}
-      </motion.div>
-    </AnimatePresence>
-  </div>
+
+            {/* TECH STACK & SKILLS */}
+            {tab === "skills" && (
+              <div className="space-y-6">
+                {/* Tech Stack Interactive Grid */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-white/5">
+                    <div className="flex items-center gap-2">
+                      <GIconCode size={16} className="text-accent" />
+                      <h2 className="font-display font-semibold text-sm text-white/95">
+                        Interactive Tech Stack Directory
+                      </h2>
+                    </div>
+
+                    {/* Category Filter Pills */}
+                    <div className="flex items-center gap-1 overflow-x-auto thin-scroll">
+                      {["All", "Frontend", "Backend", "Mobile", "Database", "Tooling"].map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => {
+                            setSkillFilter(cat);
+                            if (systemSounds) soundFx.playClick();
+                          }}
+                          className={`text-[10px] font-medium px-2.5 py-1 rounded-lg transition-colors cursor-pointer shrink-0 ${
+                            skillFilter === cat
+                              ? "bg-accent text-white font-semibold shadow-sm"
+                              : "text-white/60 hover:text-white hover:bg-white/5"
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tech Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 pt-1">
+                    {filteredTechStack.map((tech) => (
+                      <div
+                        key={tech.name}
+                        className={`group/tech flex items-center gap-2.5 p-2.5 sm:p-3 rounded-xl bg-white/[0.025] border border-white/8 backdrop-blur-md transition-all duration-200 hover:scale-[1.02] cursor-default ${tech.glowClass}`}
+                      >
+                        <div className="p-2 rounded-lg bg-black/40 border border-white/10 shrink-0 shadow-inner">
+                          {tech.icon}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-semibold text-white/90 group-hover/tech:text-white transition-colors truncate">
+                            {tech.name}
+                          </div>
+                          <span className={`inline-block text-[9px] font-medium px-1.5 py-0.2 rounded mt-0.5 border ${tech.badgeColor}`}>
+                            {tech.category}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Skill Categories Progress Deep-Dive */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {SKILL_CATEGORIES.map((cat, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3.5 flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <GIconCpu size={15} className="text-accent shrink-0" />
+                          <h3 className="font-display font-semibold text-xs sm:text-sm text-white/95">
+                            {cat.title}
+                          </h3>
+                        </div>
+                        <p className="text-[10px] text-white/50 mt-1 leading-relaxed">
+                          {cat.description}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2.5 pt-1">
+                        {cat.skills.map((s) => (
+                          <div key={s.name} className="space-y-1">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-white/80 font-medium text-[11px] truncate">{s.name}</span>
+                              <span className="text-accent font-mono text-[10px] font-semibold">{s.level}%</span>
+                            </div>
+                            <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-accent to-sky-300 rounded-full transition-all duration-700"
+                                style={{ width: `${s.level}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* EDUCATION & CERTIFICATIONS */}
+            {tab === "education" && (
+              <div className="space-y-4 sm:space-y-5">
+                <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2.5">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 border-b border-white/5 pb-2">
+                    <div>
+                      <h2 className="text-sm sm:text-base font-bold text-white">
+                        Bachelor of Science in Information Technology (BSIT)
+                      </h2>
+                      <div className="text-xs text-accent font-medium mt-0.5">
+                        Technological University of the Philippines
+                      </div>
+                    </div>
+                    <span className="text-xs text-white/50 font-mono bg-white/5 px-2 py-0.5 rounded-md self-start sm:self-auto">
+                      2021 — 2025
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-white/75 leading-relaxed pt-1">
+                    Comprehensive study in Modern Software Architecture, Distributed Systems, Relational &amp; NoSQL Database Design, Mobile Application Engineering, and System Security.
+                  </p>
+
+                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/5">
+                    {[
+                      "Software Engineering",
+                      "Database Management Systems",
+                      "Distributed Systems",
+                      "Mobile App Development",
+                      "Web Technologies",
+                      "OOP & Data Structures",
+                    ].map((course) => (
+                      <span key={course} className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-white/60 font-mono">
+                        {course}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <GIconCheck size={14} className="text-emerald-400" />
+                    <span>Certifications &amp; Accreditations</span>
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                    {[
+                      { title: "Full-Stack Web & Mobile Specialization", issuer: "Meta / Coursera", year: "2024" },
+                      { title: "Advanced React & State Architecture", issuer: "Frontend Masters", year: "2024" },
+                      { title: "Node.js Backend & Realtime WebSockets", issuer: "Professional Accreditation", year: "2025" },
+                      { title: "RESTful API Security & Database Design", issuer: "Enterprise Engineering", year: "2025" },
+                    ].map((c, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.02] border border-white/8 hover:border-white/15 transition-colors"
+                      >
+                        <span className="w-5 h-5 aspect-square shrink-0 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[11px] font-bold">
+                          ✓
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-semibold text-white/90 truncate">{c.title}</div>
+                          <div className="text-[10px] text-white/50">{c.issuer} · {c.year}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* HIRE / CONTACT ME */}
+            {tab === "contact" && (
+              <div className="max-w-2xl mx-auto space-y-5">
+                {/* Contact Quick Channel Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    onClick={copyEmail}
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-accent/40 hover:bg-white/[0.06] transition-all text-left cursor-pointer group"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-accent/15 border border-accent/25 text-accent flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <GIconMail size={16} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-semibold text-white">Direct Email</div>
+                      <div className="text-[11px] text-white/50 truncate font-mono mt-0.5">{CONTACT_EMAIL}</div>
+                    </div>
+                    <span className="text-[10px] text-accent font-semibold px-2 py-0.5 rounded bg-accent/15">
+                      {copiedEmail ? "Copied!" : "Copy"}
+                    </span>
+                  </button>
+
+                  <a
+                    href={GITHUB_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-purple-400/40 hover:bg-white/[0.06] transition-all text-left cursor-pointer group"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-500/25 text-purple-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <GIconGithub size={16} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-semibold text-white">GitHub Profile</div>
+                      <div className="text-[11px] text-white/50 truncate font-mono mt-0.5">github.com/Ememman</div>
+                    </div>
+                    <GIconExternalLink size={12} className="text-white/40 group-hover:text-white" />
+                  </a>
+                </div>
+
+                {/* Inquiry Form */}
+                <div className="p-5 sm:p-6 rounded-2xl bg-white/[0.03] border border-white/10 space-y-4">
+                  <div>
+                    <h2 className="font-display text-base font-bold text-white">
+                      Get in Touch with Emman
+                    </h2>
+                    <p className="text-xs text-white/50 mt-0.5">
+                      Have a role, contract project, or technical consultation? Send an inquiry directly to my inbox.
+                    </p>
+                  </div>
+
+                  {sentSuccess ? (
+                    <div className="text-center py-8 space-y-2.5">
+                      <div className="w-12 h-12 aspect-square shrink-0 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mx-auto shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                        ✓
+                      </div>
+                      <h3 className="font-display font-semibold text-sm text-white">Message Dispatched!</h3>
+                      <p className="text-xs text-white/60 max-w-sm mx-auto">
+                        Thank you for reaching out. Emman will review your inquiry and get in touch with you at <strong>{contactEmail}</strong>.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setSentSuccess(false);
+                          setContactMessage("");
+                        }}
+                        className="mt-3 text-xs text-accent underline cursor-pointer hover:text-white transition"
+                      >
+                        Send another message
+                      </button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSendMessage} className="space-y-3.5">
+                      {contactErrors.length > 0 && (
+                        <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs space-y-1">
+                          <div className="font-semibold text-rose-200">Please review:</div>
+                          <ul className="list-disc list-inside space-y-0.5 text-[11px] text-rose-300/90">
+                            {contactErrors.map((err, i) => (
+                              <li key={i}>{err}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-white/50 uppercase tracking-wide block font-semibold">Your Name</label>
+                          <input
+                            type="text"
+                            required
+                            value={contactName}
+                            onChange={(e) => setContactName(e.target.value)}
+                            placeholder="e.g. Sarah Jenkins"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/30 outline-none focus:border-accent transition"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-white/50 uppercase tracking-wide block font-semibold">Your Email</label>
+                          <input
+                            type="email"
+                            required
+                            value={contactEmail}
+                            onChange={(e) => setContactEmail(e.target.value)}
+                            placeholder="sarah@company.com"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/30 outline-none focus:border-accent transition"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-white/50 uppercase tracking-wide block font-semibold">Subject</label>
+                        <input
+                          type="text"
+                          value={contactSubject}
+                          onChange={(e) => setContactSubject(e.target.value)}
+                          placeholder="e.g. Full-Stack Role / Contract Work"
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/30 outline-none focus:border-accent transition"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-white/50 uppercase tracking-wide block font-semibold">Message</label>
+                        <textarea
+                          rows={4}
+                          required
+                          value={contactMessage}
+                          onChange={(e) => setContactMessage(e.target.value)}
+                          placeholder="Describe your project, timeline, or position details..."
+                          className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white placeholder:text-white/30 outline-none focus:border-accent resize-none thin-scroll transition"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={sending}
+                        className="w-full py-2.5 rounded-xl bg-accent hover:bg-accent/85 disabled:opacity-40 text-white font-medium transition shadow-lg shadow-accent/20 flex items-center justify-center gap-2 text-xs cursor-pointer active:scale-98"
+                      >
+                        <GIconPaperPlane size={14} />
+                        <span>{sending ? "Sending..." : "Submit Inquiry to Emman"}</span>
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
       {/* Footer bar */}
-      <div className="border-t border-white/10 px-4 py-2.5 bg-white/[0.02] flex items-center justify-between text-[11px] text-white/40">
-        <span>James Mendoza · Curriculum Vitae</span>
-        <span>Manila, PH</span>
+      <div className="border-t border-white/10 px-4 py-2.5 bg-white/[0.02] flex items-center justify-between text-[11px] text-white/50">
+        <span>Emman Mendoza · Curriculum Vitae</span>
+        <div className="flex items-center gap-3">
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-accent transition flex items-center gap-1"
+          >
+            <GIconGithub size={12} />
+            <span>@Ememman</span>
+          </a>
+          <span>·</span>
+          <span>Manila, PH</span>
+        </div>
       </div>
     </div>
   );
