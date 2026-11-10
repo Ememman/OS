@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { GIconRotateLeft, GIconTrophy, GIconVolume, GIconVolumeMute } from "../../icons/GravityIcons";
+import { GIconRotateLeft, GIconTrophy, GIconVolume, GIconVolumeMute, GIconCheck } from "../../icons/GravityIcons";
+import { API_URL } from "../../../lib/config";
+import { getEffectiveChatName, saveChatName } from "../../../lib/chatSession";
+import { useOS } from "../../../store/useOS";
 
 const SIZE = 8;
 const COLORS = ["#e8543f", "#57d9c7", "#9478ff", "#f5a642", "#ec6096", "#5fbf7c"];
@@ -135,6 +138,7 @@ function useGameAudio(enabled) {
 }
 
 export default function BlockBlast() {
+  const { notify } = useOS();
   const [grid, setGrid] = useState(emptyGrid());
   const [tray, setTray] = useState(() => [randomPiece(1), randomPiece(2), randomPiece(3)]);
   const [selected, setSelected] = useState(null);
@@ -147,6 +151,9 @@ export default function BlockBlast() {
   const [clearingCells, setClearingCells] = useState(new Set());
   const [popups, setPopups] = useState([]);
   const [shake, setShake] = useState(false);
+  const [playerName, setPlayerName] = useState(() => getEffectiveChatName());
+  const [submittingScore, setSubmittingScore] = useState(false);
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
   const nextId = useState({ current: 4 })[0];
   const popupId = useRef(0);
   const sfx = useGameAudio(soundOn);
@@ -247,10 +254,43 @@ export default function BlockBlast() {
     setSelected(null);
     setScore(0);
     setGameOver(false);
+    setScoreSubmitted(false);
     setClearingCells(new Set());
     setDropCells(new Set());
     setPopups([]);
     sfx.startMusic();
+  };
+
+  const handleSubmitScore = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (submittingScore || scoreSubmitted || score <= 0) return;
+
+    setSubmittingScore(true);
+    const cleanName = playerName.trim() || getEffectiveChatName();
+    saveChatName(cleanName);
+    localStorage.setItem("os_player_name", cleanName);
+
+    try {
+      const res = await fetch(`${API_URL}/api/games/leaderboard`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          game: "blockblast",
+          player: cleanName,
+          score,
+          details: `${score} pts · Best ${Math.max(score, best)}`
+        })
+      });
+
+      if (res.ok) {
+        setScoreSubmitted(true);
+        notify("Score Posted!", `Your Block Blast score of ${score} was added to the leaderboard!`, "success");
+      }
+    } catch {
+      notify("Network Error", "Could not reach leaderboard API.", "warning");
+    } finally {
+      setSubmittingScore(false);
+    }
   };
 
   const previewCells = new Set();
@@ -355,11 +395,45 @@ export default function BlockBlast() {
       )}
 
       {gameOver && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center" style={{ animation: "fadeInOpacity 200ms ease both" }}>
-          <div className="glass rounded-2xl p-6 text-center" style={{ animation: "menuOpen 220ms cubic-bezier(.34,1.56,.64,1) both" }}>
-            <h3 className="font-display text-lg font-semibold mb-1">Board's full</h3>
-            <p className="text-sm text-white/60 mb-4">Final score: <span className="accent font-semibold">{score}</span></p>
-            <button onClick={reset} className="px-4 py-2 rounded-lg bg-accent text-sm hover:brightness-110 active:scale-95 transition">Play again</button>
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" style={{ animation: "fadeInOpacity 200ms ease both" }}>
+          <div className="glass rounded-2xl p-5 sm:p-6 text-center max-w-xs w-full shadow-2xl border border-white/15" style={{ animation: "menuOpen 220ms cubic-bezier(.34,1.56,.64,1) both" }}>
+            <h3 className="font-display text-lg font-semibold mb-1 text-white">Board's full</h3>
+            <p className="text-sm text-white/60 mb-2">Final score: <span className="text-accent font-bold font-mono text-base">{score}</span></p>
+
+            {score > 0 && !scoreSubmitted && (
+              <form onSubmit={handleSubmitScore} className="my-3 space-y-2">
+                <div className="text-left">
+                  <label className="text-[10px] text-white/60 block mb-1">Player Call-Sign:</label>
+                  <input
+                    type="text"
+                    maxLength={18}
+                    value={playerName}
+                    onChange={(e) => setPlayerName(e.target.value)}
+                    placeholder="Enter call-sign"
+                    className="w-full px-2.5 py-1.5 bg-black/40 border border-white/20 rounded-xl text-white text-xs outline-none focus:border-accent"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={submittingScore}
+                  className="w-full py-1.5 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20"
+                >
+                  <GIconTrophy size={13} />
+                  <span>{submittingScore ? "Posting..." : "Post Score to Leaderboard"}</span>
+                </button>
+              </form>
+            )}
+
+            {scoreSubmitted && (
+              <div className="my-3 py-2 px-3 bg-emerald-500/15 border border-emerald-500/30 rounded-xl text-emerald-300 text-xs flex items-center justify-center gap-1.5 font-medium">
+                <GIconCheck size={14} />
+                <span>Score posted to Leaderboard!</span>
+              </div>
+            )}
+
+            <button onClick={reset} className="w-full mt-2 px-4 py-2 rounded-xl bg-accent text-white text-xs font-semibold hover:brightness-110 active:scale-95 transition cursor-pointer">
+              Play again
+            </button>
           </div>
         </div>
       )}

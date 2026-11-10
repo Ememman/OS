@@ -254,7 +254,7 @@ export default function Window({ win, children }) {
   const macRight = !isWin && dockPosition === "right" && !isMobile ? dockClearance : 8;
   const baseStyle = forceFull
     ? isMobile
-      ? { top: isWin ? 4 : 36, left: 4, right: 4, bottom: isWin ? 54 : 76, width: "auto", height: "auto", zIndex: win.z }
+      ? { top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%", zIndex: win.z }
       : isWin
         ? { top: 8, left: 8, right: 8, bottom: 64, width: "auto", height: "auto", zIndex: win.z }
         : { top: 30, left: macLeft, right: macRight, bottom: 8, width: "auto", height: "auto", zIndex: win.z }
@@ -375,7 +375,9 @@ export default function Window({ win, children }) {
   return (
     <div
       ref={windowRef}
-      className={`absolute glass shadow-2xl flex flex-col overflow-hidden transition-shadow ${isWin ? "rounded-lg" : "rounded-2xl"} ${
+      className={`absolute glass shadow-2xl flex flex-col overflow-hidden transition-shadow ${
+        isMobile ? "rounded-none border-0" : isWin ? "rounded-lg" : "rounded-2xl"
+      } ${
         isFocused
           ? "ring-1 ring-white/15"
           : isMobile
