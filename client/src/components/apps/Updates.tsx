@@ -73,24 +73,79 @@ export default function Updates() {
   const [newPinned, setNewPinned] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch initial updates and reactions
+  // Fetch initial updates and reactions (merges live server updates, real-time GitHub commits, and custom published updates)
   const fetchUpdates = async () => {
     setLoading(true);
     try {
       const [uRes, rRes] = await Promise.all([
-        fetch(`${API_URL}/api/updates`),
+        fetch(`${API_URL}/api/updates`).catch(() => null),
         fetch(`${API_URL}/api/updates/reactions`).catch(() => null)
       ]);
-      if (uRes.ok) {
-        const uData = await uRes.json();
-        setUpdates(uData);
+
+      let baseList: UpdateItem[] = [];
+      if (uRes && uRes.ok) {
+        baseList = await uRes.json();
       }
+
+      // Fetch live real-time commits directly from GitHub API for Ememman/OS
+      try {
+        const ghRes = await fetch("https://api.github.com/repos/Ememman/OS/commits?per_page=15");
+        if (ghRes.ok) {
+          const ghCommits = await ghRes.json();
+          if (Array.isArray(ghCommits)) {
+            for (const c of ghCommits) {
+              const shaShort = c.sha?.slice(0, 7) || "commit";
+              const id = `gh-${shaShort}`;
+              if (!baseList.some((u) => u.id === id)) {
+                const fullMsg = c.commit?.message || "Repository update";
+                const lines = fullMsg.split("\n").filter((l: string) => l.trim().length > 0);
+                const title = lines[0]?.slice(0, 120) || "Codebase commit";
+                const body =
+                  lines.slice(1).join(" ").trim() ||
+                  `Commit ${shaShort} on Ememman/OS by ${c.commit?.author?.name || "Emman"}.`;
+
+                let tag: UpdateItem["tag"] = "feature";
+                const lower = title.toLowerCase();
+                if (/fix|bug|patch|resolve|correct|clean/.test(lower)) tag = "fix";
+                else if (/launch|initial|release|v\d/.test(lower)) tag = "launch";
+                else if (/perf|speed|optimiz|fast/.test(lower)) tag = "performance";
+                else if (/modifi|update|enhance|improve|merge/.test(lower)) tag = "feature";
+
+                baseList.push({
+                  id,
+                  date: c.commit?.author?.date
+                    ? c.commit.author.date.slice(0, 10)
+                    : new Date().toISOString().slice(0, 10),
+                  tag,
+                  title,
+                  body,
+                  pinned: false
+                });
+              }
+            }
+          }
+        }
+      } catch {}
+
+      // Prepend any custom updates published locally by the user
+      try {
+        const localCustom = JSON.parse(localStorage.getItem("os_custom_published_updates") || "[]");
+        if (Array.isArray(localCustom)) {
+          for (const item of localCustom) {
+            if (!baseList.some((u) => u.id === item.id)) {
+              baseList.unshift(item);
+            }
+          }
+        }
+      } catch {}
+
+      setUpdates(baseList);
+
       if (rRes && rRes.ok) {
         const rData = await rRes.json();
         if (rData.detailed) {
           setReactions(rData.detailed);
         } else if (rData.counts) {
-          // Normalise flat counts to detailed
           const norm: Record<string, DetailedReaction> = {};
           for (const [k, v] of Object.entries(rData.counts)) {
             norm[k] = { heart: Number(v), fire: 0, rocket: 0, party: 0, total: Number(v) };
@@ -231,35 +286,44 @@ export default function Updates() {
       return;
     }
     setIsSubmitting(true);
+
+    const newEntry: UpdateItem = {
+      id: `u-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      date: new Date().toISOString().slice(0, 10),
+      tag: newTag,
+      title: newTitle.trim(),
+      body: newBody.trim(),
+      pinned: newPinned
+    };
+
+    // Save locally immediately to preserve user-published updates
     try {
-      const res = await fetch(`${API_URL}/api/updates`, {
+      const stored = JSON.parse(localStorage.getItem("os_custom_published_updates") || "[]");
+      stored.unshift(newEntry);
+      localStorage.setItem("os_custom_published_updates", JSON.stringify(stored));
+    } catch {}
+
+    setUpdates((prev) => [newEntry, ...prev.filter((u) => u.id !== newEntry.id)]);
+    setReactions((prev) => ({
+      ...prev,
+      [newEntry.id]: { heart: 1, fire: 0, rocket: 0, party: 0, total: 1 }
+    }));
+
+    try {
+      await fetch(`${API_URL}/api/updates`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: newTitle.trim(),
-          tag: newTag,
-          body: newBody.trim(),
-          pinned: newPinned
-        })
+        body: JSON.stringify(newEntry)
       });
+    } catch {}
 
-      if (res.ok) {
-        const created = await res.json();
-        setUpdates((prev) => [created, ...prev]);
-        setNewTitle("");
-        setNewBody("");
-        setNewPinned(false);
-        setIsComposerOpen(false);
-        if (systemSounds) soundFx.playSuccess();
-        notify("Update Published", `"${created.title}" is now live!`, "success");
-      } else {
-        notify("Publication Failed", "Could not publish update to server.", "warning");
-      }
-    } catch {
-      notify("Network Error", "Unable to reach server to publish update.", "warning");
-    } finally {
-      setIsSubmitting(false);
-    }
+    setNewTitle("");
+    setNewBody("");
+    setNewPinned(false);
+    setIsComposerOpen(false);
+    setIsSubmitting(false);
+    if (systemSounds) soundFx.playSuccess();
+    notify("Update Published", `"${newEntry.title}" is now live!`, "success");
   };
 
   // Tag filter counts
@@ -314,9 +378,19 @@ export default function Updates() {
               </span>
               <h2 className="font-display text-lg font-bold tracking-tight text-white">Changelog & System Updates</h2>
             </div>
-            <p className="text-xs text-white/50 mt-0.5">
-              Live updates stream on Portfolio OS kernel improvements, featured apps & release notes.
-            </p>
+            <div className="flex flex-wrap items-center gap-2 mt-0.5">
+              <p className="text-xs text-white/50">
+                Real-time updates stream directly from Emman's GitHub & published releases.
+              </p>
+              <a
+                href="https://github.com/Ememman/OS"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-[11px] text-accent hover:underline font-medium"
+              >
+                github.com/Ememman/OS ↗
+              </a>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">

@@ -22,16 +22,10 @@ export default function MiniPlayer() {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
-  // Re-arm player when track changes or music window opens
-  useEffect(() => {
-    setIsDismissed(false);
-    setIsMinimized(false);
-  }, [track?.id, track?.title]);
-
+  // Only reset minimized/dismissed state when the user explicitly opens the Music app window
   const musicWin = windows.find((w) => w.app === "music");
-  const musicVisible = musicWin && !musicWin.minimized;
+  const musicVisible = Boolean(musicWin && !musicWin.minimized);
 
-  // When user opens the Music app tab, reset minimized/dismissed state
   useEffect(() => {
     if (musicVisible) {
       setIsMinimized(false);
