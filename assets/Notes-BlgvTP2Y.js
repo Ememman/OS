@@ -1,4 +1,4 @@
-import{At as e,E as t,I as n,Kt as r,M as i,Nt as a,Ot as o,Qt as s,Rt as c,T as l,U as u,Ut as d,X as ee,Xt as f,Y as te,Yt as ne,Z as re,Zt as p,_ as m,f as ie,ft as ae,ht as oe,jt as se,k as ce,mt as le,q as ue,rt as de,ut as h,vt as fe,wt as pe,y as me,yt as he}from"./index-2aUgucUs.js";var g=s(p(),1),_=r(),ge=[{id:`standup`,name:`Daily Standup & Agenda`,content:`## Daily Standup & Agenda
+import{At as e,E as t,I as n,Kt as r,M as i,Nt as a,Ot as o,Qt as s,Rt as c,T as l,U as u,Ut as d,X as ee,Xt as f,Y as te,Yt as ne,Z as re,Zt as p,_ as m,f as ie,ft as ae,ht as oe,jt as se,k as ce,mt as le,q as ue,rt as de,ut as h,vt as fe,wt as pe,y as me,yt as he}from"./index-s5QZiubb.js";var g=s(p(),1),_=r(),ge=[{id:`standup`,name:`Daily Standup & Agenda`,content:`## Daily Standup & Agenda
 
 ### Top Priorities Today
 - [ ] Priority 1
