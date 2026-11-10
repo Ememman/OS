@@ -156,7 +156,7 @@ export default function App() {
   return (
     <div
       onContextMenu={handleDesktopContextMenu}
-      className={`relative w-screen h-screen overflow-hidden ${reduceMotion ? "reduced-motion" : ""}`}
+      className={`relative w-screen h-screen h-[100dvh] overflow-hidden ${reduceMotion ? "reduced-motion" : ""}`}
     >
       <Wallpaper />
       <GlobalAudioPlayer />
@@ -182,7 +182,7 @@ export default function App() {
       {/* Widget stack — macOS style only */}
       {!isWin && widgetsVisible && (
         isTablet ? (
-          <div className={`absolute ${isMobile ? "top-60 min-[456px]:top-36" : "top-36"} left-0 right-0 bottom-24 flex flex-col items-center gap-4 overflow-y-auto thin-scroll px-4 pb-8`}>
+          <div className={`absolute ${isMobile ? "top-56 min-[456px]:top-36" : "top-36"} left-0 right-0 bottom-24 flex flex-col items-center gap-4 overflow-y-auto thin-scroll px-4 pb-12`}>
             <div className="reveal w-full flex justify-center" style={{ animationDelay: "120ms" }}><PhotoWidget /></div>
             <div className="reveal w-full flex justify-center" style={{ animationDelay: "150ms" }}><WeatherWidget /></div>
             <div className="reveal w-full flex justify-center" style={{ animationDelay: "180ms" }}><ClockWidget /></div>

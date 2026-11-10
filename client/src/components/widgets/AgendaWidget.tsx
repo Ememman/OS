@@ -18,40 +18,33 @@ export default function AgendaWidget() {
   }, []);
 
   return (
-    // This wrapper reserves a stable slot in the widget stack that never
-    // changes size, whether collapsed or expanded — the calendar popover
-    // below is positioned relative to *this*, not to a guessed screen
-    // coordinate, so it always opens exactly where the card actually is
-    // instead of jumping to some other part of the screen.
-    <div className="relative shrink-0 w-full md:w-56">
-      <button
-        onClick={() => setExpanded((e) => !e)}
-        className={`glass rounded-2xl px-4 py-3.5 shadow-xl w-full h-36 text-left flex flex-col hover:border-white/25 transition group ${
-          expanded ? "opacity-0 pointer-events-none" : ""
-        }`}
-      >
-        <div className="flex items-center justify-between">
-          <div className="text-[10px] uppercase tracking-wider accent font-semibold">
-            {today.toLocaleDateString([], { weekday: "long" })}
-          </div>
-          <GIconChevronDown size={13} className="text-white/30 group-hover:text-white/60 transition" />
-        </div>
-        <div className="text-[28px] font-display font-bold leading-none mt-0.5 mb-2">{today.getDate()}</div>
-        <div className="space-y-1.5 min-w-0">
-          {items.length === 0 && <div className="text-[11px] text-white/40">No updates yet.</div>}
-          {items.map((u) => (
-            <div key={u.id} className="flex items-start gap-1.5 text-[11px] text-white/75 min-w-0">
-              <span className="w-1.5 h-1.5 rounded-full shrink-0 mt-1" style={{ background: TAG_COLOR[u.tag] || "#8892A6" }} />
-              <span className="line-clamp-1">{u.title}</span>
-            </div>
-          ))}
-        </div>
-      </button>
-
-      {expanded && (
-        <div className="absolute top-0 right-0 z-\[850]">
+    <div className="relative shrink-0 w-full max-w-[280px] sm:max-w-none md:w-56 mx-auto transition-all">
+      {expanded ? (
+        <div className="w-full">
           <CalendarWidget onBack={() => setExpanded(false)} />
         </div>
+      ) : (
+        <button
+          onClick={() => setExpanded(true)}
+          className="glass rounded-2xl px-4 py-3.5 shadow-xl w-full h-36 text-left flex flex-col hover:border-white/25 transition group cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <div className="text-[10px] uppercase tracking-wider accent font-semibold">
+              {today.toLocaleDateString([], { weekday: "long" })}
+            </div>
+            <GIconChevronDown size={13} className="text-white/30 group-hover:text-white/60 transition" />
+          </div>
+          <div className="text-[28px] font-display font-bold leading-none mt-0.5 mb-2">{today.getDate()}</div>
+          <div className="space-y-1.5 min-w-0">
+            {items.length === 0 && <div className="text-[11px] text-white/40">No updates yet.</div>}
+            {items.map((u) => (
+              <div key={u.id} className="flex items-start gap-1.5 text-[11px] text-white/75 min-w-0">
+                <span className="w-1.5 h-1.5 rounded-full shrink-0 mt-1" style={{ background: TAG_COLOR[u.tag] || "#8892A6" }} />
+                <span className="line-clamp-1">{u.title}</span>
+              </div>
+            ))}
+          </div>
+        </button>
       )}
     </div>
   );
