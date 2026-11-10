@@ -63,6 +63,7 @@ export default function SnakeRetro() {
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
 
   const nextDirRef = useRef<Direction>("RIGHT");
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const resetGame = useCallback(() => {
     if (systemSounds) soundFx.playPop();
@@ -222,6 +223,34 @@ export default function SnakeRetro() {
     return () => clearInterval(timer);
   }, [hasStarted, isPaused, isGameOver, speedIdx, food, goldenFood, score, bestScore, systemSounds]);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartRef.current.x;
+    const dy = t.clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+    const threshold = 18;
+
+    if (!hasStarted) {
+      if (systemSounds) soundFx.playPop();
+      setHasStarted(true);
+      return;
+    }
+
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
+      if (dx > 0) changeDirection("RIGHT");
+      else changeDirection("LEFT");
+    } else if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > threshold) {
+      if (dy > 0) changeDirection("DOWN");
+      else changeDirection("UP");
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center p-3 text-white select-none max-w-md mx-auto">
       {/* Top Header & Stats */}
@@ -258,8 +287,12 @@ export default function SnakeRetro() {
         </div>
       </div>
 
-      {/* Main Board Canvas Grid */}
-      <div className="relative aspect-square w-full max-w-[320px] sm:max-w-[360px] bg-black/60 rounded-2xl border-2 border-white/15 shadow-2xl overflow-hidden p-1 backdrop-blur-md">
+      {/* Main Board Canvas Grid with Swipe & Mobile Responsive Sizing */}
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className="relative aspect-square w-full max-w-[min(84vw,300px)] sm:max-w-[340px] bg-black/60 rounded-2xl border-2 border-white/15 shadow-2xl overflow-hidden p-1 backdrop-blur-md touch-none select-none"
+      >
         <div
           className="w-full h-full grid"
           style={{
@@ -393,16 +426,18 @@ export default function SnakeRetro() {
       <div className="mt-3 flex flex-col items-center gap-1.5 sm:hidden">
         <button
           onClick={() => changeDirection("UP")}
-          className="w-11 h-11 rounded-xl bg-white/10 active:bg-accent active:text-white flex items-center justify-center transition border border-white/10"
+          className="w-12 h-12 rounded-2xl bg-white/10 active:bg-accent active:scale-90 active:text-white flex items-center justify-center transition border border-white/15 shadow-md cursor-pointer"
+          title="Move Up"
         >
-          <GIconChevronUp size={18} />
+          <GIconChevronUp size={20} />
         </button>
         <div className="flex gap-4">
           <button
             onClick={() => changeDirection("LEFT")}
-            className="w-11 h-11 rounded-xl bg-white/10 active:bg-accent active:text-white flex items-center justify-center transition border border-white/10"
+            className="w-12 h-12 rounded-2xl bg-white/10 active:bg-accent active:scale-90 active:text-white flex items-center justify-center transition border border-white/15 shadow-md cursor-pointer"
+            title="Move Left"
           >
-            <GIconChevronLeft size={18} />
+            <GIconChevronLeft size={20} />
           </button>
           <button
             onClick={() => {
@@ -410,23 +445,27 @@ export default function SnakeRetro() {
               else if (hasStarted) setIsPaused(!isPaused);
               else setHasStarted(true);
             }}
-            className="w-11 h-11 rounded-xl bg-accent/20 border border-accent/40 text-accent font-mono text-[10px] flex items-center justify-center font-bold"
+            className="w-12 h-12 rounded-2xl bg-accent/20 active:scale-90 border border-accent/40 text-accent font-mono text-[11px] flex items-center justify-center font-bold shadow-md cursor-pointer"
+            title={isGameOver ? "Play Again" : isPaused ? "Resume" : "Pause"}
           >
             {isGameOver ? "REV" : isPaused ? "GO" : "PAU"}
           </button>
           <button
             onClick={() => changeDirection("RIGHT")}
-            className="w-11 h-11 rounded-xl bg-white/10 active:bg-accent active:text-white flex items-center justify-center transition border border-white/10"
+            className="w-12 h-12 rounded-2xl bg-white/10 active:bg-accent active:scale-90 active:text-white flex items-center justify-center transition border border-white/15 shadow-md cursor-pointer"
+            title="Move Right"
           >
-            <GIconChevronRight size={18} />
+            <GIconChevronRight size={20} />
           </button>
         </div>
         <button
           onClick={() => changeDirection("DOWN")}
-          className="w-11 h-11 rounded-xl bg-white/10 active:bg-accent active:text-white flex items-center justify-center transition border border-white/10"
+          className="w-12 h-12 rounded-2xl bg-white/10 active:bg-accent active:scale-90 active:text-white flex items-center justify-center transition border border-white/15 shadow-md cursor-pointer"
+          title="Move Down"
         >
-          <GIconChevronDown size={18} />
+          <GIconChevronDown size={20} />
         </button>
+        <p className="text-[10px] text-white/40 mt-1">Tip: Swipe directly on the board to steer</p>
       </div>
 
       {/* Footer controls tip */}

@@ -359,17 +359,19 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
         <div className="flex items-center gap-2">
           {/* Mobile Flag Mode Toggle */}
           <button
-            onClick={() => setFlagMode(!flagMode)}
-            className={`px-2 py-1 rounded text-xs flex items-center gap-1 font-medium transition ${
+            onClick={() => {
+              if (systemSounds) soundFx.playClick();
+              setFlagMode(!flagMode);
+            }}
+            className={`px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 font-medium transition cursor-pointer ${
               flagMode
-                ? "bg-rose-500 text-white shadow-md shadow-rose-500/20"
+                ? "bg-rose-500 text-white shadow-md shadow-rose-500/30 ring-2 ring-rose-400/50"
                 : "bg-white/10 hover:bg-white/15 text-white/80"
             }`}
             title="Toggle click mode between Dig and Flag"
           >
-            <GIconFlag size={12} className="text-rose-400" />
-            <span>Mode:</span>
-            <span className="font-bold">{flagMode ? "ON" : "OFF"}</span>
+            <GIconFlag size={12} className={flagMode ? "text-white" : "text-rose-400"} />
+            <span className="font-semibold">{flagMode ? "Mode: Flag 🚩" : "Mode: Dig ⛏️"}</span>
           </button>
 
           {onOpenLeaderboard && (

@@ -11,25 +11,10 @@ import {
   GIconPaperPlane,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
-import { fallbackProjects } from "../../data/projects";
+import { fallbackProjects, type ProjectItem } from "../../data/projects";
 import { getSocket } from "../../lib/socket";
 import { useOS } from "../../store/useOS";
 import { soundFx } from "../../lib/soundFx";
-
-interface ProjectItem {
-  id: string;
-  title: string;
-  stack: string[];
-  category: string;
-  year: string;
-  cover: string;
-  summary: string;
-  highlights: string[];
-  links: {
-    repo: string;
-    live: string;
-  };
-}
 
 
 export interface FeedbackItem {
@@ -55,24 +40,73 @@ export default function Library() {
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  const [likes, setLikes] = useState<Record<string, number>>({
-    "sandrealee-customer": 29,
-    "sandrealee-staff": 19,
-    "sandrealee-admin": 36,
-    "straive-ims": 18
+  // Real-time project likes with zero hardcoding
+  const [likes, setLikes] = useState<Record<string, number>>({});
+  const [userLikes, setUserLikes] = useState<Record<string, boolean>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("os_library_user_likes") || "{}");
+    } catch {
+      return {};
+    }
   });
 
   useEffect(() => {
-    // Fetch project list
+    // Fetch project list from backend
     fetch(`${API_URL}/api/projects`)
       .then((r) => r.json())
-      .then((data) => data.length && setProjects(data))
+      .then((data) => {
+        if (Array.isArray(data) && data.length) {
+          setProjects(data);
+        }
+      })
+      .catch(() => {});
+
+    // Also fetch GitHub repos for Ememman to dynamically include latest repositories
+    fetch("https://api.github.com/users/Ememman/repos?sort=updated")
+      .then((r) => r.json())
+      .then((ghRepos) => {
+        if (!Array.isArray(ghRepos)) return;
+        setProjects((prev) => {
+          const updated = [...prev];
+          for (const gr of ghRepos) {
+            if (gr.fork || gr.name === "Ememman") continue;
+            const exists = updated.some(
+              (p) =>
+                p.id === gr.name.toLowerCase() ||
+                p.links.repo?.toLowerCase().includes(gr.name.toLowerCase()) ||
+                p.title.toLowerCase().includes(gr.name.toLowerCase())
+            );
+            if (!exists) {
+              updated.push({
+                id: gr.name.toLowerCase(),
+                title: gr.name.replace(/[-_]/g, " "),
+                stack: [gr.language || "TypeScript", "Vite", "Git"].filter(Boolean),
+                category: gr.language === "Solidity" ? "Blockchain" : gr.language === "PHP" ? "Backend" : "Web",
+                year: gr.created_at ? gr.created_at.slice(0, 4) : "2026",
+                cover: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop",
+                summary: gr.description || `Public GitHub repository ${gr.name} by Emman.`,
+                highlights: [
+                  `Open-source on GitHub with ${gr.stargazers_count || 0} stars`,
+                  `Primary language: ${gr.language || "TypeScript"}`
+                ],
+                links: {
+                  repo: gr.html_url,
+                  live: gr.homepage || ""
+                }
+              });
+            }
+          }
+          return updated;
+        });
+      })
       .catch(() => {});
 
     // Fetch initial like counts
     fetch(`${API_URL}/api/projects/likes`)
       .then((r) => r.json())
-      .then((data) => setLikes(data))
+      .then((data) => {
+        if (data && typeof data === "object") setLikes(data);
+      })
       .catch(() => {});
 
     // Listen for live likes
@@ -130,12 +164,52 @@ export default function Library() {
     if (e) e.stopPropagation();
     if (systemSounds) soundFx.playPop();
 
+    const isAlreadyLiked = Boolean(userLikes[id]);
+
+    if (isAlreadyLiked) {
+      // User removes reaction
+      setUserLikes((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        try {
+          localStorage.setItem("os_library_user_likes", JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      setLikes((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] || 1) - 1) }));
+
+      try {
+        await fetch(`${API_URL}/api/projects/${id}/like`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "unlike" }),
+        });
+      } catch {}
+
+      notify("Reaction Removed", "Removed reaction from project.", "info");
+      return;
+    }
+
+    // User adds reaction
+    setUserLikes((prev) => {
+      const next = { ...prev, [id]: true };
+      try {
+        localStorage.setItem("os_library_user_likes", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
     setLikes((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
 
     try {
-      const res = await fetch(`${API_URL}/api/projects/${id}/like`, { method: "POST" });
+      const res = await fetch(`${API_URL}/api/projects/${id}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "like" }),
+      });
       if (res.ok) {
-        notify("Project Starred!", "Thanks for supporting Bron's engineering work!", "add");
+        notify("Project Starred!", "Thanks for supporting Emman's engineering work!", "add");
       }
     } catch {}
   };
@@ -265,10 +339,22 @@ export default function Library() {
 
                     <button
                       onClick={(e) => handleLike(p.id, e)}
-                      title="Star this project"
-                      className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/15 hover:border-rose-400/50 hover:bg-rose-500/20 text-white transition text-[11px]"
+                      title={userLikes[p.id] ? "Click to remove heart reaction" : "Star this project"}
+                      aria-label={userLikes[p.id] ? "Remove heart reaction" : "Star this project"}
+                      className={`absolute top-2.5 right-2.5 flex items-center gap-1.5 px-2.5 py-1 rounded-full backdrop-blur-md border transition text-[11px] cursor-pointer ${
+                        userLikes[p.id]
+                          ? "bg-rose-500/35 border-rose-400/60 text-rose-200 shadow-md shadow-rose-500/25"
+                          : "bg-black/60 border-white/15 hover:border-rose-400/50 hover:bg-rose-500/20 text-white"
+                      }`}
                     >
-                      <GIconHeart size={12} className="text-rose-400 group-hover:scale-110 transition-transform" />
+                      <GIconHeart
+                        size={12}
+                        className={
+                          userLikes[p.id]
+                            ? "text-rose-400 fill-rose-400 scale-110"
+                            : "text-rose-400 group-hover:scale-110 transition-transform"
+                        }
+                      />
                       <span className="font-semibold text-[10px]">{projectLikeCount}</span>
                     </button>
 
@@ -559,10 +645,15 @@ export default function Library() {
             <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between gap-2 shrink-0">
               <button
                 onClick={() => handleLike(active.id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-semibold transition"
+                title={userLikes[active.id] ? "Click to remove heart reaction" : "Star this project"}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer ${
+                  userLikes[active.id]
+                    ? "bg-rose-500/35 text-rose-200 border-rose-400/60 shadow-md shadow-rose-500/20"
+                    : "bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border-rose-500/30"
+                }`}
               >
-                <GIconHeart size={13} className="text-rose-400" />
-                <span>Star Project ({likes[active.id] || 0})</span>
+                <GIconHeart size={13} className={userLikes[active.id] ? "text-rose-300 fill-rose-300" : "text-rose-400"} />
+                <span>{userLikes[active.id] ? "Liked" : "Star Project"} ({likes[active.id] || 0})</span>
               </button>
 
               <div className="flex items-center gap-2">

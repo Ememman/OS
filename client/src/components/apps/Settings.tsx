@@ -17,6 +17,7 @@ import {
 } from "../icons/GravityIcons";
 import { soundFx } from "../../lib/soundFx";
 import { getAssetUrl } from "../../lib/assets";
+import { useIsMobile } from "../../lib/useMediaQuery";
 
 // Preview images for the wallpaper selector — resolved with getAssetUrl for subpath compatibility
 const PREVIEW_IMAGES = {
@@ -102,6 +103,8 @@ export default function Settings() {
     openSpotlight,
     notify,
   } = useOS();
+
+  const isMobile = useIsMobile();
 
   const [cityDraft, setCityDraft] = useState(weatherLoc.name);
   const [geoStatus, setGeoStatus] = useState("");
@@ -191,11 +194,12 @@ export default function Settings() {
         </div>
       </section>
 
-      {osMode === "mac" && (
-        <section className="space-y-2">
+      {/* Dock position - only applicable and visible on desktop/tablet views */}
+      {!isMobile && osMode === "mac" && (
+        <section className="hidden sm:block space-y-2">
           <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Dock position</h3>
           <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
-            Move the Dock to the bottom, left, or right of the screen. Always sits at the bottom on phones, where there's less room to spare.
+            Move the Dock to the bottom, left, or right of the screen.
           </p>
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {DOCK_POSITION_OPTIONS.map((o) => (

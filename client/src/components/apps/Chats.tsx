@@ -25,6 +25,7 @@ import { getSocket, getCachedChatInit } from "../../lib/socket";
 import { getChatSession, touchChatActivity, saveChatName } from "../../lib/chatSession";
 import { useOS } from "../../store/useOS";
 import { useOutsideClick } from "../../lib/useOutsideClick";
+import { useIsMobile } from "../../lib/useMediaQuery";
 import { soundFx } from "../../lib/soundFx";
 import { API_URL } from "../../lib/config";
 
@@ -161,16 +162,6 @@ function nameColor(name: string) {
   return palette[Math.abs(hash) % palette.length];
 }
 
-// Truncates long usernames exceeding 10 characters so UI doesn't look crowded (e.g. "BrightCommet..." -> 10 chars + "...")
-function formatUsername(name?: string, max = 10): string {
-  if (!name) return "Guest";
-  const clean = name.trim();
-  if (clean.length > max) {
-    return `${clean.slice(0, max)}...`;
-  }
-  return clean;
-}
-
 function BgPicker({ current, onPick, onClose }: any) {
   const ref = useRef<HTMLDivElement>(null);
   const { systemSounds } = useOS();
@@ -257,12 +248,25 @@ function BgPicker({ current, onPick, onClose }: any) {
 }
 
 export default function Chats() {
+  const isMobile = useIsMobile();
   const chatSound = useOS((s) => s.chatSound);
   const toggleChatSound = useOS((s) => s.toggleChatSound);
   const reduceMotion = useOS((s) => s.reduceMotion);
   const chatBg = useOS((s) => s.chatBg);
   const setChatBg = useOS((s) => s.setChatBg);
   const notify = useOS((s) => s.notify);
+
+  // Word/name truncation: on mobile view truncates if > 10 chars (e.g. "BrightCommet..."),
+  // on desktop view shows full name unless it exceeds 20 or more characters
+  const formatUsername = (rawName?: string) => {
+    if (!rawName) return "Guest";
+    const clean = rawName.trim();
+    const max = isMobile ? 10 : 20;
+    if (clean.length > max) {
+      return `${clean.slice(0, max)}...`;
+    }
+    return clean;
+  };
 
   const session = useMemo(() => getChatSession(), []);
   const clientId = session.clientId;
@@ -475,20 +479,25 @@ export default function Chats() {
         playPing();
       }
     };
-    const onReacted = ({ id, emoji, reactions, senderId, userReactions: srvUserReactions }: any) => {
+    const onReacted = ({ id, emoji, reactions, senderId, userReactions: srvUserReactions, removed }: any) => {
       touchChatActivity();
       const canonicalKey = UNICODE_TO_KEY[emoji] || emoji || "heart";
 
       const isFromMe = Boolean(senderId && senderId === clientIdRef.current);
       if (isFromMe) {
         setUserReactions((prev) => {
-          const next = { ...prev, [id]: canonicalKey };
+          const next = { ...prev };
+          if (removed) {
+            delete next[id];
+          } else {
+            next[id] = canonicalKey;
+          }
           try {
             localStorage.setItem("os_chat_user_reactions", JSON.stringify(next));
           } catch {}
           return next;
         });
-      } else {
+      } else if (!removed) {
         const burstId = `burst-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
         setBursts((prev) => [
           ...prev,
@@ -509,10 +518,23 @@ export default function Chats() {
             nextReactions = normalizeReactions(reactions);
           } else {
             nextReactions = normalizeReactions(x.reactions);
-            nextReactions[canonicalKey] = (nextReactions[canonicalKey] || 0) + 1;
+            if (removed) {
+              if (nextReactions[canonicalKey]) {
+                nextReactions[canonicalKey] = Math.max(0, nextReactions[canonicalKey] - 1);
+                if (nextReactions[canonicalKey] === 0) delete nextReactions[canonicalKey];
+              }
+            } else {
+              nextReactions[canonicalKey] = (nextReactions[canonicalKey] || 0) + 1;
+            }
           }
           const nextUserReactions = { ...(srvUserReactions || x.userReactions || {}) };
-          if (senderId) nextUserReactions[senderId] = canonicalKey;
+          if (senderId) {
+            if (removed) {
+              delete nextUserReactions[senderId];
+            } else {
+              nextUserReactions[senderId] = canonicalKey;
+            }
+          }
           return { ...x, reactions: nextReactions, userReactions: nextUserReactions };
         })
       );
@@ -623,13 +645,53 @@ export default function Chats() {
     touchChatActivity();
     const canonicalKey = UNICODE_TO_KEY[rawKey] || rawKey;
     const currentReaction = userReactions[id];
+    const unicodeEmoji = KEY_TO_UNICODE[canonicalKey] || canonicalKey;
 
-    // If the user already reacted on this message, they can no longer react using any other emojis
+    // If the user already reacted on this message:
     if (currentReaction) {
-      if (currentReaction !== canonicalKey) {
-        notify("Already Reacted", "You have already reacted to this message and cannot use other emojis.", "info", 2500);
+      if (currentReaction === canonicalKey) {
+        // Remove reaction: user clicked their existing reaction to un-react
+        setUserReactions((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          try {
+            localStorage.setItem("os_chat_user_reactions", JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+
+        getSocket().emit("chat:react", {
+          id,
+          emoji: unicodeEmoji,
+          key: canonicalKey,
+          senderId: clientIdRef.current,
+          action: "remove",
+        });
+
+        // Optimistic local decrement
+        setMessages((m) =>
+          m.map((x) => {
+            if (x.id === id) {
+              const current = normalizeReactions(x.reactions);
+              if (current[canonicalKey]) {
+                current[canonicalKey] = Math.max(0, current[canonicalKey] - 1);
+                if (current[canonicalKey] === 0) delete current[canonicalKey];
+              }
+              const userRx = { ...(x.userReactions || {}) };
+              delete userRx[clientIdRef.current];
+              return { ...x, reactions: current, userReactions: userRx };
+            }
+            return x;
+          })
+        );
+
+        notify("Reaction Removed", "Removed your reaction.", "info", 1800);
+        return;
+      } else {
+        // User cannot react with a second different emoji
+        notify("Already Reacted", "You have already reacted to this message. Tap your current reaction to remove it.", "info", 2500);
+        return;
       }
-      return;
     }
 
     // Persist this user's reaction locally
@@ -641,14 +703,13 @@ export default function Chats() {
       return next;
     });
 
-    const unicodeEmoji = KEY_TO_UNICODE[canonicalKey] || canonicalKey;
-
     // Send both unicode and key so BOTH old Render server (expects ❤️) and new server accept it!
     getSocket().emit("chat:react", {
       id,
       emoji: unicodeEmoji,
       key: canonicalKey,
       senderId: clientIdRef.current,
+      action: "add",
     });
 
     // Messenger burst animation on the message
@@ -1207,21 +1268,21 @@ export default function Chats() {
                               }}
                               className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all relative group/emo ${
                                 isMyCurrentReaction
-                                  ? "bg-accent/25 ring-2 ring-accent scale-110 cursor-default"
+                                  ? "bg-accent/25 ring-2 ring-accent scale-110 cursor-pointer"
                                   : isDisabled
                                   ? "opacity-30 cursor-not-allowed grayscale-[0.6]"
                                   : "hover:bg-white/15 cursor-pointer"
                               }`}
                               title={
                                 isMyCurrentReaction
-                                  ? `${r.label} (Your reaction)`
+                                  ? `${r.label} (Tap to remove your reaction)`
                                   : isDisabled
                                   ? "You have already reacted to this message"
                                   : r.label
                               }
                               aria-label={
                                 isMyCurrentReaction
-                                  ? `${r.label} (Your reaction)`
+                                  ? `Remove ${r.label} reaction`
                                   : isDisabled
                                   ? `Cannot react with ${r.label}`
                                   : `React with ${r.label}`
@@ -1229,7 +1290,7 @@ export default function Chats() {
                             >
                               <IconComp size={16} className={isMyCurrentReaction ? "text-accent" : r.color} />
                               <span className="absolute -top-7 opacity-0 group-hover/emo:opacity-100 transition-opacity bg-black/90 text-[10px] text-white font-medium px-1.5 py-0.5 rounded shadow pointer-events-none whitespace-nowrap">
-                                {isMyCurrentReaction ? `${r.label} (You)` : isDisabled ? "Already reacted" : r.label}
+                                {isMyCurrentReaction ? `Remove ${r.label}` : isDisabled ? "Already reacted" : r.label}
                               </span>
                             </motion.button>
                           );
