@@ -34,21 +34,19 @@ export default function MiniPlayer() {
   }, [musicVisible]);
 
   // If track doesn't exist, music window is currently open, or player was minimized/dismissed:
-  // completely hide it (never leave a floating disc or mini widget on the screen)
-  if (!track || musicVisible || isDismissed || isMinimized) return null;
+  // completely hide it (never leave a floating disc or mini widget on the screen).
+  // Also hide on mobile when an active application window is open so it doesn't obstruct fullscreen apps.
+  const hasActiveWindow = windows.some((w) => !w.minimized);
+  if (!track || musicVisible || isDismissed || isMinimized || (isMobile && hasActiveWindow)) return null;
 
-  const bottomClearance = osMode === "win" ? "bottom-[76px]" : "bottom-20";
+  const bottomClearance = isMobile ? "bottom-16" : osMode === "win" ? "bottom-[76px]" : "bottom-20";
 
   // Expanded state: full controls with minimize and dismiss actions
   return (
     <div
       role="region"
       aria-label="Floating Music Player"
-      className={`fixed ${
-        isMobile
-          ? "top-11 left-1/2 -translate-x-1/2"
-          : `${bottomClearance} left-1/2 -translate-x-1/2`
-      } z-[850] glass rounded-2xl border border-white/15 shadow-2xl pl-2.5 pr-2.5 py-2 flex items-center gap-2 sm:gap-2.5 backdrop-blur-xl transition-all duration-200 max-w-[calc(100vw-24px)] select-none`}
+      className={`fixed ${bottomClearance} left-1/2 -translate-x-1/2 z-[850] glass rounded-2xl border border-white/15 shadow-2xl pl-2.5 pr-2.5 py-2 flex items-center gap-2 sm:gap-2.5 backdrop-blur-xl transition-all duration-200 max-w-[calc(100vw-24px)] select-none`}
     >
       {/* Cover / Open app button */}
       <button

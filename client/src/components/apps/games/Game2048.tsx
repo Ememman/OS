@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { soundFx } from "../../../lib/soundFx";
 import { useOS } from "../../../store/useOS";
+import { API_URL } from "../../../lib/config";
+import { getEffectiveChatName, saveChatName } from "../../../lib/chatSession";
 import {
   GIconRotateRight,
   GIconTrophy,
@@ -8,6 +10,7 @@ import {
   GIconChevronDown,
   GIconChevronLeft,
   GIconChevronRight,
+  GIconCheck,
 } from "../../icons/GravityIcons";
 
 type Board = number[][];
@@ -123,6 +126,9 @@ export default function Game2048() {
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
   const [keepPlaying, setKeepPlaying] = useState(false);
+  const [playerName, setPlayerName] = useState(() => getEffectiveChatName());
+  const [submittingScore, setSubmittingScore] = useState(false);
+  const [scoreSubmitted, setScoreSubmitted] = useState(false);
 
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -136,6 +142,41 @@ export default function Game2048() {
     setGameOver(false);
     setWon(false);
     setKeepPlaying(false);
+    setScoreSubmitted(false);
+  };
+
+  const handleSubmitScore = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (submittingScore || scoreSubmitted || score <= 0) return;
+
+    setSubmittingScore(true);
+    const cleanName = playerName.trim() || getEffectiveChatName();
+    saveChatName(cleanName);
+    localStorage.setItem("os_player_name", cleanName);
+
+    const maxTile = Math.max(...board.flat(), 0);
+
+    try {
+      const res = await fetch(`${API_URL}/api/games/leaderboard`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          game: "2048",
+          player: cleanName,
+          score,
+          details: `Max Tile: ${maxTile} (${score} pts)`
+        })
+      });
+
+      if (res.ok) {
+        setScoreSubmitted(true);
+        notify("Score Posted!", `Your 2048 score of ${score} was added to the leaderboard!`, "success");
+      }
+    } catch {
+      notify("Network Error", "Could not reach leaderboard API.", "warning");
+    } finally {
+      setSubmittingScore(false);
+    }
   };
 
   const move = useCallback(
@@ -318,24 +359,53 @@ export default function Game2048() {
 
         {/* Win / Game Over Overlay */}
         {(gameOver || (won && !keepPlaying)) && (
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center p-4 text-center z-20 animate-fade-in">
+          <div className="absolute inset-0 bg-black/85 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center p-4 text-center z-20 animate-fade-in max-w-full">
             {won && !keepPlaying ? (
               <>
                 <div className="flex justify-center mb-1 text-amber-400">
-                  <GIconTrophy size={36} />
+                  <GIconTrophy size={32} />
                 </div>
-                <h4 className="font-display text-xl font-bold text-amber-300 mb-1">You reached 2048!</h4>
-                <p className="text-xs text-white/60 mb-4">Legendary puzzle mastery achieved.</p>
-                <div className="flex gap-2">
+                <h4 className="font-display text-lg font-bold text-amber-300 mb-0.5">You reached 2048!</h4>
+                <p className="text-[11px] text-white/60 mb-2">Score: <span className="text-accent font-bold font-mono">{score}</span></p>
+
+                {score > 0 && !scoreSubmitted && (
+                  <form onSubmit={handleSubmitScore} className="my-2 w-full max-w-[200px] space-y-1.5">
+                    <input
+                      type="text"
+                      maxLength={18}
+                      value={playerName}
+                      onChange={(e) => setPlayerName(e.target.value)}
+                      placeholder="Player call-sign"
+                      className="w-full px-2 py-1 bg-black/40 border border-white/20 rounded-lg text-white text-[11px] outline-none text-center focus:border-accent"
+                    />
+                    <button
+                      type="submit"
+                      disabled={submittingScore}
+                      className="w-full py-1 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-lg text-[11px] transition cursor-pointer flex items-center justify-center gap-1 shadow-sm"
+                    >
+                      <GIconTrophy size={12} />
+                      <span>{submittingScore ? "Posting..." : "Post to Leaderboard"}</span>
+                    </button>
+                  </form>
+                )}
+
+                {scoreSubmitted && (
+                  <div className="my-2 text-[11px] text-emerald-400 flex items-center justify-center gap-1 font-medium">
+                    <GIconCheck size={13} />
+                    <span>Score posted to Leaderboard!</span>
+                  </div>
+                )}
+
+                <div className="flex gap-2 mt-1">
                   <button
                     onClick={() => setKeepPlaying(true)}
-                    className="px-3 py-1.5 rounded-xl bg-accent text-white font-medium text-xs shadow-md shadow-accent/20"
+                    className="px-3 py-1.5 rounded-xl bg-accent text-white font-medium text-xs shadow-md shadow-accent/20 cursor-pointer"
                   >
                     Keep Playing
                   </button>
                   <button
                     onClick={resetGame}
-                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-xs"
+                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-xs cursor-pointer"
                   >
                     New Game
                   </button>
@@ -343,11 +413,40 @@ export default function Game2048() {
               </>
             ) : (
               <>
-                <h4 className="font-display text-xl font-bold text-rose-400 mb-1">Game Over</h4>
-                <p className="text-xs text-white/60 mb-3">No more legal moves left on the board.</p>
+                <h4 className="font-display text-lg font-bold text-rose-400 mb-0.5">Game Over</h4>
+                <p className="text-xs text-white/60 mb-1">Final Score: <span className="text-accent font-bold font-mono">{score}</span></p>
+
+                {score > 0 && !scoreSubmitted && (
+                  <form onSubmit={handleSubmitScore} className="my-2 w-full max-w-[200px] space-y-1.5">
+                    <input
+                      type="text"
+                      maxLength={18}
+                      value={playerName}
+                      onChange={(e) => setPlayerName(e.target.value)}
+                      placeholder="Player call-sign"
+                      className="w-full px-2 py-1 bg-black/40 border border-white/20 rounded-lg text-white text-[11px] outline-none text-center focus:border-accent"
+                    />
+                    <button
+                      type="submit"
+                      disabled={submittingScore}
+                      className="w-full py-1 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-lg text-[11px] transition cursor-pointer flex items-center justify-center gap-1 shadow-sm"
+                    >
+                      <GIconTrophy size={12} />
+                      <span>{submittingScore ? "Posting..." : "Post to Leaderboard"}</span>
+                    </button>
+                  </form>
+                )}
+
+                {scoreSubmitted && (
+                  <div className="my-2 text-[11px] text-emerald-400 flex items-center justify-center gap-1 font-medium">
+                    <GIconCheck size={13} />
+                    <span>Score posted to Leaderboard!</span>
+                  </div>
+                )}
+
                 <button
                   onClick={resetGame}
-                  className="px-4 py-2 rounded-xl bg-accent hover:bg-accent/80 text-white font-medium text-xs shadow-lg shadow-accent/20"
+                  className="mt-1 px-4 py-1.5 rounded-xl bg-accent hover:bg-accent/80 text-white font-medium text-xs shadow-lg shadow-accent/20 cursor-pointer"
                 >
                   Try Again
                 </button>

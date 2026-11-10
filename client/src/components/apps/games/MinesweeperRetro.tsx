@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { soundFx } from "../../../lib/soundFx";
 import { useOS } from "../../../store/useOS";
 import { API_URL } from "../../../lib/config";
+import { getEffectiveChatName, saveChatName } from "../../../lib/chatSession";
 import {
   GIconTrophy,
   GIconSliders,
@@ -61,7 +62,7 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
 
   // Leaderboard submission dialog
   const [showSubmitModal, setShowSubmitModal] = useState(false);
-  const [playerName, setPlayerName] = useState(() => localStorage.getItem("os_player_name") || "Pilot");
+  const [playerName, setPlayerName] = useState(() => getEffectiveChatName());
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -304,7 +305,9 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
     if (!playerName.trim() || submitting || submitted) return;
 
     setSubmitting(true);
-    localStorage.setItem("os_player_name", playerName.trim());
+    const cleanName = playerName.trim() || getEffectiveChatName();
+    saveChatName(cleanName);
+    localStorage.setItem("os_player_name", cleanName);
 
     try {
       const res = await fetch(`${API_URL}/api/games/leaderboard`, {
@@ -312,7 +315,7 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           game: "minesweeper",
-          player: playerName.trim(),
+          player: cleanName,
           score: elapsed,
           details: `${config.label.split(" ")[0]} Clear (${elapsed}s)`
         })
