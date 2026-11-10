@@ -24,6 +24,7 @@ export interface ChatMessage {
   text: string;
   ts: number;
   reactions?: Record<string, number>;
+  userReactions?: Record<string, string>;
   replyTo?: { id: string; name: string; text: string };
 }
 
@@ -66,14 +67,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return Math.max(uniqueClientIds.size, socketCount, 1);
   }
 
-  getUserList(): Array<{ name: string; clientId?: string }> {
+  getUserList(): Array<{ name: string; clientId?: string; lastActive?: number }> {
     const seen = new Set<string>();
-    const list: Array<{ name: string; clientId?: string }> = [];
+    const list: Array<{ name: string; clientId?: string; lastActive?: number }> = [];
     for (const u of this.connectedUsers.values()) {
       const key = u.clientId || u.name;
       if (!seen.has(key)) {
         seen.add(key);
-        list.push({ name: u.name, clientId: u.clientId });
+        list.push({ name: u.name, clientId: u.clientId, lastActive: u.lastActive || Date.now() });
       }
     }
     return list;
@@ -273,12 +274,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const msg = this.chatHistory.find((m) => m.id === payload.id);
     if (msg) {
       if (!msg.reactions) msg.reactions = {};
+      if (!msg.userReactions) msg.userReactions = {};
+
+      // If user has already reacted to this message, they can no longer react using any other emoji
+      if (msg.userReactions[senderId]) {
+        return;
+      }
+
+      msg.userReactions[senderId] = canonicalKey;
       msg.reactions[canonicalKey] = (msg.reactions[canonicalKey] || 0) + 1;
       this.server.emit("chat:reacted", {
         id: payload.id,
         emoji: canonicalKey,
         reactions: msg.reactions,
         senderId,
+        userReactions: msg.userReactions,
       });
     }
   }
