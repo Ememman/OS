@@ -32,128 +32,115 @@ const LINKEDIN_URL = "https://www.linkedin.com/in/james-emmanuel-mendoza-46b3773
 
 const EXPERIENCE = [
   {
-    role: "IT Support Specialist (On the Job Training)",
-    company: "Straive",
-    period: "February 02, 2026 — March 24, 2026",
-    tag: "End User Computing & IT Support",
+    role: "Front-End Developer",
+    company: "Dowinn Group",
+    period: "September 28, 2026 — Present",
+    tag: "Enterprise Front-End & Automation",
     location: "Manila, Philippines",
     points: [
+      "Engineered high-performance enterprise front-end web applications and internal operational portals utilizing Next.js, React, and TypeScript.",
+      "Integrated TanStack Query for advanced asynchronous server-state synchronization, optimistic updates, intelligent query caching, and reduced network roundtrips.",
+      "Automated cross-browser and mobile end-to-end testing pipelines using Playwright, Appium, and Selenium to ensure high software reliability and zero regression escapes.",
+      "Designed clean, WCAG-accessible component architectures with Tailwind CSS and shadcn/ui; streamlined cross-functional development sprints, system documentation, and engineering workflows via Notion and GitHub."
+    ],
+    highlights: ["Next.js & TypeScript", "TanStack Query State Sync", "Playwright, Appium & Selenium", "Tailwind CSS & shadcn/ui"],
+    stack: ["Next.js", "React", "TypeScript", "TanStack Query", "Playwright", "Appium", "Selenium", "Tailwind CSS", "shadcn/ui", "Notion", "GitHub"]
+  },
+  {
+    role: "IT Support Specialist & Web Developer (On the Job Training)",
+    company: "Straive",
+    period: "February 02, 2026 — March 24, 2026",
+    tag: "Enterprise IT Support & IMS Development",
+    location: "Manila, Philippines",
+    points: [
+      "Architected and engineered the Straive IMS (Inventory Management System) in PHP (MVC) and MySQL, implementing custom hierarchical REST routing, accessible data grids, and a high-contrast collapsible sidebar UI.",
       "Applied academic knowledge to real-world IT support — Resolved issues like BIOS configuration, BitLocker lockouts, and RDP errors, moving beyond textbook theory.",
       "Developed communication & teamwork skills — Walked frustrated users through technical fixes, collaborated closely with senior colleagues, and shared team wins.",
       "Managed time under operational pressure — Balanced weekend duties, bulk agent registrations, and documentation while prioritizing effectively.",
       "Strengthened technical skills in key tools — Hands-on with 1Kosmos (MFA/biometrics), RDP, Active Directory, BitLocker, and security tools (WorkMate, Sentinel, Netskope)."
     ],
-    highlights: ["1Kosmos MFA & Biometrics", "Active Directory & BitLocker", "RDP & BIOS Resolution", "Bulk Agent Onboarding"],
-    stack: ["1Kosmos MFA", "Active Directory", "BitLocker", "RDP", "Sentinel", "Netskope", "WorkMate", "BIOS Config", "Windows Enterprise"]
+    highlights: ["Straive IMS (PHP MVC)", "1Kosmos MFA & Biometrics", "Active Directory & BitLocker", "RDP & BIOS Resolution"],
+    stack: ["PHP (MVC)", "MySQL", "1Kosmos MFA", "Active Directory", "BitLocker", "RDP", "Sentinel", "Netskope", "WorkMate", "REST APIs", "Tailwind CSS"]
   },
   {
-    role: "Lead Full-Stack Developer",
-    company: "SandreaLee Salon Digital Ecosystem (SALON)",
-    period: "2025 — 2026",
-    tag: "Best in Research (May 2026)",
+    role: "Lead Full-Stack Developer (Capstone, Projects & Activities)",
+    company: "National Teachers College (BSIT)",
+    period: "2024 — 2026",
+    tag: "Best in Research · Academic Honors",
     location: "Manila, Philippines",
     points: [
-      "Awarded Best in Research (May 02, 2026) for architectural design and end-to-end full-stack development of the multi-tier salon digital ecosystem.",
-      "Architected customer and staff React Native/Expo mobile apps connected to a centralized Node.js/Express/MongoDB backend.",
-      "Engineered secure role-based access control (Customer, Staff, Admin), GPS-geofenced staff attendance, and real-time Socket.IO synchronization across six operational modules.",
-      "Designed and deployed payment proof verification with an automated approval scoring algorithm, decreasing manual administrative overhead by 70%."
+      "Awarded Best in Research (May 02, 2026) as Lead Developer for the SandreaLee Salon (SALON) Digital Ecosystem — architected customer & staff mobile apps (React Native/Expo) and an administrative portal (React, Node.js, Express, MongoDB, Socket.IO) featuring GPS-geofenced attendance and automated payment scoring.",
+      "Architected Portfolio OS — a full-featured web desktop environment and developer platform with draggable multi-instance window compositing, real-time WebSocket chatrooms with reactions, retro arcade games (Block Blast, 2048, Snake, Minesweeper), and Web Audio synthesizers.",
+      "Created interactive student platforms including Flash-Cards (interactive 3D card-flip transitions and local study deck persistence) and Quiz-App (60-second timed challenges with instant feedback and lifetime score stats).",
+      "Gathered system requirements, organized student & user feedback, tested basic and core functionalities, debugged critical errors, and documented code changes across all academic projects and student activities."
     ],
-    highlights: ["Awarded Best in Research", "70% Overhead Reduction", "GPS Geofencing", "6 Real-Time Modules"],
-    stack: ["React Native", "Expo", "React 19", "Node.js", "Express", "MongoDB", "Socket.IO", "TypeScript", "Tailwind CSS"]
-  },
-  {
-    role: "Web Application Developer",
-    company: "Straive IMS (Inventory Management System)",
-    period: "2025",
-    tag: "Enterprise System",
-    location: "Manila, Philippines",
-    points: [
-      "Engineered an enterprise-grade PHP MVC inventory management platform and successfully deployed it to production infrastructure.",
-      "Diagnosed and resolved a deep URL routing architecture bottleneck, expanding support from 2-segment to multi-segment hierarchical REST paths.",
-      "Designed and implemented a collapsible high-contrast sidebar UI and accessible data grids reused throughout all sub-modules."
-    ],
-    highlights: ["Hierarchical REST Routing", "Zero Production Downtime", "WCAG Accessible UI"],
-    stack: ["PHP (MVC)", "MySQL", "JavaScript", "REST APIs", "Tailwind CSS", "Linux", "Apache"]
-  },
-  {
-    role: "Full-Stack Software Engineer",
-    company: "Full-Cycle Engineering & Open Source Projects",
-    period: "2024 — Present",
-    tag: "Full-Cycle Engineering",
-    location: "Remote / Manila",
-    points: [
-      "Gathered system requirements, organized user feedback, and tested basic and complex functionalities across multiple software applications.",
-      "Documented code changes, debugged errors, and improved software performance and user experience.",
-      "Proficient in programming/coding and problem-solving (identifying root causes, developing technical solutions).",
-      "Provided technical opinions and coding solutions in group discussions and cross-functional design reviews."
-    ],
-    highlights: ["Root-Cause Problem Solving", "Modern Web Architecture", "Full-Stack CI/CD"],
-    stack: ["React 19", "Node.js", "MongoDB", "PHP", "TypeScript", "Tailwind CSS", "Socket.IO", "Git", "REST APIs"]
+    highlights: ["Best in Research (May 2026)", "SandreaLee Salon Ecosystem", "Portfolio OS Web Desktop", "React Native & MERN Stack"],
+    stack: ["React 19", "React Native", "Expo", "Node.js", "Express", "MongoDB", "Socket.IO", "PHP", "Tailwind CSS", "JavaScript", "TypeScript"]
   }
 ];
 
 const PROFESSIONAL_COMPETENCIES = [
   {
-    title: "Full-Stack Software Development",
-    desc: "Versatile full-stack developer proficient in React, PHP, Node.js, and MongoDB, with expertise in design tools and project management.",
+    title: "Full-Stack & Front-End Engineering",
+    desc: "Versatile developer proficient in Next.js, React, TypeScript, PHP, Node.js, and MongoDB, with hands-on expertise in design tools (Figma, Canva) and project management.",
     badge: "Core Stack",
   },
   {
-    title: "Requirements Gathering & Basic Functionality Testing",
-    desc: "Gathered system requirements, organized user feedback, and tested basic and core functionalities to ensure solid deliverables.",
-    badge: "SDLC & Testing",
+    title: "Requirements Gathering & Automated Testing",
+    desc: "Gathered system requirements, organized user feedback, and tested basic, core, and automated functionalities via Playwright, Appium, and Selenium.",
+    badge: "SDLC & QA",
   },
   {
     title: "Code Documentation, Debugging & UX Optimization",
-    desc: "Documented code changes, debugged errors, improved software performance, responsiveness, and overall user experience.",
+    desc: "Documented code changes, debugged errors, improved software performance, latency bottlenecks, responsive layouts, and overall user experience.",
     badge: "Quality & UX",
   },
   {
-    title: "Programming & Root-Cause Problem Solving",
-    desc: "Proficient in programming/coding and problem-solving (identifying root causes, developing practical technical solutions).",
+    title: "Programming & Root-Cause Technical Solutions",
+    desc: "Proficient in programming/coding and problem-solving — identifying root causes, developing scalable technical solutions, and resolving operational blockers.",
     badge: "Problem Solving",
   },
   {
-    title: "Technical Discussions & Collaborative Solutions",
-    desc: "Provided technical opinions and coding solutions in group discussions, design reviews, and cross-functional teamwork.",
+    title: "Technical Collaboration & Agile Sprints",
+    desc: "Provided technical opinions and coding solutions in group discussions, design reviews, cross-functional sprints, and team collaboration with Notion and GitHub.",
     badge: "Teamwork",
   },
 ];
 
 const SKILL_CATEGORIES = [
   {
-    title: "Frontend & Mobile",
-    description: "Component architecture, native bridges, reactive state, and modern styling",
+    title: "Frontend, Mobile & Design",
+    description: "Component architecture, native bridges, state caching, and visual UI design",
     skills: [
-      { name: "React 19 / Modern Hooks", level: 90, category: "Frontend" },
+      { name: "Next.js & React 19", level: 92, category: "Frontend" },
+      { name: "TypeScript (Strict)", level: 88, category: "Language" },
+      { name: "TanStack Query & State", level: 85, category: "State" },
+      { name: "Tailwind CSS & shadcn/ui", level: 90, category: "Styling" },
       { name: "React Native & Expo", level: 85, category: "Mobile" },
-      { name: "TypeScript & JavaScript", level: 85, category: "Language" },
-      { name: "Tailwind CSS & Framer Motion", level: 88, category: "Styling" },
-      { name: "HTML5 & Semantic Markup", level: 95, category: "Markup" },
-      { name: "Zustand & Context API", level: 80, category: "State" },
+      { name: "Figma & Canva (UI/UX)", level: 88, category: "Design" },
     ]
   },
   {
     title: "Backend & Systems",
-    description: "REST APIs, realtime sockets, MVC architecture, and server pipelines",
+    description: "REST APIs, realtime sockets, MVC architecture, and database pipelines",
     skills: [
       { name: "Node.js & Express 5", level: 85, category: "Backend" },
       { name: "PHP (MVC Architecture)", level: 88, category: "Backend" },
       { name: "Socket.IO WebSockets", level: 82, category: "Realtime" },
-      { name: "RESTful API Engineering", level: 88, category: "APIs" },
       { name: "MongoDB & Mongoose", level: 85, category: "NoSQL" },
+      { name: "RESTful API Engineering", level: 88, category: "APIs" },
       { name: "MySQL & Relational Design", level: 80, category: "SQL" },
     ]
   },
   {
-    title: "IT Support, Security & Tools",
-    description: "Identity, biometrics, disk encryption, remote tools, and version control",
+    title: "Testing, IT Support & Tooling",
+    description: "Automation test suites, identity, disk encryption, and project tracking",
     skills: [
-      { name: "1Kosmos (MFA / Biometrics)", level: 85, category: "Security" },
-      { name: "Active Directory & BitLocker", level: 88, category: "IT Support" },
-      { name: "RDP & BIOS Configuration", level: 85, category: "IT Support" },
-      { name: "Sentinel, Netskope & WorkMate", level: 80, category: "Security" },
-      { name: "Git & GitHub Collaboration", level: 92, category: "VCS" },
+      { name: "Playwright & E2E Testing", level: 85, category: "Testing" },
+      { name: "Appium & Selenium", level: 80, category: "Testing" },
+      { name: "1Kosmos MFA & Active Directory", level: 85, category: "Security" },
+      { name: "BitLocker & RDP Support", level: 85, category: "IT Support" },
+      { name: "Git, GitHub & Notion", level: 92, category: "Tooling" },
       { name: "Windows Enterprise & Linux", level: 82, category: "System" },
     ]
   }
@@ -169,6 +156,18 @@ interface TechStackItem {
 
 const TECH_STACK: TechStackItem[] = [
   {
+    name: "Next.js",
+    category: "Frontend",
+    badgeColor: "text-white bg-white/10 border-white/20",
+    glowClass: "hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.18)] hover:bg-white/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <circle cx="12" cy="12" r="11" fill="#000000" stroke="#ffffff" strokeWidth="1.2" />
+        <path d="M8.5 8v8M15.5 8v5.5l-6-5.5" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     name: "React 19",
     category: "Frontend",
     badgeColor: "text-[#61DAFB] bg-[#61DAFB]/10 border-[#61DAFB]/30",
@@ -181,6 +180,96 @@ const TECH_STACK: TechStackItem[] = [
           <ellipse rx="11" ry="4.2" transform="rotate(60)" />
           <ellipse rx="11" ry="4.2" transform="rotate(120)" />
         </g>
+      </svg>
+    ),
+  },
+  {
+    name: "TypeScript",
+    category: "Frontend",
+    badgeColor: "text-[#38BDF8] bg-[#3178C6]/15 border-[#3178C6]/30",
+    glowClass: "hover:border-[#3178C6]/50 hover:shadow-[0_0_20px_rgba(49,120,198,0.22)] hover:bg-[#3178C6]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 rounded-[4px] transition-transform group-hover/tech:scale-110 duration-200">
+        <rect width="24" height="24" rx="4" fill="#3178C6" />
+        <path fill="#ffffff" d="M11 7.5H5.5V9.5H7.3V17H9.2V9.5H11V7.5ZM16.8 12.2C16.2 11.9 15.6 11.7 15 11.5C14.5 11.3 14.2 11.1 14 10.9C13.8 10.7 13.7 10.5 13.7 10.2C13.7 9.9 13.8 9.6 14.1 9.4C14.4 9.2 14.8 9.1 15.3 9.1C15.8 9.1 16.3 9.2 16.7 9.4C17.1 9.6 17.4 9.9 17.6 10.2L19 8.8C18.5 8.2 17.9 7.8 17.2 7.5C16.5 7.2 15.8 7.1 14.9 7.1C13.9 7.1 13.1 7.3 12.4 7.7C11.7 8.1 11.2 8.6 10.8 9.3C10.5 10 10.3 10.7 10.3 11.5C10.3 12.3 10.5 13 10.9 13.6C11.3 14.2 11.9 14.7 12.6 15C13.2 15.3 14 15.6 14.7 15.9C15.4 16.2 15.9 16.4 16.2 16.7C16.5 17 16.6 17.3 16.6 17.7C16.6 18.2 16.4 18.6 16.1 18.9C15.7 19.2 15.2 19.3 14.5 19.3C13.9 19.3 13.3 19.1 12.7 18.8C12.1 18.5 11.6 18 11.2 17.4L9.7 19C10.3 19.8 11 20.4 11.9 20.8C12.8 21.2 13.8 21.4 14.8 21.4C15.9 21.4 16.8 21.2 17.6 20.8C18.4 20.4 19 19.8 19.4 19.1C19.8 18.4 20 17.6 20 16.7C20 15.7 19.7 14.9 19.1 14.2C18.5 13.5 17.7 12.9 16.8 12.2Z" />
+      </svg>
+    ),
+  },
+  {
+    name: "TanStack Query",
+    category: "Frontend",
+    badgeColor: "text-[#FF4154] bg-[#FF4154]/10 border-[#FF4154]/30",
+    glowClass: "hover:border-[#FF4154]/50 hover:shadow-[0_0_20px_rgba(255,65,84,0.22)] hover:bg-[#FF4154]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <circle cx="12" cy="12" r="10.5" fill="#18181b" stroke="#FF4154" strokeWidth="1.2" />
+        <path fill="#FF4154" d="M12 5a7 7 0 1 0 7 7 7 7 0 0 0-7-7zm0 10.5a3.5 3.5 0 1 1 3.5-3.5 3.5 3.5 0 0 1-3.5 3.5z" />
+        <circle cx="12" cy="12" r="1.5" fill="#FFD15C" />
+      </svg>
+    ),
+  },
+  {
+    name: "Tailwind & shadcn/ui",
+    category: "Frontend",
+    badgeColor: "text-[#38BDF8] bg-[#38BDF8]/10 border-[#38BDF8]/30",
+    glowClass: "hover:border-[#38BDF8]/50 hover:shadow-[0_0_20px_rgba(56,189,248,0.22)] hover:bg-[#38BDF8]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <path fill="#38BDF8" d="M12.001 4.8c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624C13.666 10.618 15.027 12 18.001 12c3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C16.336 6.182 14.975 4.8 12.001 4.8zm-6 7.2c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624 1.177 1.194 2.538 2.576 5.512 2.576 3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C10.336 13.382 8.975 12 6.001 12z" />
+      </svg>
+    ),
+  },
+  {
+    name: "Playwright",
+    category: "Tooling",
+    badgeColor: "text-[#45BA4B] bg-[#45BA4B]/10 border-[#45BA4B]/30",
+    glowClass: "hover:border-[#45BA4B]/50 hover:shadow-[0_0_20px_rgba(69,186,75,0.22)] hover:bg-[#45BA4B]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <circle cx="9" cy="12" r="6" fill="#45BA4B" fillOpacity="0.85" />
+        <circle cx="15" cy="12" r="6" fill="#E6533C" fillOpacity="0.85" />
+        <circle cx="9" cy="12" r="2.2" fill="#ffffff" />
+        <circle cx="15" cy="12" r="2.2" fill="#ffffff" />
+      </svg>
+    ),
+  },
+  {
+    name: "Appium / Selenium",
+    category: "Tooling",
+    badgeColor: "text-[#66C0F4] bg-[#66C0F4]/10 border-[#66C0F4]/30",
+    glowClass: "hover:border-[#66C0F4]/50 hover:shadow-[0_0_20px_rgba(102,192,244,0.22)] hover:bg-[#66C0F4]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200" fill="none" stroke="#66C0F4" strokeWidth="1.8">
+        <rect x="5" y="2" width="14" height="20" rx="3" />
+        <path d="M12 18h.01" />
+        <path d="M9 6h6" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    name: "Figma",
+    category: "Tooling",
+    badgeColor: "text-[#F24E1E] bg-[#F24E1E]/10 border-[#F24E1E]/30",
+    glowClass: "hover:border-[#F24E1E]/50 hover:shadow-[0_0_20px_rgba(242,78,30,0.22)] hover:bg-[#F24E1E]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <path fill="#0ACF83" d="M12 24a4 4 0 0 0 4-4v-4h-4a4 4 0 1 0 0 8z" />
+        <path fill="#A259FF" d="M8 16a4 4 0 0 1-4-4 4 4 0 0 1 4-4h4v8H8z" />
+        <path fill="#F24E1E" d="M8 8a4 4 0 0 1-4-4 4 4 0 0 1 4-4h4v8H8z" />
+        <path fill="#FF7262" d="M12 0h4a4 4 0 0 1 4 4 4 4 0 0 1-4 4h-4V0z" />
+        <path fill="#1ABCFE" d="M20 12a4 4 0 0 1-4 4h-4v-8h4a4 4 0 0 1 4 4z" />
+      </svg>
+    ),
+  },
+  {
+    name: "Canva",
+    category: "Tooling",
+    badgeColor: "text-[#00C4CC] bg-[#00C4CC]/10 border-[#00C4CC]/30",
+    glowClass: "hover:border-[#00C4CC]/50 hover:shadow-[0_0_20px_rgba(0,196,204,0.22)] hover:bg-[#00C4CC]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <circle cx="12" cy="12" r="10" fill="#00C4CC" />
+        <path fill="#ffffff" d="M15.2 14.5c-.8.6-1.8.8-2.8.5-1.4-.4-2.1-1.8-1.7-3.2.4-1.4 1.8-2.3 3.2-1.9.7.2 1.3.6 1.7 1.2l-1.2.9c-.3-.4-.6-.6-1-.7-.7-.2-1.4.3-1.6 1-.2.7.2 1.4.9 1.6.5.2 1.1 0 1.5-.2l.5.8z" />
       </svg>
     ),
   },
@@ -237,29 +326,6 @@ const TECH_STACK: TechStackItem[] = [
     ),
   },
   {
-    name: "TypeScript",
-    category: "Frontend",
-    badgeColor: "text-[#38BDF8] bg-[#3178C6]/15 border-[#3178C6]/30",
-    glowClass: "hover:border-[#3178C6]/50 hover:shadow-[0_0_20px_rgba(49,120,198,0.22)] hover:bg-[#3178C6]/8",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 rounded-[4px] transition-transform group-hover/tech:scale-110 duration-200">
-        <rect width="24" height="24" rx="4" fill="#3178C6" />
-        <path fill="#ffffff" d="M11 7.5H5.5V9.5H7.3V17H9.2V9.5H11V7.5ZM16.8 12.2C16.2 11.9 15.6 11.7 15 11.5C14.5 11.3 14.2 11.1 14 10.9C13.8 10.7 13.7 10.5 13.7 10.2C13.7 9.9 13.8 9.6 14.1 9.4C14.4 9.2 14.8 9.1 15.3 9.1C15.8 9.1 16.3 9.2 16.7 9.4C17.1 9.6 17.4 9.9 17.6 10.2L19 8.8C18.5 8.2 17.9 7.8 17.2 7.5C16.5 7.2 15.8 7.1 14.9 7.1C13.9 7.1 13.1 7.3 12.4 7.7C11.7 8.1 11.2 8.6 10.8 9.3C10.5 10 10.3 10.7 10.3 11.5C10.3 12.3 10.5 13 10.9 13.6C11.3 14.2 11.9 14.7 12.6 15C13.2 15.3 14 15.6 14.7 15.9C15.4 16.2 15.9 16.4 16.2 16.7C16.5 17 16.6 17.3 16.6 17.7C16.6 18.2 16.4 18.6 16.1 18.9C15.7 19.2 15.2 19.3 14.5 19.3C13.9 19.3 13.3 19.1 12.7 18.8C12.1 18.5 11.6 18 11.2 17.4L9.7 19C10.3 19.8 11 20.4 11.9 20.8C12.8 21.2 13.8 21.4 14.8 21.4C15.9 21.4 16.8 21.2 17.6 20.8C18.4 20.4 19 19.8 19.4 19.1C19.8 18.4 20 17.6 20 16.7C20 15.7 19.7 14.9 19.1 14.2C18.5 13.5 17.7 12.9 16.8 12.2Z" />
-      </svg>
-    ),
-  },
-  {
-    name: "Tailwind CSS v4",
-    category: "Frontend",
-    badgeColor: "text-[#38BDF8] bg-[#38BDF8]/10 border-[#38BDF8]/30",
-    glowClass: "hover:border-[#38BDF8]/50 hover:shadow-[0_0_20px_rgba(56,189,248,0.22)] hover:bg-[#38BDF8]/8",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
-        <path fill="#38BDF8" d="M12.001 4.8c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624C13.666 10.618 15.027 12 18.001 12c3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C16.336 6.182 14.975 4.8 12.001 4.8zm-6 7.2c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624 1.177 1.194 2.538 2.576 5.512 2.576 3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C10.336 13.382 8.975 12 6.001 12z" />
-      </svg>
-    ),
-  },
-  {
     name: "Git & GitHub",
     category: "Tooling",
     badgeColor: "text-[#F05032] bg-[#F05032]/10 border-[#F05032]/30",
@@ -267,6 +333,18 @@ const TECH_STACK: TechStackItem[] = [
     icon: (
       <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
         <path fill="#F05032" d="M21.6 10.4 13.6 2.4a2.26 2.26 0 0 0-3.2 0L8.3 4.5l3.3 3.3a2.68 2.68 0 0 1 3.4 3.4l3.2 3.2c.4-.1.7-.1 1.1-.1a2.69 2.69 0 0 1 1.9 4.6l.4.4a2.26 2.26 0 0 0 0-3.2zM7.2 5.6 2.4 10.4a2.26 2.26 0 0 0 0 3.2l8 8a2.26 2.26 0 0 0 3.2 0l2.1-2.1-3.3-3.3a2.68 2.68 0 0 1-3.4-3.4L5.7 9.5a2.68 2.68 0 0 1 1.5-3.9z" />
+      </svg>
+    ),
+  },
+  {
+    name: "Notion",
+    category: "Tooling",
+    badgeColor: "text-white bg-white/10 border-white/25",
+    glowClass: "hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.18)] hover:bg-white/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <rect width="24" height="24" rx="4" fill="#18181b" stroke="#52525b" strokeWidth="1" />
+        <text x="12" y="16.5" fill="#ffffff" fontFamily="serif" fontSize="13" fontWeight="900" textAnchor="middle">N</text>
       </svg>
     ),
   },
@@ -284,18 +362,6 @@ const TECH_STACK: TechStackItem[] = [
     ),
   },
   {
-    name: "Express.js",
-    category: "Backend",
-    badgeColor: "text-zinc-300 bg-zinc-800/40 border-zinc-700/60",
-    glowClass: "hover:border-zinc-400 hover:shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:bg-white/8",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
-        <rect width="24" height="24" rx="5" fill="#18181b" stroke="#3f3f46" strokeWidth="1" />
-        <text x="12" y="16.5" fill="#f4f4f5" fontFamily="system-ui, sans-serif" fontSize="11" fontWeight="800" textAnchor="middle" letterSpacing="-0.5">ex</text>
-      </svg>
-    ),
-  },
-  {
     name: "MySQL / SQL",
     category: "Database",
     badgeColor: "text-[#4479A1] bg-[#4479A1]/10 border-[#4479A1]/30",
@@ -305,40 +371,6 @@ const TECH_STACK: TechStackItem[] = [
         <ellipse cx="12" cy="6" rx="9" ry="3" fill="#00758F" />
         <path d="M3 6v6c0 1.66 4.03 3 9 3s9-1.34 9-3V6" fill="none" stroke="#F29111" strokeWidth="1.5" />
         <path d="M3 12v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6" fill="none" stroke="#00758F" strokeWidth="1.5" />
-      </svg>
-    ),
-  },
-  {
-    name: "Next.js",
-    category: "Frontend",
-    badgeColor: "text-white bg-white/10 border-white/20",
-    glowClass: "hover:border-white/40 hover:shadow-[0_0_20px_rgba(255,255,255,0.18)] hover:bg-white/8",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
-        <circle cx="12" cy="12" r="11" fill="#000000" stroke="#ffffff" strokeWidth="1.2" />
-        <path d="M8.5 8v8M15.5 8v5.5l-6-5.5" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    name: "Vite",
-    category: "Tooling",
-    badgeColor: "text-[#BD34FE] bg-[#BD34FE]/10 border-[#BD34FE]/30",
-    glowClass: "hover:border-[#BD34FE]/50 hover:shadow-[0_0_20px_rgba(189,52,254,0.22)] hover:bg-[#BD34FE]/8",
-    icon: (
-      <svg viewBox="0 0 32 32" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
-        <defs>
-          <linearGradient id="res-vite-a" x1="-12.35%" y1="18.9%" x2="77.9%" y2="87.9%">
-            <stop offset="0%" stopColor="#41D1FF" />
-            <stop offset="100%" stopColor="#BD34FE" />
-          </linearGradient>
-          <linearGradient id="res-vite-b" x1="16.9%" y1="-12.9%" x2="84.9%" y2="67.3%">
-            <stop offset="0%" stopColor="#FFEA83" />
-            <stop offset="100%" stopColor="#FFA800" />
-          </linearGradient>
-        </defs>
-        <path fill="url(#res-vite-a)" d="M29.5 5.5 16.8 28.2a1 1 0 0 1-1.7 0L2.5 5.5a1 1 0 0 1 .9-1.5h7.2a1 1 0 0 1 .9.6L16 14.2l4.5-9.6a1 1 0 0 1 .9-.6h7.2a1 1 0 0 1 .9 1.5z" />
-        <path fill="url(#res-vite-b)" d="M19.8 2.3 11 15h4.6l-2.4 8.7 9.8-12.7h-4.7l1.5-8.7z" />
       </svg>
     ),
   },
@@ -451,14 +483,17 @@ export default function Resume() {
               <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-white/95">
                 {FULL_NAME}
               </h1>
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30 shadow-[0_0_12px_rgba(251,191,36,0.2)]">
+              <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30 shadow-[0_0_12px_rgba(56,189,248,0.2)]">
+                Front-End Developer at Dowinn Group
+              </span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30">
                 <GIconTrophy size={11} className="text-amber-300" />
                 BSIT · Magna Cum Laude
               </span>
             </div>
 
             <p className="text-xs sm:text-sm text-white/75 font-medium leading-relaxed max-w-2xl">
-              Versatile Full-Stack Developer &amp; IT Support Specialist · Proficient in React, PHP, Node.js, and MongoDB with expertise in design tools and project management.
+              Front-End Developer at Dowinn Group &amp; Full-Stack Engineer · Next.js, React, TypeScript, TanStack Query, Node.js, MongoDB, PHP, Figma, Canva &amp; Automated Testing (Playwright, Appium, Selenium).
             </p>
 
             {/* Quick Contact & Profile Pills */}
