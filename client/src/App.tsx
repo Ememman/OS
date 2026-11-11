@@ -153,6 +153,8 @@ export default function App() {
   if (!booted) return <BootScreen />;
   if (!osChosen) return <OsPicker />;
 
+  const hasActiveWindow = windows.some((w) => !w.minimized);
+
   return (
     <div
       onContextMenu={handleDesktopContextMenu}
@@ -160,7 +162,7 @@ export default function App() {
     >
       <Wallpaper />
       <GlobalAudioPlayer />
-      {!isWin && <MenuBar />}
+      {!isWin && (!isMobile || !hasActiveWindow) && <MenuBar />}
 
       {/* Desktop Content & Widgets */}
       {isTablet ? (
@@ -262,7 +264,7 @@ export default function App() {
         );
       })}
 
-      {isWin ? <WinTaskbar /> : <Dock />}
+      {(!isMobile || !hasActiveWindow) && (isWin ? <WinTaskbar /> : <Dock />)}
       <MiniPlayer />
       <SpotlightSearch />
       <MissionControl />

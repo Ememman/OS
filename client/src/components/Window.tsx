@@ -249,7 +249,7 @@ export default function Window({ win, children }) {
 
   const forceFull = win.maximized || isMobile;
   const isMac = !isWin;
-  const dockBottomClearance = isMobile ? (isWin ? 54 : 70) : isWin ? 64 : dockPosition === "bottom" ? 76 : 8;
+  const dockBottomClearance = isMobile ? 0 : isWin ? 64 : dockPosition === "bottom" ? 76 : 8;
   const dockLeftClearance = isMac && !isMobile && dockPosition === "left" ? 96 : 8;
   const dockRightClearance = isMac && !isMobile && dockPosition === "right" ? 96 : 8;
 
@@ -260,12 +260,12 @@ export default function Window({ win, children }) {
   const baseStyle = forceFull
     ? isMobile
       ? {
-          top: isWin ? 0 : 32,
+          top: 0,
           left: 0,
           right: 0,
-          bottom: isWin ? 54 : 70,
+          bottom: 0,
           width: "100%",
-          height: "auto",
+          height: "100%",
           zIndex: win.z,
         }
       : isWin
@@ -389,7 +389,7 @@ export default function Window({ win, children }) {
     <div
       ref={windowRef}
       className={`absolute glass shadow-2xl flex flex-col overflow-hidden transition-shadow ${
-        isMobile ? "rounded-none border-0" : isWin ? "rounded-lg" : "rounded-2xl"
+        isMobile ? "rounded-none border-0 fixed inset-0 w-full h-[100dvh]" : isWin ? "rounded-lg" : "rounded-2xl"
       } ${
         isFocused
           ? "ring-1 ring-white/15"
@@ -401,23 +401,32 @@ export default function Window({ win, children }) {
       onPointerDown={() => focusWindow(win.id)}
     >
       <div
-        className={`flex items-center h-9 shrink-0 border-b border-white/8 cursor-default ${isWin ? "pl-3" : "gap-2 px-3"} ${
+        className={`relative flex items-center ${
+          isMobile ? "h-11 pt-[env(safe-area-inset-top,0px)] px-3" : "h-9 px-3"
+        } shrink-0 border-b border-white/8 cursor-default select-none ${
           isFocused ? "" : "opacity-80"
         }`}
         onPointerDown={onDragStart}
         onDoubleClick={() => !isMobile && toggleMaximize(win.id)}
         style={{ touchAction: "none" }}
       >
+        {/* Centered Window Title across both mobile and desktop views */}
+        <div className="absolute inset-x-0 mx-auto flex items-center justify-center pointer-events-none px-16 sm:px-24">
+          <span className="text-xs text-white/80 font-medium tracking-wide truncate max-w-full">
+            {win.title}
+          </span>
+        </div>
+
         {isWin ? (
           <>
-            <div className="flex-1 text-xs text-white/70 font-medium select-none truncate pr-2">{win.title}</div>
-            
+            <div className="flex-1" />
+
             {/* Windows 11 Titlebar Controls */}
-            <div className="flex items-center h-full shrink-0">
+            <div className="flex items-center h-full shrink-0 z-10 -mr-3">
               {/* Minimize */}
               <button
                 onClick={requestMinimize}
-                className="w-11 h-9 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors cursor-pointer"
+                className="w-11 h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors cursor-pointer"
                 aria-label="Minimize window"
                 title="Minimize"
               >
@@ -432,7 +441,7 @@ export default function Window({ win, children }) {
                   onClick={() => toggleMaximize(win.id)}
                   onMouseEnter={handleSnapEnter}
                   onMouseLeave={handleSnapLeave}
-                  className="w-11 h-9 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors relative cursor-pointer"
+                  className="w-11 h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors relative cursor-pointer"
                   aria-label={win.maximized ? "Restore window" : "Maximize window"}
                   title={win.maximized ? "Restore" : "Maximize"}
                 >
@@ -452,7 +461,7 @@ export default function Window({ win, children }) {
               {/* Close */}
               <button
                 onClick={requestClose}
-                className="w-11 h-9 flex items-center justify-center text-white/70 hover:text-white hover:bg-[#e81123] active:bg-[#c4101e] transition-colors cursor-pointer rounded-tr-lg"
+                className="w-11 h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-[#e81123] active:bg-[#c4101e] transition-colors cursor-pointer rounded-tr-lg"
                 aria-label="Close window"
                 title="Close"
               >
@@ -466,11 +475,11 @@ export default function Window({ win, children }) {
         ) : (
           <>
             {/* macOS Window Controls (Traffic Lights) */}
-            <div className="group/controls flex items-center gap-1 sm:gap-2">
+            <div className="group/controls flex items-center gap-1.5 sm:gap-2 z-10">
               {/* Close (Red) */}
               <button
                 onClick={requestClose}
-                className="w-6 h-6 sm:w-3 sm:h-3 rounded-full flex items-center justify-center transition-all cursor-pointer"
+                className="w-7 h-7 sm:w-3 sm:h-3 rounded-full flex items-center justify-center transition-all cursor-pointer"
                 aria-label="Close window"
                 title="Close"
               >
@@ -496,7 +505,7 @@ export default function Window({ win, children }) {
               {/* Minimize (Yellow) */}
               <button
                 onClick={requestMinimize}
-                className="w-6 h-6 sm:w-3 sm:h-3 rounded-full flex items-center justify-center transition-all cursor-pointer"
+                className="w-7 h-7 sm:w-3 sm:h-3 rounded-full flex items-center justify-center transition-all cursor-pointer"
                 aria-label="Minimize window"
                 title="Minimize"
               >
@@ -542,12 +551,12 @@ export default function Window({ win, children }) {
                 </button>
               )}
             </div>
-            <div className="flex-1 text-center text-xs text-white/60 font-medium select-none pr-4 sm:pr-10 truncate">{win.title}</div>
+            <div className="flex-1" />
           </>
         )}
       </div>
       {renderSnapFlyout()}
-      <div className={`flex-1 min-h-0 thin-scroll overflow-y-auto overscroll-contain pb-6 sm:pb-2 allow-select ${isInteracting ? "pointer-events-none select-none" : ""}`}>{children}</div>
+      <div className={`flex-1 min-h-0 thin-scroll overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom,0px)] allow-select ${isInteracting ? "pointer-events-none select-none" : ""}`}>{children}</div>
       {!win.maximized && !isMobile && (
         <div
           onPointerDown={onResizeStart}
