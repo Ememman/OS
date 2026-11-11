@@ -93,6 +93,7 @@ export async function connectDB() {
     // Configure mongoose connection
     mongoose.set("strictQuery", false);
     await mongoose.connect(uri, {
+      dbName: "portfolio_os",
       serverSelectionTimeoutMS: 8000,
       socketTimeoutMS: 45000,
     });
