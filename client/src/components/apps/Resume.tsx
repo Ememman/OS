@@ -22,6 +22,9 @@ import {
 import { API_URL } from "../../lib/config";
 import { useOS } from "../../store/useOS";
 import { soundFx } from "../../lib/soundFx";
+import dowinnLogo from "../../assets/dowinn-group.png";
+import straiveLogo from "../../assets/straive.png";
+import ntcLogo from "../../assets/ntc.png";
 
 const FULL_NAME = "JAMES EMMANUEL E. MENDOZA";
 const LOCATION = "Tondo, Manila";
@@ -34,9 +37,10 @@ const EXPERIENCE = [
   {
     role: "Front-End Developer",
     company: "Dowinn Group",
+    logo: dowinnLogo,
     period: "September 28, 2026 — Present",
     tag: "Enterprise Front-End & Automation",
-    location: "Manila, Philippines",
+    location: "12F Aseana Tower 3, Asean Ave. cor. Diosdado Macapagal Blvd. Aseana City, Parañaque",
     points: [
       "Engineered high-performance enterprise front-end web applications and internal operational portals utilizing Next.js, React, and TypeScript.",
       "Integrated TanStack Query for advanced asynchronous server-state synchronization, optimistic updates, intelligent query caching, and reduced network roundtrips.",
@@ -49,9 +53,10 @@ const EXPERIENCE = [
   {
     role: "IT Support Specialist & Web Developer (On the Job Training)",
     company: "Straive",
+    logo: straiveLogo,
     period: "February 02, 2026 — March 24, 2026",
     tag: "Enterprise IT Support & IMS Development",
-    location: "Manila, Philippines",
+    location: "SPi Global Building, Pascor Dr, Parañaque, 1700",
     points: [
       "Architected and engineered the Straive IMS (Inventory Management System) in PHP (MVC) and MySQL, implementing custom hierarchical REST routing, accessible data grids, and a high-contrast collapsible sidebar UI.",
       "Applied academic knowledge to real-world IT support — Resolved issues like BIOS configuration, BitLocker lockouts, and RDP errors, moving beyond textbook theory.",
@@ -65,9 +70,10 @@ const EXPERIENCE = [
   {
     role: "Lead Full-Stack Developer (Capstone, Projects & Activities)",
     company: "National Teachers College (BSIT)",
+    logo: ntcLogo,
     period: "2024 — 2026",
     tag: "Best in Research · Academic Honors",
-    location: "Manila, Philippines",
+    location: "629 J. Nepomuceno Street, Quiapo, Manila",
     points: [
       "Awarded Best in Research (May 02, 2026) as Lead Developer for the SandreaLee Salon (SALON) Digital Ecosystem — architected customer & staff mobile apps (React Native/Expo) and an administrative portal (React, Node.js, Express, MongoDB, Socket.IO) featuring GPS-geofenced attendance and automated payment scoring.",
       "Architected Portfolio OS — a full-featured web desktop environment and developer platform with draggable multi-instance window compositing, real-time WebSocket chatrooms with reactions, retro arcade games (Block Blast, 2048, Snake, Minesweeper), and Web Audio synthesizers.",
@@ -483,7 +489,8 @@ export default function Resume() {
               <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-white/95">
                 {FULL_NAME}
               </h1>
-              <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30 shadow-[0_0_12px_rgba(56,189,248,0.2)]">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30 shadow-[0_0_12px_rgba(56,189,248,0.2)]">
+                <img src={dowinnLogo} alt="Dowinn Group" className="w-3.5 h-3.5 rounded-sm object-contain shrink-0" />
                 Front-End Developer at Dowinn Group
               </span>
               <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30">
@@ -692,10 +699,17 @@ export default function Resume() {
                         <h2 className="text-sm sm:text-base font-bold text-white/95 group-hover/exp:text-accent transition-colors">
                           {e.role}
                         </h2>
-                        <div className="text-xs text-accent font-semibold mt-0.5 flex items-center gap-1.5">
-                          <span>{e.company}</span>
+                        <div className="text-xs text-accent font-semibold mt-1 flex flex-wrap items-center gap-1.5 leading-snug">
+                          {e.logo && (
+                            <img
+                              src={e.logo}
+                              alt={`${e.company} logo`}
+                              className="w-5 h-5 rounded-md object-contain bg-white/10 p-0.5 border border-white/15 shadow-xs shrink-0"
+                            />
+                          )}
+                          <span className="font-semibold text-accent">{e.company}</span>
                           <span className="text-white/30">·</span>
-                          <span className="text-white/50 font-normal">{e.location}</span>
+                          <span className="text-white/55 font-normal text-[11px] sm:text-xs">{e.location}</span>
                         </div>
                       </div>
 
@@ -897,10 +911,15 @@ export default function Resume() {
                           Magna Cum Laude
                         </span>
                       </div>
-                      <div className="text-xs text-accent font-semibold mt-1 flex items-center gap-1.5">
-                        <span>National Teachers College</span>
+                      <div className="text-xs text-accent font-semibold mt-1 flex flex-wrap items-center gap-1.5 leading-snug">
+                        <img
+                          src={ntcLogo}
+                          alt="National Teachers College logo"
+                          className="w-5 h-5 rounded-md object-contain bg-white/10 p-0.5 border border-white/15 shadow-xs shrink-0"
+                        />
+                        <span className="font-semibold text-accent">National Teachers College</span>
                         <span className="text-white/30">·</span>
-                        <span className="text-white/50 font-normal">Manila, Philippines</span>
+                        <span className="text-white/55 font-normal text-[11px] sm:text-xs">629 J. Nepomuceno Street, Quiapo, Manila</span>
                       </div>
                     </div>
                     <span className="text-xs text-white/70 font-mono bg-white/8 px-2.5 py-1 rounded-md self-start sm:self-auto border border-white/10">
