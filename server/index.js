@@ -1044,14 +1044,12 @@ app.get("/api/games/leaderboard", async (req, res) => {
       const filter = game && game !== "all" ? { game: String(game).toLowerCase() } : {};
       const sort = game === "minesweeper" ? { score: 1 } : { score: -1 };
       const dbScores = await GameScoreModel.find(filter).sort(sort).limit(max).lean();
-      if (dbScores && dbScores.length > 0) {
-        return res.json({
-          ok: true,
-          total: dbScores.length,
-          game: game || "all",
-          leaderboard: dbScores
-        });
-      }
+      return res.json({
+        ok: true,
+        total: dbScores ? dbScores.length : 0,
+        game: game || "all",
+        leaderboard: dbScores || []
+      });
     } catch (err) {
       console.error("[Leaderboard DB Query Error]:", err.message);
     }
