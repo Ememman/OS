@@ -1034,8 +1034,29 @@ app.post("/api/snippets/run", (req, res) => {
 // ---------- Arcade Games Leaderboard API ----------
 let arcadeLeaderboard = [...initialLeaderboard];
 
-app.get("/api/games/leaderboard", (req, res) => {
+app.get("/api/games/leaderboard", async (req, res) => {
   const { game, limit = 20 } = req.query;
+  const max = Math.min(50, Math.max(1, parseInt(limit, 10) || 20));
+
+  // If MongoDB is connected, query latest scores from database directly
+  if (isDbConnected) {
+    try {
+      const filter = game && game !== "all" ? { game: String(game).toLowerCase() } : {};
+      const sort = game === "minesweeper" ? { score: 1 } : { score: -1 };
+      const dbScores = await GameScoreModel.find(filter).sort(sort).limit(max).lean();
+      if (dbScores && dbScores.length > 0) {
+        return res.json({
+          ok: true,
+          total: dbScores.length,
+          game: game || "all",
+          leaderboard: dbScores
+        });
+      }
+    } catch (err) {
+      console.error("[Leaderboard DB Query Error]:", err.message);
+    }
+  }
+
   let list = [...arcadeLeaderboard];
   if (game && game !== "all") {
     list = list.filter((e) => e.game.toLowerCase() === String(game).toLowerCase());
@@ -1047,7 +1068,6 @@ app.get("/api/games/leaderboard", (req, res) => {
     }
     return b.score - a.score;
   });
-  const max = Math.min(50, Math.max(1, parseInt(limit, 10) || 20));
   res.json({
     ok: true,
     total: list.length,
@@ -2512,7 +2532,11 @@ async function initDatabase() {
   }
 }
 
-server.listen(PORT, async () => {
-  console.log(`Portfolio OS API + chat running on :${PORT}`);
+async function startServer() {
   await initDatabase();
-});
+  server.listen(PORT, () => {
+    console.log(`Portfolio OS API + chat running on :${PORT}`);
+  });
+}
+
+startServer();
