@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   GIconPaperPlane,
@@ -22,7 +22,7 @@ import {
   GIconRotateLeft,
 } from "../icons/GravityIcons";
 import { getSocket, getCachedChatInit } from "../../lib/socket";
-import { getChatSession, touchChatActivity, saveChatName } from "../../lib/chatSession";
+import { getChatSession, touchChatActivity, saveChatName, getLastReadChatTs, setLastReadChatTs } from "../../lib/chatSession";
 import { useOS } from "../../store/useOS";
 import { useOutsideClick } from "../../lib/useOutsideClick";
 import { useIsMobile } from "../../lib/useMediaQuery";
@@ -325,6 +325,76 @@ export default function Chats() {
   const longPressTimer = useRef<any>(null);
   const touchStartCoords = useRef<{ x: number; y: number } | null>(null);
 
+  // Filter messages based on search query with ID deduplication
+  const displayedMessages = useMemo(() => {
+    const seen = new Set<string>();
+    const unique = messages.filter((m) => {
+      const key = m.id || m.tempId;
+      if (!key) return true;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    if (!searchQuery.trim()) return unique;
+    const q = searchQuery.toLowerCase();
+    return unique.filter(
+      (m) => (m.text && m.text.toLowerCase().includes(q)) || (m.name && m.name.toLowerCase().includes(q))
+    );
+  }, [messages, searchQuery]);
+
+  // Track initial last read timestamp when opening chat
+  const initialLastReadTsRef = useRef<number>(getLastReadChatTs());
+  const [showNewDivider, setShowNewDivider] = useState(true);
+
+  // Identify index of the first unread message from other users
+  const firstUnreadIndex = useMemo(() => {
+    const lastRead = initialLastReadTsRef.current;
+    if (!lastRead || !showNewDivider) return -1;
+    return displayedMessages.findIndex((m) => {
+      const isSelf = Boolean(
+        (m.senderId && m.senderId === clientId) ||
+        mySentIds.current.has(m.id) ||
+        (m.tempId && mySentIds.current.has(m.tempId)) ||
+        (!m.senderId && name && name.toLowerCase() !== "guest" && m.name === name)
+      );
+      return !isSelf && m.ts > lastRead;
+    });
+  }, [displayedMessages, showNewDivider, clientId, name]);
+
+  const markAsRead = useCallback(() => {
+    setShowNewDivider(false);
+    const latestTs = displayedMessages.length > 0 ? displayedMessages[displayedMessages.length - 1].ts : Date.now();
+    setLastReadChatTs(latestTs);
+    clearUnreadChat();
+  }, [displayedMessages, clearUnreadChat]);
+
+  // Keep divider visible for 4s so user can notice where new messages start, then fade out
+  useEffect(() => {
+    if (firstUnreadIndex === -1) {
+      if (displayedMessages.length > 0) {
+        setLastReadChatTs(displayedMessages[displayedMessages.length - 1].ts);
+      }
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      markAsRead();
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [firstUnreadIndex, markAsRead, displayedMessages]);
+
+  // When unmounting or closing the chat window, mark current messages as read
+  useEffect(() => {
+    return () => {
+      if (displayedMessages.length > 0) {
+        setLastReadChatTs(displayedMessages[displayedMessages.length - 1].ts);
+      }
+      clearUnreadChat();
+    };
+  }, [displayedMessages, clearUnreadChat]);
+
   // Toggle reaction tray with smart vertical placement (avoids overlapping sticky topbar on mobile/desktop)
   const toggleReactionMenu = (id: string) => {
     setActiveReactionMenu((curr) => {
@@ -616,6 +686,13 @@ export default function Chats() {
   }, [chatSound]);
 
   useEffect(() => {
+    // If an unread divider exists on load, scroll so the divider is visible
+    const dividerEl = document.getElementById("chat-unread-divider");
+    if (dividerEl) {
+      dividerEl.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+      return;
+    }
+
     listRef.current?.scrollTo({
       top: listRef.current.scrollHeight,
       behavior: reduceMotion ? "auto" : "smooth",
@@ -761,6 +838,7 @@ export default function Chats() {
 
   const sendText = (t: string) => {
     touchChatActivity();
+    markAsRead();
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const currentName = name || getChatSession().name || "Guest";
 
@@ -907,24 +985,6 @@ export default function Chats() {
     URL.revokeObjectURL(url);
     notify("Chat Exported", "Downloaded conversation transcript.", "success");
   };
-
-  // Filter messages based on search query with ID deduplication
-  const displayedMessages = useMemo(() => {
-    const seen = new Set<string>();
-    const unique = messages.filter((m) => {
-      const key = m.id || m.tempId;
-      if (!key) return true;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-
-    if (!searchQuery.trim()) return unique;
-    const q = searchQuery.toLowerCase();
-    return unique.filter(
-      (m) => (m.text && m.text.toLowerCase().includes(q)) || (m.name && m.name.toLowerCase().includes(q))
-    );
-  }, [messages, searchQuery]);
 
   return (
     <div
@@ -1147,7 +1207,7 @@ export default function Chats() {
           </p>
         )}
 
-        {displayedMessages.map((m) => {
+        {displayedMessages.map((m, idx) => {
           const isSelf = Boolean(
             (m.senderId && m.senderId === clientId) ||
             mySentIds.current.has(m.id) ||
@@ -1158,15 +1218,31 @@ export default function Chats() {
           const isPinned = pinnedList.some((p) => p.id === m.id);
           const myReactionOnMsg = userReactions[m.id] || (m.userReactions && m.userReactions[clientId]);
           const hasAlreadyReacted = Boolean(myReactionOnMsg);
+          const isFirstUnread = showNewDivider && idx === firstUnreadIndex;
 
           return (
-            <div
-              key={m.id || m.tempId}
-              id={`msg-${m.id || m.tempId}`}
-              className={`group flex items-end gap-2 max-w-[90%] sm:max-w-[80%] chat-message-in transition-all duration-300 rounded-2xl ${
-                isSelf ? "ml-auto flex-row-reverse" : "mr-auto flex-row"
-              }`}
-            >
+            <div key={m.id || m.tempId} className="w-full flex flex-col">
+              {/* Discord-style NEW unread message divider */}
+              {isFirstUnread && (
+                <div
+                  id="chat-unread-divider"
+                  className="w-full my-3 sm:my-4 flex items-center gap-2 select-none pointer-events-none transition-all duration-700 ease-out"
+                  role="separator"
+                  aria-label="New messages divider"
+                >
+                  <div className="flex-1 h-[1px] bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.45)]" />
+                  <span className="shrink-0 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-rose-500 text-white shadow-md shadow-rose-500/40 border border-rose-400/30 flex items-center">
+                    NEW
+                  </span>
+                </div>
+              )}
+
+              <div
+                id={`msg-${m.id || m.tempId}`}
+                className={`group flex items-end gap-2 max-w-[90%] sm:max-w-[80%] chat-message-in transition-all duration-300 rounded-2xl ${
+                  isSelf ? "ml-auto flex-row-reverse" : "mr-auto flex-row"
+                }`}
+              >
               <div
                 aria-hidden="true"
                 className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm"
@@ -1454,8 +1530,9 @@ export default function Chats() {
                 )}
               </div>
             </div>
-          );
-        })}
+          </div>
+        );
+      })}
 
         {/* Messenger Animated Typing Indicator */}
         {typingName && typingName !== name && (

@@ -87,3 +87,24 @@ export function getEffectiveChatName(): string {
   saveChatName(generated);
   return generated;
 }
+
+/**
+ * Returns timestamp of the most recent message read by this user.
+ */
+export function getLastReadChatTs(): number {
+  if (typeof window === "undefined") return 0;
+  const stored = localStorage.getItem("os_chat_last_read_ts");
+  return stored ? Number(stored) : 0;
+}
+
+/**
+ * Records the timestamp of the latest read message.
+ */
+export function setLastReadChatTs(ts: number): void {
+  if (typeof window !== "undefined" && ts > 0) {
+    const current = getLastReadChatTs();
+    if (ts > current) {
+      localStorage.setItem("os_chat_last_read_ts", String(ts));
+    }
+  }
+}
