@@ -504,6 +504,10 @@ app.get("/api/health", (req, res) => {
     service: "Portfolio OS API",
     timestamp: Date.now(),
     uptimeSeconds: Math.floor(process.uptime()),
+    database: {
+      connected: isDbConnected,
+      status: isDbConnected ? "connected" : (process.env.MONGODB_URI ? "disconnected" : "no_uri_configured")
+    },
     realtime: { connectedClients: io.engine.clientsCount }
   });
 });
