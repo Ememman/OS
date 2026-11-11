@@ -28,14 +28,14 @@ const LOCATION = "Tondo, Manila";
 const PHONE = "0992 543 3570";
 const CONTACT_EMAIL = "mendozajamesemmanuel@gmail.com";
 const GITHUB_URL = "https://github.com/Ememman";
-const LINKEDIN_URL = "www.linkedin.com/in/james-emmanuel-r";
+const LINKEDIN_URL = "https://www.linkedin.com/in/james-emmanuel-mendoza-46b377373/";
 
 const EXPERIENCE = [
   {
     role: "IT Support Specialist (On the Job Training)",
     company: "Straive",
     period: "February 02, 2026 — March 24, 2026",
-    tag: "Enterprise IT & Security",
+    tag: "End User Computing & IT Support",
     location: "Manila, Philippines",
     points: [
       "Applied academic knowledge to real-world IT support — Resolved issues like BIOS configuration, BitLocker lockouts, and RDP errors, moving beyond textbook theory.",
