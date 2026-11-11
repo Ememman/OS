@@ -482,106 +482,38 @@ export default function Resume() {
   return (
     <div className="h-full overflow-y-auto thin-scroll bg-[#0a0d14] text-white select-none flex flex-col">
       {/* Executive Header */}
-      <div className="p-4 sm:p-6 border-b border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent shrink-0">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="min-w-0 space-y-2.5">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-white/95">
-                {FULL_NAME}
-              </h1>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30 shadow-[0_0_12px_rgba(56,189,248,0.2)]">
+      <div className="p-4 sm:p-5 border-b border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent shrink-0 space-y-3">
+        {/* Top Bar: Name & Badges on Left, Action CTAs on Right */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-white/95 whitespace-nowrap">
+              {FULL_NAME}
+            </h1>
+            <div className="flex flex-wrap items-center gap-2 pt-1.5">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30 shadow-[0_0_12px_rgba(56,189,248,0.2)] whitespace-nowrap">
                 <img src={dowinnLogo} alt="Dowinn Group" className="w-3.5 h-3.5 rounded-sm object-contain shrink-0" />
                 Front-End Developer at Dowinn Group
               </span>
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30">
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30 whitespace-nowrap">
                 <GIconTrophy size={11} className="text-amber-300" />
                 BSIT · Magna Cum Laude
               </span>
             </div>
-
-            <p className="text-xs sm:text-sm text-white/75 font-medium leading-relaxed max-w-2xl">
-              Front-End Developer at Dowinn Group &amp; Full-Stack Engineer · Next.js, React, TypeScript, TanStack Query, Node.js, MongoDB, PHP, Figma, Canva &amp; Automated Testing (Playwright, Appium, Selenium).
-            </p>
-
-            {/* Quick Contact & Profile Pills */}
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1 text-xs">
-              {/* Location */}
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 text-white/75 text-[11px] sm:text-xs">
-                <GIconMapPin size={13} className="text-accent shrink-0" />
-                <span>{LOCATION}</span>
-              </span>
-
-              {/* Phone */}
-              <button
-                onClick={copyPhone}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 hover:border-emerald-400/40 hover:bg-emerald-500/10 text-white/80 hover:text-white transition cursor-pointer group text-[11px] sm:text-xs"
-                title="Click to copy phone number / Call 0992 543 3570"
-              >
-                <GIconPhone size={12} className="text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
-                <span className="font-mono">{PHONE}</span>
-                {copiedPhone ? (
-                  <GIconCheck size={11} className="text-emerald-400 shrink-0" />
-                ) : (
-                  <GIconCopy size={10} className="text-white/40 group-hover:text-white shrink-0" />
-                )}
-              </button>
-
-              {/* Email */}
-              <button
-                onClick={copyEmail}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 hover:border-accent/40 hover:bg-white/10 text-white/80 hover:text-white transition cursor-pointer group text-[11px] sm:text-xs"
-                title="Click to copy email"
-              >
-                <GIconMail size={13} className="text-accent group-hover:scale-110 transition-transform shrink-0" />
-                <span className="font-mono">{CONTACT_EMAIL}</span>
-                {copiedEmail ? (
-                  <GIconCheck size={12} className="text-accent shrink-0" />
-                ) : (
-                  <GIconCopy size={11} className="text-white/40 group-hover:text-white shrink-0" />
-                )}
-              </button>
-
-              {/* LinkedIn */}
-              <a
-                href={LINKEDIN_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 hover:border-[#0A66C2]/40 hover:bg-[#0A66C2]/10 text-white/80 hover:text-white transition cursor-pointer group text-[11px] sm:text-xs"
-                title={`Open LinkedIn Profile: ${LINKEDIN_URL}`}
-              >
-                <GIconLinkedin size={13} className="text-[#0A66C2] group-hover:scale-110 transition-transform shrink-0" />
-                <span className="font-mono">LinkedIn Profile</span>
-                <GIconExternalLink size={10} className="text-white/40 group-hover:text-white shrink-0" />
-              </a>
-
-              {/* GitHub */}
-              <a
-                href={GITHUB_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 hover:border-purple-400/40 hover:bg-purple-500/10 text-white/80 hover:text-white transition cursor-pointer group text-[11px] sm:text-xs"
-                title={`Open GitHub: ${GITHUB_URL}`}
-              >
-                <GIconGithub size={13} className="text-purple-400 group-hover:scale-110 transition-transform shrink-0" />
-                <span className="font-mono">github.com/Ememman</span>
-                <GIconExternalLink size={10} className="text-white/40 group-hover:text-white shrink-0" />
-              </a>
-            </div>
           </div>
 
-          {/* Action CTAs: Beautifully aligned grid on mobile, flex row on sm+ */}
-          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto pt-2 lg:pt-0 shrink-0">
+          {/* Action CTAs: Beautifully aligned grid on mobile, sleek flex row on desktop */}
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 shrink-0 w-full sm:w-auto">
             {/* GitHub Button */}
             <a
               href={GITHUB_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="h-10 px-3 sm:px-3.5 text-xs font-semibold rounded-xl bg-white/8 hover:bg-white/12 border border-white/12 text-white/90 hover:text-white inline-flex items-center justify-center gap-1.5 whitespace-nowrap transition-all active:scale-95 shadow-sm"
+              className="h-9 px-3 text-xs font-semibold rounded-xl bg-white/8 hover:bg-white/12 border border-white/12 text-white/90 hover:text-white inline-flex items-center justify-center gap-1.5 whitespace-nowrap transition-all active:scale-95 shadow-sm"
               title="Visit GitHub: https://github.com/Ememman"
             >
-              <GIconGithub size={14} className="text-white/90 shrink-0" />
+              <GIconGithub size={13} className="text-white/90 shrink-0" />
               <span>GitHub</span>
-              <GIconExternalLink size={10} className="opacity-60 shrink-0" />
+              <GIconExternalLink size={9} className="opacity-60 shrink-0" />
             </a>
 
             {/* LinkedIn Button */}
@@ -589,38 +521,108 @@ export default function Resume() {
               href={LINKEDIN_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="h-10 px-3 sm:px-3.5 text-xs font-semibold rounded-xl bg-[#0A66C2]/15 hover:bg-[#0A66C2]/25 border border-[#0A66C2]/40 text-[#70B5F9] hover:text-white inline-flex items-center justify-center gap-1.5 whitespace-nowrap transition-all active:scale-95 shadow-sm shadow-[#0A66C2]/10"
+              className="h-9 px-3 text-xs font-semibold rounded-xl bg-[#0A66C2]/15 hover:bg-[#0A66C2]/25 border border-[#0A66C2]/40 text-[#70B5F9] hover:text-white inline-flex items-center justify-center gap-1.5 whitespace-nowrap transition-all active:scale-95 shadow-sm shadow-[#0A66C2]/10"
               title={`Visit LinkedIn: ${LINKEDIN_URL}`}
             >
-              <GIconLinkedin size={14} className="shrink-0 text-[#0A66C2]" />
+              <GIconLinkedin size={13} className="shrink-0 text-[#0A66C2]" />
               <span>LinkedIn</span>
-              <GIconExternalLink size={10} className="opacity-60 shrink-0" />
+              <GIconExternalLink size={9} className="opacity-60 shrink-0" />
             </a>
 
             {/* Print Résumé Button */}
             <button
               onClick={handlePrint}
-              className="h-10 px-3 sm:px-3.5 text-xs font-semibold rounded-xl bg-white/8 hover:bg-white/12 border border-white/12 text-white/90 hover:text-white inline-flex items-center justify-center gap-1.5 whitespace-nowrap transition-all active:scale-95 cursor-pointer shadow-sm"
+              className="h-9 px-3 text-xs font-semibold rounded-xl bg-white/8 hover:bg-white/12 border border-white/12 text-white/90 hover:text-white inline-flex items-center justify-center gap-1.5 whitespace-nowrap transition-all active:scale-95 cursor-pointer shadow-sm"
               title="Print Résumé"
             >
-              <GIconPrinter size={13} className="text-white/80 shrink-0" />
+              <GIconPrinter size={12} className="text-white/80 shrink-0" />
               <span>Print Résumé</span>
             </button>
 
             {/* Download PDF Button */}
             <button
               onClick={handleDownloadPdf}
-              className="h-10 px-3 sm:px-4 text-xs font-semibold rounded-xl bg-accent text-white inline-flex items-center justify-center gap-1.5 whitespace-nowrap shadow-md shadow-accent/25 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+              className="h-9 px-3.5 text-xs font-semibold rounded-xl bg-accent text-white inline-flex items-center justify-center gap-1.5 whitespace-nowrap shadow-sm shadow-accent/25 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
               title="Download PDF Copy"
             >
-              <GIconDownload size={13} className="shrink-0" />
+              <GIconDownload size={12} className="shrink-0" />
               <span>Download PDF</span>
             </button>
           </div>
         </div>
 
+        {/* Bio Paragraph: Full Width */}
+        <p className="text-xs sm:text-sm text-white/75 font-medium leading-relaxed max-w-4xl">
+          Front-End Developer at Dowinn Group &amp; Full-Stack Engineer · Next.js, React, TypeScript, TanStack Query, Node.js, MongoDB, PHP, Figma, Canva &amp; Automated Testing (Playwright, Appium, Selenium).
+        </p>
+
+        {/* Quick Contact & Profile Pills: Full Width Horizontal Row */}
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs">
+          {/* Location */}
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 text-white/75 text-[11px] sm:text-xs">
+            <GIconMapPin size={12} className="text-accent shrink-0" />
+            <span>{LOCATION}</span>
+          </span>
+
+          {/* Phone */}
+          <button
+            onClick={copyPhone}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 hover:border-emerald-400/40 hover:bg-emerald-500/10 text-white/80 hover:text-white transition cursor-pointer group text-[11px] sm:text-xs"
+            title="Click to copy phone number / Call 0992 543 3570"
+          >
+            <GIconPhone size={11} className="text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
+            <span className="font-mono">{PHONE}</span>
+            {copiedPhone ? (
+              <GIconCheck size={11} className="text-emerald-400 shrink-0" />
+            ) : (
+              <GIconCopy size={10} className="text-white/40 group-hover:text-white shrink-0" />
+            )}
+          </button>
+
+          {/* Email */}
+          <button
+            onClick={copyEmail}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 hover:border-accent/40 hover:bg-white/10 text-white/80 hover:text-white transition cursor-pointer group text-[11px] sm:text-xs"
+            title="Click to copy email"
+          >
+            <GIconMail size={12} className="text-accent group-hover:scale-110 transition-transform shrink-0" />
+            <span className="font-mono">{CONTACT_EMAIL}</span>
+            {copiedEmail ? (
+              <GIconCheck size={11} className="text-accent shrink-0" />
+            ) : (
+              <GIconCopy size={10} className="text-white/40 group-hover:text-white shrink-0" />
+            )}
+          </button>
+
+          {/* LinkedIn */}
+          <a
+            href={LINKEDIN_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 hover:border-[#0A66C2]/40 hover:bg-[#0A66C2]/10 text-white/80 hover:text-white transition cursor-pointer group text-[11px] sm:text-xs"
+            title={`Open LinkedIn Profile: ${LINKEDIN_URL}`}
+          >
+            <GIconLinkedin size={12} className="text-[#0A66C2] group-hover:scale-110 transition-transform shrink-0" />
+            <span className="font-mono">LinkedIn Profile</span>
+            <GIconExternalLink size={9} className="text-white/40 group-hover:text-white shrink-0" />
+          </a>
+
+          {/* GitHub */}
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/8 hover:border-purple-400/40 hover:bg-purple-500/10 text-white/80 hover:text-white transition cursor-pointer group text-[11px] sm:text-xs"
+            title={`Open GitHub: ${GITHUB_URL}`}
+          >
+            <GIconGithub size={12} className="text-purple-400 group-hover:scale-110 transition-transform shrink-0" />
+            <span className="font-mono">github.com/Ememman</span>
+            <GIconExternalLink size={9} className="text-white/40 group-hover:text-white shrink-0" />
+          </a>
+        </div>
+
         {/* Highlight Stack Chips (Smooth Horizontal Scroll to conserve vertical height) */}
-        <div className="flex items-center gap-1.5 mt-3 pt-2.5 border-t border-white/5 overflow-x-auto thin-scroll flex-nowrap py-0.5">
+        <div className="flex items-center gap-1.5 pt-2 border-t border-white/5 overflow-x-auto thin-scroll flex-nowrap py-0.5">
           <span className="text-[10px] uppercase tracking-wider font-semibold text-white/40 mr-1 shrink-0 flex items-center gap-1">
             <GIconLayoutCells size={11} className="text-accent" />
             Core Stack:
