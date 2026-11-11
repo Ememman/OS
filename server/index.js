@@ -13,6 +13,14 @@ import { snippets } from "./data/snippets.js";
 import { initialFeedback } from "./data/feedback.js";
 import { initialLeaderboard } from "./data/leaderboard.js";
 import { initialCloudFiles } from "./data/files.js";
+import {
+  connectDB,
+  isDbConnected,
+  ChatModel,
+  GameScoreModel,
+  GuestbookModel,
+  ContactInquiryModel
+} from "./db.js";
 
 // Force IPv4-first resolution for Windows networking stability
 dns.setDefaultResultOrder("ipv4first");
@@ -440,7 +448,7 @@ app.post("/api/projects/:id/feedback", strictSubmissionLimiter, (req, res) => {
 });
 
 // ---------- Contact / Hire Inquiry Endpoint with Schema Validation ----------
-const contactInquiries = [];
+let contactInquiries = [];
 
 app.get("/api/contact/inquiries", (req, res) => {
   res.json({ count: contactInquiries.length, inquiries: contactInquiries.slice(0, 20) });
@@ -480,6 +488,9 @@ app.post("/api/contact", strictSubmissionLimiter, (req, res) => {
 
   contactInquiries.unshift(inquiry);
   addActivity("contact", `Inquiry received from ${cleanName}: "${cleanSubject}"`);
+  if (isDbConnected) {
+    ContactInquiryModel.create(inquiry).catch((err) => console.error("[DB] Failed to save contact inquiry:", err.message));
+  }
   res.status(201).json({
     ok: true,
     message: `Thank you, ${cleanName}! Your message was successfully recorded. Bron will get back to ${cleanEmail} soon.`
@@ -1098,6 +1109,12 @@ app.post("/api/games/leaderboard", leaderboardLimiter, (req, res) => {
       existing.ts = Date.now();
       existing.badge = badge;
       io.emit("game:score_submitted", existing);
+      if (isDbConnected) {
+        GameScoreModel.updateOne(
+          { id: existing.id },
+          { score: numScore, details: cleanDetails, ts: existing.ts, badge }
+        ).catch((err) => console.error("[DB] Failed to update game score:", err.message));
+      }
       return res.status(200).json({ ok: true, entry: existing, updated: true });
     } else {
       return res.status(200).json({ ok: true, entry: existing, updated: false });
@@ -1120,6 +1137,9 @@ app.post("/api/games/leaderboard", leaderboardLimiter, (req, res) => {
 
   io.emit("game:score_submitted", newEntry);
   addActivity("game", `${cleanPlayer} scored ${numScore} in ${validGames[cleanGame]}!`);
+  if (isDbConnected) {
+    GameScoreModel.create(newEntry).catch((err) => console.error("[DB] Failed to save game score:", err.message));
+  }
   res.status(201).json({ ok: true, entry: newEntry });
 });
 
@@ -1464,6 +1484,9 @@ app.post("/api/guestbook", strictSubmissionLimiter, (req, res) => {
   // Real-time broadcast to all connected clients
   io.emit("guestbook:entry", newEntry);
   addActivity("guestbook", `${cleanName} (${cleanRole}) left a message in Guestbook`);
+  if (isDbConnected) {
+    GuestbookModel.create(newEntry).catch((err) => console.error("[DB] Failed to save guestbook entry:", err.message));
+  }
   res.status(201).json(newEntry);
 });
 
@@ -1479,6 +1502,9 @@ app.post("/api/guestbook/:id/react", (req, res) => {
     entry.reactions = (entry.reactions || 0) + 1;
   }
   io.emit("guestbook:reacted", { id, reactions: entry.reactions });
+  if (isDbConnected) {
+    GuestbookModel.updateOne({ id }, { reactions: entry.reactions }).catch((err) => console.error("[DB] Failed to save guestbook reaction:", err.message));
+  }
   res.json({ id, reactions: entry.reactions });
 });
 
@@ -1491,6 +1517,9 @@ app.delete("/api/guestbook/:id", (req, res) => {
   }
   io.emit("guestbook:deleted", { id });
   addActivity("guestbook", "A signature was removed from Guestbook");
+  if (isDbConnected) {
+    GuestbookModel.deleteOne({ id }).catch((err) => console.error("[DB] Failed to delete guestbook entry:", err.message));
+  }
   res.json({ success: true, id });
 });
 
@@ -2115,12 +2144,17 @@ app.post("/api/chat/:id/pin", (req, res) => {
   const isPinned = pinnedChatMessages.some((m) => m.id === id);
   if (isPinned) {
     pinnedChatMessages = pinnedChatMessages.filter((m) => m.id !== id);
+    msg.isPinned = false;
   } else {
+    msg.isPinned = true;
     pinnedChatMessages.unshift(msg);
     if (pinnedChatMessages.length > 5) pinnedChatMessages.pop();
   }
 
   io.emit("chat:pinned", { id, isPinned: !isPinned, pinnedList: pinnedChatMessages });
+  if (isDbConnected) {
+    ChatModel.updateOne({ id }, { isPinned: !isPinned }).catch((err) => console.error("[DB] Failed to update chat pin:", err.message));
+  }
   res.json({ id, isPinned: !isPinned, pinned: pinnedChatMessages });
 });
 
@@ -2131,6 +2165,9 @@ app.delete("/api/chat/:id", (req, res) => {
     chatHistory.splice(idx, 1);
     pinnedChatMessages = pinnedChatMessages.filter((m) => m.id !== id);
     io.emit("chat:message_deleted", { id });
+    if (isDbConnected) {
+      ChatModel.deleteOne({ id }).catch((err) => console.error("[DB] Failed to delete chat message:", err.message));
+    }
     return res.json({ ok: true, id });
   }
   res.status(404).json({ ok: false, error: "Message not found" });
@@ -2307,6 +2344,13 @@ io.on("connection", (socket) => {
 
     io.emit("chat:message", msg);
     addActivity("chat", `${authorName} sent a message in Chat`);
+    if (isDbConnected) {
+      ChatModel.create({
+        ...msg,
+        reactions: new Map(Object.entries(msg.reactions || {})),
+        userReactions: new Map(Object.entries(msg.userReactions || {}))
+      }).catch((err) => console.error("[DB] Failed to save chat message:", err.message));
+    }
     if (typeof ack === "function") ack({ ok: true, message: msg });
   });
 
@@ -2340,6 +2384,15 @@ io.on("connection", (socket) => {
           userReactions: msg.userReactions,
           removed: true
         });
+        if (isDbConnected) {
+          ChatModel.updateOne(
+            { id: data.id },
+            {
+              reactions: new Map(Object.entries(msg.reactions || {})),
+              userReactions: new Map(Object.entries(msg.userReactions || {}))
+            }
+          ).catch((err) => console.error("[DB] Failed to update reaction:", err.message));
+        }
         return;
       }
 
@@ -2358,6 +2411,15 @@ io.on("connection", (socket) => {
         userReactions: msg.userReactions,
         removed: false
       });
+      if (isDbConnected) {
+        ChatModel.updateOne(
+          { id: data.id },
+          {
+            reactions: new Map(Object.entries(msg.reactions || {})),
+            userReactions: new Map(Object.entries(msg.userReactions || {}))
+          }
+        ).catch((err) => console.error("[DB] Failed to update reaction:", err.message));
+      }
     }
   });
 
@@ -2368,6 +2430,9 @@ io.on("connection", (socket) => {
       chatHistory.splice(idx, 1);
       pinnedChatMessages = pinnedChatMessages.filter((m) => m.id !== id);
       io.emit("chat:message_deleted", { id });
+      if (isDbConnected) {
+        ChatModel.deleteOne({ id }).catch((err) => console.error("[DB] Failed to delete chat message:", err.message));
+      }
     }
   });
 
@@ -2401,4 +2466,49 @@ app.use((err, req, res, next) => {
   });
 });
 
-server.listen(PORT, () => console.log(`Portfolio OS API + chat running on :${PORT}`));
+async function initDatabase() {
+  const connected = await connectDB();
+  if (connected) {
+    try {
+      // 1. Hydrate Chat History
+      const dbChats = await ChatModel.find().sort({ ts: 1 }).limit(MAX_HISTORY).lean();
+      if (dbChats.length > 0) {
+        chatHistory = dbChats.map((doc) => ({
+          ...doc,
+          reactions: doc.reactions ? (doc.reactions instanceof Map ? Object.fromEntries(doc.reactions) : doc.reactions) : {},
+          userReactions: doc.userReactions ? (doc.userReactions instanceof Map ? Object.fromEntries(doc.userReactions) : doc.userReactions) : {}
+        }));
+        pinnedChatMessages = chatHistory.filter((m) => m.isPinned);
+        console.log(`[MongoDB] Loaded ${chatHistory.length} chat messages (${pinnedChatMessages.length} pinned).`);
+      }
+
+      // 2. Hydrate Leaderboard
+      const dbScores = await GameScoreModel.find().sort({ ts: -1 }).limit(200).lean();
+      if (dbScores.length > 0) {
+        arcadeLeaderboard = dbScores;
+        console.log(`[MongoDB] Loaded ${arcadeLeaderboard.length} arcade leaderboard scores.`);
+      }
+
+      // 3. Hydrate Guestbook
+      const dbGuestbook = await GuestbookModel.find().sort({ ts: -1 }).limit(100).lean();
+      if (dbGuestbook.length > 0) {
+        guestbookEntries = dbGuestbook;
+        console.log(`[MongoDB] Loaded ${guestbookEntries.length} guestbook entries.`);
+      }
+
+      // 4. Hydrate Contact Inquiries
+      const dbInquiries = await ContactInquiryModel.find().sort({ ts: -1 }).limit(50).lean();
+      if (dbInquiries.length > 0) {
+        contactInquiries = dbInquiries;
+        console.log(`[MongoDB] Loaded ${contactInquiries.length} contact inquiries.`);
+      }
+    } catch (err) {
+      console.error("[MongoDB] Error hydrating cache from database:", err.message);
+    }
+  }
+}
+
+server.listen(PORT, async () => {
+  console.log(`Portfolio OS API + chat running on :${PORT}`);
+  await initDatabase();
+});
