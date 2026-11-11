@@ -79,6 +79,21 @@ export const GameScoreModel = mongoose.model("GameScore", GameScoreSchema);
 export const GuestbookModel = mongoose.model("Guestbook", GuestbookSchema);
 export const ContactInquiryModel = mongoose.model("ContactInquiry", ContactInquirySchema);
 
+// Monitor connection state dynamically
+mongoose.connection.on("connected", () => {
+  isDbConnected = true;
+});
+
+mongoose.connection.on("disconnected", () => {
+  isDbConnected = false;
+  console.log("[MongoDB] Connection disconnected.");
+});
+
+mongoose.connection.on("error", (err) => {
+  isDbConnected = false;
+  console.error("[MongoDB] Connection error:", err.message);
+});
+
 /**
  * Connect to MongoDB Atlas with automatic retry and graceful fallback
  */
