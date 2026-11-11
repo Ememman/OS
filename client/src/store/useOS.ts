@@ -90,6 +90,7 @@ interface OSState {
   toggleWindowIndicators: () => void;
   unreadChatCount: number;
   incrementUnreadChat: () => void;
+  setUnreadChatCount: (count: number) => void;
   clearUnreadChat: () => void;
   setAccent: (value: string) => void;
   setWallpaper: (id: string) => void;
@@ -433,6 +434,7 @@ export const useOS = create<OSState>((set, get) => ({
 
   unreadChatCount: 0,
   incrementUnreadChat: () => set((s) => ({ unreadChatCount: s.unreadChatCount + 1 })),
+  setUnreadChatCount: (count: number) => set({ unreadChatCount: Math.max(0, count) }),
   clearUnreadChat: () => set({ unreadChatCount: 0 }),
 
   setThemeMode: () => {
