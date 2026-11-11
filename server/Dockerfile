@@ -11,7 +11,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 # Copy application source files
-COPY index.js ./
+COPY index.js db.js ./
 COPY data/ ./data/
 COPY src/ ./src/
 COPY tsconfig.json ./
