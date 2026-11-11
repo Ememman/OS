@@ -80,8 +80,20 @@ export const GuestbookModel = mongoose.model("Guestbook", GuestbookSchema);
 export const ContactInquiryModel = mongoose.model("ContactInquiry", ContactInquirySchema);
 
 // Monitor connection state dynamically
+const connectedListeners = [];
+export function onDatabaseConnected(fn) {
+  if (typeof fn === "function") connectedListeners.push(fn);
+}
+
 mongoose.connection.on("connected", () => {
   isDbConnected = true;
+  for (const fn of connectedListeners) {
+    try {
+      fn();
+    } catch (e) {
+      console.error("[MongoDB Listener Error]:", e.message);
+    }
+  }
 });
 
 mongoose.connection.on("disconnected", () => {
@@ -97,11 +109,18 @@ mongoose.connection.on("error", (err) => {
 const DEFAULT_MONGODB_URI =
   "mongodb+srv://mendozajamesemmanuel_db_user:sGDgreUP30KFryg9@cluster0.2m91o5d.mongodb.net/portfolio_os?retryWrites=true&w=majority";
 
+let retryTimer = null;
+
 /**
  * Connect to MongoDB Atlas with automatic retry and graceful fallback
  */
 export async function connectDB() {
   const uri = (process.env.MONGODB_URI || "").trim() || DEFAULT_MONGODB_URI;
+
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+  }
 
   try {
     // Configure mongoose connection
@@ -117,8 +136,14 @@ export async function connectDB() {
     return true;
   } catch (err) {
     console.error("[MongoDB] Connection failed:", err.message);
-    console.log("[MongoDB] Falling back to in-memory storage. Server will remain fully operational.");
+    console.log("[MongoDB] Falling back to in-memory storage. Will retry connection in 15 seconds...");
     isDbConnected = false;
+
+    // Retry connection automatically every 15 seconds until connected
+    retryTimer = setTimeout(() => {
+      connectDB().catch(() => {});
+    }, 15000);
+
     return false;
   }
 }
