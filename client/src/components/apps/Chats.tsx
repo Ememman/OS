@@ -1521,9 +1521,9 @@ export default function Chats() {
               e.preventDefault();
               saveName();
             }}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 flex-1 min-w-0"
           >
-            <label htmlFor="chat-display-name" className="text-sm font-medium text-[var(--chat-text)]">
+            <label htmlFor="chat-display-name" className="text-xs sm:text-sm font-medium text-[var(--chat-text)] shrink-0">
               Display name
             </label>
             <input
@@ -1532,11 +1532,20 @@ export default function Chats() {
               value={draftName}
               onChange={(e) => setDraftName(e.target.value)}
               maxLength={20}
-              className="chat-input min-w-0 w-32 rounded-lg px-2.5 py-1.5 text-sm"
+              className="chat-input min-w-0 flex-1 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm"
               placeholder="Your guest name"
             />
-            <button type="submit" aria-label="Save display name" className="chat-icon-button">
+            <button type="submit" aria-label="Save display name" className="chat-icon-button shrink-0" title="Save name">
               <GIconCheck size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditingName(false)}
+              aria-label="Cancel editing"
+              className="chat-icon-button shrink-0 text-white/50 hover:text-white"
+              title="Cancel"
+            >
+              <GIconClose size={14} />
             </button>
           </form>
         ) : (
@@ -1545,47 +1554,55 @@ export default function Chats() {
               setDraftName(name);
               setEditingName(true);
             }}
-            className="chat-link inline-flex items-center gap-1.5 rounded px-1 py-0.5 text-sm cursor-pointer"
+            className="chat-link inline-flex items-center gap-1.5 rounded px-1 py-0.5 text-xs sm:text-sm cursor-pointer truncate"
             title={`Click to change name (${name})`}
           >
-            <GIconPencil size={14} /> Chatting as <span className="font-semibold text-[var(--chat-text)]" title={name}>{formatUsername(name || "guest")}</span>
+            <GIconPencil size={14} className="shrink-0" />
+            <span className="shrink-0">Chatting as</span>
+            <span className="font-semibold text-[var(--chat-text)] truncate" title={name}>
+              {isMobile && formatUsername(name || "guest").length > 8
+                ? `${formatUsername(name || "guest").slice(0, 8)}...`
+                : formatUsername(name || "guest")}
+            </span>
           </button>
         )}
-        <div role="group" className="flex items-center gap-1 select-none" aria-label="Message text zoom">
-          <span className="chat-muted text-xs mr-0.5">Zoom</span>
-          <button
-            type="button"
-            onClick={() => changeTextScale(-0.1)}
-            disabled={textScale <= 0.7}
-            aria-label="Zoom out messages"
-            className="chat-text-size-button"
-            title="Zoom out (−)"
-          >
-            −
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setTextScale(1);
-              localStorage.setItem("os_chat_text_scale", "1");
-            }}
-            aria-label="Reset zoom"
-            className="text-[10px] font-mono text-[var(--chat-muted)] hover:text-[var(--chat-text)] px-1 py-0.5 rounded hover:bg-white/5 transition cursor-pointer"
-            title="Click to reset zoom (100%)"
-          >
-            {Math.round(textScale * 100)}%
-          </button>
-          <button
-            type="button"
-            onClick={() => changeTextScale(0.1)}
-            disabled={textScale >= 1.3}
-            aria-label="Zoom in messages"
-            className="chat-text-size-button"
-            title="Zoom in (+)"
-          >
-            +
-          </button>
-        </div>
+        {!editingName && (
+          <div role="group" className="flex items-center gap-1 select-none shrink-0" aria-label="Message text zoom">
+            <span className="chat-muted text-xs mr-0.5">Zoom</span>
+            <button
+              type="button"
+              onClick={() => changeTextScale(-0.1)}
+              disabled={textScale <= 0.7}
+              aria-label="Zoom out messages"
+              className="chat-text-size-button"
+              title="Zoom out (−)"
+            >
+              −
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTextScale(1);
+                localStorage.setItem("os_chat_text_scale", "1");
+              }}
+              aria-label="Reset zoom"
+              className="text-[10px] font-mono text-[var(--chat-muted)] hover:text-[var(--chat-text)] px-1 py-0.5 rounded hover:bg-white/5 transition cursor-pointer"
+              title="Click to reset zoom (100%)"
+            >
+              {Math.round(textScale * 100)}%
+            </button>
+            <button
+              type="button"
+              onClick={() => changeTextScale(0.1)}
+              disabled={textScale >= 1.3}
+              aria-label="Zoom in messages"
+              className="chat-text-size-button"
+              title="Zoom in (+)"
+            >
+              +
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Composer */}

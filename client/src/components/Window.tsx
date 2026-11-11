@@ -410,12 +410,31 @@ export default function Window({ win, children }) {
         onDoubleClick={() => !isMobile && toggleMaximize(win.id)}
         style={{ touchAction: "none" }}
       >
-        {/* Centered Window Title across both mobile and desktop views */}
-        <div className="absolute inset-x-0 mx-auto flex items-center justify-center pointer-events-none px-16 sm:px-24">
-          <span className="text-xs text-white/80 font-medium tracking-wide truncate max-w-full">
-            {win.title}
-          </span>
-        </div>
+        {/* Window Title: Right-aligned on mobile for macOS mode, centered on desktop */}
+        {isMobile ? (
+          !isWin ? (
+            /* macOS Mobile: traffic lights on left, title on right-side */
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-10">
+              <span className="text-xs text-white/85 font-medium tracking-wide truncate max-w-[calc(100vw-110px)]">
+                {win.title}
+              </span>
+            </div>
+          ) : (
+            /* Windows Mobile: controls on right, title on left */
+            <div className="flex items-center pl-1 pointer-events-none z-10">
+              <span className="text-xs text-white/85 font-medium tracking-wide truncate max-w-[calc(100vw-120px)]">
+                {win.title}
+              </span>
+            </div>
+          )
+        ) : (
+          /* Desktop: centered */
+          <div className="absolute inset-x-0 mx-auto flex items-center justify-center pointer-events-none px-16 sm:px-24">
+            <span className="text-xs text-white/80 font-medium tracking-wide truncate max-w-full">
+              {win.title}
+            </span>
+          </div>
+        )}
 
         {isWin ? (
           <>
