@@ -28,7 +28,7 @@ const LOCATION = "Tondo, Manila";
 const PHONE = "0992 543 3570";
 const CONTACT_EMAIL = "mendozajamesemmanuel@gmail.com";
 const GITHUB_URL = "https://github.com/Ememman";
-const LINKEDIN_URL = "https://www.linkedin.com/in/james-emmanuel-mendoza";
+const LINKEDIN_URL = "www.linkedin.com/in/james-emmanuel-r";
 
 const EXPERIENCE = [
   {
