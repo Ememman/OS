@@ -1594,7 +1594,7 @@ export default function Chats() {
           e.preventDefault();
           send();
         }}
-        className="chat-composer flex items-end gap-2 p-3 border-t border-[var(--chat-border)] bg-[var(--chat-panel)]"
+        className="chat-composer flex items-end gap-2 p-3 border-t border-[var(--chat-border)] bg-[var(--chat-panel)] pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]"
       >
         <label htmlFor="chat-message" className="sr-only">
           Write a message
