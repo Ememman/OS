@@ -16,6 +16,7 @@ import { initialCloudFiles } from "./data/files.js";
 import {
   connectDB,
   isDbConnected,
+  onDatabaseConnected,
   ChatModel,
   GameScoreModel,
   GuestbookModel,
@@ -2488,50 +2489,58 @@ app.use((err, req, res, next) => {
   });
 });
 
-async function initDatabase() {
-  const connected = await connectDB();
-  if (connected) {
-    try {
-      // 1. Hydrate Chat History
-      const dbChats = await ChatModel.find().sort({ ts: 1 }).limit(MAX_HISTORY).lean();
-      if (dbChats.length > 0) {
-        chatHistory = dbChats.map((doc) => ({
-          ...doc,
-          reactions: doc.reactions ? (doc.reactions instanceof Map ? Object.fromEntries(doc.reactions) : doc.reactions) : {},
-          userReactions: doc.userReactions ? (doc.userReactions instanceof Map ? Object.fromEntries(doc.userReactions) : doc.userReactions) : {}
-        }));
-        pinnedChatMessages = chatHistory.filter((m) => m.isPinned);
-        console.log(`[MongoDB] Loaded ${chatHistory.length} chat messages (${pinnedChatMessages.length} pinned).`);
-      }
-
-      // 2. Hydrate Leaderboard
-      const dbScores = await GameScoreModel.find().sort({ ts: -1 }).limit(200).lean();
-      if (dbScores.length > 0) {
-        arcadeLeaderboard = dbScores;
-        console.log(`[MongoDB] Loaded ${arcadeLeaderboard.length} arcade leaderboard scores.`);
-      }
-
-      // 3. Hydrate Guestbook
-      const dbGuestbook = await GuestbookModel.find().sort({ ts: -1 }).limit(100).lean();
-      if (dbGuestbook.length > 0) {
-        guestbookEntries = dbGuestbook;
-        console.log(`[MongoDB] Loaded ${guestbookEntries.length} guestbook entries.`);
-      }
-
-      // 4. Hydrate Contact Inquiries
-      const dbInquiries = await ContactInquiryModel.find().sort({ ts: -1 }).limit(50).lean();
-      if (dbInquiries.length > 0) {
-        contactInquiries = dbInquiries;
-        console.log(`[MongoDB] Loaded ${contactInquiries.length} contact inquiries.`);
-      }
-    } catch (err) {
-      console.error("[MongoDB] Error hydrating cache from database:", err.message);
+async function hydrateFromDatabase() {
+  try {
+    // 1. Hydrate Chat History
+    const dbChats = await ChatModel.find().sort({ ts: 1 }).limit(MAX_HISTORY).lean();
+    if (dbChats.length > 0) {
+      chatHistory = dbChats.map((doc) => ({
+        ...doc,
+        reactions: doc.reactions ? (doc.reactions instanceof Map ? Object.fromEntries(doc.reactions) : doc.reactions) : {},
+        userReactions: doc.userReactions ? (doc.userReactions instanceof Map ? Object.fromEntries(doc.userReactions) : doc.userReactions) : {}
+      }));
+      pinnedChatMessages = chatHistory.filter((m) => m.isPinned);
+      io.emit("chat:init", {
+        history: chatHistory,
+        pinned: pinnedChatMessages,
+        online: getRealOnlineCount(),
+        users: getUserList()
+      });
+      console.log(`[MongoDB] Loaded & synced ${chatHistory.length} chat messages.`);
     }
+
+    // 2. Hydrate Leaderboard
+    const dbScores = await GameScoreModel.find().sort({ ts: -1 }).limit(200).lean();
+    if (dbScores.length > 0) {
+      arcadeLeaderboard = dbScores;
+      console.log(`[MongoDB] Loaded ${arcadeLeaderboard.length} arcade leaderboard scores.`);
+    }
+
+    // 3. Hydrate Guestbook
+    const dbGuestbook = await GuestbookModel.find().sort({ ts: -1 }).limit(100).lean();
+    if (dbGuestbook.length > 0) {
+      guestbookEntries = dbGuestbook;
+      console.log(`[MongoDB] Loaded ${guestbookEntries.length} guestbook entries.`);
+    }
+
+    // 4. Hydrate Contact Inquiries
+    const dbInquiries = await ContactInquiryModel.find().sort({ ts: -1 }).limit(50).lean();
+    if (dbInquiries.length > 0) {
+      contactInquiries = dbInquiries;
+      console.log(`[MongoDB] Loaded ${contactInquiries.length} contact inquiries.`);
+    }
+  } catch (err) {
+    console.error("[MongoDB] Error hydrating cache from database:", err.message);
   }
 }
 
+// Automatically re-hydrate and broadcast whenever MongoDB connects or reconnects
+onDatabaseConnected(() => {
+  hydrateFromDatabase();
+});
+
 async function startServer() {
-  await initDatabase();
+  await connectDB();
   server.listen(PORT, () => {
     console.log(`Portfolio OS API + chat running on :${PORT}`);
   });
