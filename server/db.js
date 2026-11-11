@@ -94,27 +94,26 @@ mongoose.connection.on("error", (err) => {
   console.error("[MongoDB] Connection error:", err.message);
 });
 
+const DEFAULT_MONGODB_URI =
+  "mongodb+srv://mendozajamesemmanuel_db_user:sGDgreUP30KFryg9@cluster0.2m91o5d.mongodb.net/portfolio_os?retryWrites=true&w=majority";
+
 /**
  * Connect to MongoDB Atlas with automatic retry and graceful fallback
  */
 export async function connectDB() {
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    console.log("[MongoDB] No MONGODB_URI found in environment. Running in memory-only fallback mode.");
-    return false;
-  }
+  const uri = (process.env.MONGODB_URI || "").trim() || DEFAULT_MONGODB_URI;
 
   try {
     // Configure mongoose connection
     mongoose.set("strictQuery", false);
     await mongoose.connect(uri, {
       dbName: "portfolio_os",
-      serverSelectionTimeoutMS: 8000,
+      serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
     });
 
     isDbConnected = true;
-    console.log("[MongoDB] Successfully connected to MongoDB Atlas!");
+    console.log("[MongoDB] Successfully connected to MongoDB Atlas (portfolio_os)!");
     return true;
   } catch (err) {
     console.error("[MongoDB] Connection failed:", err.message);
