@@ -118,36 +118,36 @@ const SKILL_CATEGORIES = [
     title: "Frontend, Mobile & Design",
     description: "Component architecture, native bridges, state caching, and visual UI design",
     skills: [
-      { name: "Next.js & React 19", level: 92, category: "Frontend" },
-      { name: "TypeScript (Strict)", level: 88, category: "Language" },
-      { name: "TanStack Query & State", level: 85, category: "State" },
-      { name: "Tailwind CSS & shadcn/ui", level: 90, category: "Styling" },
-      { name: "React Native & Expo", level: 85, category: "Mobile" },
-      { name: "Figma & Canva (UI/UX)", level: 88, category: "Design" },
+      { name: "Next.js & React 19", level: 50, category: "Frontend" },
+      { name: "TypeScript (Strict)", level: 40, category: "Language" },
+      { name: "TanStack Query & State", level: 20, category: "State" },
+      { name: "Tailwind CSS & shadcn/ui", level: 50, category: "Styling" },
+      { name: "React Native & Expo", level: 50, category: "Mobile" },
+      { name: "Figma & Canva (UI/UX)", level: 90, category: "Design" },
     ]
   },
   {
     title: "Backend & Systems",
     description: "REST APIs, realtime sockets, MVC architecture, and database pipelines",
     skills: [
-      { name: "Node.js & Express 5", level: 85, category: "Backend" },
-      { name: "PHP (MVC Architecture)", level: 88, category: "Backend" },
-      { name: "Socket.IO WebSockets", level: 82, category: "Realtime" },
-      { name: "MongoDB & Mongoose", level: 85, category: "NoSQL" },
-      { name: "RESTful API Engineering", level: 88, category: "APIs" },
-      { name: "MySQL & Relational Design", level: 80, category: "SQL" },
+      { name: "Node.js & Express 5", level: 50, category: "Backend" },
+      { name: "PHP (MVC Architecture)", level: 50, category: "Backend" },
+      { name: "Socket.IO WebSockets", level: 50, category: "Realtime" },
+      { name: "MongoDB & Mongoose", level: 50, category: "NoSQL" },
+      { name: "RESTful API Engineering", level: 50, category: "APIs" },
+      { name: "MySQL & Relational Design", level: 50, category: "SQL" },
     ]
   },
   {
     title: "Testing, IT Support & Tooling",
     description: "Automation test suites, identity, disk encryption, and project tracking",
     skills: [
-      { name: "Playwright & E2E Testing", level: 85, category: "Testing" },
-      { name: "Appium & Selenium", level: 80, category: "Testing" },
-      { name: "1Kosmos MFA & Active Directory", level: 85, category: "Security" },
-      { name: "BitLocker & RDP Support", level: 85, category: "IT Support" },
-      { name: "Git, GitHub & Notion", level: 92, category: "Tooling" },
-      { name: "Windows Enterprise & Linux", level: 82, category: "System" },
+      { name: "Playwright & E2E Testing", level: 90, category: "Testing" },
+      { name: "Appium & Selenium", level: 90, category: "Testing" },
+      { name: "1Kosmos MFA & Active Directory", level: 70, category: "Security" },
+      { name: "BitLocker & RDP Support", level: 70, category: "IT Support" },
+      { name: "Git, GitHub & Notion", level: 90, category: "Tooling" },
+      { name: "Windows Enterprise & Linux", level: 20, category: "System" },
     ]
   }
 ];
