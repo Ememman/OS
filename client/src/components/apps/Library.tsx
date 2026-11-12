@@ -18,6 +18,7 @@ import { soundFx } from "../../lib/soundFx";
 import osImg from "../../assets/os.png";
 import flashCardsImg from "../../assets/flash-cards.png";
 import quizAppImg from "../../assets/quiz-app.png";
+import CustomDropdown from "../ui/CustomDropdown";
 
 export interface FeedbackItem {
   id: string;
@@ -705,17 +706,20 @@ export default function Library() {
                             onChange={(e) => setReviewAuthor(e.target.value)}
                             className="px-2.5 py-1.5 rounded-xl bg-black/40 border border-white/10 text-xs focus:outline-none focus:border-accent text-white"
                           />
-                          <select
+                          <CustomDropdown
                             value={reviewRole}
-                            onChange={(e) => setReviewRole(e.target.value)}
-                            className="px-2.5 py-1.5 rounded-xl bg-black/40 border border-white/10 text-xs focus:outline-none focus:border-accent text-white/80"
-                          >
-                            <option value="Engineer">Software Engineer</option>
-                            <option value="Architect">Tech Lead / Architect</option>
-                            <option value="Product Manager">Product Manager</option>
-                            <option value="Recruiter">Recruiter / Talent Partner</option>
-                            <option value="Visitor">Community Member</option>
-                          </select>
+                            onChange={(val) => setReviewRole(val)}
+                            options={[
+                              { value: "Engineer", label: "Software Engineer" },
+                              { value: "Architect", label: "Tech Lead / Architect" },
+                              { value: "Product Manager", label: "Product Manager" },
+                              { value: "Recruiter", label: "Recruiter / Talent Partner" },
+                              { value: "Visitor", label: "Community Member" },
+                            ]}
+                            containerClassName="w-full"
+                            className="w-full justify-between rounded-xl py-1.5"
+                            size="sm"
+                          />
                         </div>
                         <textarea
                           rows={2}
