@@ -6,7 +6,9 @@ import Wallpaper from "./components/Wallpaper";
 import MenuBar from "./components/MenuBar";
 import Dock from "./components/Dock";
 import WinTaskbar from "./components/win/WinTaskbar";
-import DesktopIcon from "./components/DesktopIcon";
+import DesktopAppsGrid from "./components/DesktopAppsGrid";
+import DesktopFolderModal from "./components/DesktopFolderModal";
+import DesktopNameModal from "./components/DesktopNameModal";
 import Window from "./components/Window";
 import GlobalAudioPlayer from "./components/GlobalAudioPlayer";
 import MiniPlayer from "./components/MiniPlayer";
@@ -45,17 +47,6 @@ const Guestbook = lazy(() => import("./components/apps/Guestbook"));
 const CodePlay = lazy(() => import("./components/apps/CodePlay"));
 import MissionControl from "./components/MissionControl";
 
-import {
-  GIconResume,
-  GIconGames,
-  GIconTerminal,
-  GIconCalculator,
-  GIconNotes,
-  GIconActivity,
-  GIconBookOpen,
-  GIconCode,
-} from "./components/icons/GravityIcons";
-
 const APP_COMPONENTS: Record<string, any> = {
   library: Library,
   music: Music,
@@ -77,7 +68,6 @@ const APP_COMPONENTS: Record<string, any> = {
 export default function App() {
   const {
     windows,
-    openApp,
     harmonizedPalette,
     reduceMotion,
     booted,
@@ -173,19 +163,9 @@ export default function App() {
           } left-0 right-0 bottom-0 overflow-y-auto overscroll-contain thin-scroll px-3 pt-2 pb-44 flex flex-col items-center gap-4 z-10 pointer-events-auto`}
           style={{ touchAction: "pan-y" }}
         >
-          {/* Applications on desktop — responsive grid that scrolls with content and is not fixed */}
-          <div
-            className="grid grid-cols-4 min-[390px]:grid-cols-5 sm:flex sm:flex-wrap items-center justify-items-center gap-2 sm:gap-3 w-full max-w-sm sm:max-w-none reveal"
-            style={{ animationDelay: "50ms" }}
-          >
-            <DesktopIcon icon={GIconResume} label="Resume" color="#4B5A73" onOpen={() => openApp("resume")} />
-            <DesktopIcon icon={GIconGames} label="Games" color="#D98A4E" onOpen={() => openApp("games")} />
-            <DesktopIcon icon={GIconCode} label="CodePlay" color="#38bdf8" onOpen={() => openApp("codeplay")} />
-            <DesktopIcon icon={GIconTerminal} label="Terminal" color="#22c55e" onOpen={() => openApp("terminal")} />
-            <DesktopIcon icon={GIconNotes} label="Notes" color="#f59e0b" onOpen={() => openApp("notes")} />
-            <DesktopIcon icon={GIconCalculator} label="Calculator" color="#06b6d4" onOpen={() => openApp("calculator")} />
-            <DesktopIcon icon={GIconActivity} label={isWin ? "Task Manager" : "Activity"} color="#10b981" onOpen={() => openApp("activity")} />
-            <DesktopIcon icon={GIconBookOpen} label="Guestbook" color="#8b5cf6" onOpen={() => openApp("guestbook")} />
+          {/* Applications on desktop — responsive grid that scrolls with content and supports drag-to-combine folders */}
+          <div className="reveal w-full max-w-sm sm:max-w-none" style={{ animationDelay: "50ms" }}>
+            <DesktopAppsGrid isMobile={true} />
           </div>
 
           {/* Widget stack below icons — macOS style only */}
@@ -206,21 +186,14 @@ export default function App() {
       ) : (
         /* Desktop: Spacious multi-column layout with scrollable widget columns so lower widgets are never cut off */
         <>
-          {/* Desktop application icons */}
+          {/* Desktop application icons — draggable and combinable into folders */}
           <div
             className={`absolute ${isWin ? "top-3" : "top-10 sm:top-12"} ${
               macDockLeft ? "left-20 sm:left-24" : "left-3 sm:left-6"
-            } flex flex-wrap items-center gap-2 sm:gap-3 max-w-[calc(100vw-360px)] z-10 pointer-events-auto reveal`}
+            } z-10 pointer-events-auto reveal`}
             style={{ animationDelay: "50ms" }}
           >
-            <DesktopIcon icon={GIconResume} label="Resume" color="#4B5A73" onOpen={() => openApp("resume")} />
-            <DesktopIcon icon={GIconGames} label="Games" color="#D98A4E" onOpen={() => openApp("games")} />
-            <DesktopIcon icon={GIconCode} label="CodePlay" color="#38bdf8" onOpen={() => openApp("codeplay")} />
-            <DesktopIcon icon={GIconTerminal} label="Terminal" color="#22c55e" onOpen={() => openApp("terminal")} />
-            <DesktopIcon icon={GIconNotes} label="Notes" color="#f59e0b" onOpen={() => openApp("notes")} />
-            <DesktopIcon icon={GIconCalculator} label="Calculator" color="#06b6d4" onOpen={() => openApp("calculator")} />
-            <DesktopIcon icon={GIconActivity} label={isWin ? "Task Manager" : "Activity"} color="#10b981" onOpen={() => openApp("activity")} />
-            <DesktopIcon icon={GIconBookOpen} label="Guestbook" color="#8b5cf6" onOpen={() => openApp("guestbook")} />
+            <DesktopAppsGrid isMobile={false} />
           </div>
 
           {/* Widget columns with scrollability — lower part is always accessible */}
@@ -280,6 +253,8 @@ export default function App() {
       )}
       {powerDialogOpen && <PowerDialog onClose={closePowerDialog} />}
       {isSleeping && <SleepScreen />}
+      <DesktopFolderModal />
+      <DesktopNameModal />
     </div>
   );
 }
