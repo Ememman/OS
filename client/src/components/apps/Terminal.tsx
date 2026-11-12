@@ -3,9 +3,16 @@ import { useOS, APPS } from "../../store/useOS";
 import { fallbackProjects } from "../../data/projects";
 import { fileTree } from "../../data/files";
 import { API_URL } from "../../lib/config";
-import { GIconTerminal, GIconFolder, GIconFileText } from "../icons/GravityIcons";
+import {
+  GIconTerminal,
+  GIconFolder,
+  GIconFileText,
+  GIconChevronUp,
+  GIconChevronDown,
+  GIconExternalLink,
+} from "../icons/GravityIcons";
 
-const BANNER = `
+const BANNER_DESKTOP = `
   ██████╗  ██████╗ ██████╗ ████████╗███████╗ ██████╗ ██╗     ██╗ ██████╗      ██████╗ ███████╗
   ██╔══██╗██╔═══██╗██╔══██╗╚══██╔══╝██╔════╝██╔═══██╗██║     ██║██╔═══██╗    ██╔═══██╗██╔════╝
   ██████╔╝██║   ██║██████╔╝   ██║   █████╗  ██║   ██║██║     ██║██║   ██║    ██║   ██║███████╗
@@ -15,12 +22,39 @@ const BANNER = `
   Type 'help' for available commands or 'neofetch' for system info.
 `;
 
+const BANNER_MOBILE = `
+   ___         _    __      _ _        ___  ___ 
+  | _ \\___ _ _| |_ / _|___ | (_)___   / _ \\/ __|
+  |  _/ _ \\ '_|  _|  _/ _ \\| | / _ \\ | (_) \\__ \\
+  |_| \\___/_|  \\__|_| \\___/|_|_\\___/  \\___/|___/
+  Type 'help' for commands or 'neofetch' for info.
+`;
+
 const COMMANDS = [
-  "help", "clear", "neofetch", "whoami", "skills", "projects",
-  "ls", "cat", "open", "theme", "date", "uptime", "history", "matrix",
+  "help", "clear", "cls", "neofetch", "whoami", "skills", "projects",
+  "ls", "dir", "cat", "open", "theme", "date", "uptime", "history", "matrix",
   "sysinfo", "server", "ping", "quote", "joke", "curl", "logs", "processes", "ps", "notes", "storage", "df",
   "guestbook", "weather", "analytics", "top", "htop", "kill", "find", "search", "netstat", "clearlogs", "echo",
-  "codeplay", "snake", "minesweeper", "benchmark", "leaderboard", "scores", "files", "motd", "calc", "github", "mission", "sudo"
+  "codeplay", "snake", "minesweeper", "benchmark", "leaderboard", "scores", "files", "motd", "calc", "calculator",
+  "github", "mission", "sudo", "pwd", "cd", "chats", "chat", "resume", "cv", "music", "activity", "gallery", "settings", "exit"
+];
+
+const DEV_QUOTES = [
+  "“Simplicity is prerequisite for reliability.” — Edsger W. Dijkstra",
+  "“Make it work, make it right, make it fast.” — Kent Beck",
+  "“First, solve the problem. Then, write the code.” — John Johnson",
+  "“Any fool can write code that a computer can understand. Good programmers write code that humans can understand.” — Martin Fowler",
+  "“Talk is cheap. Show me the code.” — Linus Torvalds",
+  "“Programs must be written for people to read, and only incidentally for machines to execute.” — Harold Abelson"
+];
+
+const DEV_JOKES = [
+  "There are 10 types of people in the world: those who understand binary, and those who don't.",
+  "Why do programmers prefer dark mode? Because light attracts bugs.",
+  "A SQL query walks into a bar, walks up to two tables and asks: 'Can I join you?'",
+  "Why do Java programmers have to wear glasses? Because they don't C#.",
+  "To understand recursion, you must first understand recursion.",
+  "There are 2 hard problems in computer science: cache invalidation, naming things, and off-by-one errors."
 ];
 
 type TerminalEntry =
@@ -28,10 +62,203 @@ type TerminalEntry =
   | { type: "banner" | "system"; content: string }
   | { type: "output"; content: ReactNode };
 
+// Safe client-side math expression evaluator for instant calculations
+function evalMath(expr: string): { ok: boolean; result?: number | string; error?: string } {
+  try {
+    const sanitized = expr.replace(/\^/g, "**");
+    if (!/^[0-9+\-*/()., %^eE\sMath.sqrtcospitannabsceilfloorroundlog]+$/.test(sanitized)) {
+      return { ok: false, error: "Invalid math characters or unsupported syntax." };
+    }
+    const res = Function(`"use strict"; return (${sanitized});`)();
+    if (typeof res !== "number" || isNaN(res)) {
+      return { ok: false, error: "Expression did not evaluate to a valid number." };
+    }
+    return { ok: true, result: Number.isInteger(res) ? res : Number(res.toFixed(6)) };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "Math evaluation syntax error" };
+  }
+}
+
+// Local fallback engine ensuring all commands work even when backend is offline or sleeping
+function getLocalCommandFallback(cmd: string, args: string[]): string {
+  switch (cmd) {
+    case "sysinfo":
+    case "server": {
+      const cores = typeof navigator !== "undefined" ? navigator.hardwareConcurrency || 8 : 8;
+      const mem = (performance as any).memory;
+      const heapUsed = mem ? Math.round(mem.usedJSHeapSize / 1024 / 1024) : 48;
+      const heapTotal = mem ? Math.round(mem.totalJSHeapSize / 1024 / 1024) : 180;
+      return [
+        "🖥️ Portfolio OS Host Diagnostics (Client POSIX Engine):",
+        "--------------------------------------------------",
+        `• Host System:         ${navigator.userAgent.includes("Windows") ? "Windows 11 Fluent" : navigator.userAgent.includes("Mac") ? "macOS Sonoma Glass" : "Linux / Android POSIX"}`,
+        `• Browser Engine:      ${navigator.userAgent.split(" ").slice(-2).join(" ")}`,
+        `• Kernel Version:      v2.4.0 (Gravity Edition)`,
+        `• CPU Concurrency:     ${cores} Hardware Cores Available`,
+        `• Heap Memory:         ${heapUsed} MB / ${heapTotal} MB allocated`,
+        `• Viewport Resolution: ${window.innerWidth} x ${window.innerHeight} px (${window.devicePixelRatio}x DPR)`,
+        `• Network Status:      ${navigator.onLine ? "Online (HTTP/2 · SSL TLSv1.3)" : "Offline (Local Cache)"}`,
+        `• Backend Gateway:     ${API_URL} (Standby Mode)`
+      ].join("\n");
+    }
+
+    case "benchmark": {
+      const start = performance.now();
+      let primes = 0;
+      for (let i = 2; i <= 20000; i++) {
+        let isP = true;
+        for (let j = 2; j * j <= i; j++) {
+          if (i % j === 0) {
+            isP = false;
+            break;
+          }
+        }
+        if (isP) primes++;
+      }
+      const dur = Math.round((performance.now() - start) * 100) / 100;
+      const ops = Math.round(20000 / (dur / 1000));
+      return [
+        "⚡ Portfolio OS Kernel Performance Benchmark:",
+        "--------------------------------------------------",
+        `• Primes Computed:     ${primes} (Range: 2 - 20,000)`,
+        `• Execution Time:      ${dur} ms`,
+        `• Computation Rate:    ${ops.toLocaleString()} Ops/sec`,
+        `• Client Threading:    Single-threaded V8 JS JIT Engine`,
+        `• Performance Rating:  ${dur < 60 ? "A+ (Ultra Fast)" : "A (Fast)"}`
+      ].join("\n");
+    }
+
+    case "ping": {
+      const host = args[0] || "portfolio-os.local";
+      const pingMs = Math.round(14 + Math.random() * 18);
+      return `PING ${host}: 64 bytes from server, seq=1 time=${pingMs}ms, TTL=64 (status 200 OK)`;
+    }
+
+    case "weather":
+      return [
+        "🌤️ Weather Report (Manila, Philippines):",
+        "-----------------------------------------",
+        "Condition:   Partly Cloudy / Clear Skies",
+        "Temperature: 29°C (84°F) · Feels like 32°C",
+        "Humidity:    68% | Wind: 11 km/h ENE",
+        "Forecast:    Pleasant tropical breeze with sunshine"
+      ].join("\n");
+
+    case "analytics": {
+      const durMin = Math.floor(performance.now() / 60000);
+      return [
+        "📊 Portfolio OS Platform Telemetry:",
+        "-------------------------------------------",
+        "• Installed Apps:      15 Desktop Modules",
+        `• Active Uptime:       ${durMin} minutes`,
+        `• Current Viewport:    ${window.innerWidth}x${window.innerHeight} px`,
+        `• Storage Used:        ${(JSON.stringify(localStorage).length / 1024).toFixed(1)} KB (LocalStorage)`,
+        "• Render Engine:       React 19 + Vite 6 + Tailwind v4",
+        "• System Health:       100% Operational"
+      ].join("\n");
+    }
+
+    case "motd":
+      return [
+        "╔════════════════════════════════════════════════════════════╗",
+        "║        Welcome to Portfolio OS — Developer Edition         ║",
+        "╚════════════════════════════════════════════════════════════╝",
+        "• System Status:       Online & Healthy (Express 5 + React 19)",
+        "• Active Applications: 15 Built-in Desktop Modules",
+        "• Latest Update:       Arcade Leaderboard, CodePlay & Cloud Drive",
+        "• Developer Tip:       Press ⌘K or Ctrl+K anywhere to open Spotlight Search!"
+      ].join("\n");
+
+    case "top":
+    case "htop":
+    case "ps":
+    case "processes":
+      return [
+        "PID    USER     STATUS      CPU%   MEM(MB)  NAME",
+        "------------------------------------------------------",
+        "101    system   running     1.2%   42       window-manager",
+        "102    system   running     0.6%   28       audio-subsystem",
+        "103    emman    running     1.8%   36       terminal-daemon",
+        "104    system   idle        0.1%   16       dock-service",
+        "105    network  active      0.4%   24       websocket-poller"
+      ].join("\n");
+
+    case "storage":
+    case "df":
+      return [
+        "💾 Virtual Disk Storage Usage (Virtual SSD 256GB):",
+        "-------------------------------------------",
+        "Used: 68.4 GB (26.7%) | Free: 187.6 GB",
+        "• OS Subsystem:        22.1 GB",
+        "• Applications:        18.5 GB",
+        "• Notes & User Data:   12.8 GB",
+        "• Media & Cache:       15.0 GB"
+      ].join("\n");
+
+    case "quote":
+      return DEV_QUOTES[Math.floor(Math.random() * DEV_QUOTES.length)];
+
+    case "joke":
+      return DEV_JOKES[Math.floor(Math.random() * DEV_JOKES.length)];
+
+    case "netstat":
+      return [
+        "🌐 Network Interfaces & Active Sockets:",
+        "----------------------------------------",
+        "• Interface [wlan0]:   IP 192.168.1.104 (Connected)",
+        "• Protocol:            HTTP/2.0 TLSv1.3 WebSocket",
+        `• Gateway Host:        ${API_URL}`,
+        `• Client Online:       ${navigator.onLine ? "YES" : "NO"}`
+      ].join("\n");
+
+    case "curl": {
+      const target = args[0] || "/api/health";
+      return [
+        "HTTP/1.1 200 OK",
+        `Host: ${target}`,
+        "Content-Type: application/json",
+        JSON.stringify({ ok: true, status: "healthy", timestamp: Date.now() }, null, 2)
+      ].join("\n");
+    }
+
+    case "leaderboard":
+    case "scores":
+      return [
+        "🏆 Portfolio OS Global Arcade Leaderboard:",
+        "==================================================",
+        "\n🎮 2048 Puzzle:",
+        "RANK  PLAYER              SCORE    BADGE / DETAILS",
+        "--------------------------------------------------",
+        "#1    SwiftOtter214       888      🏅 Competitor (Max Tile: 128)",
+        "#2    CyberKnight         640      ⭐ Adventurer (Max Tile: 64)",
+        "\n🐍 Snake Retro:",
+        "RANK  PLAYER              SCORE    BADGE / DETAILS",
+        "--------------------------------------------------",
+        "#1    NeonCoder           140      🏆 Gold Snake Master",
+        "#2    PixelPilot          90       🥈 Silver Striker"
+      ].join("\n");
+
+    case "logs":
+      return [
+        "📜 Recent System Event Logs:",
+        "----------------------------------------",
+        `[${new Date().toLocaleTimeString()}] [INFO] [Kernel] Portfolio OS v2.4.0 booted successfully`,
+        `[${new Date().toLocaleTimeString()}] [INFO] [WindowMgr] Terminal session active (emman@portfolio-os)`,
+        `[${new Date().toLocaleTimeString()}] [INFO] [Audio] WebAudio engine initialized`
+      ].join("\n");
+
+    case "clearlogs":
+      return "System event logs buffer reset.";
+
+    default:
+      return `Executed '${cmd}' successfully.`;
+  }
+}
+
 export default function Terminal() {
-  const { openApp, wallpapers, setWallpaper, osMode } = useOS();
+  const { openApp, closeWindow, wallpapers, setWallpaper, osMode, toggleMissionControl } = useOS();
   const [history, setHistory] = useState<TerminalEntry[]>([
-    { type: "banner", content: BANNER },
+    { type: "banner", content: BANNER_DESKTOP },
     { type: "system", content: "Portfolio OS Kernel v2.4.0 (Gravity Edition) initialized." },
     { type: "system", content: "Logged in as emman@portfolio-os. Type 'help' to start." },
   ]);
@@ -49,9 +276,11 @@ export default function Terminal() {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [history, matrixActive]);
 
-  // Keep input focused
+  // Keep input focused safely without forcing disruptive page scrolls
   const focusInput = () => {
-    if (!matrixActive) inputRef.current?.focus();
+    if (!matrixActive) {
+      inputRef.current?.focus({ preventScroll: true });
+    }
   };
 
   // Matrix digital rain animation
@@ -90,6 +319,38 @@ export default function Terminal() {
     return () => clearInterval(interval);
   }, [matrixActive]);
 
+  // Mobile virtual keyboard helpers
+  const handleTabComplete = () => {
+    const trimmed = inputVal.trimStart();
+    if (!trimmed) return;
+    const match = COMMANDS.find((c) => c.startsWith(trimmed.toLowerCase()));
+    if (match) {
+      setInputVal(match);
+      inputRef.current?.focus();
+    }
+  };
+
+  const handlePrevHistory = () => {
+    if (cmdHistory.length === 0) return;
+    const nextIdx = historyIdx < 0 ? cmdHistory.length - 1 : Math.max(0, historyIdx - 1);
+    setHistoryIdx(nextIdx);
+    setInputVal(cmdHistory[nextIdx]);
+    inputRef.current?.focus();
+  };
+
+  const handleNextHistory = () => {
+    if (historyIdx < 0) return;
+    const nextIdx = historyIdx + 1;
+    if (nextIdx >= cmdHistory.length) {
+      setHistoryIdx(-1);
+      setInputVal("");
+    } else {
+      setHistoryIdx(nextIdx);
+      setInputVal(cmdHistory[nextIdx]);
+    }
+    inputRef.current?.focus();
+  };
+
   const handleCommand = async (rawCmd: string) => {
     const trimmed = rawCmd.trim();
     if (!trimmed) {
@@ -110,39 +371,71 @@ export default function Terminal() {
       case "help":
       case "?":
         output = (
-          <div className="space-y-2 py-1">
-            <p className="text-white/90 font-semibold">Available Terminal Commands:</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 text-xs">
-              <div><span className="text-emerald-400 font-bold">whoami</span> - Developer profile & intro</div>
-              <div><span className="text-emerald-400 font-bold">skills</span> - Technical skill stacks</div>
-              <div><span className="text-emerald-400 font-bold">projects</span> - Showcase of live projects</div>
-              <div><span className="text-emerald-400 font-bold">sysinfo</span> - Live server CPU, RAM & diagnostics</div>
-              <div><span className="text-emerald-400 font-bold">benchmark</span> - Run live kernel CPU/throughput stress test</div>
-              <div><span className="text-emerald-400 font-bold">leaderboard</span> - View global arcade high scores</div>
-              <div><span className="text-emerald-400 font-bold">minesweeper</span> - Launch Retro Minesweeper minigame</div>
-              <div><span className="text-emerald-400 font-bold">files</span> - List virtual cloud drive files</div>
-              <div><span className="text-emerald-400 font-bold">calc &lt;math&gt;</span> - Evaluate math expression</div>
-              <div><span className="text-emerald-400 font-bold">motd</span> - Print message of the day</div>
-              <div><span className="text-emerald-400 font-bold">weather</span> - Real-time forecast report</div>
-              <div><span className="text-emerald-400 font-bold">analytics</span> - Live desktop platform telemetry</div>
-              <div><span className="text-emerald-400 font-bold">ping [host]</span> - Test roundtrip response time</div>
-              <div><span className="text-emerald-400 font-bold">quote / joke</span> - Random developer quotes & humor</div>
-              <div><span className="text-emerald-400 font-bold">curl [url]</span> - Inspect API endpoints</div>
-              <div><span className="text-emerald-400 font-bold">codeplay</span> - Open interactive CodePlay Sandbox</div>
-              <div><span className="text-emerald-400 font-bold">snake</span> - Launch retro Nokia Snake Arcade</div>
-              <div><span className="text-emerald-400 font-bold">github</span> - Live GitHub repo & contribution stats</div>
-              <div><span className="text-emerald-400 font-bold">mission</span> - Open Mission Control window overview</div>
-              <div><span className="text-emerald-400 font-bold">guestbook</span> - Open social guestbook ledger</div>
-              <div><span className="text-emerald-400 font-bold">open &lt;app&gt;</span> - Launch any OS app</div>
-              <div><span className="text-emerald-400 font-bold">ls / dir</span> - List files and directories</div>
-              <div><span className="text-emerald-400 font-bold">cat &lt;file&gt;</span> - Read file contents</div>
-              <div><span className="text-emerald-400 font-bold">theme &lt;name&gt;</span> - Switch accent color or wallpaper</div>
-              <div><span className="text-emerald-400 font-bold">neofetch</span> - System specs & OS stats</div>
-              <div><span className="text-emerald-400 font-bold">matrix</span> - Toggle digital rain effect</div>
-              <div><span className="text-emerald-400 font-bold">date / uptime</span> - Check system time & session duration</div>
-              <div><span className="text-emerald-400 font-bold">clear</span> - Clear terminal screen</div>
+          <div className="space-y-3 py-1.5 text-xs">
+            <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+              <p className="text-emerald-400 font-bold text-sm">Portfolio OS Terminal Commands</p>
+              <span className="text-[10px] text-white/40">Type command & press Enter</span>
             </div>
-            <p className="text-white/40 text-[11px] pt-1">Tip: Use Tab for autocompletion, and ↑/↓ to browse history.</p>
+
+            <div className="space-y-2">
+              <div>
+                <span className="text-cyan-400 font-semibold text-[11px] uppercase tracking-wider">🚀 System & Diagnostics</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] mt-1 text-white/80">
+                  <div><span className="text-emerald-400 font-bold">whoami</span> - Developer profile & intro</div>
+                  <div><span className="text-emerald-400 font-bold">skills</span> - Technical skill stacks</div>
+                  <div><span className="text-emerald-400 font-bold">projects</span> - Showcase of live projects</div>
+                  <div><span className="text-emerald-400 font-bold">sysinfo</span> - CPU, memory & diagnostics</div>
+                  <div><span className="text-emerald-400 font-bold">benchmark</span> - Real-time CPU prime stress test</div>
+                  <div><span className="text-emerald-400 font-bold">neofetch</span> - System specs & OS stats</div>
+                  <div><span className="text-emerald-400 font-bold">analytics</span> - Platform telemetry & stats</div>
+                  <div><span className="text-emerald-400 font-bold">motd</span> - Print message of the day</div>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-amber-400 font-semibold text-[11px] uppercase tracking-wider">📱 Applications & Games</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] mt-1 text-white/80">
+                  <div><span className="text-emerald-400 font-bold">codeplay</span> - Launch CodePlay Sandbox</div>
+                  <div><span className="text-emerald-400 font-bold">snake</span> - Launch Nokia Retro Snake</div>
+                  <div><span className="text-emerald-400 font-bold">minesweeper</span> - Launch Minesweeper arcade</div>
+                  <div><span className="text-emerald-400 font-bold">guestbook</span> - Open social guestbook ledger</div>
+                  <div><span className="text-emerald-400 font-bold">calc [math]</span> - Evaluate math / open calculator</div>
+                  <div><span className="text-emerald-400 font-bold">github</span> - Developer GitHub card & link</div>
+                  <div><span className="text-emerald-400 font-bold">mission</span> - Toggle Mission Control</div>
+                  <div><span className="text-emerald-400 font-bold">open &lt;app&gt;</span> - Launch any OS app</div>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-purple-400 font-semibold text-[11px] uppercase tracking-wider">📁 Files & Navigation</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] mt-1 text-white/80">
+                  <div><span className="text-emerald-400 font-bold">ls / dir</span> - List files and directories</div>
+                  <div><span className="text-emerald-400 font-bold">cat &lt;file&gt;</span> - Read text file content</div>
+                  <div><span className="text-emerald-400 font-bold">pwd / cd</span> - Path location & navigation</div>
+                  <div><span className="text-emerald-400 font-bold">files [open]</span> - Browse virtual cloud drive</div>
+                  <div><span className="text-emerald-400 font-bold">notes [open]</span> - View notes / launch Notes app</div>
+                  <div><span className="text-emerald-400 font-bold">clear</span> - Clear terminal screen</div>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-sky-400 font-semibold text-[11px] uppercase tracking-wider">🛠️ Network, Tools & Fun</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] mt-1 text-white/80">
+                  <div><span className="text-emerald-400 font-bold">ping [host]</span> - Test latency response time</div>
+                  <div><span className="text-emerald-400 font-bold">weather</span> - Real-time forecast report</div>
+                  <div><span className="text-emerald-400 font-bold">matrix</span> - Toggle digital rain effect</div>
+                  <div><span className="text-emerald-400 font-bold">quote / joke</span> - Developer wisdom & humor</div>
+                  <div><span className="text-emerald-400 font-bold">top / ps</span> - Real-time process monitor</div>
+                  <div><span className="text-emerald-400 font-bold">storage / df</span> - Storage breakdown</div>
+                  <div><span className="text-emerald-400 font-bold">theme &lt;info&gt;</span> - Accent & wallpaper settings</div>
+                  <div><span className="text-emerald-400 font-bold">sudo &lt;cmd&gt;</span> - Administrator privileges</div>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-white/40 text-[10px] pt-1 border-t border-white/10">
+              💡 Mobile tips: Use the bottom toolbar buttons for quick commands, Tab autocompletion, and ↑/↓ history navigation!
+            </p>
           </div>
         );
         break;
@@ -152,65 +445,194 @@ export default function Terminal() {
         setHistory([]);
         return;
 
-      case "sysinfo":
-      case "server":
-      case "ping":
-      case "weather":
-      case "analytics":
-      case "top":
-      case "htop":
-      case "kill":
-      case "find":
-      case "search":
-      case "netstat":
-      case "clearlogs":
-      case "echo":
-      case "quote":
-      case "joke":
-      case "curl":
-      case "logs":
-      case "processes":
-      case "ps":
-      case "notes":
-      case "storage":
-      case "df":
-      case "benchmark":
-      case "leaderboard":
-      case "scores":
-      case "files":
-      case "motd":
-      case "calc":
-        try {
-          const res = await fetch(`${API_URL}/api/terminal/exec`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ command: trimmed })
-          });
-          const data = await res.json();
-          output = (
-            <pre className="text-xs text-emerald-300 font-mono py-1 whitespace-pre-wrap leading-relaxed">
-              {data.output || data.error}
-            </pre>
-          );
-        } catch {
-          output = <p className="text-rose-400 text-xs">Could not reach backend API at {API_URL}.</p>;
-        }
+      case "exit":
+        closeWindow("terminal");
+        return;
+
+      case "codeplay":
+        openApp("codeplay");
+        output = <p className="text-emerald-400 text-xs">⚡ Launching CodePlay Sandbox environment...</p>;
         break;
 
-      case "guestbook":
-        openApp("guestbook");
-        output = <p className="text-emerald-300 text-xs">Launching Guestbook & Social Ledger...</p>;
+      case "snake":
+        openApp("games");
+        output = <p className="text-emerald-400 text-xs">🐍 Launching Nokia 3310 Retro Snake Arcade...</p>;
         break;
 
       case "minesweeper":
         openApp("games");
-        output = <p className="text-rose-300 text-xs">Launching Minesweeper Retro in Arcade Module...</p>;
+        output = <p className="text-amber-400 text-xs">💣 Launching Retro Minesweeper Arcade...</p>;
+        break;
+
+      case "guestbook":
+        openApp("guestbook");
+        output = <p className="text-emerald-400 text-xs">📖 Launching Social Guestbook & Ledger...</p>;
+        break;
+
+      case "chats":
+      case "chat":
+        openApp("chats");
+        output = <p className="text-emerald-400 text-xs">💬 Launching Real-time Messenger...</p>;
+        break;
+
+      case "resume":
+      case "cv":
+        openApp("resume");
+        output = <p className="text-emerald-400 text-xs">📄 Launching Developer Interactive Resume...</p>;
+        break;
+
+      case "music":
+        openApp("music");
+        output = <p className="text-emerald-400 text-xs">🎵 Launching Audio Player & Music Library...</p>;
+        break;
+
+      case "activity":
+        openApp("activity");
+        output = <p className="text-emerald-400 text-xs">📊 Launching System Activity Monitor...</p>;
+        break;
+
+      case "gallery":
+        openApp("gallery");
+        output = <p className="text-emerald-400 text-xs">🖼️ Launching Media Gallery...</p>;
+        break;
+
+      case "settings":
+        openApp("settings");
+        output = <p className="text-emerald-400 text-xs">⚙️ Launching System Settings...</p>;
+        break;
+
+      case "mission":
+        toggleMissionControl();
+        output = <p className="text-emerald-400 text-xs">🪟 Toggled Mission Control window overview.</p>;
+        break;
+
+      case "calc":
+      case "calculator":
+        if (args.length === 0) {
+          openApp("calculator");
+          output = <p className="text-emerald-400 text-xs">🧮 Launching Scientific Desktop Calculator...</p>;
+        } else {
+          const expr = args.join(" ");
+          const evalRes = evalMath(expr);
+          if (evalRes.ok) {
+            output = (
+              <div className="text-xs text-emerald-300 font-mono py-0.5">
+                <span className="text-white/60">{expr} = </span>
+                <span className="font-bold text-emerald-400">{evalRes.result}</span>
+              </div>
+            );
+          } else {
+            output = <p className="text-rose-400 text-xs">Math error: {evalRes.error}</p>;
+          }
+        }
+        break;
+
+      case "files":
+        if (args[0] === "open") {
+          openApp("files");
+          output = <p className="text-emerald-400 text-xs">📁 Launching Cloud Virtual Drive...</p>;
+        } else {
+          output = (
+            <div className="space-y-1.5 py-1 text-xs">
+              <div className="flex items-center justify-between">
+                <p className="text-white/80 font-semibold">Virtual Cloud Drive ({fileTree.children.length} items):</p>
+                <button
+                  onClick={() => openApp("files")}
+                  className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-cyan-300 text-[10px] transition-colors"
+                >
+                  Launch Files App ↗
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px]">
+                {fileTree.children.map((item) => (
+                  <div key={item.name} className="flex items-center gap-1.5 text-white/70">
+                    {item.type === "folder" ? (
+                      <GIconFolder size={13} className="text-sky-400 shrink-0" />
+                    ) : (
+                      <GIconFileText size={13} className="text-white/50 shrink-0" />
+                    )}
+                    <span className={item.type === "folder" ? "text-sky-300 font-medium" : ""}>{item.name}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-white/40 text-[10px]">Tip: Type 'cat &lt;file&gt;' to read text files, or 'files open' to launch the app.</p>
+            </div>
+          );
+        }
+        break;
+
+      case "notes":
+        if (args[0] === "open") {
+          openApp("notes");
+          output = <p className="text-emerald-400 text-xs">📝 Launching Cloud Notes app...</p>;
+        } else {
+          output = (
+            <div className="space-y-1 py-1 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-white/80 font-semibold">📌 Cloud Notes Repository:</span>
+                <button
+                  onClick={() => openApp("notes")}
+                  className="px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-cyan-300 text-[10px] transition-colors"
+                >
+                  Open Notes App ↗
+                </button>
+              </div>
+              <p className="text-white/60 text-[11px]">• [work] SandreaLee Salon Architecture & Deployment</p>
+              <p className="text-white/60 text-[11px]">• [ideas] WebOS Window Snapping & Audio Engine</p>
+              <p className="text-white/60 text-[11px]">• [todo] Straive IMS performance optimization</p>
+            </div>
+          );
+        }
+        break;
+
+      case "github":
+        output = (
+          <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-2 text-xs max-w-md">
+            <div className="flex items-center justify-between">
+              <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+                <GIconExternalLink size={13} />
+                GitHub: @ememman
+              </span>
+              <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px]">Active Engineer</span>
+            </div>
+            <p className="text-white/80 text-[11px] leading-relaxed">
+              Full-stack engineer crafting responsive web applications, mobile ecosystems (React Native/Expo), and interactive operating systems.
+            </p>
+            <div className="text-[11px] space-y-0.5 text-white/60">
+              <p>• Repositories: <span className="text-cyan-300 font-mono">Portfolio-OS</span>, <span className="text-cyan-300 font-mono">sandrealee-salon</span>, <span className="text-cyan-300 font-mono">straive-ims</span></p>
+              <p>• Primary Languages: TypeScript, JavaScript, PHP, Python, HTML/CSS</p>
+            </div>
+            <a
+              href="https://github.com/ememman"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-white/10 hover:bg-white/20 text-white font-medium text-[11px] transition-colors"
+            >
+              <span>Open github.com/ememman</span>
+              <GIconExternalLink size={12} />
+            </a>
+          </div>
+        );
+        break;
+
+      case "pwd":
+        output = <p className="text-emerald-300 text-xs">/home/emman</p>;
+        break;
+
+      case "cd":
+        if (!args[0] || args[0] === "~" || args[0] === "/") {
+          output = <p className="text-white/70 text-xs">Changed directory to /home/emman</p>;
+        } else if (args[0] === "..") {
+          output = <p className="text-white/70 text-xs">/home</p>;
+        } else {
+          output = <p className="text-white/70 text-xs">Changed directory to /home/emman/{args[0]}</p>;
+        }
         break;
 
       case "whoami":
         output = (
           <div className="space-y-1.5 py-1 text-xs text-white/90">
-            <p><span className="text-emerald-400 font-semibold">Name:</span> James Mendoza</p>
+            <p><span className="text-emerald-400 font-semibold">Name:</span> James Mendoza (Emman)</p>
             <p><span className="text-emerald-400 font-semibold">Role:</span> Full-Stack Developer & Software Engineer</p>
             <p><span className="text-emerald-400 font-semibold">Location:</span> Manila, Philippines</p>
             <p><span className="text-emerald-400 font-semibold">Specialization:</span> MERN Stack, React Native/Expo, NextJS, NestJS, PHP MVC, Real-time WebSockets</p>
@@ -265,7 +687,7 @@ export default function Terminal() {
             <p className="text-white/80 font-semibold">Featured Shipped Projects:</p>
             <div className="space-y-2">
               {fallbackProjects.map((p) => (
-                <div key={p.id} className="p-2 rounded bg-white/5 border border-white/10">
+                <div key={p.id} className="p-2.5 rounded bg-white/5 border border-white/10">
                   <div className="flex items-center justify-between">
                     <span className="text-emerald-400 font-bold">{p.title}</span>
                     <span className="text-white/40 text-[11px]">{p.year} · {p.category}</span>
@@ -288,18 +710,51 @@ export default function Terminal() {
       case "open":
         if (!args[0]) {
           output = (
-            <p className="text-amber-400">
-              Usage: open &lt;app&gt; (e.g. open activity, open guestbook, open music, open library, open games, open settings, open files, open chats)
-            </p>
+            <div className="space-y-1 text-xs">
+              <p className="text-amber-400">Usage: open &lt;app&gt;</p>
+              <p className="text-white/60">Available apps: {Object.keys(APPS).join(", ")}</p>
+            </div>
           );
         } else {
-          const appName = args[0].toLowerCase();
-          const target = Object.keys(APPS).find((k) => k === appName);
-          if (target) {
+          const rawApp = args[0].toLowerCase();
+          const appMap: Record<string, string> = {
+            codeplay: "codeplay",
+            sandbox: "codeplay",
+            ide: "codeplay",
+            calc: "calculator",
+            calculator: "calculator",
+            games: "games",
+            snake: "games",
+            minesweeper: "games",
+            arcade: "games",
+            chat: "chats",
+            chats: "chats",
+            messenger: "chats",
+            resume: "resume",
+            cv: "resume",
+            files: "files",
+            drive: "files",
+            notes: "notes",
+            notepad: "notes",
+            music: "music",
+            player: "music",
+            activity: "activity",
+            top: "activity",
+            gallery: "gallery",
+            photos: "gallery",
+            settings: "settings",
+            guestbook: "guestbook",
+            terminal: "terminal",
+            library: "library",
+            updates: "updates"
+          };
+
+          const target = appMap[rawApp] || Object.keys(APPS).find((k) => k === rawApp);
+          if (target && APPS[target]) {
             openApp(target);
             output = <p className="text-emerald-400">Launching {APPS[target].title}…</p>;
           } else {
-            output = <p className="text-rose-400">App '{appName}' not found. Available: {Object.keys(APPS).join(", ")}</p>;
+            output = <p className="text-rose-400">App '{rawApp}' not found. Available: {Object.keys(APPS).join(", ")}</p>;
           }
         }
         break;
@@ -326,18 +781,23 @@ export default function Terminal() {
 
       case "cat":
         if (!args[0]) {
-          output = <p className="text-amber-400">Usage: cat &lt;filename&gt; (e.g. cat About_James.txt, cat Skills.txt)</p>;
+          output = <p className="text-amber-400 text-xs">Usage: cat &lt;filename&gt; (e.g. cat About_Emman.txt, cat Skills.txt, cat README.md)</p>;
         } else {
-          const targetName = args[0].toLowerCase();
-          const found = fileTree.children.find((f) => f.name.toLowerCase() === targetName);
+          const rawTarget = args[0].toLowerCase();
+          const found = fileTree.children.find(
+            (f) =>
+              f.name.toLowerCase() === rawTarget ||
+              (rawTarget.includes("james") && f.name.toLowerCase().includes("emman")) ||
+              (rawTarget.includes("emman") && f.name.toLowerCase().includes("emman"))
+          );
           if (found && found.type === "text" && found.content) {
             output = (
-              <pre className="text-xs text-white/80 font-mono whitespace-pre-wrap leading-relaxed py-1">
+              <pre className="text-xs text-white/90 font-mono whitespace-pre-wrap leading-relaxed py-1 bg-white/5 p-2 rounded border border-white/10">
                 {found.content}
               </pre>
             );
           } else {
-            output = <p className="text-rose-400">cat: {args[0]}: No such text file</p>;
+            output = <p className="text-rose-400 text-xs">cat: {args[0]}: No such text file. Try 'ls' to list available files.</p>;
           }
         }
         break;
@@ -353,7 +813,7 @@ export default function Terminal() {
    OS 2.4`}
             </pre>
             <div className="space-y-1 text-white/90">
-              <p><span className="text-accent font-bold">james@portfolio-os</span></p>
+              <p><span className="text-accent font-bold">emman@portfolio-os</span></p>
               <p className="text-white/40">-----------------------------</p>
               <p><span className="text-accent font-semibold">OS:</span> Portfolio OS (Web / React 19)</p>
               <p><span className="text-accent font-semibold">Host:</span> {osMode === "win" ? "Windows 11 Fluent Edition" : "macOS Sonoma Glass Edition"}</p>
@@ -376,12 +836,13 @@ export default function Terminal() {
         output = <p className="text-white/90">{new Date().toString()}</p>;
         break;
 
-      case "uptime":
+      case "uptime": {
         const totalSecs = Math.floor(performance.now() / 1000);
         const mins = Math.floor(totalSecs / 60);
         const secs = totalSecs % 60;
         output = <p className="text-white/90">Session up {mins} minutes, {secs} seconds.</p>;
         break;
+      }
 
       case "theme":
         if (!args[0]) {
@@ -425,9 +886,76 @@ export default function Terminal() {
         );
         break;
 
-      case "sudo":
-        output = <p className="text-rose-400">Permission denied: guest user cannot execute administrative operations.</p>;
+      case "echo":
+        output = <p className="text-white/90 text-xs">{args.join(" ") || ""}</p>;
         break;
+
+      case "sudo":
+        output = (
+          <div className="space-y-1 text-xs">
+            <p className="text-white/60">[sudo] password for emman: <span className="text-white">••••••••</span></p>
+            <p className="text-rose-400 font-semibold">emman is not in the sudoers file. This incident will be reported to Santa 🎅.</p>
+          </div>
+        );
+        break;
+
+      // Backend-dispatched commands with automatic local resilience
+      case "sysinfo":
+      case "server":
+      case "ping":
+      case "weather":
+      case "analytics":
+      case "top":
+      case "htop":
+      case "kill":
+      case "find":
+      case "search":
+      case "netstat":
+      case "clearlogs":
+      case "quote":
+      case "joke":
+      case "curl":
+      case "logs":
+      case "processes":
+      case "ps":
+      case "storage":
+      case "df":
+      case "benchmark":
+      case "leaderboard":
+      case "scores":
+      case "motd": {
+        let textResult = "";
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2800);
+          const res = await fetch(`${API_URL}/api/terminal/exec`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ command: trimmed }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && (data.output || data.error)) {
+              textResult = data.output || data.error;
+            }
+          }
+        } catch {
+          // If offline or timeout, local fallback handles it seamlessly
+        }
+
+        if (!textResult) {
+          textResult = getLocalCommandFallback(cmd, args);
+        }
+
+        output = (
+          <pre className="text-xs text-emerald-300 font-mono py-1 whitespace-pre-wrap leading-relaxed">
+            {textResult}
+          </pre>
+        );
+        break;
+      }
 
       default:
         output = (
@@ -453,26 +981,13 @@ export default function Terminal() {
       handleCommand(val);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      if (cmdHistory.length === 0) return;
-      const nextIdx = historyIdx < 0 ? cmdHistory.length - 1 : Math.max(0, historyIdx - 1);
-      setHistoryIdx(nextIdx);
-      setInputVal(cmdHistory[nextIdx]);
+      handlePrevHistory();
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      if (historyIdx < 0) return;
-      const nextIdx = historyIdx + 1;
-      if (nextIdx >= cmdHistory.length) {
-        setHistoryIdx(-1);
-        setInputVal("");
-      } else {
-        setHistoryIdx(nextIdx);
-        setInputVal(cmdHistory[nextIdx]);
-      }
+      handleNextHistory();
     } else if (e.key === "Tab") {
       e.preventDefault();
-      if (!inputVal) return;
-      const match = COMMANDS.find((c) => c.startsWith(inputVal.toLowerCase()));
-      if (match) setInputVal(match);
+      handleTabComplete();
     } else if (e.key === "c" && e.ctrlKey) {
       setHistory((prev) => [...prev, { type: "prompt", cmd: inputVal + "^C" }]);
       setInputVal("");
@@ -495,15 +1010,21 @@ export default function Terminal() {
         />
       )}
 
-      {/* Terminal Header */}
-      <div className="relative z-10 sticky top-0 flex items-center justify-between px-3 py-1.5 bg-[#05070c]/95 backdrop-blur-md border-b border-white/10 shrink-0 select-none">
-        <div className="flex items-center gap-2">
-          <GIconTerminal size={14} className="text-emerald-400" />
-          <span className="text-[11px] text-white/70 font-semibold">james@portfolio-os:~ (portfolio-sh)</span>
+      {/* Terminal Header Bar — Single line on mobile, no wrapping */}
+      <div className="relative z-10 sticky top-0 flex items-center justify-between px-3 py-1.5 bg-[#05070c]/95 backdrop-blur-md border-b border-white/10 shrink-0 select-none min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <GIconTerminal size={14} className="text-emerald-400 shrink-0" />
+          <span className="text-[11px] text-white/80 font-semibold truncate">
+            <span className="hidden sm:inline">emman@portfolio-os:~ (portfolio-sh)</span>
+            <span className="sm:hidden">emman@portfolio-os:~</span>
+          </span>
         </div>
-        <div className="flex items-center gap-3 text-[10px] text-white/40">
-          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" /> bash 5.2</span>
-          <span>UTF-8</span>
+        <div className="flex items-center gap-2 text-[10px] text-white/40 shrink-0">
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-white/60">bash 5.2</span>
+          </span>
+          <span className="hidden sm:inline px-1 py-0.2 rounded bg-white/5 border border-white/10 text-[9px] text-white/50">UTF-8</span>
         </div>
       </div>
 
@@ -512,9 +1033,16 @@ export default function Terminal() {
         {history.map((item, idx) => {
           if (item.type === "banner") {
             return (
-              <pre key={idx} className="text-[8px] xs:text-[10px] sm:text-[11px] leading-tight text-emerald-400/90 whitespace-pre overflow-x-auto select-none no-scrollbar">
-                {item.content}
-              </pre>
+              <div key={idx} className="select-none py-1">
+                {/* Desktop Banner: Full width */}
+                <pre className="hidden sm:block text-[10px] md:text-[11px] leading-tight text-emerald-400 font-mono whitespace-pre overflow-x-auto no-scrollbar">
+                  {BANNER_DESKTOP}
+                </pre>
+                {/* Mobile Banner: Compact & beautifully fits 360px+ screens without cutoff */}
+                <pre className="sm:hidden text-[9px] leading-snug text-emerald-400 font-mono whitespace-pre overflow-x-hidden">
+                  {BANNER_MOBILE}
+                </pre>
+              </div>
             );
           }
           if (item.type === "system") {
@@ -526,16 +1054,16 @@ export default function Terminal() {
           }
           if (item.type === "prompt") {
             return (
-              <div key={idx} className="flex items-start gap-1.5 sm:gap-2 text-[11px] sm:text-[12px] pt-1">
-                <span className="text-accent font-semibold shrink-0 hidden sm:inline">james@portfolio-os:~$</span>
-                <span className="text-accent font-semibold shrink-0 sm:hidden">os:~$</span>
-                <span className="text-white font-medium">{item.cmd}</span>
+              <div key={idx} className="flex items-start gap-1.5 sm:gap-2 text-[11px] sm:text-[12px] pt-1 min-w-0">
+                <span className="text-accent font-semibold shrink-0 hidden sm:inline">emman@portfolio-os:~$</span>
+                <span className="text-accent font-semibold shrink-0 sm:hidden text-[11px]">emman@os:~$</span>
+                <span className="text-white font-medium break-all">{item.cmd}</span>
               </div>
             );
           }
           if (item.type === "output") {
             return (
-              <div key={idx} className="pl-1">
+              <div key={idx} className="pl-0.5 sm:pl-1">
                 {item.content}
               </div>
             );
@@ -543,10 +1071,10 @@ export default function Terminal() {
           return null;
         })}
 
-        {/* Current prompt line */}
-        <div className="flex items-center gap-1.5 sm:gap-2 pt-1">
-          <span className="text-accent font-semibold shrink-0 hidden sm:inline">james@portfolio-os:~$</span>
-          <span className="text-accent font-semibold shrink-0 sm:hidden">os:~$</span>
+        {/* Current prompt input line */}
+        <div className="flex items-center gap-1.5 sm:gap-2 pt-1 min-w-0">
+          <span className="text-accent font-semibold shrink-0 hidden sm:inline">emman@portfolio-os:~$</span>
+          <span className="text-accent font-semibold shrink-0 sm:hidden text-[11px]">emman@os:~$</span>
           <input
             ref={inputRef}
             type="text"
@@ -556,25 +1084,84 @@ export default function Terminal() {
             autoFocus
             spellCheck="false"
             autoComplete="off"
-            className="flex-1 min-w-0 bg-transparent text-white outline-none font-mono text-[12px] caret-emerald-400"
+            className="flex-1 min-w-0 bg-transparent text-white outline-none font-mono text-[11px] sm:text-[12px] caret-emerald-400"
           />
         </div>
 
         <div ref={endRef} />
       </div>
 
-      {/* Quick command buttons for convenience */}
-      <div className="relative z-10 px-3 py-1.5 bg-[#05070c]/90 border-t border-white/10 flex items-center gap-1.5 overflow-x-auto no-scrollbar select-none">
-        <span className="text-[10px] text-white/40 shrink-0">Quick:</span>
-        {["help", "sysinfo", "codeplay", "snake", "github", "mission", "ping", "guestbook", "neofetch", "clear"].map((cmd) => (
+      {/* Quick command buttons & mobile keyboard helpers */}
+      <div className="relative z-10 px-2 sm:px-3 py-1.5 bg-[#05070c]/95 border-t border-white/10 flex items-center justify-between gap-1.5 select-none shrink-0 min-w-0">
+        {/* Scrollable quick commands bar */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar min-w-0 py-0.5 flex-1 touch-pan-x">
+          <span className="text-[10px] text-white/40 shrink-0 font-semibold pl-0.5">Quick:</span>
+          {[
+            { label: "help", cmd: "help" },
+            { label: "sysinfo", cmd: "sysinfo" },
+            { label: "codeplay", cmd: "codeplay" },
+            { label: "snake", cmd: "snake" },
+            { label: "minesweeper", cmd: "minesweeper" },
+            { label: "github", cmd: "github" },
+            { label: "neofetch", cmd: "neofetch" },
+            { label: "benchmark", cmd: "benchmark" },
+            { label: "projects", cmd: "projects" },
+            { label: "skills", cmd: "skills" },
+            { label: "calc", cmd: "calc" },
+            { label: "weather", cmd: "weather" },
+            { label: "matrix", cmd: "matrix" },
+            { label: "clear", cmd: "clear" }
+          ].map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCommand(item.cmd);
+              }}
+              className="px-2 py-1 rounded bg-white/5 active:bg-emerald-500/20 hover:bg-white/15 text-[10px] text-white/75 hover:text-white transition-colors shrink-0 border border-white/5 hover:border-white/15"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Mobile-friendly helpers: Tab, Up, Down arrow history */}
+        <div className="flex items-center gap-1 shrink-0 pl-1 border-l border-white/10">
           <button
-            key={cmd}
-            onClick={() => handleCommand(cmd)}
-            className="px-2 py-0.5 rounded bg-white/5 hover:bg-white/15 text-[10px] text-white/70 hover:text-white transition-colors shrink-0"
+            type="button"
+            title="Autocomplete (Tab)"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleTabComplete();
+            }}
+            className="px-1.5 py-1 rounded bg-white/10 active:bg-emerald-500/30 hover:bg-white/20 text-[10px] text-emerald-300 font-semibold transition-colors"
           >
-            {cmd}
+            Tab ⇥
           </button>
-        ))}
+          <button
+            type="button"
+            title="Previous Command (Up)"
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePrevHistory();
+            }}
+            className="p-1 rounded bg-white/10 active:bg-white/30 hover:bg-white/20 text-white/70 hover:text-white transition-colors"
+          >
+            <GIconChevronUp size={12} />
+          </button>
+          <button
+            type="button"
+            title="Next Command (Down)"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNextHistory();
+            }}
+            className="p-1 rounded bg-white/10 active:bg-white/30 hover:bg-white/20 text-white/70 hover:text-white transition-colors"
+          >
+            <GIconChevronDown size={12} />
+          </button>
+        </div>
       </div>
     </div>
   );
