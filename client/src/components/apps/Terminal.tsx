@@ -101,7 +101,7 @@ function getLocalCommandFallback(cmd: string, args: string[]): string {
         `• Backend Gateway:     ${API_URL} (Standby Mode)`
       ].join("\n");
     }
-
+    
     case "benchmark": {
       const start = performance.now();
       let primes = 0;
