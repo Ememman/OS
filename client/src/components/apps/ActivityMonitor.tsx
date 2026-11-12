@@ -753,7 +753,7 @@ export default function ActivityMonitor() {
                   placeholder="Search processes, apps, PID..."
                   value={procSearchQuery}
                   onChange={(e) => setProcSearchQuery(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-[11px] text-white placeholder-white/40 outline-none focus:border-accent"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-[11px] text-white placeholder-white/40 outline-none focus-stroke focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
                 />
               </div>
             </div>
@@ -1043,7 +1043,7 @@ export default function ActivityMonitor() {
                   placeholder="Filter endpoints or packages..."
                   value={apiSearchQuery}
                   onChange={(e) => setApiSearchQuery(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-[11px] text-white placeholder-white/40 outline-none focus:border-accent"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-[11px] text-white placeholder-white/40 outline-none focus-stroke focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
                 />
               </div>
             </div>
@@ -1230,7 +1230,7 @@ export default function ActivityMonitor() {
                 value={logSearchQuery}
                 onChange={(e) => setLogSearchQuery(e.target.value)}
                 placeholder="Filter logs by message or module..."
-                className="w-full pl-7 pr-3 py-1.5 rounded-lg text-xs bg-black/30 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-accent"
+                className="w-full pl-7 pr-3 py-1.5 rounded-lg text-xs bg-black/30 border border-white/10 text-white placeholder-white/30 outline-none focus-stroke focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
               />
             </div>
 

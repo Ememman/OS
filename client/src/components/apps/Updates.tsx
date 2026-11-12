@@ -637,7 +637,7 @@ export default function Updates() {
         <div className="flex flex-col gap-2.5 pt-1">
           {/* Row 1: Search + Quick Category Pills */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 w-full sm:w-72">
+            <div className="focus-stroke flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 w-full sm:w-72 transition-all focus-within:border-[#0091ff] focus-within:ring-2 focus-within:ring-[#0091ff]/40 focus-within:shadow-[0_0_14px_rgba(0,145,255,0.28)]">
               <GIconSearch size={14} className="text-white/40 shrink-0" />
               <input
                 type="text"

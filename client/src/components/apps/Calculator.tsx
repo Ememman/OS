@@ -513,12 +513,12 @@ export default function Calculator() {
                   type="number"
                   value={convertInput}
                   onChange={(e) => setConvertInput(e.target.value)}
-                  className="w-2/3 bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-white font-mono text-sm focus:outline-none focus:border-accent"
+                  className="w-2/3 bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-white font-mono text-sm outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
                 />
                 <select
                   value={convertFromUnit}
                   onChange={(e) => setConvertFromUnit(e.target.value)}
-                  className="w-1/3 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-white text-xs uppercase"
+                  className="w-1/3 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-white text-xs uppercase outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
                 >
                   {convertType === "length" && (
                     <>
@@ -567,7 +567,7 @@ export default function Calculator() {
                 <select
                   value={convertToUnit}
                   onChange={(e) => setConvertToUnit(e.target.value)}
-                  className="w-1/3 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-white text-xs uppercase"
+                  className="w-1/3 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-white text-xs uppercase outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
                 >
                   {convertType === "length" && (
                     <>

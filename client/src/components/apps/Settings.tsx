@@ -388,7 +388,7 @@ export default function Settings() {
           defaultValue={useOS.getState().photoUrl}
           onBlur={(e) => useOS.getState().setPhotoUrl(e.target.value.trim())}
           placeholder="https://example.com/image.jpg"
-          className="w-full bg-white/5 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-white outline-none border border-white/10 focus:border-accent transition-colors placeholder:text-white/20"
+          className="w-full bg-white/5 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-white outline-none border border-white/10 focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all placeholder:text-white/20"
         />
       </section>
 
@@ -403,7 +403,7 @@ export default function Settings() {
             onChange={(e) => setCityDraft(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && lookupCity()}
             placeholder="City name…"
-            className="flex-1 bg-white/5 rounded-lg px-3 py-2 text-xs text-white outline-none border border-white/10 focus:border-accent transition-colors placeholder:text-white/20"
+            className="flex-1 bg-white/5 rounded-lg px-3 py-2 text-xs text-white outline-none border border-white/10 focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all placeholder:text-white/20"
           />
           <button onClick={lookupCity} className="text-xs px-3 py-2 rounded-lg bg-accent shrink-0 hover:brightness-110 active:scale-95 transition">Set</button>
         </div>

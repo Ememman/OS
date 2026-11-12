@@ -453,7 +453,7 @@ export default function Music() {
                   e.preventDefault();
                   runSearch();
                 }}
-                className="flex items-center gap-2 bg-white/10 rounded-xl px-2.5 h-9 sm:h-10 border border-white/10 focus-within:border-accent transition-colors"
+                className="focus-stroke flex items-center gap-2 bg-white/10 rounded-xl px-2.5 h-9 sm:h-10 border border-white/10 transition-all focus-within:border-[#0091ff] focus-within:ring-2 focus-within:ring-[#0091ff]/40 focus-within:shadow-[0_0_14px_rgba(0,145,255,0.28)]"
               >
                 <GIconSearch size={14} className="text-white/40 shrink-0" />
                 <input

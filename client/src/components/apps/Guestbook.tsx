@@ -706,7 +706,7 @@ export default function Guestbook() {
                             setSeed(val.trim() || activePresets[0]);
                           }}
                           placeholder="Or type custom handle..."
-                          className="flex-1 min-w-0 bg-black/30 border border-white/[0.08] rounded-lg px-2 py-1 text-[10px] text-white placeholder:text-white/30 outline-none focus:border-accent/40"
+                          className="flex-1 min-w-0 bg-black/30 border border-white/[0.08] rounded-lg px-2 py-1 text-[10px] text-white placeholder:text-white/30 outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
                         />
                       </div>
                     </>
@@ -752,7 +752,7 @@ export default function Guestbook() {
                         value={customPhoto.startsWith("data:") ? "" : customPhoto}
                         onChange={(e) => setCustomPhoto(e.target.value)}
                         placeholder="Or paste direct image URL..."
-                        className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-2 py-1 text-[10px] text-white placeholder:text-white/30 outline-none focus:border-accent/40"
+                        className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-2 py-1 text-[10px] text-white placeholder:text-white/30 outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
                       />
                     </>
                   )}
@@ -777,7 +777,7 @@ export default function Guestbook() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Alex Rivera"
-                  className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-1.5 text-xs text-white placeholder:text-white/30 outline-none focus:border-accent/40 focus:bg-white/[0.05] transition"
+                  className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-1.5 text-xs text-white placeholder:text-white/30 outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] focus:bg-white/[0.05] transition-all"
                 />
               </div>
 
@@ -822,7 +822,7 @@ export default function Guestbook() {
                     value={link}
                     onChange={(e) => setLink(e.target.value)}
                     placeholder="github.com/username (optional)"
-                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-[11px] text-white placeholder:text-white/30 outline-none focus:border-accent/40 transition"
+                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-[11px] text-white placeholder:text-white/30 outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
                   />
                 </div>
 
@@ -837,7 +837,7 @@ export default function Guestbook() {
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="e.g. San Francisco (optional)"
-                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-[11px] text-white placeholder:text-white/30 outline-none focus:border-accent/40 transition"
+                    className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-[11px] text-white placeholder:text-white/30 outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
                   />
                 </div>
               </div>
@@ -860,7 +860,7 @@ export default function Guestbook() {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Share thoughts, project feedback, or a friendly hello for Emman..."
-                className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-xs text-white placeholder:text-white/30 outline-none focus:border-accent/40 focus:bg-white/[0.05] resize-none thin-scroll transition leading-relaxed"
+                className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl p-3 text-xs text-white placeholder:text-white/30 outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] focus:bg-white/[0.05] resize-none thin-scroll transition-all leading-relaxed"
               />
             </div>
 
@@ -891,7 +891,7 @@ export default function Guestbook() {
           {/* Top Filter & Search Bar */}
           <div className="p-3 border-b border-white/[0.08] space-y-2 bg-white/[0.015]">
             <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-              <div className="flex-1 min-w-[180px] flex items-center gap-2 bg-white/[0.03] px-3 py-1.5 rounded-xl border border-white/[0.08] focus-within:border-white/25 transition">
+              <div className="focus-stroke flex-1 min-w-[180px] flex items-center gap-2 bg-white/[0.03] px-3 py-1.5 rounded-xl border border-white/[0.08] transition-all focus-within:border-[#0091ff] focus-within:ring-2 focus-within:ring-[#0091ff]/40 focus-within:shadow-[0_0_14px_rgba(0,145,255,0.28)]">
                 <GIconSearch size={12} className="text-white/40" />
                 <input
                   type="text"

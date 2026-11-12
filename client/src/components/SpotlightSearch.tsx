@@ -240,11 +240,11 @@ export default function SpotlightSearch() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: -16 }}
             transition={{ type: "spring", stiffness: 420, damping: 28 }}
-            className="w-full max-w-xl glass rounded-2xl border border-white/15 shadow-2xl overflow-hidden flex flex-col origin-top"
+            className="w-full max-w-xl glass rounded-2xl border border-white/15 focus-within:border-[#0091ff] focus-within:ring-2 focus-within:ring-[#0091ff]/40 focus-within:shadow-[0_0_24px_rgba(0,145,255,0.3)] shadow-2xl overflow-hidden flex flex-col origin-top transition-all duration-150"
             onClick={(e) => e.stopPropagation()}
           >
         {/* Search Header */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-white/5">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10 bg-white/5 focus-within:bg-white/[0.08] transition-all">
           <GIconSearch size={18} className="text-white/40 shrink-0" />
           <input
             ref={inputRef}
