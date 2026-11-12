@@ -11,7 +11,6 @@ import {
   GIconSearch,
   GIconCheck,
   GIconClose,
-  GIconBars,
   GIconSliders,
   GIconLayoutCells,
   GIconResume,
@@ -292,14 +291,6 @@ export default function MenuBar() {
             Log Out / Switch OS…
           </MenuItem>
         </MenuDropdown>
-
-        <button
-          onClick={() => setMobileSheetOpen((prev) => !prev)}
-          className="sm:hidden p-1.5 -ml-1 hover:bg-white/10 active:bg-white/20 rounded-lg text-white transition-colors cursor-pointer"
-          aria-label="Open mobile menu"
-        >
-          <GIconBars size={18} />
-        </button>
 
         <div className="hidden sm:flex items-center gap-1">
           <MenuDropdown label="File" {...m("file")}>
