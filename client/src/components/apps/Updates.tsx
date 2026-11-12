@@ -5,29 +5,40 @@ import {
   GIconTrophy,
   GIconRocket,
   GIconSearch,
-  GIconPlus,
-  GIconTrash,
   GIconPin,
   GIconCopy,
   GIconCheck,
   GIconRotateRight,
   GIconClose,
-  GIconSliders,
-  GIconCircleInfo,
   GIconHeart,
   GIconFlame,
+  GIconBug,
+  GIconExternalLink,
+  GIconPlus,
+  GIconGithub,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
 import { getSocket } from "../../lib/socket";
 import { useOS } from "../../store/useOS";
 import { soundFx } from "../../lib/soundFx";
 
+export type UpdateCategory = "feature" | "fix" | "bug";
+export type UpdatePriority = "critical" | "high" | "medium" | "low";
+export type UpdateStatus = "merged" | "open" | "closed";
+
 export interface UpdateItem {
   id: string;
-  date: string;
-  tag: "fix" | "feature" | "launch" | "announcement" | "performance";
+  prNumber: number;
   title: string;
   body: string;
+  date: string;
+  category: UpdateCategory;
+  priority: UpdatePriority;
+  status: UpdateStatus;
+  author: string;
+  authorAvatar?: string;
+  branch?: string;
+  url: string;
   pinned?: boolean;
 }
 
@@ -39,108 +50,359 @@ export interface DetailedReaction {
   total: number;
 }
 
-const TAG_META: Record<string, { label: string; Icon: any; color: string; bg: string }> = {
-  feature: { label: "Feature", Icon: GIconPlus, color: "#5FBF7C", bg: "rgba(95, 191, 124, 0.15)" },
-  fix: { label: "Fix", Icon: GIconWrench, color: "#D98A4E", bg: "rgba(217, 138, 78, 0.15)" },
-  launch: { label: "Launch", Icon: GIconRocket, color: "#8E7BE0", bg: "rgba(142, 123, 224, 0.15)" },
-  announcement: { label: "Notice", Icon: GIconCircleInfo, color: "#38BDF8", bg: "rgba(56, 189, 248, 0.15)" },
-  performance: { label: "Perf", Icon: GIconSliders, color: "#FBBF24", bg: "rgba(251, 191, 36, 0.15)" },
+const CATEGORY_META: Record<
+  UpdateCategory,
+  { label: string; Icon: React.ComponentType<any>; color: string; bg: string; border: string }
+> = {
+  feature: {
+    label: "Feature",
+    Icon: GIconPlus,
+    color: "text-emerald-400",
+    bg: "bg-emerald-500/15",
+    border: "border-emerald-500/30",
+  },
+  fix: {
+    label: "Fix",
+    Icon: GIconWrench,
+    color: "text-amber-400",
+    bg: "bg-amber-500/15",
+    border: "border-amber-500/30",
+  },
+  bug: {
+    label: "Bug",
+    Icon: GIconBug,
+    color: "text-rose-400",
+    bg: "bg-rose-500/15",
+    border: "border-rose-500/30",
+  },
+};
+
+const PRIORITY_META: Record<
+  UpdatePriority,
+  { label: string; badgeClass: string; dotClass?: string }
+> = {
+  critical: {
+    label: "Critical",
+    badgeClass: "bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-sm shadow-rose-500/20",
+    dotClass: "bg-rose-400 animate-pulse",
+  },
+  high: {
+    label: "High",
+    badgeClass: "bg-amber-500/20 text-amber-300 border-amber-500/40",
+    dotClass: "bg-amber-400",
+  },
+  medium: {
+    label: "Medium",
+    badgeClass: "bg-sky-500/20 text-sky-300 border-sky-500/40",
+    dotClass: "bg-sky-400",
+  },
+  low: {
+    label: "Low",
+    badgeClass: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+    dotClass: "bg-emerald-400",
+  },
+};
+
+const STATUS_META: Record<UpdateStatus, { label: string; badgeClass: string }> = {
+  merged: {
+    label: "Merged",
+    badgeClass: "bg-purple-500/20 text-purple-300 border-purple-500/40",
+  },
+  open: {
+    label: "Open",
+    badgeClass: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
+  },
+  closed: {
+    label: "Closed",
+    badgeClass: "bg-zinc-500/20 text-zinc-300 border-zinc-500/40",
+  },
 };
 
 const REACTION_BUTTONS = [
   { type: "heart" as const, Icon: GIconHeart, label: "Love", color: "text-rose-400" },
   { type: "fire" as const, Icon: GIconFlame, label: "Fire", color: "text-amber-400" },
   { type: "rocket" as const, Icon: GIconRocket, label: "Shipped", color: "text-purple-400" },
-  { type: "party" as const, Icon: GIconTrophy, label: "Celebrate", color: "text-amber-400" },
+  { type: "party" as const, Icon: GIconTrophy, label: "Celebrate", color: "text-emerald-400" },
 ];
+
+// Fallback PR list representing real repository pull requests
+const FALLBACK_UPDATES: UpdateItem[] = [
+  {
+    id: "pr-151",
+    prNumber: 151,
+    title: "Change the preview image for the project in Library",
+    body: "Enhanced the Engineering Library with custom screenshot previews for Portfolio OS, Flash-Cards, and Quiz-App, alongside polished 'Currently in Development' frosted glassmorphism placeholders for upcoming works.",
+    date: "2026-11-12",
+    category: "feature",
+    priority: "medium",
+    status: "open",
+    author: "Ememman",
+    branch: "feat/library-preview-image",
+    url: "https://github.com/Ememman/OS/pull/151",
+    pinned: true,
+  },
+  {
+    id: "pr-150",
+    prNumber: 150,
+    title: "Refactor code structure for improved readability and maintainability",
+    body: "Comprehensive Activity Monitor overhaul: responsive mobile touch cards, dismissible compositor banner, 24-package client/server ecosystem registry, and interactive 43-endpoint API testing with latency tracking.",
+    date: "2026-11-12",
+    category: "fix",
+    priority: "high",
+    status: "open",
+    author: "Ememman",
+    branch: "fix/activity-monitor-enhancement",
+    url: "https://github.com/Ememman/OS/pull/150",
+    pinned: true,
+  },
+  {
+    id: "pr-149",
+    prNumber: 149,
+    title: "Updated Main │ Remove the Dev in the Deployment for the Github Pages",
+    body: "Merged production deployment isolation into main branch, eliminating non-production deployment triggers.",
+    date: "2026-11-12",
+    category: "fix",
+    priority: "critical",
+    status: "merged",
+    author: "Ememman",
+    branch: "dev",
+    url: "https://github.com/Ememman/OS/pull/149",
+  },
+  {
+    id: "pr-148",
+    prNumber: 148,
+    title: "Remove the Dev in the Deployment for the Github Pages",
+    body: "Updated GitHub Actions deploy.yml workflow to restrict continuous deployment execution solely to the main branch.",
+    date: "2026-11-12",
+    category: "fix",
+    priority: "critical",
+    status: "merged",
+    author: "Ememman",
+    branch: "fix/remove-dev-in-the-deployment",
+    url: "https://github.com/Ememman/OS/pull/148",
+  },
+  {
+    id: "pr-147",
+    prNumber: 147,
+    title: "Fix the Layouts and Organize the templates in the Notes",
+    body: "Resolved template dropdown z-index clipping bug, added clean responsive split-view editor, and improved typography.",
+    date: "2026-11-12",
+    category: "fix",
+    priority: "high",
+    status: "merged",
+    author: "Ememman",
+    branch: "fix/notes-layouts-templates",
+    url: "https://github.com/Ememman/OS/pull/147",
+  },
+  {
+    id: "pr-146",
+    prNumber: 146,
+    title: "Updated Main │ Organize the Terminal's layout in the mobile-view or it's reponsiveness",
+    body: "Merged mobile terminal responsive layout improvements into the primary production branch.",
+    date: "2026-11-12",
+    category: "feature",
+    priority: "medium",
+    status: "merged",
+    author: "Ememman",
+    branch: "dev",
+    url: "https://github.com/Ememman/OS/pull/146",
+  },
+  {
+    id: "pr-145",
+    prNumber: 145,
+    title: "Organize the Terminal's layout in the mobile-view or it's reponsiveness",
+    body: "Enhanced terminal shell responsiveness: horizontal touch quick-action pills, full viewport wrapping, and enhanced command execution.",
+    date: "2026-11-12",
+    category: "fix",
+    priority: "high",
+    status: "merged",
+    author: "Ememman",
+    branch: "fix/terminal-reponsiveness",
+    url: "https://github.com/Ememman/OS/pull/145",
+  },
+  {
+    id: "pr-144",
+    prNumber: 144,
+    title: "Updated Main │ Preview overlapping issue in the responsiveness",
+    body: "Merged sandbox layout fixes preventing live preview container from breaking viewport boundaries.",
+    date: "2026-11-12",
+    category: "bug",
+    priority: "high",
+    status: "merged",
+    author: "Ememman",
+    branch: "dev",
+    url: "https://github.com/Ememman/OS/pull/144",
+  },
+  {
+    id: "pr-143",
+    prNumber: 143,
+    title: "Preview overlapping issue in the responsiveness",
+    body: "Fixed CodePlay Sandbox preview iframe overflowing horizontal boundaries on mobile viewport and added word wrap to code editor.",
+    date: "2026-11-12",
+    category: "bug",
+    priority: "high",
+    status: "merged",
+    author: "Ememman",
+    branch: "fix/codeplay-preview-issue",
+    url: "https://github.com/Ememman/OS/pull/143",
+  },
+  {
+    id: "pr-142",
+    prNumber: 142,
+    title: "Updated Main │ Fix the overlapping issue in the mobile-responsiveness in CodePlay",
+    body: "Resolved mobile view slider bugs in CodePlay by enforcing CSS touch constraints and eye preview icon.",
+    date: "2026-11-12",
+    category: "bug",
+    priority: "high",
+    status: "merged",
+    author: "Ememman",
+    branch: "dev",
+    url: "https://github.com/Ememman/OS/pull/142",
+  },
+];
+
+function parseGithubPR(pr: any): UpdateItem {
+  const prNumber = pr.number;
+  const id = `pr-${prNumber}`;
+  const title = pr.title || `Pull Request #${prNumber}`;
+  const author = pr.user?.login || "Ememman";
+  const authorAvatar = pr.user?.avatar_url;
+  const branch = pr.head?.ref || "main";
+  const status: UpdateStatus = pr.merged_at ? "merged" : pr.state === "closed" ? "closed" : "open";
+  const date = pr.created_at ? pr.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10);
+  const url = pr.html_url || `https://github.com/Ememman/OS/pull/${prNumber}`;
+  const rawBody = (pr.body || "").trim();
+  const body = rawBody || `Pull Request #${prNumber} on Ememman/OS: ${title}. Branch: ${branch}`;
+
+  const labelNames: string[] = Array.isArray(pr.labels)
+    ? pr.labels.map((l: any) => (l.name || "").toLowerCase())
+    : [];
+  const textCorpus = `${title} ${rawBody} ${branch} ${labelNames.join(" ")}`.toLowerCase();
+
+  let category: UpdateCategory = "feature";
+  if (
+    labelNames.some((l) => l.includes("bug")) ||
+    /\b(bug|overlap|issue|broken|crash|error|leak|fail)\b/i.test(textCorpus)
+  ) {
+    category = "bug";
+  } else if (
+    labelNames.some((l) => l.includes("fix") || l.includes("patch")) ||
+    /\b(fix|resolve|patch|repair|clean|correct|remove|refactor)\b/i.test(textCorpus)
+  ) {
+    category = "fix";
+  } else {
+    category = "feature";
+  }
+
+  let priority: UpdatePriority = "medium";
+  if (
+    labelNames.some((l) => l.includes("critical") || l.includes("p0") || l.includes("urgent")) ||
+    /\b(critical|emergency|hotfix|security|fatal|deployment)\b/i.test(textCorpus)
+  ) {
+    priority = "critical";
+  } else if (
+    labelNames.some((l) => l.includes("high") || l.includes("p1")) ||
+    category === "bug" ||
+    /\b(high|urgent|alert|breaking|fail)\b/i.test(textCorpus)
+  ) {
+    priority = "high";
+  } else if (
+    labelNames.some((l) => l.includes("low") || l.includes("p3") || l.includes("minor")) ||
+    /\b(low|minor|docs|chore|tweak|style|readme)\b/i.test(textCorpus)
+  ) {
+    priority = "low";
+  } else {
+    priority = "medium";
+  }
+
+  return {
+    id,
+    prNumber,
+    title,
+    body,
+    date,
+    category,
+    priority,
+    status,
+    author,
+    authorAvatar,
+    branch,
+    url,
+    pinned: false,
+  };
+}
 
 export default function Updates() {
   const { systemSounds, notify } = useOS();
-  const [updates, setUpdates] = useState<UpdateItem[]>([]);
+  const [updates, setUpdates] = useState<UpdateItem[]>(FALLBACK_UPDATES);
   const [reactions, setReactions] = useState<Record<string, DetailedReaction>>({});
-  const [loading, setLoading] = useState(true);
-  const [activeTag, setActiveTag] = useState<string>("all");
+  const [loading, setLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Filters
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [activePriority, setActivePriority] = useState<string>("all");
+  const [activeStatus, setActiveStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"newest" | "popular" | "oldest">("newest");
-  const [justReacted, setJustReacted] = useState<{ id: string; type: string } | null>(null);
+
+  // Local user reacted states (real-time toggle feedback)
+  const [userReactions, setUserReactions] = useState<Record<string, Record<string, boolean>>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("os_updates_user_reactions") || "{}");
+    } catch {
+      return {};
+    }
+  });
+
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // New update modal / drawer state
-  const [isComposerOpen, setIsComposerOpen] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newTag, setNewTag] = useState<UpdateItem["tag"]>("feature");
-  const [newBody, setNewBody] = useState("");
-  const [newPinned, setNewPinned] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Fetch real-time updates directly from GitHub PR API and backend
+  const fetchUpdates = async (showRefreshIndicator = false) => {
+    if (showRefreshIndicator) setIsRefreshing(true);
+    else setLoading(true);
 
-  // Fetch initial updates and reactions (merges live server updates, real-time GitHub commits, and custom published updates)
-  const fetchUpdates = async () => {
-    setLoading(true);
     try {
-      const [uRes, rRes] = await Promise.all([
+      // Fetch backend updates & reactions and live GitHub Pull Requests simultaneously
+      const [uRes, rRes, ghRes] = await Promise.all([
         fetch(`${API_URL}/api/updates`).catch(() => null),
-        fetch(`${API_URL}/api/updates/reactions`).catch(() => null)
+        fetch(`${API_URL}/api/updates/reactions`).catch(() => null),
+        fetch("https://api.github.com/repos/Ememman/OS/pulls?state=all&per_page=30", {
+          headers: { Accept: "application/vnd.github.v3+json" },
+        }).catch(() => null),
       ]);
 
-      let baseList: UpdateItem[] = [];
+      const mergedMap = new Map<string, UpdateItem>();
+
+      // Seed with fallback updates first
+      FALLBACK_UPDATES.forEach((u) => mergedMap.set(u.id, u));
+
+      // Merge backend updates if available
       if (uRes && uRes.ok) {
-        baseList = await uRes.json();
+        const serverList = await uRes.json();
+        if (Array.isArray(serverList)) {
+          serverList.forEach((u: any) => {
+            const formatted = u.prNumber ? u : parseGithubPR(u);
+            mergedMap.set(formatted.id, formatted);
+          });
+        }
       }
 
-      // Fetch live real-time commits directly from GitHub API for Ememman/OS
-      try {
-        const ghRes = await fetch("https://api.github.com/repos/Ememman/OS/commits?per_page=15");
-        if (ghRes.ok) {
-          const ghCommits = await ghRes.json();
-          if (Array.isArray(ghCommits)) {
-            for (const c of ghCommits) {
-              const shaShort = c.sha?.slice(0, 7) || "commit";
-              const id = `gh-${shaShort}`;
-              if (!baseList.some((u) => u.id === id)) {
-                const fullMsg = c.commit?.message || "Repository update";
-                const lines = fullMsg.split("\n").filter((l: string) => l.trim().length > 0);
-                const title = lines[0]?.slice(0, 120) || "Codebase commit";
-                const body =
-                  lines.slice(1).join(" ").trim() ||
-                  `Commit ${shaShort} on Ememman/OS by ${c.commit?.author?.name || "Emman"}.`;
-
-                let tag: UpdateItem["tag"] = "feature";
-                const lower = title.toLowerCase();
-                if (/fix|bug|patch|resolve|correct|clean/.test(lower)) tag = "fix";
-                else if (/launch|initial|release|v\d/.test(lower)) tag = "launch";
-                else if (/perf|speed|optimiz|fast/.test(lower)) tag = "performance";
-                else if (/modifi|update|enhance|improve|merge/.test(lower)) tag = "feature";
-
-                baseList.push({
-                  id,
-                  date: c.commit?.author?.date
-                    ? c.commit.author.date.slice(0, 10)
-                    : new Date().toISOString().slice(0, 10),
-                  tag,
-                  title,
-                  body,
-                  pinned: false
-                });
-              }
-            }
-          }
+      // Merge live GitHub PRs
+      if (ghRes && ghRes.ok) {
+        const ghPulls = await ghRes.json();
+        if (Array.isArray(ghPulls)) {
+          ghPulls.forEach((pr: any) => {
+            const parsed = parseGithubPR(pr);
+            mergedMap.set(parsed.id, parsed);
+          });
         }
-      } catch {}
+      }
 
-      // Prepend any custom updates published locally by the user
-      try {
-        const localCustom = JSON.parse(localStorage.getItem("os_custom_published_updates") || "[]");
-        if (Array.isArray(localCustom)) {
-          for (const item of localCustom) {
-            if (!baseList.some((u) => u.id === item.id)) {
-              baseList.unshift(item);
-            }
-          }
-        }
-      } catch {}
+      const list = Array.from(mergedMap.values());
+      setUpdates(list);
 
-      setUpdates(baseList);
-
+      // Handle real-time reactions payload (starts clean, zero hardcoding)
       if (rRes && rRes.ok) {
         const rData = await rRes.json();
         if (rData.detailed) {
@@ -154,9 +416,10 @@ export default function Updates() {
         }
       }
     } catch {
-      // offline fallback handled gracefully
+      // Graceful offline fallback
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -164,18 +427,9 @@ export default function Updates() {
     fetchUpdates();
   }, []);
 
-  // Real-time Socket.IO synchronization
+  // Real-time WebSocket synchronization for reactions, pins, and updates
   useEffect(() => {
     const socket = getSocket();
-
-    const onNewUpdate = (newEntry: UpdateItem) => {
-      setUpdates((prev) => {
-        if (prev.some((u) => u.id === newEntry.id)) return prev;
-        return [newEntry, ...prev];
-      });
-      if (systemSounds) soundFx.playNotification();
-      notify("New Update Published", newEntry.title, "info");
-    };
 
     const onReacted = ({ id, type, count, reactions: detailed }: any) => {
       setReactions((prev) => ({
@@ -183,51 +437,55 @@ export default function Updates() {
         [id]: detailed || {
           ...(prev[id] || { heart: 0, fire: 0, rocket: 0, party: 0, total: 0 }),
           [type]: ((prev[id]?.[type as keyof DetailedReaction] as number) || 0) + 1,
-          total: count || ((prev[id]?.total || 0) + 1)
-        }
+          total: count || ((prev[id]?.total || 0) + 1),
+        },
       }));
     };
 
-    const onDeleted = ({ id }: { id: string }) => {
-      setUpdates((prev) => prev.filter((u) => u.id !== id));
-      notify("Update Removed", "An update entry was deleted.", "delete");
-    };
-
     const onPinned = ({ id, pinned }: { id: string; pinned: boolean }) => {
-      setUpdates((prev) =>
-        prev.map((u) => (u.id === id ? { ...u, pinned } : u))
-      );
+      setUpdates((prev) => prev.map((u) => (u.id === id ? { ...u, pinned } : u)));
     };
 
-    socket.on("update:new", onNewUpdate);
     socket.on("update:reacted", onReacted);
-    socket.on("update:deleted", onDeleted);
     socket.on("update:pinned", onPinned);
 
     return () => {
-      socket.off("update:new", onNewUpdate);
       socket.off("update:reacted", onReacted);
-      socket.off("update:deleted", onDeleted);
       socket.off("update:pinned", onPinned);
     };
-  }, [systemSounds, notify]);
+  }, []);
 
-  // Send a multi-emoji reaction
+  // Multi-emoji reaction handler (100% real-time, zero hardcoding)
   const react = async (id: string, type: "heart" | "fire" | "rocket" | "party") => {
     if (systemSounds) soundFx.playClick();
-    setJustReacted({ id, type });
-    setTimeout(() => setJustReacted(null), 500);
+
+    // Toggle user reaction state locally
+    const alreadyReacted = Boolean(userReactions[id]?.[type]);
+    const updatedUserReacts = {
+      ...userReactions,
+      [id]: {
+        ...(userReactions[id] || {}),
+        [type]: !alreadyReacted,
+      },
+    };
+    setUserReactions(updatedUserReacts);
+    try {
+      localStorage.setItem("os_updates_user_reactions", JSON.stringify(updatedUserReacts));
+    } catch {}
 
     // Optimistic UI update
+    const delta = alreadyReacted ? -1 : 1;
     setReactions((prev) => {
       const cur = prev[id] || { heart: 0, fire: 0, rocket: 0, party: 0, total: 0 };
+      const nextTypeVal = Math.max(0, cur[type] + delta);
+      const nextTotal = Math.max(0, cur.total + delta);
       return {
         ...prev,
         [id]: {
           ...cur,
-          [type]: cur[type] + 1,
-          total: cur.total + 1
-        }
+          [type]: nextTypeVal,
+          total: nextTotal,
+        },
       };
     });
 
@@ -235,536 +493,453 @@ export default function Updates() {
       await fetch(`${API_URL}/api/updates/${id}/react`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type })
+        body: JSON.stringify({ type, action: alreadyReacted ? "remove" : "add" }),
       });
     } catch {
-      // rollback or ignore
+      // Fail gracefully
     }
   };
 
   // Toggle pinned update
   const togglePin = async (id: string) => {
     if (systemSounds) soundFx.playClick();
+    setUpdates((prev) =>
+      prev.map((u) => (u.id === id ? { ...u, pinned: !u.pinned } : u))
+    );
     try {
-      const res = await fetch(`${API_URL}/api/updates/${id}/pin`, { method: "POST" });
-      if (res.ok) {
-        const data = await res.json();
-        setUpdates((prev) => prev.map((u) => (u.id === id ? { ...u, pinned: data.pinned } : u)));
-        notify("Update Pinned", data.pinned ? "Pinned to top" : "Unpinned", "update");
-      }
+      await fetch(`${API_URL}/api/updates/${id}/pin`, { method: "POST" });
     } catch {}
   };
 
-  // Delete update entry
-  const deleteUpdate = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this update entry?")) return;
-    if (systemSounds) soundFx.playTrash();
-    try {
-      const res = await fetch(`${API_URL}/api/updates/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        setUpdates((prev) => prev.filter((u) => u.id !== id));
-        notify("Update Removed", "Update entry deleted.", "delete");
-      }
-    } catch {}
-  };
-
-  // Copy update text to clipboard
+  // Copy PR changelog text to clipboard
   const copyUpdate = (item: UpdateItem) => {
     if (systemSounds) soundFx.playClick();
-    const text = `[Portfolio OS Update - ${item.title}]\n${item.date} (${item.tag.toUpperCase()})\n\n${item.body}`;
+    const text = `[Portfolio OS PR #${item.prNumber} - ${item.title}]\nCategory: ${item.category.toUpperCase()} | Priority: ${item.priority.toUpperCase()} | Status: ${item.status.toUpperCase()}\n${item.date} by @${item.author}\n\n${item.body}\n\nLink: ${item.url}`;
     navigator.clipboard.writeText(text);
     setCopiedId(item.id);
-    notify("Copied to Clipboard", "Update changelog copied to clipboard.", "success");
+    notify("Copied to Clipboard", `PR #${item.prNumber} copied to clipboard.`, "success");
     setTimeout(() => setCopiedId(null), 1800);
   };
 
-  // Publish new update
-  const handlePublish = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim() || !newBody.trim()) {
-      notify("Missing Fields", "Please provide a title and changelog description.", "warning");
-      return;
-    }
-    setIsSubmitting(true);
-
-    const newEntry: UpdateItem = {
-      id: `u-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      date: new Date().toISOString().slice(0, 10),
-      tag: newTag,
-      title: newTitle.trim(),
-      body: newBody.trim(),
-      pinned: newPinned
-    };
-
-    // Save locally immediately to preserve user-published updates
-    try {
-      const stored = JSON.parse(localStorage.getItem("os_custom_published_updates") || "[]");
-      stored.unshift(newEntry);
-      localStorage.setItem("os_custom_published_updates", JSON.stringify(stored));
-    } catch {}
-
-    setUpdates((prev) => [newEntry, ...prev.filter((u) => u.id !== newEntry.id)]);
-    setReactions((prev) => ({
-      ...prev,
-      [newEntry.id]: { heart: 1, fire: 0, rocket: 0, party: 0, total: 1 }
-    }));
-
-    try {
-      await fetch(`${API_URL}/api/updates`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newEntry)
-      });
-    } catch {}
-
-    setNewTitle("");
-    setNewBody("");
-    setNewPinned(false);
-    setIsComposerOpen(false);
-    setIsSubmitting(false);
-    if (systemSounds) soundFx.playSuccess();
-    notify("Update Published", `"${newEntry.title}" is now live!`, "success");
-  };
-
-  // Tag filter counts
-  const tagCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: updates.length };
-    updates.forEach((u) => {
-      counts[u.tag] = (counts[u.tag] || 0) + 1;
-    });
-    return counts;
-  }, [updates]);
-
-  // Filtered and sorted updates
+  // Filter and sort updates
   const filteredUpdates = useMemo(() => {
     let result = [...updates];
 
-    if (activeTag !== "all") {
-      result = result.filter((u) => u.tag === activeTag);
+    // Category Filter
+    if (activeCategory !== "all") {
+      result = result.filter((u) => u.category === activeCategory);
     }
 
+    // Priority Filter
+    if (activePriority !== "all") {
+      result = result.filter((u) => u.priority === activePriority);
+    }
+
+    // Status Filter
+    if (activeStatus !== "all") {
+      result = result.filter((u) => u.status === activeStatus);
+    }
+
+    // Search Query
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
       result = result.filter(
-        (u) => u.title.toLowerCase().includes(q) || u.body.toLowerCase().includes(q)
+        (u) =>
+          u.title.toLowerCase().includes(q) ||
+          u.body.toLowerCase().includes(q) ||
+          String(u.prNumber).includes(q) ||
+          u.author.toLowerCase().includes(q) ||
+          (u.branch && u.branch.toLowerCase().includes(q))
       );
     }
 
+    // Sorting
     if (sortBy === "popular") {
       result.sort((a, b) => (reactions[b.id]?.total || 0) - (reactions[a.id]?.total || 0));
     } else if (sortBy === "oldest") {
-      result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      result.sort((a, b) => (a.prNumber || 0) - (b.prNumber || 0));
     } else {
-      // Default newest first, keeping pinned at very top
+      // Default: pinned float to top, then newest PR # first
       result.sort((a, b) => {
         if (a.pinned && !b.pinned) return -1;
         if (!a.pinned && b.pinned) return 1;
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
+        return (b.prNumber || 0) - (a.prNumber || 0);
       });
     }
 
     return result;
-  }, [updates, activeTag, searchQuery, sortBy, reactions]);
+  }, [updates, activeCategory, activePriority, activeStatus, searchQuery, sortBy, reactions]);
+
+  // Summary Metrics
+  const totalPRs = updates.length;
+  const mergedPRs = updates.filter((u) => u.status === "merged").length;
+  const openPRs = updates.filter((u) => u.status === "open").length;
+  const totalReactionsCount = Object.values(reactions).reduce(
+    (acc, curr) => acc + (curr?.total || 0),
+    0
+  );
 
   return (
-    <div className="flex flex-col h-full bg-slate-950/40 text-white select-text">
-      {/* Top Header Bar (Sticky) */}
-      <div className="shrink-0 p-3 sm:p-4 border-b border-white/10 bg-[#070a12]/95 backdrop-blur-md sticky top-0 z-20 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                <GIconUpdates size={16} />
-              </span>
-              <h2 className="font-display text-lg font-bold tracking-tight text-white">Changelog & System Updates</h2>
+    <div className="flex flex-col h-full bg-[#0a0a0f] text-white select-none overflow-hidden">
+      {/* Top Header & Metrics Banner */}
+      <div className="p-3.5 sm:p-5 border-b border-white/10 bg-[#0c0d14]/95 backdrop-blur-md space-y-3 shrink-0 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center text-accent shrink-0">
+              <GIconUpdates size={18} />
             </div>
-            <div className="flex flex-wrap items-center gap-2 mt-0.5">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-display text-base sm:text-lg font-bold tracking-tight">
+                  System Updates & Pull Requests
+                </h2>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/20 text-accent font-semibold border border-accent/30">
+                  Live PRs
+                </span>
+              </div>
               <p className="text-xs text-white/50">
-                Real-time updates stream directly from Emman's GitHub & published releases.
+                Direct changelog from GitHub pull requests on <code className="text-accent/80">Ememman/OS</code>.
               </p>
-              <a
-                href="https://github.com/Ememman/OS"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-[11px] text-accent hover:underline font-medium"
-              >
-                github.com/Ememman/OS ↗
-              </a>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                if (systemSounds) soundFx.playClick();
-                fetchUpdates();
-              }}
-              title="Refresh updates"
-              className="p-2 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition"
-            >
-              <GIconRotateRight size={14} className={loading ? "animate-spin" : ""} />
-            </button>
+          {/* Metrics & Refresh */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-[11px] text-white/70">
+              <span className="font-semibold text-white">{totalPRs}</span>
+              <span className="text-white/40">Total</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-purple-500/15 border border-purple-500/30 text-[11px] text-purple-300">
+              <span className="font-semibold">{mergedPRs}</span>
+              <span className="text-purple-300/70">Merged</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-[11px] text-emerald-300">
+              <span className="font-semibold">{openPRs}</span>
+              <span className="text-emerald-300/70">Open</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-rose-500/15 border border-rose-500/30 text-[11px] text-rose-300">
+              <GIconHeart size={11} className="text-rose-400 fill-rose-400" />
+              <span className="font-semibold">{totalReactionsCount}</span>
+            </div>
 
             <button
-              onClick={() => {
-                if (systemSounds) soundFx.playClick();
-                setIsComposerOpen(!isComposerOpen);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-accent text-white hover:opacity-90 transition shadow-lg shadow-accent/20"
+              onClick={() => fetchUpdates(true)}
+              disabled={isRefreshing}
+              title="Sync latest GitHub Pull Requests"
+              className="p-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition cursor-pointer disabled:opacity-50"
             >
-              <GIconPlus size={14} />
-              <span>{isComposerOpen ? "Close Composer" : "Publish Update"}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Search & Sort Controls */}
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <div className="relative flex-1 min-w-[180px]">
-            <GIconSearch size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search updates or keywords..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs bg-black/30 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-accent"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
-              >
-                <GIconClose size={12} />
-              </button>
-            )}
-          </div>
-
-          {/* Sort Selector */}
-          <div className="flex items-center gap-1 bg-black/30 border border-white/10 rounded-lg p-0.5 text-xs">
-            <button
-              onClick={() => {
-                if (systemSounds) soundFx.playClick();
-                setSortBy("newest");
-              }}
-              className={`px-2.5 py-1 rounded-md transition ${sortBy === "newest" ? "bg-white/15 text-white font-medium" : "text-white/60 hover:text-white"}`}
-            >
-              Newest
-            </button>
-            <button
-              onClick={() => {
-                if (systemSounds) soundFx.playClick();
-                setSortBy("popular");
-              }}
-              className={`px-2.5 py-1 rounded-md transition ${sortBy === "popular" ? "bg-white/15 text-white font-medium" : "text-white/60 hover:text-white"}`}
-            >
-              Most Reacted
-            </button>
-            <button
-              onClick={() => {
-                if (systemSounds) soundFx.playClick();
-                setSortBy("oldest");
-              }}
-              className={`px-2.5 py-1 rounded-md transition ${sortBy === "oldest" ? "bg-white/15 text-white font-medium" : "text-white/60 hover:text-white"}`}
-            >
-              Oldest
+              <GIconRotateRight size={14} className={isRefreshing ? "animate-spin text-accent" : ""} />
             </button>
           </div>
         </div>
 
-        {/* Tag Filters */}
-        <div className="flex items-center gap-1.5 mt-3 overflow-x-auto thin-scroll pb-1">
-          <button
-            onClick={() => {
-              if (systemSounds) soundFx.playClick();
-              setActiveTag("all");
-            }}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium transition shrink-0 ${
-              activeTag === "all"
-                ? "bg-white text-slate-900"
-                : "bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            All <span className="opacity-70 ml-1">({tagCounts.all || 0})</span>
-          </button>
+        {/* Search & Multi-Filter Control Bar */}
+        <div className="flex flex-col gap-2.5 pt-1">
+          {/* Row 1: Search + Quick Category Pills */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 w-full sm:w-72">
+              <GIconSearch size={14} className="text-white/40 shrink-0" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search PR title, #number, author, branch..."
+                className="bg-transparent outline-none text-xs text-white placeholder:text-white/35 w-full"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="text-white/40 hover:text-white text-xs"
+                >
+                  <GIconClose size={12} />
+                </button>
+              )}
+            </div>
 
-          {Object.entries(TAG_META).map(([tagKey, meta]) => {
-            const count = tagCounts[tagKey] || 0;
-            const Icon = meta.Icon;
-            const active = activeTag === tagKey;
-            return (
+            {/* Category Pills (Feature, Fix, Bug) */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
               <button
-                key={tagKey}
                 onClick={() => {
+                  setActiveCategory("all");
                   if (systemSounds) soundFx.playClick();
-                  setActiveTag(tagKey);
                 }}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition shrink-0 ${
-                  active
-                    ? "ring-1 text-white shadow-sm"
-                    : "bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+                className={`text-xs px-3 py-1 rounded-xl border transition cursor-pointer whitespace-nowrap ${
+                  activeCategory === "all"
+                    ? "bg-accent text-white border-accent shadow-sm shadow-accent/20 font-semibold"
+                    : "border-white/10 text-white/60 hover:text-white hover:bg-white/5"
                 }`}
-                style={{
-                  background: active ? meta.bg : undefined,
-                  borderColor: active ? meta.color : undefined,
-                  color: active ? meta.color : undefined,
-                }}
               >
-                <Icon size={12} />
-                <span>{meta.label}</span>
-                <span className="opacity-70 text-[10px]">({count})</span>
+                All Categories
               </button>
-            );
-          })}
+              {(["feature", "fix", "bug"] as UpdateCategory[]).map((cat) => {
+                const meta = CATEGORY_META[cat];
+                const isSelected = activeCategory === cat;
+                const Icon = meta.Icon;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => {
+                      setActiveCategory(cat);
+                      if (systemSounds) soundFx.playClick();
+                    }}
+                    className={`text-xs px-2.5 py-1 rounded-xl border flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap ${
+                      isSelected
+                        ? `${meta.bg} ${meta.color} ${meta.border} font-semibold shadow-sm`
+                        : "border-white/10 text-white/60 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    <Icon size={12} className={meta.color} />
+                    <span>{meta.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Row 2: Secondary Filters (Priority, Status, Sort) */}
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs pt-0.5 border-t border-white/5">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Priority Filter */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-white/40">Priority:</span>
+                <select
+                  value={activePriority}
+                  onChange={(e) => setActivePriority(e.target.value)}
+                  className="bg-white/5 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-white/80 focus:outline-none focus:border-accent cursor-pointer"
+                >
+                  <option value="all">All Priorities</option>
+                  <option value="critical">Critical</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+
+              {/* Status Filter */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-white/40">Status:</span>
+                <select
+                  value={activeStatus}
+                  onChange={(e) => setActiveStatus(e.target.value)}
+                  className="bg-white/5 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-white/80 focus:outline-none focus:border-accent cursor-pointer"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="merged">Merged</option>
+                  <option value="open">Open</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Sort Order */}
+            <div className="flex items-center gap-1.5 ml-auto">
+              <span className="text-[11px] text-white/40">Sort:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-white/5 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-white/80 focus:outline-none focus:border-accent cursor-pointer"
+              >
+                <option value="newest">Newest PR First</option>
+                <option value="popular">Most Reacted</option>
+                <option value="oldest">Oldest PR First</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto thin-scroll p-4 space-y-3">
-        {/* Publish Update Composer Modal / Box */}
-        {isComposerOpen && (
-          <form
-            onSubmit={handlePublish}
-            className="rounded-2xl border border-accent/40 bg-accent/5 p-4 mb-4 backdrop-blur-md shadow-xl animate-scaleIn"
-          >
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
-              <span className="text-xs font-bold text-accent uppercase tracking-wider flex items-center gap-1.5">
-                <GIconPlus size={14} /> Compose New Changelog Update
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsComposerOpen(false)}
-                className="text-white/40 hover:text-white p-1"
-              >
-                <GIconClose size={14} />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-medium text-white/70 mb-1">Update Title</label>
-                <input
-                  type="text"
-                  required
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="e.g. Added Real-Time Notes Cloud Sync & Unit Converter"
-                  className="w-full px-3 py-1.5 rounded-lg text-xs bg-black/40 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:border-accent"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-medium text-white/70 mb-1">Category Tag</label>
-                  <select
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value as any)}
-                    className="w-full px-3 py-1.5 rounded-lg text-xs bg-black/40 border border-white/15 text-white focus:outline-none focus:border-accent"
-                  >
-                    <option value="feature">Feature</option>
-                    <option value="fix">Bug Fix</option>
-                    <option value="launch">Release / Launch</option>
-                    <option value="announcement">Announcement</option>
-                    <option value="performance">Performance</option>
-                  </select>
-                </div>
-
-                <div className="flex items-center gap-2 pt-5">
-                  <label className="flex items-center gap-2 text-xs text-white/80 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={newPinned}
-                      onChange={(e) => setNewPinned(e.target.checked)}
-                      className="rounded bg-black/40 border-white/20 text-accent focus:ring-accent"
-                    />
-                    <span>Pin this update to top</span>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-white/70 mb-1">Changelog Description</label>
-                <textarea
-                  required
-                  rows={3}
-                  value={newBody}
-                  onChange={(e) => setNewBody(e.target.value)}
-                  placeholder="Explain what was shipped, technical details, fixes or architectural improvements..."
-                  className="w-full px-3 py-2 rounded-lg text-xs bg-black/40 border border-white/15 text-white placeholder-white/30 focus:outline-none focus:border-accent leading-relaxed"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setIsComposerOpen(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs text-white/60 hover:text-white hover:bg-white/10 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-accent text-white hover:opacity-90 transition disabled:opacity-50"
-                >
-                  {isSubmitting ? "Broadcasting..." : "Publish & Sync Live"}
-                </button>
-              </div>
-            </div>
-          </form>
-        )}
-
-        {/* Loading skeleton */}
-        {loading && (
-          <div className="space-y-3">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="rounded-xl border border-white/10 bg-white/5 p-4 animate-pulse">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="h-4 w-20 bg-white/10 rounded-full" />
-                  <div className="h-3 w-16 bg-white/10 rounded" />
-                </div>
-                <div className="h-4 w-3/4 bg-white/10 rounded mb-2.5" />
-                <div className="h-3 w-full bg-white/5 rounded mb-1.5" />
-                <div className="h-3 w-2/3 bg-white/5 rounded" />
-              </div>
-            ))}
+      {/* PR Updates Feed List */}
+      <div className="flex-1 overflow-y-auto thin-scroll p-3.5 sm:p-5 space-y-3.5">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 text-white/40 space-y-2">
+            <GIconRotateRight size={24} className="animate-spin text-accent" />
+            <span className="text-xs">Fetching real-time Pull Requests from GitHub...</span>
           </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && filteredUpdates.length === 0 && (
-          <div className="text-center py-12 px-4 rounded-xl border border-white/5 bg-white/[0.02]">
-            <GIconUpdates size={28} className="mx-auto text-white/30 mb-2" />
-            <div className="text-sm font-medium text-white/70">No updates matching your search</div>
-            <p className="text-xs text-white/40 mt-1 max-w-sm mx-auto">
-              Try clearing filters or search keywords, or compose a new update to broadcast to all visitors.
+        ) : filteredUpdates.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-white/40 text-center space-y-2">
+            <GIconSearch size={24} className="opacity-40" />
+            <p className="text-sm font-medium">No pull requests match your active filters</p>
+            <p className="text-xs text-white/30">
+              Try resetting the category, priority, or search parameters.
             </p>
-            {activeTag !== "all" || searchQuery ? (
-              <button
-                onClick={() => {
-                  setActiveTag("all");
-                  setSearchQuery("");
-                }}
-                className="mt-3 px-3 py-1 text-xs font-medium bg-white/10 hover:bg-white/15 rounded-lg transition"
-              >
-                Reset Filters
-              </button>
-            ) : null}
           </div>
-        )}
-
-        {/* Update Cards */}
-        <div className="space-y-3">
-          {filteredUpdates.map((u) => {
-            const meta = TAG_META[u.tag] || TAG_META.feature;
-            const Icon = meta.Icon;
-            const itemReactions = reactions[u.id] || { heart: 0, fire: 0, rocket: 0, party: 0, total: 0 };
-            const isJustReacted = justReacted?.id === u.id;
+        ) : (
+          filteredUpdates.map((item) => {
+            const catMeta = CATEGORY_META[item.category] || CATEGORY_META.feature;
+            const priorityMeta = PRIORITY_META[item.priority] || PRIORITY_META.medium;
+            const statusMeta = STATUS_META[item.status] || STATUS_META.merged;
+            const CatIcon = catMeta.Icon;
+            const prReactions = reactions[item.id] || { heart: 0, fire: 0, rocket: 0, party: 0, total: 0 };
+            const userItemReacts = userReactions[item.id] || {};
 
             return (
               <div
-                key={u.id}
-                className={`group relative rounded-xl border p-4 transition duration-200 ${
-                  u.pinned
-                    ? "border-amber-500/40 bg-gradient-to-br from-amber-500/[0.08] to-white/[0.02] shadow-lg shadow-amber-500/5"
-                    : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
+                key={item.id}
+                className={`rounded-2xl border bg-white/[0.03] backdrop-blur-sm p-4 sm:p-5 transition hover:border-white/20 flex flex-col justify-between space-y-3 relative group ${
+                  item.pinned ? "border-accent/40 bg-accent/[0.03] shadow-md shadow-accent/5" : "border-white/10"
                 }`}
               >
-                {/* Header info */}
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-0.5 rounded-full uppercase tracking-wider"
-                      style={{ background: meta.bg, color: meta.color, border: `1px solid ${meta.color}33` }}
+                {/* Top Badge Strip: PR Number, Status, Category, Priority, Actions */}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {/* PR Number Tag */}
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold bg-white/10 text-white hover:bg-accent/30 hover:text-white border border-white/15 transition flex items-center gap-1"
+                      title="Open PR on GitHub"
                     >
-                      <Icon size={11} /> {meta.label}
+                      <GIconGithub size={11} />
+                      <span>#{item.prNumber}</span>
+                    </a>
+
+                    {/* PR Status Badge */}
+                    <span
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold border ${statusMeta.badgeClass}`}
+                    >
+                      {statusMeta.label}
                     </span>
 
-                    {u.pinned && (
-                      <span className="flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
-                        <GIconPin size={10} /> Pinned
-                      </span>
-                    )}
+                    {/* Category Badge (Feature, Fix, Bug) */}
+                    <span
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold border flex items-center gap-1 ${catMeta.bg} ${catMeta.color} ${catMeta.border}`}
+                    >
+                      <CatIcon size={11} className={catMeta.color} />
+                      <span>{catMeta.label}</span>
+                    </span>
 
-                    <span className="text-[11px] text-white/40">
-                      {new Date(u.date).toLocaleDateString([], {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric"
-                      })}
+                    {/* Priority Badge (Critical, High, Medium, Low) */}
+                    <span
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold border flex items-center gap-1.5 ${priorityMeta.badgeClass}`}
+                    >
+                      {priorityMeta.dotClass && (
+                        <span className={`w-1.5 h-1.5 rounded-full ${priorityMeta.dotClass}`} />
+                      )}
+                      <span>{priorityMeta.label} Priority</span>
                     </span>
                   </div>
 
-                  {/* Actions: Pin, Copy, Delete */}
-                  <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition">
+                  {/* Header Actions: Pin & External PR Link */}
+                  <div className="flex items-center gap-1.5 ml-auto">
                     <button
-                      onClick={() => togglePin(u.id)}
-                      title={u.pinned ? "Unpin update" : "Pin to top"}
-                      className={`p-1.5 rounded-md hover:bg-white/10 transition ${u.pinned ? "text-amber-400" : "text-white/40 hover:text-white"}`}
+                      onClick={() => togglePin(item.id)}
+                      title={item.pinned ? "Unpin update" : "Pin update to top"}
+                      className={`p-1.5 rounded-lg border transition cursor-pointer text-xs ${
+                        item.pinned
+                          ? "bg-accent/25 border-accent/40 text-accent"
+                          : "border-white/10 text-white/40 hover:text-white hover:bg-white/5"
+                      }`}
                     >
-                      <GIconPin size={12} />
+                      <GIconPin size={12} className={item.pinned ? "fill-accent" : ""} />
                     </button>
 
-                    <button
-                      onClick={() => copyUpdate(u)}
-                      title="Copy update changelog"
-                      className="p-1.5 rounded-md text-white/40 hover:text-white hover:bg-white/10 transition"
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="View Pull Request on GitHub"
+                      className="p-1.5 rounded-lg border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition text-xs"
                     >
-                      {copiedId === u.id ? <GIconCheck size={12} className="text-emerald-400" /> : <GIconCopy size={12} />}
-                    </button>
-
-                    <button
-                      onClick={() => deleteUpdate(u.id)}
-                      title="Delete update"
-                      className="p-1.5 rounded-md text-white/40 hover:text-rose-400 hover:bg-rose-500/10 transition"
-                    >
-                      <GIconTrash size={12} />
-                    </button>
+                      <GIconExternalLink size={12} />
+                    </a>
                   </div>
                 </div>
 
-                {/* Title */}
-                <h3 className="text-sm font-semibold text-white/95 mb-1.5 leading-snug tracking-tight">
-                  {u.title}
-                </h3>
+                {/* PR Title & Changelog Description */}
+                <div className="space-y-1.5">
+                  <h3 className="font-display text-sm sm:text-base font-bold text-white group-hover:text-accent transition-colors leading-snug">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-white/70 leading-relaxed font-sans">
+                    {item.body}
+                  </p>
+                </div>
 
-                {/* Body Content */}
-                <p className="text-xs text-white/70 leading-relaxed font-normal whitespace-pre-line mb-3">
-                  {u.body}
-                </p>
+                {/* Author & Branch Metadata */}
+                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-white/50 pt-1 border-t border-white/5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full overflow-hidden bg-white/10 shrink-0">
+                      {item.authorAvatar ? (
+                        <img src={item.authorAvatar} alt={item.author} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-accent/30 flex items-center justify-center text-[9px] text-accent">
+                          {item.author.slice(0, 1).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <span className="font-mono text-white/70">@{item.author}</span>
+                    {item.branch && (
+                      <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-white/60">
+                        {item.branch}
+                      </span>
+                    )}
+                  </div>
 
-                {/* Multi-Reaction Bar */}
+                  <span className="font-mono text-[10px] text-white/40">
+                    {item.date}
+                  </span>
+                </div>
+
+                {/* Real-time Reaction Bar & Copy Button */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5">
-                  <div className="flex items-center gap-1.5">
-                    {REACTION_BUTTONS.map((btn) => {
-                      const count = (itemReactions as any)[btn.type] || 0;
-                      const isTarget = isJustReacted && justReacted?.type === btn.type;
-                      const BtnIcon = btn.Icon;
+                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                    {REACTION_BUTTONS.map(({ type, Icon, label, color }) => {
+                      const count = prReactions[type] || 0;
+                      const hasUserReacted = Boolean(userItemReacts[type]);
+
                       return (
                         <button
-                          key={btn.type}
-                          onClick={() => react(u.id, btn.type)}
-                          title={`React with ${btn.label}`}
-                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition border cursor-pointer ${
-                            count > 0
-                              ? "bg-white/10 border-white/20 text-white hover:bg-white/15"
-                              : "bg-white/[0.02] border-white/5 text-white/50 hover:bg-white/10 hover:text-white/80"
-                          } ${isTarget ? "scale-110 bg-accent/30 border-accent" : ""}`}
+                          key={type}
+                          onClick={() => react(item.id, type)}
+                          title={`React with ${label}`}
+                          className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border text-xs transition cursor-pointer ${
+                            hasUserReacted
+                              ? "bg-accent/25 border-accent/50 text-white font-semibold shadow-sm"
+                              : "bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10 hover:border-white/20"
+                          }`}
                         >
-                          <BtnIcon size={12} className={btn.color} />
-                          <span className="text-[11px] font-medium">{count}</span>
+                          <Icon size={12} className={hasUserReacted ? color : "text-white/50"} />
+                          <span className="text-[11px]">{count > 0 ? count : ""}</span>
                         </button>
                       );
                     })}
                   </div>
 
-                  <span className="text-[10px] text-white/40">
-                    {itemReactions.total || 0} reaction{itemReactions.total === 1 ? "" : "s"}
-                  </span>
+                  <div className="flex items-center gap-1.5 ml-auto">
+                    <button
+                      onClick={() => copyUpdate(item)}
+                      title="Copy update changelog"
+                      className="px-2.5 py-1 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-xs transition flex items-center gap-1 cursor-pointer"
+                    >
+                      {copiedId === item.id ? (
+                        <>
+                          <GIconCheck size={12} className="text-emerald-400" />
+                          <span className="text-emerald-300 text-[11px]">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <GIconCopy size={12} />
+                          <span className="text-[11px]">Copy</span>
+                        </>
+                      )}
+                    </button>
+
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2.5 py-1 rounded-xl bg-accent text-white font-medium hover:brightness-110 shadow-sm shadow-accent/20 transition text-xs flex items-center gap-1"
+                    >
+                      <span className="text-[11px]">View PR</span>
+                      <GIconExternalLink size={10} />
+                    </a>
+                  </div>
                 </div>
               </div>
             );
-          })}
-        </div>
+          })
+        )}
       </div>
     </div>
   );
