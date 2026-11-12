@@ -17,8 +17,8 @@ export const fileTree: FolderNode = {
       name: "Projects",
       type: "folder",
       children: [
-        { name: "SandreaLee Salon — Customer App.link", type: "app-link", app: "library" },
-        { name: "SandreaLee Salon — Staff App.link", type: "app-link", app: "library" },
+        { name: "SandreaLee Salon — Mobile Application.link", type: "app-link", app: "library" },
+        { name: "SandreaLee Salon — Website.link", type: "app-link", app: "library" },
         { name: "SandreaLee Salon — Admin Dashboard.link", type: "app-link", app: "library" },
         { name: "Straive IMS.link", type: "app-link", app: "library" }
       ]
