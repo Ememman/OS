@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useOS } from "../store/useOS";
+import { useDesktopStore } from "../store/useDesktopStore";
 import {
   GIconSearch,
   GIconTerminal,
@@ -13,6 +14,7 @@ import {
   GIconActivity,
   GIconBookOpen,
   GIconCode,
+  GIconFolder,
 } from "./icons/GravityIcons";
 
 interface ContextMenuProps {
@@ -174,6 +176,17 @@ export default function DesktopContextMenu({ x, y, onClose, widgetsVisible }: Co
         <span className="flex-1 font-medium">
           {widgetsVisible ? "Hide Desktop Widgets" : "Show Desktop Widgets"}
         </span>
+      </button>
+
+      <button
+        onClick={() => {
+          useDesktopStore.getState().resetDesktop();
+          onClose();
+        }}
+        className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors text-left"
+      >
+        <GIconFolder size={14} className="text-amber-400" />
+        <span className="flex-1 font-medium">Reset Desktop Apps</span>
       </button>
 
       <button
