@@ -393,9 +393,9 @@ export default function CodePlay() {
   const lines = currentCode.split("\n");
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0f] text-white select-none">
+    <div className="flex flex-col h-full bg-[#0a0a0f] text-white select-none w-full max-w-full overflow-hidden">
       {/* 1. TOP HEADER & CONTROLS (Sticky Header) */}
-      <div className="px-2.5 sm:px-3.5 py-2 border-b border-white/10 flex items-center justify-between gap-1.5 sm:gap-2 bg-[#0a0a0f]/95 backdrop-blur-md shrink-0 sticky top-0 z-20 shadow-sm">
+      <div className="px-2.5 sm:px-3.5 py-2 border-b border-white/10 flex items-center justify-between gap-1.5 sm:gap-2 bg-[#0a0a0f]/95 backdrop-blur-md shrink-0 sticky top-0 z-20 shadow-sm w-full max-w-full overflow-hidden">
         {/* Title & Info */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center text-accent shrink-0">
@@ -622,14 +622,15 @@ export default function CodePlay() {
                 setMobileTab("preview");
                 setViewMode("preview");
               }}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition flex items-center gap-1 ${
+              className={`px-2 py-1 rounded-md text-[11px] font-medium transition flex items-center gap-1 shrink-0 ${
                 mobileTab === "preview"
                   ? "bg-accent text-white shadow-sm font-semibold"
                   : "text-white/60 hover:text-white"
               }`}
+              title="Preview"
             >
-              <GIconEye size={12} />
-              <span>Preview</span>
+              <GIconEye size={13} />
+              <span className="hidden xs:inline">Preview</span>
             </button>
           )}
 
@@ -640,14 +641,15 @@ export default function CodePlay() {
                 setMobileTab("console");
                 setViewMode("console");
               }}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition flex items-center gap-1 ${
+              className={`px-2 py-1 rounded-md text-[11px] font-medium transition flex items-center gap-1 shrink-0 ${
                 mobileTab === "console"
                   ? "bg-accent text-white shadow-sm font-semibold"
                   : "text-white/60 hover:text-white"
               }`}
             >
               <GIconTerminal size={12} />
-              <span>{selectedLang === "sql" ? "Table" : "Console"}</span>
+              <span className="hidden xs:inline">{selectedLang === "sql" ? "Table" : "Console"}</span>
+              <span className="xs:hidden">{selectedLang === "sql" ? "SQL" : "Logs"}</span>
             </button>
           )}
         </div>
@@ -655,72 +657,76 @@ export default function CodePlay() {
 
       {/* 4. WEB SUB-TABS (When in Web Mode & In Editor View) */}
       {selectedLang === "web" && (mobileTab === "editor" || viewMode !== "preview") && (
-        <div className={`px-2.5 sm:px-3 py-1 bg-[#0b0c12] border-b border-white/10 flex items-center justify-between text-xs font-mono ${
+        <div className={`px-2.5 sm:px-3 py-1 bg-[#0b0c12] border-b border-white/10 flex items-center justify-between text-xs font-mono w-full max-w-full overflow-hidden shrink-0 ${
           mobileTab !== "editor" ? "hidden md:flex" : "flex"
         }`}>
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <button
               type="button"
               onClick={() => setActiveWebTab("html")}
-              className={`px-2.5 sm:px-3 py-1 rounded-t-lg transition flex items-center gap-1.5 ${
+              className={`px-2 sm:px-3 py-1 rounded-t-lg transition flex items-center gap-1.5 ${
                 activeWebTab === "html"
                   ? "bg-[#0d0e15] text-amber-300 font-semibold border-b-2 border-amber-400"
                   : "text-white/50 hover:text-white hover:bg-white/5"
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-              index.html
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>
+              <span className="xs:hidden">html</span>
+              <span className="hidden xs:inline">index.html</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveWebTab("css")}
-              className={`px-2.5 sm:px-3 py-1 rounded-t-lg transition flex items-center gap-1.5 ${
+              className={`px-2 sm:px-3 py-1 rounded-t-lg transition flex items-center gap-1.5 ${
                 activeWebTab === "css"
                   ? "bg-[#0d0e15] text-sky-300 font-semibold border-b-2 border-sky-400"
                   : "text-white/50 hover:text-white hover:bg-white/5"
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-sky-400"></span>
-              style.css
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0"></span>
+              <span className="xs:hidden">css</span>
+              <span className="hidden xs:inline">style.css</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveWebTab("js")}
-              className={`px-2.5 sm:px-3 py-1 rounded-t-lg transition flex items-center gap-1.5 ${
+              className={`px-2 sm:px-3 py-1 rounded-t-lg transition flex items-center gap-1.5 ${
                 activeWebTab === "js"
                   ? "bg-[#0d0e15] text-yellow-300 font-semibold border-b-2 border-yellow-400"
                   : "text-white/50 hover:text-white hover:bg-white/5"
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
-              script.js
+              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0"></span>
+              <span className="xs:hidden">js</span>
+              <span className="hidden xs:inline">script.js</span>
             </button>
           </div>
 
-          {/* Quick Preview shortcut on mobile */}
+          {/* Quick Preview shortcut on mobile: Gravity UI Eye icon button */}
           <button
             type="button"
             onClick={() => {
               setMobileTab("preview");
               setViewMode("preview");
             }}
-            className="md:hidden flex items-center gap-1 text-[11px] text-accent hover:underline font-sans px-1"
+            className="md:hidden p-1.5 rounded-lg bg-accent/20 hover:bg-accent/30 text-accent transition flex items-center justify-center shrink-0 cursor-pointer active:scale-95 shadow-sm border border-accent/30"
+            title="Open Live Preview"
+            aria-label="Open Live Preview"
           >
-            <span>Preview</span>
-            <span>↗</span>
+            <GIconEye size={14} />
           </button>
         </div>
       )}
 
       {/* 5. MAIN WORKSPACE (EDITOR + PREVIEW/OUTPUT) */}
-      <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden w-full max-w-full">
         {/* LEFT PANE: CODE EDITOR */}
         <div
-          className={`flex-1 flex-col min-w-0 border-b md:border-b-0 md:border-r border-white/10 bg-[#0d0e15] ${
+          className={`flex-1 flex-col min-w-0 border-b md:border-b-0 md:border-r border-white/10 bg-[#0d0e15] w-full max-w-full overflow-hidden ${
             mobileTab === "editor" ? "flex" : "hidden md:flex"
           } ${viewMode === "preview" ? "md:hidden" : ""}`}
         >
-          <div className="flex-1 relative flex overflow-hidden min-h-0">
+          <div className="flex-1 relative flex overflow-hidden min-h-0 w-full max-w-full">
             {/* Line Numbers Gutter (Hidden on mobile when wrap is active to maximize width) */}
             <div
               ref={lineNumbersRef}
@@ -748,7 +754,7 @@ export default function CodePlay() {
                   ? `Enter ${activeWebTab.toUpperCase()} code here...`
                   : `Write your ${selectedLang} code here...`
               }
-              className={`flex-1 h-full p-2.5 sm:p-3 bg-transparent text-emerald-300 font-mono text-xs leading-relaxed outline-none resize-none thin-scroll allow-select ${
+              className={`flex-1 h-full p-2.5 sm:p-3 bg-transparent text-emerald-300 font-mono text-xs leading-relaxed outline-none resize-none thin-scroll allow-select w-full max-w-full ${
                 wordWrap
                   ? "whitespace-pre-wrap break-words overflow-x-hidden"
                   : "whitespace-pre overflow-x-auto"
@@ -757,7 +763,7 @@ export default function CodePlay() {
           </div>
 
           {/* Status Bar */}
-          <div className="px-2.5 sm:px-3 py-1 bg-black/30 border-t border-white/5 flex items-center justify-between text-[10px] text-white/40 font-mono shrink-0">
+          <div className="px-2.5 sm:px-3 py-1 bg-black/30 border-t border-white/5 flex items-center justify-between text-[10px] text-white/40 font-mono shrink-0 w-full max-w-full overflow-hidden">
             <div className="flex items-center gap-1.5 sm:gap-2 truncate min-w-0">
               <span className="truncate">
                 {lines.length} lines · {currentCode.length} chars
@@ -794,10 +800,11 @@ export default function CodePlay() {
                   setMobileTab(next);
                   setViewMode(next);
                 }}
-                className="md:hidden text-accent text-[10px] font-sans hover:underline flex items-center gap-0.5 ml-0.5 cursor-pointer"
+                className="md:hidden text-accent text-[10px] font-sans hover:underline flex items-center gap-1 ml-0.5 cursor-pointer py-0.5 px-1.5 rounded bg-accent/10 shrink-0"
+                title="View Output"
               >
-                <span>View Output</span>
-                <span>→</span>
+                <GIconEye size={11} />
+                <span>Output</span>
               </button>
             </div>
           </div>
