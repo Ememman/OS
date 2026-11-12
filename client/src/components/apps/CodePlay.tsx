@@ -75,6 +75,8 @@ export default function CodePlay() {
   const [viewMode, setViewMode] = useState<ViewMode>(() =>
     typeof window !== "undefined" && window.innerWidth < 768 ? "editor" : "split"
   );
+  const [mobileTab, setMobileTab] = useState<"editor" | "preview" | "console">("editor");
+  const [wordWrap, setWordWrap] = useState<boolean>(true);
   const [viewport, setViewport] = useState<ViewportSize>("desktop");
 
   // Console & Execution Results
@@ -83,9 +85,6 @@ export default function CodePlay() {
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [execTime, setExecTime] = useState<number | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
-
-  // Effective view mode for mobile vs desktop
-  const effectiveView: ViewMode = isMobile && viewMode === "split" ? "editor" : viewMode;
 
   // DOM Refs for synchronized line-number scrolling
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -150,6 +149,7 @@ export default function CodePlay() {
     setSqlResult(null);
 
     // Default view mode: on mobile always start in editor; on desktop default to split
+    setMobileTab("editor");
     if (isMobile) {
       setViewMode("editor");
     } else if (lang === "web" || lang === "markdown") {
@@ -161,6 +161,7 @@ export default function CodePlay() {
   const handleSelectTemplate = (template: CodeTemplate) => {
     if (systemSounds) soundFx.playClick();
     setActiveTemplateId(template.id);
+    setMobileTab("editor");
     setOutputLogs([]);
     setExecTime(null);
     setSqlResult(null);
@@ -269,12 +270,12 @@ export default function CodePlay() {
     setExecTime(null);
 
     // On mobile, auto-switch to preview or console so output is immediately visible
-    if (isMobile) {
-      if (selectedLang === "web" || selectedLang === "markdown") {
-        setViewMode("preview");
-      } else {
-        setViewMode("console");
-      }
+    if (selectedLang === "web" || selectedLang === "markdown") {
+      setMobileTab("preview");
+      if (isMobile) setViewMode("preview");
+    } else {
+      setMobileTab("console");
+      if (isMobile) setViewMode("console");
     }
 
     if (selectedLang === "web") {
@@ -599,9 +600,13 @@ export default function CodePlay() {
         {/* Mobile View Switcher Segmented Control */}
         <div className="flex items-center bg-black/60 border border-white/10 rounded-lg p-0.5 shrink-0">
           <button
-            onClick={() => setViewMode("editor")}
+            type="button"
+            onClick={() => {
+              setMobileTab("editor");
+              setViewMode("editor");
+            }}
             className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition flex items-center gap-1 ${
-              effectiveView === "editor"
+              mobileTab === "editor"
                 ? "bg-accent text-white shadow-sm font-semibold"
                 : "text-white/60 hover:text-white"
             }`}
@@ -612,9 +617,13 @@ export default function CodePlay() {
 
           {(selectedLang === "web" || selectedLang === "markdown") && (
             <button
-              onClick={() => setViewMode("preview")}
+              type="button"
+              onClick={() => {
+                setMobileTab("preview");
+                setViewMode("preview");
+              }}
               className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition flex items-center gap-1 ${
-                effectiveView === "preview"
+                mobileTab === "preview"
                   ? "bg-accent text-white shadow-sm font-semibold"
                   : "text-white/60 hover:text-white"
               }`}
@@ -626,9 +635,13 @@ export default function CodePlay() {
 
           {selectedLang !== "markdown" && (
             <button
-              onClick={() => setViewMode("console")}
+              type="button"
+              onClick={() => {
+                setMobileTab("console");
+                setViewMode("console");
+              }}
               className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition flex items-center gap-1 ${
-                effectiveView === "console"
+                mobileTab === "console"
                   ? "bg-accent text-white shadow-sm font-semibold"
                   : "text-white/60 hover:text-white"
               }`}
@@ -641,10 +654,13 @@ export default function CodePlay() {
       </div>
 
       {/* 4. WEB SUB-TABS (When in Web Mode & In Editor View) */}
-      {selectedLang === "web" && (isMobile ? effectiveView === "editor" : viewMode !== "preview") && (
-        <div className="px-2.5 sm:px-3 py-1 bg-[#0b0c12] border-b border-white/10 flex items-center justify-between text-xs font-mono">
+      {selectedLang === "web" && (mobileTab === "editor" || viewMode !== "preview") && (
+        <div className={`px-2.5 sm:px-3 py-1 bg-[#0b0c12] border-b border-white/10 flex items-center justify-between text-xs font-mono ${
+          mobileTab !== "editor" ? "hidden md:flex" : "flex"
+        }`}>
           <div className="flex items-center gap-1 sm:gap-2">
             <button
+              type="button"
               onClick={() => setActiveWebTab("html")}
               className={`px-2.5 sm:px-3 py-1 rounded-t-lg transition flex items-center gap-1.5 ${
                 activeWebTab === "html"
@@ -656,6 +672,7 @@ export default function CodePlay() {
               index.html
             </button>
             <button
+              type="button"
               onClick={() => setActiveWebTab("css")}
               className={`px-2.5 sm:px-3 py-1 rounded-t-lg transition flex items-center gap-1.5 ${
                 activeWebTab === "css"
@@ -667,6 +684,7 @@ export default function CodePlay() {
               style.css
             </button>
             <button
+              type="button"
               onClick={() => setActiveWebTab("js")}
               className={`px-2.5 sm:px-3 py-1 rounded-t-lg transition flex items-center gap-1.5 ${
                 activeWebTab === "js"
@@ -681,7 +699,11 @@ export default function CodePlay() {
 
           {/* Quick Preview shortcut on mobile */}
           <button
-            onClick={() => setViewMode("preview")}
+            type="button"
+            onClick={() => {
+              setMobileTab("preview");
+              setViewMode("preview");
+            }}
             className="md:hidden flex items-center gap-1 text-[11px] text-accent hover:underline font-sans px-1"
           >
             <span>Preview</span>
@@ -691,335 +713,362 @@ export default function CodePlay() {
       )}
 
       {/* 5. MAIN WORKSPACE (EDITOR + PREVIEW/OUTPUT) */}
-      <div className="flex-1 flex flex-col md:flex-row min-h-0">
+      <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
         {/* LEFT PANE: CODE EDITOR */}
-        {(isMobile ? effectiveView === "editor" : viewMode !== "preview") && (
-          <div className="flex-1 flex flex-col min-w-0 border-b md:border-b-0 md:border-r border-white/10 bg-[#0d0e15]">
-            <div className="flex-1 relative flex overflow-hidden">
-              {/* Line Numbers Gutter */}
-              <div
-                ref={lineNumbersRef}
-                className="w-8 sm:w-12 py-2.5 sm:py-3 bg-black/35 border-r border-white/5 text-right pr-1.5 sm:pr-2 text-white/25 font-mono text-[11px] sm:text-xs select-none overflow-hidden leading-relaxed"
-              >
-                {lines.map((_, i) => (
-                  <div key={i}>{i + 1}</div>
-                ))}
-              </div>
-
-              {/* Code Input Textarea */}
-              <textarea
-                ref={textareaRef}
-                value={currentCode}
-                onChange={(e) => handleCodeChange(e.target.value)}
-                onScroll={handleSyncScroll}
-                onKeyDown={handleKeyDown}
-                spellCheck="false"
-                autoComplete="off"
-                autoCapitalize="off"
-                placeholder={
-                  selectedLang === "web"
-                    ? `Enter ${activeWebTab.toUpperCase()} code here...`
-                    : `Write your ${selectedLang} code here...`
-                }
-                className="flex-1 h-full p-2.5 sm:p-3 bg-transparent text-emerald-300 font-mono text-xs leading-relaxed outline-none resize-none thin-scroll allow-select whitespace-pre"
-              />
+        <div
+          className={`flex-1 flex-col min-w-0 border-b md:border-b-0 md:border-r border-white/10 bg-[#0d0e15] ${
+            mobileTab === "editor" ? "flex" : "hidden md:flex"
+          } ${viewMode === "preview" ? "md:hidden" : ""}`}
+        >
+          <div className="flex-1 relative flex overflow-hidden min-h-0">
+            {/* Line Numbers Gutter (Hidden on mobile when wrap is active to maximize width) */}
+            <div
+              ref={lineNumbersRef}
+              className={`w-8 sm:w-12 py-2.5 sm:py-3 bg-black/35 border-r border-white/5 text-right pr-1.5 sm:pr-2 text-white/25 font-mono text-[11px] sm:text-xs select-none overflow-hidden leading-relaxed shrink-0 ${
+                wordWrap ? "hidden sm:block" : "block"
+              }`}
+            >
+              {lines.map((_, i) => (
+                <div key={i}>{i + 1}</div>
+              ))}
             </div>
 
-            {/* Status Bar */}
-            <div className="px-3 py-1 bg-black/30 border-t border-white/5 flex items-center justify-between text-[10px] text-white/40 font-mono">
-              <div className="flex items-center gap-2">
-                <span>
-                  {lines.length} lines · {currentCode.length} chars
-                </span>
-                <span>·</span>
-                <span className="text-white/60">
-                  {selectedLang === "web"
-                    ? `web / ${activeWebTab}`
-                    : LANGUAGE_OPTIONS.find((l) => l.id === selectedLang)?.label}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="hidden sm:inline text-white/30">⌘ + Enter to execute</span>
-                {isMobile && (
-                  <button
-                    onClick={() => {
-                      if (selectedLang === "web" || selectedLang === "markdown") {
-                        setViewMode("preview");
-                      } else {
-                        setViewMode("console");
-                      }
-                    }}
-                    className="sm:hidden text-accent text-[10px] font-sans hover:underline flex items-center gap-0.5"
-                  >
-                    <span>View Output</span>
-                    <span>→</span>
-                  </button>
-                )}
-              </div>
+            {/* Code Input Textarea with Word Wrap support */}
+            <textarea
+              ref={textareaRef}
+              value={currentCode}
+              onChange={(e) => handleCodeChange(e.target.value)}
+              onScroll={handleSyncScroll}
+              onKeyDown={handleKeyDown}
+              spellCheck="false"
+              autoComplete="off"
+              autoCapitalize="off"
+              placeholder={
+                selectedLang === "web"
+                  ? `Enter ${activeWebTab.toUpperCase()} code here...`
+                  : `Write your ${selectedLang} code here...`
+              }
+              className={`flex-1 h-full p-2.5 sm:p-3 bg-transparent text-emerald-300 font-mono text-xs leading-relaxed outline-none resize-none thin-scroll allow-select ${
+                wordWrap
+                  ? "whitespace-pre-wrap break-words overflow-x-hidden"
+                  : "whitespace-pre overflow-x-auto"
+              }`}
+            />
+          </div>
+
+          {/* Status Bar */}
+          <div className="px-2.5 sm:px-3 py-1 bg-black/30 border-t border-white/5 flex items-center justify-between text-[10px] text-white/40 font-mono shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 truncate min-w-0">
+              <span className="truncate">
+                {lines.length} lines · {currentCode.length} chars
+              </span>
+              <span>·</span>
+              <span className="text-white/60 truncate">
+                {selectedLang === "web"
+                  ? `web / ${activeWebTab}`
+                  : LANGUAGE_OPTIONS.find((l) => l.id === selectedLang)?.label}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              {/* Word Wrap Toggle */}
+              <button
+                type="button"
+                onClick={() => setWordWrap(!wordWrap)}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition flex items-center gap-1 cursor-pointer ${
+                  wordWrap
+                    ? "bg-accent/20 text-accent border border-accent/30 font-semibold"
+                    : "bg-white/5 text-white/40 hover:text-white"
+                }`}
+                title="Toggle Word Wrap (Wrap lines without sliding)"
+              >
+                <span>Wrap</span>
+                <span className="text-[9px]">{wordWrap ? "ON" : "OFF"}</span>
+              </button>
+
+              <span className="hidden sm:inline text-white/30">⌘ + Enter to execute</span>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const next = selectedLang === "web" || selectedLang === "markdown" ? "preview" : "console";
+                  setMobileTab(next);
+                  setViewMode(next);
+                }}
+                className="md:hidden text-accent text-[10px] font-sans hover:underline flex items-center gap-0.5 ml-0.5 cursor-pointer"
+              >
+                <span>View Output</span>
+                <span>→</span>
+              </button>
             </div>
           </div>
-        )}
+        </div>
 
         {/* RIGHT PANE: PREVIEW / OUTPUT CONSOLE / SQL TABLE */}
-        {(isMobile ? effectiveView !== "editor" : viewMode !== "editor") && (
-          <div
-            className={`${
-              viewMode === "preview" || isMobile ? "flex-1 w-full" : "w-full md:w-1/2 lg:w-7/12"
-            } flex flex-col bg-black/40 min-h-0 relative overflow-hidden`}
-          >
-            {/* Header Bar for Output Pane */}
-            <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between bg-black/30">
-              <div className="flex items-center gap-2 text-xs text-white/80">
-                {isMobile && (
-                  <button
-                    onClick={() => setViewMode("editor")}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/20 text-[11px] text-white/90 mr-1 transition"
-                  >
-                    <span>‹</span>
-                    <span>Code</span>
-                  </button>
-                )}
-                {selectedLang === "web" && effectiveView !== "console" ? (
-                  <>
-                    <GIconEye size={14} className="text-accent" />
-                    <span className="font-semibold text-xs">Live Sandbox Preview</span>
-                  </>
-                ) : selectedLang === "markdown" ? (
-                  <>
-                    <GIconEye size={14} className="text-accent" />
-                    <span className="font-semibold text-xs">Markdown Rendered View</span>
-                  </>
-                ) : selectedLang === "sql" ? (
-                  <>
-                    <GIconTerminal size={14} className="text-accent" />
-                    <span className="font-semibold text-xs">SQL Result & Logs</span>
-                  </>
-                ) : (
-                  <>
-                    <GIconTerminal size={14} className="text-accent" />
-                    <span className="font-semibold text-xs">Output Terminal</span>
-                  </>
-                )}
+        <div
+          className={`flex-col bg-black/40 min-h-0 relative overflow-hidden ${
+            mobileTab === "editor" ? "hidden md:flex" : "flex flex-1 w-full"
+          } ${
+            viewMode === "preview" ? "md:flex-1 md:w-full" : "md:w-1/2 lg:w-7/12"
+          }`}
+        >
+          {/* Header Bar for Output Pane */}
+          <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between bg-black/30 shrink-0">
+            <div className="flex items-center gap-2 text-xs text-white/80">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileTab("editor");
+                  setViewMode("editor");
+                }}
+                className="md:hidden flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/10 hover:bg-white/20 text-xs text-white font-medium mr-1 transition active:scale-95 cursor-pointer"
+              >
+                <span>‹</span>
+                <span>Code</span>
+              </button>
+              {selectedLang === "web" && (mobileTab === "preview" || viewMode !== "console") ? (
+                <>
+                  <GIconEye size={14} className="text-accent" />
+                  <span className="font-semibold text-xs">Live Sandbox Preview</span>
+                </>
+              ) : selectedLang === "markdown" ? (
+                <>
+                  <GIconEye size={14} className="text-accent" />
+                  <span className="font-semibold text-xs">Markdown Rendered View</span>
+                </>
+              ) : selectedLang === "sql" ? (
+                <>
+                  <GIconTerminal size={14} className="text-accent" />
+                  <span className="font-semibold text-xs">SQL Result & Logs</span>
+                </>
+              ) : (
+                <>
+                  <GIconTerminal size={14} className="text-accent" />
+                  <span className="font-semibold text-xs">Output Terminal</span>
+                </>
+              )}
 
-                {execTime !== null && (
-                  <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-accent/10 text-accent font-mono">
-                    <GIconClock size={10} />
-                    <span>{execTime} ms</span>
-                  </span>
-                )}
-              </div>
-
-              {/* Controls for Web / Terminal */}
-              <div className="flex items-center gap-2">
-                {/* Responsive Device Toggles for Web Preview (Hidden on mobile) */}
-                {selectedLang === "web" && effectiveView !== "console" && (
-                  <div className="hidden sm:flex items-center bg-black/50 border border-white/10 rounded-md p-0.5 text-[10px] font-mono">
-                    <button
-                      onClick={() => setViewport("desktop")}
-                      className={`px-1.5 py-0.5 rounded ${
-                        viewport === "desktop"
-                          ? "bg-white/20 text-white"
-                          : "text-white/40 hover:text-white"
-                      }`}
-                    >
-                      100%
-                    </button>
-                    <button
-                      onClick={() => setViewport("tablet")}
-                      className={`px-1.5 py-0.5 rounded ${
-                        viewport === "tablet"
-                          ? "bg-white/20 text-white"
-                          : "text-white/40 hover:text-white"
-                      }`}
-                    >
-                      768px
-                    </button>
-                    <button
-                      onClick={() => setViewport("mobile")}
-                      className={`px-1.5 py-0.5 rounded ${
-                        viewport === "mobile"
-                          ? "bg-white/20 text-white"
-                          : "text-white/40 hover:text-white"
-                      }`}
-                    >
-                      375px
-                    </button>
-                  </div>
-                )}
-
-                {/* Clear Output logs */}
-                {outputLogs.length > 0 && (
-                  <button
-                    onClick={() => setOutputLogs([])}
-                    className="text-white/40 hover:text-rose-400 p-1 rounded transition"
-                    title="Clear Console Output"
-                  >
-                    <GIconTrash size={12} />
-                  </button>
-                )}
-              </div>
+              {execTime !== null && (
+                <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-accent/10 text-accent font-mono">
+                  <GIconClock size={10} />
+                  <span>{execTime} ms</span>
+                </span>
+              )}
             </div>
 
-            {/* CONTENT AREA */}
-            <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
-              {/* A. WEB SANDBOX PREVIEW */}
-              {selectedLang === "web" && effectiveView !== "console" && (
-                <div className="flex-1 flex flex-col items-center justify-center bg-[#090a10] p-1.5 sm:p-2 overflow-auto">
-                  <div
-                    className={`h-full transition-all duration-300 rounded-lg overflow-hidden border border-white/10 shadow-2xl bg-[#0f111a] flex flex-col ${
-                      viewport === "desktop" || isMobile
-                        ? "w-full"
-                        : viewport === "tablet"
-                        ? "w-[768px] max-w-full"
-                        : "w-[375px] max-w-full"
+            {/* Controls for Web / Terminal */}
+            <div className="flex items-center gap-2">
+              {/* Responsive Device Toggles for Web Preview (Hidden on mobile) */}
+              {selectedLang === "web" && (mobileTab === "preview" || viewMode !== "console") && (
+                <div className="hidden sm:flex items-center bg-black/50 border border-white/10 rounded-md p-0.5 text-[10px] font-mono">
+                  <button
+                    type="button"
+                    onClick={() => setViewport("desktop")}
+                    className={`px-1.5 py-0.5 rounded ${
+                      viewport === "desktop"
+                        ? "bg-white/20 text-white"
+                        : "text-white/40 hover:text-white"
                     }`}
                   >
-                    {/* Optional Browser Chrome Bar for tablet/mobile frame on desktop */}
-                    {!isMobile && viewport !== "desktop" && (
-                      <div className="px-3 py-1.5 bg-black/60 border-b border-white/10 flex items-center justify-between text-[10px] font-mono text-white/40">
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-rose-500/80"></span>
-                          <span className="w-2 h-2 rounded-full bg-amber-500/80"></span>
-                          <span className="w-2 h-2 rounded-full bg-emerald-500/80"></span>
-                        </div>
-                        <span>
-                          {viewport === "tablet" ? "Tablet View (768px)" : "Mobile View (375px)"}
-                        </span>
-                        <span>100%</span>
-                      </div>
-                    )}
-
-                    <iframe
-                      title="CodePlay Web Preview"
-                      sandbox="allow-scripts allow-modals"
-                      srcDoc={webSrcDoc}
-                      className="w-full flex-1 border-none bg-[#0f111a]"
-                    />
-                  </div>
+                    100%
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewport("tablet")}
+                    className={`px-1.5 py-0.5 rounded ${
+                      viewport === "tablet"
+                        ? "bg-white/20 text-white"
+                        : "text-white/40 hover:text-white"
+                    }`}
+                  >
+                    768px
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewport("mobile")}
+                    className={`px-1.5 py-0.5 rounded ${
+                      viewport === "mobile"
+                        ? "bg-white/20 text-white"
+                        : "text-white/40 hover:text-white"
+                    }`}
+                  >
+                    375px
+                  </button>
                 </div>
               )}
 
-              {/* B. MARKDOWN LIVE PREVIEW */}
-              {selectedLang === "markdown" && (
-                <div
-                  className="flex-1 p-4 sm:p-6 overflow-y-auto thin-scroll text-white/90 font-sans leading-relaxed select-text"
-                  dangerouslySetInnerHTML={{
-                    __html: renderMarkdownToHtml(scriptCodes.markdown || ""),
-                  }}
-                />
-              )}
-
-              {/* C. SQL TABULAR RESULT & LOGS */}
-              {selectedLang === "sql" && (
-                <div className="flex-1 flex flex-col min-h-0 overflow-y-auto thin-scroll p-3 space-y-3">
-                  {sqlResult ? (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs text-white/60">
-                        <span className="font-semibold text-emerald-400">
-                          {sqlResult.message}
-                        </span>
-                        <span className="font-mono text-[10px]">
-                          {sqlResult.rowCount} {sqlResult.rowCount === 1 ? "row" : "rows"}
-                        </span>
-                      </div>
-
-                      <div className="overflow-x-auto rounded-lg border border-white/10 bg-black/40 shadow-inner">
-                        <table className="w-full text-xs text-left border-collapse">
-                          <thead className="bg-white/5 border-b border-white/10 text-white/80 font-mono">
-                            <tr>
-                              {sqlResult.columns.map((col, idx) => (
-                                <th key={idx} className="px-3 py-2 font-semibold">
-                                  {col}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-white/5 font-mono text-[11px]">
-                            {sqlResult.rows.map((row, rIdx) => (
-                              <tr key={rIdx} className="hover:bg-white/[0.03] transition">
-                                {sqlResult.columns.map((col, cIdx) => (
-                                  <td key={cIdx} className="px-3 py-1.5 text-white/70">
-                                    {row[col] !== undefined && row[col] !== null
-                                      ? String(row[col])
-                                      : "NULL"}
-                                  </td>
-                                ))}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 text-white/30 text-xs">
-                      Run your SQL statements above to view the tabular result grid.
-                    </div>
-                  )}
-
-                  {/* SQL execution output logs */}
-                  {outputLogs.length > 0 && (
-                    <div className="pt-2 border-t border-white/10 space-y-1 font-mono text-xs">
-                      <div className="text-[10px] text-white/40 uppercase font-mono mb-1">
-                        Execution Log:
-                      </div>
-                      {outputLogs.map((log, idx) => (
-                        <div
-                          key={idx}
-                          className={`text-xs ${
-                            log.type === "error"
-                              ? "text-rose-400"
-                              : log.type === "warn"
-                              ? "text-amber-300"
-                              : "text-emerald-300"
-                          }`}
-                        >
-                          {log.args.join(" ")}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* D. JAVASCRIPT / TYPESCRIPT / PYTHON & WEB CONSOLE DRAWER */}
-              {(selectedLang === "javascript" ||
-                selectedLang === "typescript" ||
-                selectedLang === "python" ||
-                (selectedLang === "web" && effectiveView === "console")) && (
-                <div className="flex-1 p-3 overflow-y-auto thin-scroll space-y-1.5 font-mono text-xs select-text">
-                  {outputLogs.length === 0 ? (
-                    <div className="text-center py-12 text-white/30 text-xs">
-                      Press <span className="text-accent font-semibold">Run</span> to execute code
-                      and inspect output.
-                    </div>
-                  ) : (
-                    outputLogs.map((log, idx) => {
-                      const color =
-                        log.type === "error"
-                          ? "text-rose-400"
-                          : log.type === "warn"
-                          ? "text-amber-300"
-                          : log.type === "info"
-                          ? "text-sky-300"
-                          : "text-white/85";
-
-                      return (
-                        <div key={idx} className="flex items-start gap-1.5 leading-relaxed">
-                          <span className="text-[9px] text-white/25 mt-0.5 shrink-0">
-                            {log.time}
-                          </span>
-                          <pre className={`whitespace-pre-wrap break-all ${color}`}>
-                            {log.args.join(" ")}
-                          </pre>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+              {/* Clear Output logs */}
+              {outputLogs.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setOutputLogs([])}
+                  className="text-white/40 hover:text-rose-400 p-1 rounded transition cursor-pointer"
+                  title="Clear Console Output"
+                >
+                  <GIconTrash size={12} />
+                </button>
               )}
             </div>
           </div>
-        )}
+
+          {/* CONTENT AREA */}
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
+            {/* A. WEB SANDBOX PREVIEW */}
+            {selectedLang === "web" && (mobileTab === "preview" || viewMode !== "console") && (
+              <div className="flex-1 flex flex-col items-center justify-center bg-[#090a10] p-0 sm:p-2 overflow-hidden min-h-0 w-full h-full">
+                <div
+                  className={`h-full w-full transition-all duration-300 sm:rounded-lg overflow-hidden sm:border sm:border-white/10 sm:shadow-2xl bg-[#0f111a] flex flex-col min-h-0 ${
+                    viewport === "desktop"
+                      ? "w-full"
+                      : viewport === "tablet"
+                      ? "sm:max-w-[768px] w-full"
+                      : "sm:max-w-[375px] w-full"
+                  }`}
+                >
+                  {/* Optional Browser Chrome Bar for tablet/mobile frame on desktop */}
+                  {viewport !== "desktop" && (
+                    <div className="hidden sm:flex px-3 py-1.5 bg-black/60 border-b border-white/10 items-center justify-between text-[10px] font-mono text-white/40 shrink-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-rose-500/80"></span>
+                        <span className="w-2 h-2 rounded-full bg-amber-500/80"></span>
+                        <span className="w-2 h-2 rounded-full bg-emerald-500/80"></span>
+                      </div>
+                      <span>
+                        {viewport === "tablet" ? "Tablet View (768px)" : "Mobile View (375px)"}
+                      </span>
+                      <span>100%</span>
+                    </div>
+                  )}
+
+                  <iframe
+                    title="CodePlay Web Preview"
+                    sandbox="allow-scripts allow-modals"
+                    srcDoc={webSrcDoc}
+                    className="w-full h-full flex-1 border-none bg-[#0f111a] block min-h-0"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* B. MARKDOWN LIVE PREVIEW */}
+            {selectedLang === "markdown" && (
+              <div
+                className="flex-1 p-4 sm:p-6 overflow-y-auto thin-scroll text-white/90 font-sans leading-relaxed select-text"
+                dangerouslySetInnerHTML={{
+                  __html: renderMarkdownToHtml(scriptCodes.markdown || ""),
+                }}
+              />
+            )}
+
+            {/* C. SQL TABULAR RESULT & LOGS */}
+            {selectedLang === "sql" && (
+              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto thin-scroll p-3 space-y-3">
+                {sqlResult ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs text-white/60">
+                      <span className="font-semibold text-emerald-400">
+                        {sqlResult.message}
+                      </span>
+                      <span className="font-mono text-[10px]">
+                        {sqlResult.rowCount} {sqlResult.rowCount === 1 ? "row" : "rows"}
+                      </span>
+                    </div>
+
+                    <div className="overflow-x-auto rounded-lg border border-white/10 bg-black/40 shadow-inner">
+                      <table className="w-full text-xs text-left border-collapse">
+                        <thead className="bg-white/5 border-b border-white/10 text-white/80 font-mono">
+                          <tr>
+                            {sqlResult.columns.map((col, idx) => (
+                              <th key={idx} className="px-3 py-2 font-semibold">
+                                {col}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 font-mono text-[11px]">
+                          {sqlResult.rows.map((row, rIdx) => (
+                            <tr key={rIdx} className="hover:bg-white/[0.03] transition">
+                              {sqlResult.columns.map((col, cIdx) => (
+                                <td key={cIdx} className="px-3 py-1.5 text-white/70">
+                                  {row[col] !== undefined && row[col] !== null
+                                    ? String(row[col])
+                                    : "NULL"}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-white/30 text-xs">
+                    Run your SQL statements above to view the tabular result grid.
+                  </div>
+                )}
+
+                {/* SQL execution output logs */}
+                {outputLogs.length > 0 && (
+                  <div className="pt-2 border-t border-white/10 space-y-1 font-mono text-xs">
+                    <div className="text-[10px] text-white/40 uppercase font-mono mb-1">
+                      Execution Log:
+                    </div>
+                    {outputLogs.map((log, idx) => (
+                      <div
+                        key={idx}
+                        className={`text-xs ${
+                          log.type === "error"
+                            ? "text-rose-400"
+                            : log.type === "warn"
+                            ? "text-amber-300"
+                            : "text-emerald-300"
+                        }`}
+                      >
+                        {log.args.join(" ")}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* D. JAVASCRIPT / TYPESCRIPT / PYTHON & WEB CONSOLE DRAWER */}
+            {((selectedLang === "javascript" ||
+              selectedLang === "typescript" ||
+              selectedLang === "python") ||
+              (selectedLang === "web" && (mobileTab === "console" || viewMode === "console"))) && (
+              <div className="flex-1 p-3 overflow-y-auto thin-scroll space-y-1.5 font-mono text-xs select-text">
+                {outputLogs.length === 0 ? (
+                  <div className="text-center py-12 text-white/30 text-xs">
+                    Press <span className="text-accent font-semibold">Run</span> to execute code
+                    and inspect output.
+                  </div>
+                ) : (
+                  outputLogs.map((log, idx) => {
+                    const color =
+                      log.type === "error"
+                        ? "text-rose-400"
+                        : log.type === "warn"
+                        ? "text-amber-300"
+                        : log.type === "info"
+                        ? "text-sky-300"
+                        : "text-white/85";
+
+                    return (
+                      <div key={idx} className="flex items-start gap-1.5 leading-relaxed">
+                        <span className="text-[9px] text-white/25 mt-0.5 shrink-0">
+                          {log.time}
+                        </span>
+                        <pre className={`whitespace-pre-wrap break-all ${color}`}>
+                          {log.args.join(" ")}
+                        </pre>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

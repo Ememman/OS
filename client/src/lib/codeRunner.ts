@@ -26,16 +26,23 @@ export function buildWebPreviewDoc(html: string, css: string, js: string): strin
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <style>
     * { box-sizing: border-box; }
-    body {
+    html, body {
       margin: 0;
-      padding: 16px;
+      padding: 12px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       color: #e2e8f0;
       background: #0f111a;
-      min-height: 100vh;
+      min-height: 100%;
+      overflow-x: hidden;
+    }
+    @media (max-width: 480px) {
+      body { padding: 8px; }
+      .card { max-width: 100% !important; padding: 20px 14px !important; }
+      .btn-group { flex-wrap: wrap !important; gap: 6px !important; }
+      button { padding: 8px 12px !important; font-size: 11px !important; }
     }
     ${css}
   </style>
