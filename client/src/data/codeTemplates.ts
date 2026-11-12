@@ -51,11 +51,11 @@ export const TEMPLATES: CodeTemplate[] = [
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(16px);
-  padding: 28px;
+  padding: 24px 16px;
   border-radius: 20px;
   text-align: center;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-  max-width: 380px;
+  max-width: 340px;
   width: 100%;
 }
 .badge {
@@ -93,6 +93,7 @@ p {
   display: flex;
   gap: 8px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 button {
   background: rgba(255, 255, 255, 0.06);
