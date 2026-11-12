@@ -543,3 +543,60 @@ body {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* ==========================================================================
+   Global Interactive Input & Search Bar Active Stroke System
+   Matches user specification: Adds a vivid electric cyan-blue outline stroke
+   and active glow ring across search bars, inputs, textareas, and selects
+   whenever clicked, focused, or active.
+   ========================================================================== */
+
+/* 1. Global styling for all standalone input elements, textareas, and selects */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="file"]):not(.bg-transparent):focus,
+textarea:not(.bg-transparent):focus,
+select:focus,
+.focus-stroke-self:focus,
+.chat-input:focus {
+  outline: none !important;
+  border-color: #0091ff !important;
+  box-shadow: 0 0 0 2px rgba(0, 145, 255, 0.45), 0 0 14px rgba(0, 145, 255, 0.28) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+/* 2. Global styling for search bar containers and focus-within wrappers */
+.focus-stroke,
+.search-container,
+.search-bar,
+.search-box,
+.chat-search-bar,
+div[class*="border"]:has(> input:focus):not([class*="glass"]):not([class*="fixed"]):not([class*="max-w-"]):not([class*="overflow-"]):not([class*="space-y-"]):not([class*="flex-col"]):not([class*="grid"]),
+form[class*="border"]:has(> input:focus):not([class*="glass"]):not([class*="fixed"]):not([class*="overflow-"]),
+label[class*="border"]:has(> input:focus) {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.focus-stroke:focus-within,
+.search-container:focus-within,
+.search-bar:focus-within,
+.search-box:focus-within,
+.chat-search-bar:focus-within,
+div[class*="border"]:has(> input:focus):not([class*="glass"]):not([class*="fixed"]):not([class*="max-w-"]):not([class*="overflow-"]):not([class*="space-y-"]):not([class*="flex-col"]):not([class*="grid"]),
+form[class*="border"]:has(> input:focus):not([class*="glass"]):not([class*="fixed"]):not([class*="overflow-"]),
+label[class*="border"]:has(> input:focus) {
+  border-color: #0091ff !important;
+  box-shadow: 0 0 0 2px rgba(0, 145, 255, 0.45), 0 0 14px rgba(0, 145, 255, 0.28) !important;
+}
+
+/* 3. Prevent double stroke on inner transparent input in search wrappers */
+div:has(> input:focus) > input.bg-transparent,
+form:has(> input:focus) > input.bg-transparent,
+.focus-stroke > input,
+.search-container > input,
+.search-bar > input,
+.search-box > input,
+.chat-search-bar > input {
+  box-shadow: none !important;
+  border-color: transparent !important;
+  outline: none !important;
+}
+

@@ -407,7 +407,7 @@ export default function SnakeRetro() {
                   value={playerName}
                   onChange={(e) => setPlayerName(e.target.value)}
                   placeholder="Pilot call-sign"
-                  className="w-full px-2 py-1 bg-white/10 border border-white/20 rounded-lg text-white text-[11px] outline-none"
+                  className="w-full px-2 py-1 bg-white/10 border border-white/20 rounded-lg text-white text-[11px] outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
                 />
                 <button
                   type="submit"

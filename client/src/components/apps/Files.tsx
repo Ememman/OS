@@ -451,7 +451,7 @@ export default function Files() {
 
           {/* Search bar & View Toggles */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2 py-1">
+            <div className="focus-stroke flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2 py-1 transition-all focus-within:border-[#0091ff] focus-within:ring-2 focus-within:ring-[#0091ff]/40 focus-within:shadow-[0_0_14px_rgba(0,145,255,0.28)]">
               <GIconSearch size={12} className="text-white/40 shrink-0" />
               <input
                 type="text"
@@ -617,7 +617,7 @@ export default function Files() {
                   value={newFileName}
                   onChange={(e) => setNewFileName(e.target.value)}
                   placeholder="e.g. project-roadmap"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:border-accent"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
                 />
               </div>
 
@@ -628,7 +628,7 @@ export default function Files() {
                   value={newFileContent}
                   onChange={(e) => setNewFileContent(e.target.value)}
                   placeholder="Enter initial document text..."
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-white outline-none focus:border-accent resize-none thin-scroll"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-2.5 text-xs text-white outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] resize-none thin-scroll transition-all"
                 />
               </div>
 
@@ -708,7 +708,7 @@ export default function Files() {
               <textarea
                 value={editBuffer}
                 onChange={(e) => setEditBuffer(e.target.value)}
-                className="w-full flex-1 p-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white font-mono leading-relaxed outline-none focus:border-accent resize-none thin-scroll min-h-[260px]"
+                className="w-full flex-1 p-3 bg-black/40 border border-white/10 rounded-xl text-xs text-white font-mono leading-relaxed outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] resize-none thin-scroll min-h-[260px] transition-all"
               />
             ) : (
               <pre className="text-xs text-white/85 whitespace-pre-wrap font-mono leading-relaxed overflow-y-auto thin-scroll flex-1 p-3 bg-black/30 rounded-xl border border-white/5 min-h-[260px]">

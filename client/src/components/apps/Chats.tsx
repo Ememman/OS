@@ -1163,7 +1163,7 @@ export default function Chats() {
 
       {/* Search Input Bar */}
       {searchOpen && (
-        <div className="chat-search-bar p-2 border-b border-[var(--chat-border)] bg-[var(--chat-panel)] flex items-center gap-2">
+        <div className="focus-stroke chat-search-bar p-2 border-b border-[var(--chat-border)] bg-[var(--chat-panel)] flex items-center gap-2 transition-all focus-within:border-[#0091ff] focus-within:ring-2 focus-within:ring-[#0091ff]/40 focus-within:shadow-[0_0_14px_rgba(0,145,255,0.28)]">
           <GIconSearch size={12} className="text-[var(--chat-muted)] ml-1" />
           <input
             type="text"
@@ -1609,7 +1609,7 @@ export default function Chats() {
               value={draftName}
               onChange={(e) => setDraftName(e.target.value)}
               maxLength={20}
-              className="chat-input min-w-0 flex-1 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm"
+              className="chat-input min-w-0 flex-1 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
               placeholder="Your guest name"
             />
             <button type="submit" aria-label="Save display name" className="chat-icon-button shrink-0" title="Save name">
@@ -1709,7 +1709,7 @@ export default function Chats() {
             }
           }}
           placeholder={connected ? "Write a message… (Enter to send)" : "Chat with Portfolio Bot…"}
-          className="chat-input min-h-11 max-h-28 flex-1 resize-y rounded-xl px-3 py-2.5 text-sm"
+          className="chat-input min-h-11 max-h-28 flex-1 resize-y rounded-xl px-3 py-2.5 text-sm focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
         />
         <AnimatePresence mode="wait">
           {!text.trim() ? (

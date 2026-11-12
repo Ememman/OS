@@ -170,69 +170,111 @@ app.get("/api/activity/feed", (req, res) => res.json(activityFeed));
 // ---------- REST: projects / updates ----------
 app.get("/api/projects", (req, res) => res.json(projects));
 
-// Live updates array with real-time CRUD and multi-reactions
+// Live updates array with real-time PR sync and multi-reactions
 let liveUpdates = [...updates];
 const updateReactions = {};
 
-// Initialize default reactions for updates
-liveUpdates.forEach((u, idx) => {
-  const baseHeart = 1 + (idx % 3);
-  const baseFire = idx % 2;
-  const baseRocket = idx % 2;
-  const baseParty = 0;
+// Initialize reactions in real-time (starts at 0, no hardcoded counts)
+liveUpdates.forEach((u) => {
   updateReactions[u.id] = {
-    heart: baseHeart,
-    fire: baseFire,
-    rocket: baseRocket,
-    party: baseParty,
-    total: baseHeart + baseFire + baseRocket + baseParty
+    heart: 0,
+    fire: 0,
+    rocket: 0,
+    party: 0,
+    total: 0
   };
 });
 
-// Real-time GitHub synchronizer for Ememman repositories and commits
+// Real-time GitHub synchronizer for Ememman/OS Pull Requests
 let lastGithubSync = 0;
 async function syncGithubUpdates() {
-  if (Date.now() - lastGithubSync < 60000) return; // 1-minute rate-limit guard
+  if (Date.now() - lastGithubSync < 45000) return; // 45s rate-limit guard
   lastGithubSync = Date.now();
   try {
-    const res = await fetch("https://api.github.com/repos/Ememman/OS/commits?per_page=15", {
+    const res = await fetch("https://api.github.com/repos/Ememman/OS/pulls?state=all&per_page=30", {
       headers: { "User-Agent": "PortfolioOS-Server", Accept: "application/vnd.github.v3+json" }
     });
     if (!res.ok) return;
-    const commits = await res.json();
-    if (!Array.isArray(commits)) return;
+    const pulls = await res.json();
+    if (!Array.isArray(pulls)) return;
 
-    for (const c of commits) {
-      const shaShort = c.sha?.slice(0, 7) || "commit";
-      const id = `gh-${shaShort}`;
+    for (const pr of pulls) {
+      const prNumber = pr.number;
+      const id = `pr-${prNumber}`;
       if (liveUpdates.some((u) => u.id === id)) continue;
 
-      const fullMsg = c.commit?.message || "Repository update";
-      const lines = fullMsg.split("\n").filter((l) => l.trim().length > 0);
-      const title = lines[0]?.slice(0, 120) || "Codebase commit";
-      const body = lines.slice(1).join(" ").trim() || `Commit ${shaShort} on Ememman/OS by ${c.commit?.author?.name || "Emman"}.`;
+      const title = pr.title || `Pull Request #${prNumber}`;
+      const rawBody = (pr.body || "").trim();
+      const branch = pr.head?.ref || "main";
+      const author = pr.user?.login || "Ememman";
+      const authorAvatar = pr.user?.avatar_url || "";
+      const status = pr.merged_at ? "merged" : pr.state === "closed" ? "closed" : "open";
+      const date = pr.created_at ? pr.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10);
+      const url = pr.html_url || `https://github.com/Ememman/OS/pull/${prNumber}`;
+      const body = rawBody || `Pull Request #${prNumber} on Ememman/OS: ${title}. Branch: ${branch}`;
 
-      let tag = "feature";
-      const lower = title.toLowerCase();
-      if (/fix|bug|patch|resolve|correct|clean/.test(lower)) tag = "fix";
-      else if (/launch|initial|release|v\d/.test(lower)) tag = "launch";
-      else if (/perf|speed|optimiz|fast/.test(lower)) tag = "performance";
-      else if (/modifi|update|enhance|improve|merge/.test(lower)) tag = "feature";
+      // Category detection: feature | fix | bug
+      const labelNames = Array.isArray(pr.labels)
+        ? pr.labels.map((l) => (l.name || "").toLowerCase())
+        : [];
+      const textCorpus = `${title} ${rawBody} ${branch} ${labelNames.join(" ")}`.toLowerCase();
 
-      const commitItem = {
+      let category = "feature";
+      if (
+        labelNames.some((l) => l.includes("bug")) ||
+        /\b(bug|overlap|issue|broken|crash|error|leak|fail)\b/i.test(textCorpus)
+      ) {
+        category = "bug";
+      } else if (
+        labelNames.some((l) => l.includes("fix") || l.includes("patch")) ||
+        /\b(fix|resolve|patch|repair|clean|correct|remove|refactor)\b/i.test(textCorpus)
+      ) {
+        category = "fix";
+      } else {
+        category = "feature";
+      }
+
+      // Priority detection: low | medium | high | critical
+      let priority = "medium";
+      if (
+        labelNames.some((l) => l.includes("critical") || l.includes("p0") || l.includes("urgent")) ||
+        /\b(critical|emergency|hotfix|security|fatal|deployment)\b/i.test(textCorpus)
+      ) {
+        priority = "critical";
+      } else if (
+        labelNames.some((l) => l.includes("high") || l.includes("p1")) ||
+        category === "bug" ||
+        /\b(high|urgent|alert|breaking|fail)\b/i.test(textCorpus)
+      ) {
+        priority = "high";
+      } else if (
+        labelNames.some((l) => l.includes("low") || l.includes("p3") || l.includes("minor")) ||
+        /\b(low|minor|docs|chore|tweak|style|readme)\b/i.test(textCorpus)
+      ) {
+        priority = "low";
+      } else {
+        priority = "medium";
+      }
+
+      const prItem = {
         id,
-        date: c.commit?.author?.date ? c.commit.author.date.slice(0, 10) : new Date().toISOString().slice(0, 10),
-        tag,
+        prNumber,
         title,
         body,
-        pinned: false,
-        repo: "Ememman/OS",
-        url: c.html_url
+        date,
+        category,
+        priority,
+        status,
+        author,
+        authorAvatar,
+        branch,
+        url,
+        pinned: false
       };
 
-      liveUpdates.push(commitItem);
+      liveUpdates.push(prItem);
       if (!updateReactions[id]) {
-        updateReactions[id] = { heart: 1, fire: 0, rocket: 0, party: 0, total: 1 };
+        updateReactions[id] = { heart: 0, fire: 0, rocket: 0, party: 0, total: 0 };
       }
     }
   } catch {
@@ -243,27 +285,41 @@ syncGithubUpdates().catch(() => {});
 
 app.get("/api/updates", async (req, res) => {
   await syncGithubUpdates().catch(() => {});
-  const { tag, q, sort } = req.query;
+  const { tag, category, priority, status, q, sort } = req.query;
   let list = [...liveUpdates];
-  if (tag && tag !== "all") {
-    list = list.filter((u) => u.tag?.toLowerCase() === String(tag).toLowerCase());
+
+  const catFilter = category || tag;
+  if (catFilter && catFilter !== "all") {
+    list = list.filter((u) => u.category?.toLowerCase() === String(catFilter).toLowerCase());
+  }
+  if (priority && priority !== "all") {
+    list = list.filter((u) => u.priority?.toLowerCase() === String(priority).toLowerCase());
+  }
+  if (status && status !== "all") {
+    list = list.filter((u) => u.status?.toLowerCase() === String(status).toLowerCase());
   }
   if (q) {
     const query = String(q).toLowerCase();
     list = list.filter(
-      (u) => u.title.toLowerCase().includes(query) || u.body.toLowerCase().includes(query)
+      (u) =>
+        u.title.toLowerCase().includes(query) ||
+        u.body.toLowerCase().includes(query) ||
+        (u.branch && u.branch.toLowerCase().includes(query)) ||
+        (u.prNumber && String(u.prNumber).includes(query))
     );
   }
   if (sort === "popular") {
     list.sort((a, b) => (updateReactions[b.id]?.total || 0) - (updateReactions[a.id]?.total || 0));
   } else if (sort === "oldest") {
     list.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  } else if (sort === "number") {
+    list.sort((a, b) => (b.prNumber || 0) - (a.prNumber || 0));
   } else {
     // Default newest first (pinned float to top)
     list.sort((a, b) => {
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
+      return (b.prNumber || 0) - (a.prNumber || 0);
     });
   }
   res.json(list);

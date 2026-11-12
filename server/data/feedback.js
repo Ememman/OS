@@ -1,7 +1,7 @@
 export const initialFeedback = [
   {
     id: "fb-1",
-    projectId: "sandrealee-customer",
+    projectId: "sandrealee-mobile",
     author: "Elena Rostova",
     role: "UX Engineer",
     rating: 5,
@@ -28,12 +28,20 @@ export const initialFeedback = [
   },
   {
     id: "fb-4",
-    projectId: "sandrealee-staff",
+    projectId: "sandrealee-mobile",
     author: "Sophia Alvarez",
     role: "Frontend Specialist",
     rating: 5,
     comment: "Staff shift schedule management and offline service checklists are clean and responsive. Excellent typography choices.",
     ts: Date.now() - 3600000 * 18
+  },
+  {
+    id: "fb-5",
+    projectId: "sandrealee-website",
+    author: "David Kim",
+    role: "Creative Director",
+    rating: 5,
+    comment: "Stunning aesthetic and micro-interactions. The dark glassmorphism and clear service pricing convert visitors seamlessly.",
+    ts: Date.now() - 3600000 * 12
   }
 ];
-
