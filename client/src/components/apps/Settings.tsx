@@ -228,148 +228,113 @@ export default function Settings() {
         </section>
       )}
 
-      {/* Window Controls Indicators (Interactive Live Showcase) */}
-      <section className="space-y-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">
-              Window Button Indicators
-            </h3>
-            <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
-              {osMode === "mac"
-                ? "Show permanent action glyphs (×, −, +) inside window traffic lights for faster targeting."
-                : "Windows 11 title bar controls with action glyphs and snap layout triggers."}
-            </p>
-          </div>
-        </div>
-
-        <div
-          onClick={() => {
-            soundFx.playClick();
-            toggleWindowIndicators();
-          }}
-          className="group relative rounded-2xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/[0.07] p-3.5 sm:p-4.5 transition-all cursor-pointer focus-stroke select-none overflow-hidden"
-        >
-          {/* Subtle gradient glow */}
-          <div className="absolute inset-0 bg-gradient-to-r from-accent/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-
-          {/* Live Interactive Window Bar Preview */}
-          <div className="relative mb-3.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between gap-3 shadow-inner">
-            {osMode === "mac" ? (
-              <>
-                {/* macOS Traffic Lights Live Preview */}
-                <div className="flex items-center gap-2 shrink-0">
-                  {/* Close Red */}
-                  <div className="w-3.5 h-3.5 rounded-full bg-[#ff5f56] border border-[#e0443e]/80 flex items-center justify-center shadow-xs">
-                    <svg
-                      width="7"
-                      height="7"
-                      viewBox="0 0 10 10"
-                      fill="none"
-                      stroke="#4a0002"
-                      strokeWidth="1.3"
-                      strokeLinecap="round"
-                      className={`transition-opacity duration-200 ${windowIndicators ? "opacity-90" : "opacity-0 group-hover:opacity-60"}`}
-                    >
-                      <line x1="2" y1="2" x2="8" y2="8" />
-                      <line x1="8" y1="2" x2="2" y2="8" />
-                    </svg>
-                  </div>
-                  {/* Minimize Yellow */}
-                  <div className="w-3.5 h-3.5 rounded-full bg-[#ffbd2e] border border-[#dea123]/80 flex items-center justify-center shadow-xs">
-                    <svg
-                      width="7"
-                      height="7"
-                      viewBox="0 0 10 10"
-                      fill="none"
-                      stroke="#613600"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      className={`transition-opacity duration-200 ${windowIndicators ? "opacity-90" : "opacity-0 group-hover:opacity-60"}`}
-                    >
-                      <line x1="1.5" y1="5" x2="8.5" y2="5" />
-                    </svg>
-                  </div>
-                  {/* Maximize Green */}
-                  <div className="w-3.5 h-3.5 rounded-full bg-[#27c93f] border border-[#1aab29]/80 flex items-center justify-center shadow-xs">
-                    <svg
-                      width="7"
-                      height="7"
-                      viewBox="0 0 10 10"
-                      fill="#004800"
-                      className={`transition-opacity duration-200 ${windowIndicators ? "opacity-90" : "opacity-0 group-hover:opacity-60"}`}
-                    >
-                      <path d="M 2 3.8 L 2 8 L 6.2 8 Z M 3.8 2 L 8 2 L 8 6.2 Z" />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* Window Header Title */}
-                <div className="flex items-center gap-1.5 text-[11px] font-mono text-white/60 truncate">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse shrink-0" />
-                  <span className="truncate">Window Header — Live Preview</span>
-                </div>
-
-                {/* Badge */}
-                <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-medium border transition-colors shrink-0 ${
-                    windowIndicators
-                      ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
-                      : "bg-white/5 text-white/50 border-white/10"
-                  }`}
-                >
-                  {windowIndicators ? "Glyphs Visible" : "Minimal Dots"}
-                </span>
-              </>
-            ) : (
-              <>
-                {/* Windows 11 Title Bar Preview */}
-                <div className="flex items-center gap-1.5 text-[11px] font-mono text-white/60 truncate">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse shrink-0" />
-                  <span className="truncate">Windows 11 Controls — Active</span>
-                </div>
-
-                <div className="flex items-center h-6 -mr-1 shrink-0">
-                  <div className="w-8 h-6 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors">
-                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1">
-                      <line x1="0.5" y1="5.5" x2="9.5" y2="5.5" />
-                    </svg>
-                  </div>
-                  <div className="w-8 h-6 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors">
-                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1">
-                      <rect x="0.5" y="0.5" width="9" height="9" />
-                    </svg>
-                  </div>
-                  <div className="w-8 h-6 flex items-center justify-center text-white/70 hover:text-white hover:bg-rose-500 rounded transition-colors">
-                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.1">
-                      <line x1="0.5" y1="0.5" x2="9.5" y2="9.5" />
-                      <line x1="9.5" y1="0.5" x2="0.5" y2="9.5" />
-                    </svg>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Information and Toggle Button */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm font-semibold text-white/95">
-                  {osMode === "mac" ? "Show Window Action Glyphs" : "Windows 11 Window Controls"}
-                </span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-accent/20 text-accent font-medium border border-accent/30">
-                  {osMode === "mac" ? "Traffic Lights" : "Fluent UI"}
-                </span>
-              </div>
-              <p className="text-[10px] sm:text-xs text-white/45 leading-relaxed">
-                {osMode === "mac"
-                  ? "Display close (×), minimize (−), and expand (+) symbols permanently inside window control dots."
-                  : "Display native Windows 11 minimize, maximize, and close controls in the upper-right corner."}
+      {/* Window Controls Indicators (macOS Only — hidden in Windows Settings) */}
+      {osMode === "mac" && (
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">
+                Window Button Indicators
+              </h3>
+              <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
+                Show permanent action glyphs (×, −, +) inside window traffic lights for faster targeting.
               </p>
             </div>
+          </div>
 
-            {osMode === "mac" ? (
+          <div
+            onClick={() => {
+              soundFx.playClick();
+              toggleWindowIndicators();
+            }}
+            className="group relative rounded-2xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/[0.07] p-3.5 sm:p-4.5 transition-all cursor-pointer focus-stroke select-none overflow-hidden"
+          >
+            {/* Subtle gradient glow */}
+            <div className="absolute inset-0 bg-gradient-to-r from-accent/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
+            {/* Live Interactive Window Bar Preview */}
+            <div className="relative mb-3.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between gap-3 shadow-inner">
+              {/* macOS Traffic Lights Live Preview */}
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Close Red */}
+                <div className="w-3.5 h-3.5 rounded-full bg-[#ff5f56] border border-[#e0443e]/80 flex items-center justify-center shadow-xs">
+                  <svg
+                    width="7"
+                    height="7"
+                    viewBox="0 0 10 10"
+                    fill="none"
+                    stroke="#4a0002"
+                    strokeWidth="1.3"
+                    strokeLinecap="round"
+                    className={`transition-opacity duration-200 ${windowIndicators ? "opacity-90" : "opacity-0 group-hover:opacity-60"}`}
+                  >
+                    <line x1="2" y1="2" x2="8" y2="8" />
+                    <line x1="8" y1="2" x2="2" y2="8" />
+                  </svg>
+                </div>
+                {/* Minimize Yellow */}
+                <div className="w-3.5 h-3.5 rounded-full bg-[#ffbd2e] border border-[#dea123]/80 flex items-center justify-center shadow-xs">
+                  <svg
+                    width="7"
+                    height="7"
+                    viewBox="0 0 10 10"
+                    fill="none"
+                    stroke="#613600"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    className={`transition-opacity duration-200 ${windowIndicators ? "opacity-90" : "opacity-0 group-hover:opacity-60"}`}
+                  >
+                    <line x1="1.5" y1="5" x2="8.5" y2="5" />
+                  </svg>
+                </div>
+                {/* Maximize Green */}
+                <div className="w-3.5 h-3.5 rounded-full bg-[#27c93f] border border-[#1aab29]/80 flex items-center justify-center shadow-xs">
+                  <svg
+                    width="7"
+                    height="7"
+                    viewBox="0 0 10 10"
+                    fill="#004800"
+                    className={`transition-opacity duration-200 ${windowIndicators ? "opacity-90" : "opacity-0 group-hover:opacity-60"}`}
+                  >
+                    <path d="M 2 3.8 L 2 8 L 6.2 8 Z M 3.8 2 L 8 2 L 8 6.2 Z" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Window Header Title */}
+              <div className="flex items-center gap-1.5 text-[11px] font-mono text-white/60 truncate">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse shrink-0" />
+                <span className="truncate">Window Header — Live Preview</span>
+              </div>
+
+              {/* Badge */}
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full font-medium border transition-colors shrink-0 ${
+                  windowIndicators
+                    ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                    : "bg-white/5 text-white/50 border-white/10"
+                }`}
+              >
+                {windowIndicators ? "Glyphs Visible" : "Minimal Dots"}
+              </span>
+            </div>
+
+            {/* Information and Toggle Button */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs sm:text-sm font-semibold text-white/95">
+                    Show Window Action Glyphs
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-accent/20 text-accent font-medium border border-accent/30">
+                    Traffic Lights
+                  </span>
+                </div>
+                <p className="text-[10px] sm:text-xs text-white/45 leading-relaxed">
+                  Display close (×), minimize (−), and expand (+) symbols permanently inside window control dots.
+                </p>
+              </div>
+
               <button
                 type="button"
                 onClick={(e) => {
@@ -390,15 +355,10 @@ export default function Settings() {
                   }`}
                 />
               </button>
-            ) : (
-              <div className="text-[11px] text-emerald-400 font-mono font-medium shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                <GIconCheck size={12} />
-                Active
-              </div>
-            )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section>
         <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium mb-2">Wallpaper</h3>
