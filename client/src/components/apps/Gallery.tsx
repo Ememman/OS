@@ -1,16 +1,16 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   GIconClose,
   GIconChevronLeft,
   GIconChevronRight,
-  GIconPlay,
   GIconDownload,
   GIconCopy,
   GIconCheck,
   GIconSliders,
+  GIconGallery,
 } from "../icons/GravityIcons";
-import { galleryItems } from "../../data/gallery";
+import { galleryItems, type GalleryItem } from "../../data/gallery";
 import { soundFx } from "../../lib/soundFx";
 import { useOS } from "../../store/useOS";
 
@@ -30,12 +30,17 @@ export default function Gallery() {
   const [zoomLevel, setZoomLevel] = useState<1 | 1.5 | 2>(1);
   const [copied, setCopied] = useState(false);
 
-  const tags = ["All", ...new Set(galleryItems.map((g) => g.tag))];
-  const counts = tags.reduce((acc: Record<string, number>, t) => {
-    acc[t] = t === "All" ? galleryItems.length : galleryItems.filter((g) => g.tag === t).length;
-    return acc;
-  }, {});
-  const shown = tag === "All" ? galleryItems : galleryItems.filter((g) => g.tag === tag);
+  const tags = useMemo(() => ["All", ...new Set(galleryItems.map((g) => g.tag))], []);
+  const counts = useMemo(() => {
+    return tags.reduce((acc: Record<string, number>, t) => {
+      acc[t] = t === "All" ? galleryItems.length : galleryItems.filter((g) => g.tag === t).length;
+      return acc;
+    }, {});
+  }, [tags]);
+
+  const shown = useMemo(() => {
+    return tag === "All" ? galleryItems : galleryItems.filter((g) => g.tag === tag);
+  }, [tag]);
 
   const go = useCallback(
     (delta: number) => {
@@ -63,22 +68,30 @@ export default function Gallery() {
     return () => window.removeEventListener("keydown", onKey);
   }, [openIdx, go, close]);
 
-  const currentItem = openIdx !== null ? shown[openIdx] : null;
+  const currentItem: GalleryItem | null = openIdx !== null ? shown[openIdx] : null;
 
   const handleCopyLink = () => {
     if (!currentItem) return;
     if (systemSounds) soundFx.playPop();
-    navigator.clipboard?.writeText(window.location.origin + currentItem.src);
+    if (currentItem.src) {
+      navigator.clipboard?.writeText(window.location.origin + currentItem.src);
+      notify("Copied to Clipboard", "Image link copied to clipboard.", "success");
+    } else {
+      navigator.clipboard?.writeText(
+        `${currentItem.caption} — ${currentItem.status || "Currently on Development"}`
+      );
+      notify("Copied to Clipboard", "Project status summary copied to clipboard.", "success");
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownload = () => {
-    if (!currentItem) return;
+    if (!currentItem || !currentItem.src) return;
     if (systemSounds) soundFx.playPop();
     const a = document.createElement("a");
     a.href = currentItem.src;
-    a.download = `gallery-${currentItem.id}.jpg`;
+    a.download = `gallery-${currentItem.id}.png`;
     a.target = "_blank";
     document.body.appendChild(a);
     a.click();
@@ -89,13 +102,20 @@ export default function Gallery() {
   const currentFilterStyle = PHOTO_FILTERS.find((f) => f.id === activeFilter)?.style || "none";
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0f] text-white select-none">
+    <div className="flex flex-col h-full bg-[#0a0a0f] text-white select-none overflow-hidden">
       {/* Sticky Gallery Header & Filter Pills */}
-      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2.5 p-3 sm:p-4 border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-md sticky top-0 z-20 shrink-0 shadow-sm">
-        <div>
-          <h2 className="font-display text-base sm:text-lg font-semibold text-white">Gallery</h2>
-          <p className="text-[10px] sm:text-[11px] text-white/50">Curated showcase and media library</p>
+      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2.5 p-3 sm:p-4 border-b border-white/10 bg-[#0c0d14]/95 backdrop-blur-md sticky top-0 z-20 shrink-0 shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center text-accent shrink-0">
+            <GIconGallery size={16} />
+          </div>
+          <div>
+            <h2 className="font-display text-sm sm:text-base font-semibold text-white">Media Gallery</h2>
+            <p className="text-[10px] sm:text-[11px] text-white/50">Verified system screenshots & architecture media</p>
+          </div>
         </div>
+
+        {/* Category Pills */}
         <div className="flex gap-1 overflow-x-auto no-scrollbar py-0.5">
           {tags.map((t) => (
             <button
@@ -104,9 +124,9 @@ export default function Gallery() {
                 if (systemSounds) soundFx.playClick();
                 setTag(t);
               }}
-              className={`text-[11px] px-2.5 py-1 rounded-full border flex items-center gap-1.5 transition shrink-0 cursor-pointer whitespace-nowrap ${
+              className={`text-[11px] px-2.5 py-1 rounded-xl border flex items-center gap-1.5 transition shrink-0 cursor-pointer whitespace-nowrap ${
                 tag === t
-                  ? "bg-accent border-accent text-white shadow-sm shadow-accent/20"
+                  ? "bg-accent border-accent text-white font-semibold shadow-sm shadow-accent/20"
                   : "border-white/15 text-white/60 hover:text-white hover:bg-white/5"
               }`}
             >
@@ -117,38 +137,119 @@ export default function Gallery() {
         </div>
       </div>
 
-      {/* Masonry / Grid Container */}
-      <div className="flex-1 overflow-y-auto thin-scroll p-3 sm:p-4 [column-fill:balance] sm:columns-3 columns-2 gap-2 space-y-2">
-        {shown.map((g, i) => (
-          <motion.button
-            key={g.id}
-            whileHover={{ y: -4, scale: 1.015 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 450, damping: 25 }}
-            onClick={() => {
-              if (systemSounds) soundFx.playClick();
-              setOpenIdx(i);
-            }}
-            className="relative rounded-xl overflow-hidden group block w-full break-inside-avoid border border-white/5 hover:border-accent/40 transition-colors cursor-pointer bg-slate-900/80 min-h-[140px]"
-          >
-            <img
-              src={g.type === "video" ? g.poster : g.src}
-              alt={g.caption}
-              className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500 block"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-            {g.type === "video" && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/25">
-                <GIconPlay size={32} className="text-white/90 drop-shadow" />
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end p-2.5">
-              <span className="text-[11px] text-white font-medium line-clamp-1">{g.caption}</span>
-            </div>
-          </motion.button>
-        ))}
+      {/* Grid Container */}
+      <div className="flex-1 overflow-y-auto thin-scroll p-3.5 sm:p-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          {shown.map((g, i) => {
+            const isPlaceholder = g.type === "placeholder" || !g.src;
+            const isEnhancement = g.status?.toLowerCase().includes("enhancement");
+
+            if (isPlaceholder) {
+              return (
+                <motion.button
+                  key={g.id}
+                  whileHover={{ y: -4, scale: 1.015 }}
+                  whileTap={{ scale: 0.985 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 25 }}
+                  onClick={() => {
+                    if (systemSounds) soundFx.playClick();
+                    setOpenIdx(i);
+                  }}
+                  className={`relative rounded-2xl overflow-hidden group block w-full border transition-all cursor-pointer text-left shadow-lg ${
+                    isEnhancement
+                      ? "border-amber-500/30 bg-gradient-to-br from-[#1c130b] via-[#120d08] to-[#18110b] hover:border-amber-500/50 hover:shadow-amber-500/10"
+                      : "border-white/10 bg-gradient-to-br from-[#0c101c] via-[#090c15] to-[#101424] hover:border-accent/40 hover:shadow-accent/10"
+                  }`}
+                >
+                  <div className="relative aspect-[16/10] p-4 flex flex-col justify-between overflow-hidden">
+                    <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:14px_14px]" />
+
+                    {/* Top Badges */}
+                    <div className="relative z-10 flex flex-wrap items-center justify-between gap-1.5">
+                      <span className="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-black/60 backdrop-blur-md border border-white/15 text-white/90">
+                        {g.tag}
+                      </span>
+
+                      <div className="flex items-center gap-1">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[9px] font-semibold border flex items-center gap-1 ${
+                            isEnhancement
+                              ? "bg-amber-500/20 text-amber-300 border-amber-500/35"
+                              : "bg-sky-500/20 text-sky-300 border-sky-500/35"
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              isEnhancement ? "bg-amber-400" : "bg-sky-400"
+                            } animate-pulse`}
+                          />
+                          {g.status || "Currently on Development"}
+                        </span>
+                        {g.statusBadge && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30 text-[9px] font-mono">
+                            {g.statusBadge}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Center Content */}
+                    <div className="relative z-10 my-auto py-2">
+                      <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-accent transition-colors line-clamp-1 mb-1">
+                        {g.caption}
+                      </h3>
+                      <p className="text-[11px] text-white/50 line-clamp-2 leading-relaxed">
+                        {g.description}
+                      </p>
+                    </div>
+
+                    {/* Bottom Notice */}
+                    <div className="relative z-10 flex items-center justify-between text-[10px] text-white/40 pt-1.5 border-t border-white/5">
+                      <span>{isEnhancement ? "Enhancement cycle active" : "Asset preparation underway"}</span>
+                      <span className="text-accent group-hover:underline">Inspect →</span>
+                    </div>
+                  </div>
+                </motion.button>
+              );
+            }
+
+            return (
+              <motion.button
+                key={g.id}
+                whileHover={{ y: -4, scale: 1.015 }}
+                whileTap={{ scale: 0.985 }}
+                transition={{ type: "spring", stiffness: 450, damping: 25 }}
+                onClick={() => {
+                  if (systemSounds) soundFx.playClick();
+                  setOpenIdx(i);
+                }}
+                className="relative rounded-2xl overflow-hidden group block w-full border border-white/10 hover:border-accent/50 transition-all cursor-pointer bg-slate-900/90 shadow-lg text-left"
+              >
+                <div className="relative aspect-[16/10] overflow-hidden bg-slate-950">
+                  <img
+                    src={g.src}
+                    alt={g.caption}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 block"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
+
+                  <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-black/60 backdrop-blur-md border border-white/15 text-white">
+                    {g.tag}
+                  </span>
+
+                  <div className="absolute bottom-2.5 left-3 right-3 pointer-events-none">
+                    <span className="text-xs font-bold text-white group-hover:text-accent transition-colors line-clamp-1">
+                      {g.caption}
+                    </span>
+                  </div>
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Expanded Lightbox Modal */}
@@ -162,130 +263,173 @@ export default function Gallery() {
             className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-3 sm:p-6"
             onClick={close}
           >
-          {/* Top Bar Controls */}
-          <div
-            className="w-full max-w-4xl flex items-center justify-between z-10 pb-2"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Filter Pills */}
-            <div className="flex items-center gap-1 bg-white/10 p-1 rounded-xl backdrop-blur-md overflow-x-auto no-scrollbar">
-              <GIconSliders size={13} className="text-accent ml-1.5 mr-0.5 shrink-0" />
-              {PHOTO_FILTERS.map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => {
-                    if (systemSounds) soundFx.playClick();
-                    setActiveFilter(f.id);
-                  }}
-                  className={`text-[10px] px-2 py-0.5 rounded-lg transition ${
-                    activeFilter === f.id
-                      ? "bg-accent text-white font-semibold"
-                      : "text-white/60 hover:text-white"
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-1.5">
-              {currentItem.type !== "video" && (
-                <button
-                  onClick={() => setZoomLevel((z) => (z === 1 ? 1.5 : z === 1.5 ? 2 : 1))}
-                  className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs text-white/80 transition font-mono"
-                  title="Toggle Zoom"
-                >
-                  {zoomLevel}x
-                </button>
-              )}
-              <button
-                onClick={handleCopyLink}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition"
-                title="Copy Image URL"
-              >
-                {copied ? <GIconCheck size={14} className="text-emerald-400" /> : <GIconCopy size={14} />}
-              </button>
-              <button
-                onClick={handleDownload}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition"
-                title="Download"
-              >
-                <GIconDownload size={14} />
-              </button>
-              <button
-                onClick={close}
-                className="p-1.5 hover:bg-white/20 rounded-lg text-white/80 hover:text-white transition ml-1"
-                aria-label="Close"
-              >
-                <GIconClose size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Center Image/Video with Nav Buttons */}
-          <div className="relative w-full max-w-4xl flex-1 flex items-center justify-center my-2 overflow-hidden">
-            <button
-              onClick={(e) => { e.stopPropagation(); go(-1); }}
-              className="absolute left-1 sm:left-3 w-10 h-10 aspect-square shrink-0 flex items-center justify-center hover:bg-white/20 active:scale-90 rounded-full z-10 text-white/85 transition bg-black/40 backdrop-blur-sm"
-              aria-label="Previous"
-            >
-              <GIconChevronLeft size={20} />
-            </button>
-
+            {/* Top Bar Controls */}
             <div
+              className="w-full max-w-4xl flex items-center justify-between z-10 pb-2"
               onClick={(e) => e.stopPropagation()}
-              className="max-h-[70vh] flex items-center justify-center overflow-auto"
             >
-              {currentItem.type === "video" ? (
-                <video
-                  src={currentItem.src}
-                  poster={currentItem.poster}
-                  controls
-                  autoPlay
-                  muted
-                  className="rounded-2xl max-h-[68vh] w-full object-contain mx-auto bg-black shadow-2xl"
-                  style={{ filter: currentFilterStyle }}
-                />
+              {/* Photo Filter Pills (Only visible when image exists) */}
+              {currentItem.src ? (
+                <div className="flex items-center gap-1 bg-white/10 p-1 rounded-xl backdrop-blur-md overflow-x-auto no-scrollbar">
+                  <GIconSliders size={13} className="text-accent ml-1.5 mr-0.5 shrink-0" />
+                  {PHOTO_FILTERS.map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => {
+                        if (systemSounds) soundFx.playClick();
+                        setActiveFilter(f.id);
+                      }}
+                      className={`text-[10px] px-2 py-0.5 rounded-lg transition ${
+                        activeFilter === f.id
+                          ? "bg-accent text-white font-semibold"
+                          : "text-white/60 hover:text-white"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
               ) : (
-                <img
-                  src={currentItem.src}
-                  alt={currentItem.caption}
-                  style={{
-                    filter: currentFilterStyle,
-                    transform: `scale(${zoomLevel})`,
-                    transition: "transform 250ms ease, filter 250ms ease"
-                  }}
-                  className="rounded-2xl max-h-[68vh] object-contain mx-auto shadow-2xl cursor-zoom-in"
-                  onClick={() => setZoomLevel((z) => (z === 1 ? 1.5 : z === 1.5 ? 2 : 1))}
-                />
+                <div className="flex items-center gap-1.5 text-xs text-white/50 bg-white/5 px-2.5 py-1 rounded-xl border border-white/10">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                  <span>Project Status Inspector</span>
+                </div>
               )}
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1.5">
+                {currentItem.src && (
+                  <button
+                    onClick={() => setZoomLevel((z) => (z === 1 ? 1.5 : z === 1.5 ? 2 : 1))}
+                    className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs text-white/80 transition font-mono cursor-pointer"
+                    title="Toggle Zoom"
+                  >
+                    {zoomLevel}x
+                  </button>
+                )}
+                <button
+                  onClick={handleCopyLink}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition cursor-pointer"
+                  title="Copy Details"
+                >
+                  {copied ? <GIconCheck size={14} className="text-emerald-400" /> : <GIconCopy size={14} />}
+                </button>
+                {currentItem.src && (
+                  <button
+                    onClick={handleDownload}
+                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition cursor-pointer"
+                    title="Download"
+                  >
+                    <GIconDownload size={14} />
+                  </button>
+                )}
+                <button
+                  onClick={close}
+                  className="p-1.5 hover:bg-white/20 rounded-lg text-white/80 hover:text-white transition ml-1 cursor-pointer"
+                  aria-label="Close"
+                >
+                  <GIconClose size={16} />
+                </button>
+              </div>
             </div>
 
-            <button
-              onClick={(e) => { e.stopPropagation(); go(1); }}
-              className="absolute right-1 sm:right-3 w-10 h-10 aspect-square shrink-0 flex items-center justify-center hover:bg-white/20 active:scale-90 rounded-full z-10 text-white/85 transition bg-black/40 backdrop-blur-sm"
-              aria-label="Next"
-            >
-              <GIconChevronRight size={20} />
-            </button>
-          </div>
+            {/* Center Image or Status Inspector with Nav Buttons */}
+            <div className="relative w-full max-w-4xl flex-1 flex items-center justify-center my-2 overflow-hidden">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  go(-1);
+                }}
+                className="absolute left-1 sm:left-3 w-10 h-10 aspect-square shrink-0 flex items-center justify-center hover:bg-white/20 active:scale-90 rounded-full z-10 text-white/85 transition bg-black/40 backdrop-blur-sm cursor-pointer"
+                aria-label="Previous"
+              >
+                <GIconChevronLeft size={20} />
+              </button>
 
-          {/* Bottom Caption & Controls */}
-          <div
-            className="text-center z-10"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-xs sm:text-sm text-white/90 font-medium">
-              {currentItem.caption} · <span className="text-accent">{currentItem.tag}</span>
-            </p>
-            <p className="text-[10px] text-white/40 mt-0.5 font-mono">
-              {(openIdx ?? 0) + 1} of {shown.length} · Arrow keys to navigate · Esc to close
-            </p>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  </div>
-);
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="max-h-[70vh] w-full flex items-center justify-center overflow-auto px-4"
+              >
+                {currentItem.src ? (
+                  <img
+                    src={currentItem.src}
+                    alt={currentItem.caption}
+                    style={{
+                      filter: currentFilterStyle,
+                      transform: `scale(${zoomLevel})`,
+                      transition: "transform 250ms ease, filter 250ms ease",
+                    }}
+                    className="rounded-2xl max-h-[68vh] object-contain mx-auto shadow-2xl cursor-zoom-in"
+                    onClick={() => setZoomLevel((z) => (z === 1 ? 1.5 : z === 1.5 ? 2 : 1))}
+                  />
+                ) : (
+                  <div className="rounded-3xl max-w-lg w-full p-6 sm:p-8 border border-white/15 bg-gradient-to-br from-[#0c0f18] via-[#090c14] to-[#121624] shadow-2xl text-center space-y-4">
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold border flex items-center gap-2 ${
+                          currentItem.status?.toLowerCase().includes("enhancement")
+                            ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                            : "bg-sky-500/20 text-sky-300 border-sky-500/40"
+                        }`}
+                      >
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            currentItem.status?.toLowerCase().includes("enhancement")
+                              ? "bg-amber-400"
+                              : "bg-sky-400"
+                          } animate-pulse`}
+                        />
+                        {currentItem.status || "Currently on Development"}
+                      </span>
+                      {currentItem.statusBadge && (
+                        <span className="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/35 text-xs font-mono font-medium">
+                          {currentItem.statusBadge}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="font-display text-base sm:text-lg font-bold text-white">
+                        {currentItem.caption}
+                      </h3>
+                      <p className="text-xs text-white/60 max-w-md mx-auto leading-relaxed">
+                        {currentItem.description}
+                      </p>
+                    </div>
+
+                    <div className="pt-2">
+                      <span className="text-[11px] px-3 py-1 rounded-xl bg-white/5 border border-white/10 text-white/50 font-mono">
+                        Category: {currentItem.tag}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  go(1);
+                }}
+                className="absolute right-1 sm:right-3 w-10 h-10 aspect-square shrink-0 flex items-center justify-center hover:bg-white/20 active:scale-90 rounded-full z-10 text-white/85 transition bg-black/40 backdrop-blur-sm cursor-pointer"
+                aria-label="Next"
+              >
+                <GIconChevronRight size={20} />
+              </button>
+            </div>
+
+            {/* Bottom Caption & Controls */}
+            <div className="text-center z-10" onClick={(e) => e.stopPropagation()}>
+              <p className="text-xs sm:text-sm text-white/90 font-medium">
+                {currentItem.caption} · <span className="text-accent">{currentItem.tag}</span>
+              </p>
+              <p className="text-[10px] text-white/40 mt-0.5 font-mono">
+                {(openIdx ?? 0) + 1} of {shown.length} · Arrow keys to navigate · Esc to close
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
