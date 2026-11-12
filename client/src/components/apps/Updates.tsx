@@ -21,6 +21,7 @@ import { API_URL } from "../../lib/config";
 import { getSocket } from "../../lib/socket";
 import { useOS } from "../../store/useOS";
 import { soundFx } from "../../lib/soundFx";
+import CustomDropdown from "../ui/CustomDropdown";
 
 export type UpdateCategory = "feature" | "fix" | "bug";
 export type UpdatePriority = "critical" | "high" | "medium" | "low";
@@ -589,11 +590,12 @@ export default function Updates() {
               <GIconUpdates size={18} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="font-display text-base sm:text-lg font-bold tracking-tight">
                   System Updates & Pull Requests
                 </h2>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/20 text-accent font-semibold border border-accent/30">
+                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 shadow-sm shadow-emerald-500/10">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                   Live PRs
                 </span>
               </div>
@@ -698,51 +700,55 @@ export default function Updates() {
 
           {/* Row 2: Secondary Filters (Priority, Status, Sort) */}
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs pt-0.5 border-t border-white/5">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2.5">
               {/* Priority Filter */}
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] text-white/40">Priority:</span>
-                <select
+                <CustomDropdown
                   value={activePriority}
-                  onChange={(e) => setActivePriority(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-white/80 focus:outline-none focus:border-accent cursor-pointer"
-                >
-                  <option value="all">All Priorities</option>
-                  <option value="critical">Critical</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                </select>
+                  onChange={(val) => setActivePriority(val)}
+                  options={[
+                    { value: "all", label: "All Priorities" },
+                    { value: "critical", label: "Critical", badge: "Critical", badgeColor: "bg-red-500/20 text-red-300 border-red-500/30" },
+                    { value: "high", label: "High", badge: "High", badgeColor: "bg-amber-500/20 text-amber-300 border-amber-500/30" },
+                    { value: "medium", label: "Medium", badge: "Medium", badgeColor: "bg-sky-500/20 text-sky-300 border-sky-500/30" },
+                    { value: "low", label: "Low", badge: "Low", badgeColor: "bg-slate-500/20 text-slate-300 border-slate-500/30" },
+                  ]}
+                  size="xs"
+                />
               </div>
 
               {/* Status Filter */}
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] text-white/40">Status:</span>
-                <select
+                <CustomDropdown
                   value={activeStatus}
-                  onChange={(e) => setActiveStatus(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-white/80 focus:outline-none focus:border-accent cursor-pointer"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="merged">Merged</option>
-                  <option value="open">Open</option>
-                  <option value="closed">Closed</option>
-                </select>
+                  onChange={(val) => setActiveStatus(val)}
+                  options={[
+                    { value: "all", label: "All Statuses" },
+                    { value: "merged", label: "Merged", badge: "Merged", badgeColor: "bg-purple-500/20 text-purple-300 border-purple-500/30" },
+                    { value: "open", label: "Open", badge: "Open", badgeColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" },
+                    { value: "closed", label: "Closed", badge: "Closed", badgeColor: "bg-rose-500/20 text-rose-300 border-rose-500/30" },
+                  ]}
+                  size="xs"
+                />
               </div>
             </div>
 
             {/* Sort Order */}
             <div className="flex items-center gap-1.5 ml-auto">
               <span className="text-[11px] text-white/40">Sort:</span>
-              <select
+              <CustomDropdown
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-white/5 border border-white/10 rounded-lg px-2 py-0.5 text-xs text-white/80 focus:outline-none focus:border-accent cursor-pointer"
-              >
-                <option value="newest">Newest PR First</option>
-                <option value="popular">Most Reacted</option>
-                <option value="oldest">Oldest PR First</option>
-              </select>
+                onChange={(val) => setSortBy(val as any)}
+                options={[
+                  { value: "newest", label: "Newest PR First" },
+                  { value: "popular", label: "Most Reacted" },
+                  { value: "oldest", label: "Oldest PR First" },
+                ]}
+                align="right"
+                size="xs"
+              />
             </div>
           </div>
         </div>

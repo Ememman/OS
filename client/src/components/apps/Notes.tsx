@@ -32,6 +32,7 @@ import { soundFx } from "../../lib/soundFx";
 import { useOS } from "../../store/useOS";
 import { API_URL } from "../../lib/config";
 import { getSocket } from "../../lib/socket";
+import CustomDropdown from "../ui/CustomDropdown";
 
 export interface NoteItem {
   id: string;
@@ -1287,18 +1288,21 @@ export default function Notes() {
                 className="bg-transparent text-xs sm:text-base font-semibold text-white outline-none flex-1 min-w-0 placeholder:text-white/30 truncate px-2 py-0.5 rounded-lg border border-transparent focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
               />
 
-              {/* Tag Selector Pill */}
-              <select
-                value={activeNote.tag || "ideas"}
-                onChange={(e) => updateActiveNote({ tag: e.target.value })}
-                className="text-[10px] bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-white/70 outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all shrink-0 hidden xs:inline-block"
-              >
-                <option value="ideas">#ideas</option>
-                <option value="work">#work</option>
-                <option value="code">#code</option>
-                <option value="todo">#todo</option>
-                <option value="personal">#personal</option>
-              </select>
+              {/* Tag Selector Dropdown */}
+              <div className="hidden xs:inline-block shrink-0">
+                <CustomDropdown
+                  value={activeNote.tag || "ideas"}
+                  onChange={(val) => updateActiveNote({ tag: val })}
+                  options={[
+                    { value: "ideas", label: "#ideas" },
+                    { value: "work", label: "#work" },
+                    { value: "code", label: "#code" },
+                    { value: "todo", label: "#todo" },
+                    { value: "personal", label: "#personal" },
+                  ]}
+                  size="xs"
+                />
+              </div>
             </div>
 
             {/* Right Action Tools: Compact & Organized (No collisions) */}

@@ -164,37 +164,37 @@ export default function Gallery() {
                   <div className="relative aspect-[16/10] p-4 flex flex-col justify-between overflow-hidden">
                     <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:14px_14px]" />
 
-                    {/* Top Badges */}
-                    <div className="relative z-10 flex flex-wrap items-center justify-between gap-1.5">
-                      <span className="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-black/60 backdrop-blur-md border border-white/15 text-white/90">
+                    {/* Top Header: Tag on Left, Status Pill on Right */}
+                    <div className="relative z-10 flex items-center justify-between gap-2">
+                      <span className="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-black/60 backdrop-blur-md border border-white/15 text-white/90 shrink-0">
                         {g.tag}
                       </span>
 
-                      <div className="flex items-center gap-1">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[9px] font-semibold border inline-flex items-center gap-1 shrink-0 whitespace-nowrap ${
+                          isEnhancement
+                            ? "bg-amber-500/20 text-amber-300 border-amber-500/35"
+                            : "bg-sky-500/20 text-sky-300 border-sky-500/35"
+                        }`}
+                      >
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[9px] font-semibold border flex items-center gap-1 ${
-                            isEnhancement
-                              ? "bg-amber-500/20 text-amber-300 border-amber-500/35"
-                              : "bg-sky-500/20 text-sky-300 border-sky-500/35"
-                          }`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              isEnhancement ? "bg-amber-400" : "bg-sky-400"
-                            } animate-pulse`}
-                          />
-                          {g.status || "Currently on Development"}
-                        </span>
-                        {g.statusBadge && (
-                          <span className="px-1.5 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30 text-[9px] font-mono">
-                            {g.statusBadge}
-                          </span>
-                        )}
-                      </div>
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            isEnhancement ? "bg-amber-400" : "bg-sky-400"
+                          } animate-pulse`}
+                        />
+                        {g.status || "Currently on Development"}
+                      </span>
                     </div>
 
-                    {/* Center Content */}
-                    <div className="relative z-10 my-auto py-2">
+                    {/* Center Content: Status Badge + Title + Description */}
+                    <div className="relative z-10 my-auto py-1.5">
+                      {g.statusBadge && (
+                        <div className="mb-1">
+                          <span className="px-1.5 py-0.5 rounded-md bg-rose-500/15 text-rose-300 border border-rose-500/30 text-[9px] font-mono font-medium inline-block">
+                            {g.statusBadge}
+                          </span>
+                        </div>
+                      )}
                       <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-accent transition-colors line-clamp-1 mb-1">
                         {g.caption}
                       </h3>

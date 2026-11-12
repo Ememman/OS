@@ -5,6 +5,7 @@
 }
 
 :root {
+  color-scheme: dark;
   --accent: 59 130 246;
   --accent-hex: #3b82f6;
   --accent-hover: 96 165 250;
@@ -598,5 +599,24 @@ form:has(> input:focus) > input.bg-transparent,
   box-shadow: none !important;
   border-color: transparent !important;
   outline: none !important;
+}
+
+/* 4. Global Dark Theme Styling for Native Select & Option Dropdowns */
+select {
+  color-scheme: dark !important;
+}
+
+select option,
+select optgroup {
+  background-color: #0c1220 !important;
+  color: #ffffff !important;
+  padding: 8px 12px !important;
+}
+
+select option:hover,
+select option:focus,
+select option:checked {
+  background-color: #0091ff !important;
+  color: #ffffff !important;
 }
 

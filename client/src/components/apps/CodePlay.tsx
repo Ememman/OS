@@ -31,6 +31,7 @@ import {
   TEMPLATES,
   type CodeTemplate,
 } from "../../data/codeTemplates";
+import CustomDropdown from "../ui/CustomDropdown";
 
 type WebTab = "html" | "css" | "js";
 type ViewMode = "split" | "editor" | "preview" | "console";
@@ -496,12 +497,11 @@ export default function CodePlay() {
           <button
             onClick={runActiveCode}
             disabled={isRunning}
-            className="flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 rounded-lg sm:rounded-xl bg-accent hover:brightness-110 active:scale-95 text-xs font-semibold text-white shadow-md shadow-accent/25 transition ml-0.5"
-            title="Execute Code (⌘+Enter)"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-lg sm:rounded-xl bg-accent hover:brightness-110 active:scale-95 text-xs font-semibold text-white shadow-md shadow-accent/25 transition ml-0.5 cursor-pointer"
+            title="Run Code"
           >
             <GIconPlay size={13} />
-            <span className="inline sm:hidden">{isRunning ? "..." : "Run"}</span>
-            <span className="hidden sm:inline">{isRunning ? "Running..." : "Run (⌘Enter)"}</span>
+            <span>{isRunning ? "Running..." : "Run"}</span>
           </button>
         </div>
       </div>
@@ -531,18 +531,41 @@ export default function CodePlay() {
           })}
         </div>
 
-        {/* Web Auto-Run Toggle */}
+        {/* Web Auto-Run Toggle - Enhanced glass toggle switch */}
         {selectedLang === "web" && (
-          <label className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-white/50 cursor-pointer select-none shrink-0 hover:text-white/80 ml-auto">
-            <input
-              type="checkbox"
-              checked={autoRunWeb}
-              onChange={(e) => setAutoRunWeb(e.target.checked)}
-              className="accent-accent rounded w-3.5 h-3.5"
-            />
-            <span className="hidden xs:inline">Live Auto-Update</span>
-            <span className="xs:hidden">Live</span>
-          </label>
+          <button
+            type="button"
+            onClick={() => setAutoRunWeb(!autoRunWeb)}
+            className={`flex items-center gap-2 px-2.5 py-1 rounded-full text-[11px] font-medium transition cursor-pointer ml-auto border select-none ${
+              autoRunWeb
+                ? "bg-emerald-500/15 border-emerald-500/35 text-emerald-300 shadow-xs shadow-emerald-500/20"
+                : "bg-white/5 border-white/10 text-white/40 hover:text-white/70 hover:bg-white/10"
+            }`}
+            title={
+              autoRunWeb
+                ? "Live Auto-Update Active (preview re-runs as you type)"
+                : "Live Auto-Update Paused (Click Run to execute)"
+            }
+          >
+            {/* Animated toggle track & knob */}
+            <div
+              className={`w-6 h-3.5 rounded-full p-0.5 transition-colors duration-200 flex items-center ${
+                autoRunWeb ? "bg-emerald-500 justify-end" : "bg-white/20 justify-start"
+              }`}
+            >
+              <div className="w-2.5 h-2.5 rounded-full bg-white shadow-xs" />
+            </div>
+
+            <span className="flex items-center gap-1.5">
+              <span
+                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                  autoRunWeb ? "bg-emerald-400 animate-pulse" : "bg-white/30"
+                }`}
+              />
+              <span className="hidden xs:inline">Live Auto-Update</span>
+              <span className="xs:hidden">Live</span>
+            </span>
+          </button>
         )}
       </div>
 
@@ -576,24 +599,20 @@ export default function CodePlay() {
       <div className="md:hidden px-2.5 py-1.5 bg-black/30 border-b border-white/10 flex items-center justify-between gap-2">
         {/* Template Select Dropdown */}
         {availableTemplates.length > 0 && (
-          <div className="relative flex-1 min-w-0 max-w-[190px]">
-            <select
+          <div className="flex-1 min-w-0 max-w-[200px]">
+            <CustomDropdown
               value={activeTemplateId}
-              onChange={(e) => {
-                const found = availableTemplates.find((t) => t.id === e.target.value);
+              onChange={(newId) => {
+                const found = availableTemplates.find((t) => t.id === newId);
                 if (found) handleSelectTemplate(found);
               }}
-              className="w-full bg-[#141622] text-white text-[11px] font-medium rounded-lg px-2.5 py-1 border border-white/10 truncate focus:outline-none focus:border-accent appearance-none pr-6 cursor-pointer"
-            >
-              {availableTemplates.map((t) => (
-                <option key={t.id} value={t.id} className="bg-[#12131a] text-white">
-                  {t.title}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-white/40 text-[9px]">
-              ▼
-            </div>
+              options={availableTemplates.map((t) => ({
+                value: t.id,
+                label: t.title,
+              }))}
+              size="xs"
+              className="w-full text-[11px]"
+            />
           </div>
         )}
 

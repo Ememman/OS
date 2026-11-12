@@ -9,6 +9,36 @@ import {
   GIconClose,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
+import CustomDropdown, { type DropdownOption } from "../ui/CustomDropdown";
+
+const CONVERT_UNIT_OPTIONS: Record<"length" | "weight" | "data" | "temp", DropdownOption[]> = {
+  length: [
+    { value: "m", label: "Meters (m)" },
+    { value: "km", label: "Kilometers (km)" },
+    { value: "cm", label: "Centimeters (cm)" },
+    { value: "ft", label: "Feet (ft)" },
+    { value: "in", label: "Inches (in)" },
+    { value: "mi", label: "Miles (mi)" },
+  ],
+  weight: [
+    { value: "kg", label: "Kilograms (kg)" },
+    { value: "g", label: "Grams (g)" },
+    { value: "lb", label: "Pounds (lb)" },
+    { value: "oz", label: "Ounces (oz)" },
+  ],
+  data: [
+    { value: "b", label: "Bytes (B)" },
+    { value: "kb", label: "Kilobytes (KB)" },
+    { value: "mb", label: "Megabytes (MB)" },
+    { value: "gb", label: "Gigabytes (GB)" },
+    { value: "tb", label: "Terabytes (TB)" },
+  ],
+  temp: [
+    { value: "c", label: "Celsius (°C)" },
+    { value: "f", label: "Fahrenheit (°F)" },
+    { value: "k", label: "Kelvin (K)" },
+  ],
+};
 
 interface CalcHistoryItem {
   id: string;
@@ -515,46 +545,15 @@ export default function Calculator() {
                   onChange={(e) => setConvertInput(e.target.value)}
                   className="w-2/3 bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-white font-mono text-sm outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
                 />
-                <select
+                <CustomDropdown
                   value={convertFromUnit}
-                  onChange={(e) => setConvertFromUnit(e.target.value)}
-                  className="w-1/3 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-white text-xs uppercase outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
-                >
-                  {convertType === "length" && (
-                    <>
-                      <option value="m">Meters (m)</option>
-                      <option value="km">Kilometers (km)</option>
-                      <option value="cm">Centimeters (cm)</option>
-                      <option value="ft">Feet (ft)</option>
-                      <option value="in">Inches (in)</option>
-                      <option value="mi">Miles (mi)</option>
-                    </>
-                  )}
-                  {convertType === "weight" && (
-                    <>
-                      <option value="kg">Kilograms (kg)</option>
-                      <option value="g">Grams (g)</option>
-                      <option value="lb">Pounds (lb)</option>
-                      <option value="oz">Ounces (oz)</option>
-                    </>
-                  )}
-                  {convertType === "data" && (
-                    <>
-                      <option value="b">Bytes (B)</option>
-                      <option value="kb">Kilobytes (KB)</option>
-                      <option value="mb">Megabytes (MB)</option>
-                      <option value="gb">Gigabytes (GB)</option>
-                      <option value="tb">Terabytes (TB)</option>
-                    </>
-                  )}
-                  {convertType === "temp" && (
-                    <>
-                      <option value="c">Celsius (°C)</option>
-                      <option value="f">Fahrenheit (°F)</option>
-                      <option value="k">Kelvin (K)</option>
-                    </>
-                  )}
-                </select>
+                  onChange={(val) => setConvertFromUnit(val)}
+                  options={CONVERT_UNIT_OPTIONS[convertType] || []}
+                  containerClassName="w-1/3"
+                  className="w-full justify-between rounded-lg py-1.5 uppercase font-mono text-xs"
+                  size="sm"
+                  align="right"
+                />
               </div>
             </div>
 
@@ -564,46 +563,15 @@ export default function Calculator() {
                 <div className="w-2/3 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-accent font-mono text-sm truncate flex items-center font-bold">
                   {convertResult}
                 </div>
-                <select
+                <CustomDropdown
                   value={convertToUnit}
-                  onChange={(e) => setConvertToUnit(e.target.value)}
-                  className="w-1/3 bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-white text-xs uppercase outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
-                >
-                  {convertType === "length" && (
-                    <>
-                      <option value="m">Meters (m)</option>
-                      <option value="km">Kilometers (km)</option>
-                      <option value="cm">Centimeters (cm)</option>
-                      <option value="ft">Feet (ft)</option>
-                      <option value="in">Inches (in)</option>
-                      <option value="mi">Miles (mi)</option>
-                    </>
-                  )}
-                  {convertType === "weight" && (
-                    <>
-                      <option value="kg">Kilograms (kg)</option>
-                      <option value="g">Grams (g)</option>
-                      <option value="lb">Pounds (lb)</option>
-                      <option value="oz">Ounces (oz)</option>
-                    </>
-                  )}
-                  {convertType === "data" && (
-                    <>
-                      <option value="b">Bytes (B)</option>
-                      <option value="kb">Kilobytes (KB)</option>
-                      <option value="mb">Megabytes (MB)</option>
-                      <option value="gb">Gigabytes (GB)</option>
-                      <option value="tb">Terabytes (TB)</option>
-                    </>
-                  )}
-                  {convertType === "temp" && (
-                    <>
-                      <option value="c">Celsius (°C)</option>
-                      <option value="f">Fahrenheit (°F)</option>
-                      <option value="k">Kelvin (K)</option>
-                    </>
-                  )}
-                </select>
+                  onChange={(val) => setConvertToUnit(val)}
+                  options={CONVERT_UNIT_OPTIONS[convertType] || []}
+                  containerClassName="w-1/3"
+                  className="w-full justify-between rounded-lg py-1.5 uppercase font-mono text-xs"
+                  size="sm"
+                  align="right"
+                />
               </div>
             </div>
           </div>

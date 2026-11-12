@@ -1037,15 +1037,15 @@ export default function ActivityMonitor() {
                   <>
                     {/* Desktop View: Full Tabular Layout */}
                     <div className="hidden sm:block rounded-xl border border-white/10 overflow-x-auto thin-scroll bg-black/20">
-                      <table className="w-full min-w-[540px] text-left text-[11px]">
+                      <table className="w-full min-w-[680px] text-left text-[11px]">
                         <thead className="bg-white/5 border-b border-white/10 text-white/40 uppercase font-mono text-[9px] tracking-wider">
                           <tr>
-                            <th className="py-2.5 px-3">Process / Application</th>
-                            <th className="py-2.5 px-3">Thread ID</th>
-                            <th className="py-2.5 px-3">Compositor State</th>
-                            <th className="py-2.5 px-3">Z-Index Layer</th>
-                            <th className="py-2.5 px-3">Est. Memory</th>
-                            <th className="py-2.5 px-3 text-right">Window Controls</th>
+                            <th className="py-2.5 px-3 min-w-[140px] whitespace-nowrap">Process / Application</th>
+                            <th className="py-2.5 px-3 min-w-[120px] whitespace-nowrap">Thread ID</th>
+                            <th className="py-2.5 px-3 min-w-[130px] whitespace-nowrap">Compositor State</th>
+                            <th className="py-2.5 px-3 min-w-[90px] whitespace-nowrap">Z-Index Layer</th>
+                            <th className="py-2.5 px-3 min-w-[80px] whitespace-nowrap">Est. Memory</th>
+                            <th className="py-2.5 px-3 min-w-[180px] text-right whitespace-nowrap">Window Controls</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -1053,53 +1053,58 @@ export default function ActivityMonitor() {
                             const memMb = (Math.abs(win.id.charCodeAt(0) * 3) % 24) + 14;
                             return (
                               <tr key={win.id} className="hover:bg-white/5 transition-colors">
-                                <td className="py-2.5 px-3 font-medium flex items-center gap-2">
-                                  <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                                  <span className="text-white font-medium">{win.title}</span>
+                                <td className="py-2.5 px-3 font-medium flex items-center gap-2 whitespace-nowrap">
+                                  <span className="w-2 h-2 rounded-full bg-accent animate-pulse shrink-0" />
+                                  <span className="text-white font-medium truncate max-w-[160px]">{win.title}</span>
                                 </td>
-                                <td className="py-2.5 px-3 font-mono text-white/40">
+                                <td className="py-2.5 px-3 font-mono text-white/40 whitespace-nowrap">
                                   #win-{win.id}
                                 </td>
-                                <td className="py-2.5 px-3">
+                                <td className="py-2.5 px-3 whitespace-nowrap">
                                   <span
-                                    className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border whitespace-nowrap shrink-0 ${
                                       win.minimized
-                                        ? "bg-amber-500/10 text-amber-300 border-amber-500/20"
-                                        : "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                                        ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                                        : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
                                     }`}
                                   >
+                                    <span
+                                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                        win.minimized ? "bg-amber-400" : "bg-emerald-400 animate-pulse"
+                                      }`}
+                                    />
                                     {win.minimized ? "Minimized" : "Active / Visible"}
                                   </span>
                                 </td>
-                                <td className="py-2.5 px-3 font-mono text-white/60">
+                                <td className="py-2.5 px-3 font-mono text-white/60 whitespace-nowrap">
                                   Layer {win.z || 10}
                                 </td>
-                                <td className="py-2.5 px-3 font-mono text-white/70">
+                                <td className="py-2.5 px-3 font-mono text-white/70 whitespace-nowrap">
                                   ~{memMb} MB
                                 </td>
-                                <td className="py-2.5 px-3 text-right">
-                                  <div className="flex items-center justify-end gap-1.5">
+                                <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                                  <div className="inline-flex items-center justify-end gap-1.5">
                                     <button
                                       onClick={() => {
                                         focusWindow(win.id);
                                         if (systemSounds) soundFx.playClick();
                                         notify("Window Focused", `Focused "${win.title}".`, "info");
                                       }}
-                                      className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition text-[10px] font-medium cursor-pointer"
+                                      className="h-7 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white/90 hover:text-white transition text-[11px] font-medium cursor-pointer"
                                       title="Bring window to front"
                                     >
                                       Focus
                                     </button>
                                     <button
                                       onClick={() => minimizeWindow(win.id)}
-                                      className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition text-[10px] font-medium cursor-pointer"
+                                      className="h-7 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white/90 hover:text-white transition text-[11px] font-medium cursor-pointer"
                                       title={win.minimized ? "Restore window" : "Minimize window"}
                                     >
                                       {win.minimized ? "Restore" : "Minimize"}
                                     </button>
                                     <button
                                       onClick={() => handleEndTask(win.id, win.title)}
-                                      className="px-2 py-1 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 transition text-[10px] font-medium cursor-pointer"
+                                      className="h-7 px-2.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 active:scale-95 text-rose-300 border border-rose-500/30 hover:border-rose-500/50 transition text-[11px] font-semibold cursor-pointer shadow-xs"
                                       title="Terminate window process"
                                     >
                                       End Task
@@ -1139,26 +1144,26 @@ export default function ActivityMonitor() {
                               <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-white/60">~{memMb} MB</span>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-1.5 pt-1 border-t border-white/5">
+                            <div className="grid grid-cols-3 gap-1.5 pt-1.5 border-t border-white/5">
                               <button
                                 onClick={() => {
                                   focusWindow(win.id);
                                   if (systemSounds) soundFx.playClick();
                                   notify("Window Focused", `Focused "${win.title}".`, "info");
                                 }}
-                                className="py-1 px-2 rounded-lg bg-white/10 active:bg-white/20 text-white/90 text-[10px] font-medium transition text-center"
+                                className="py-1.5 px-2 rounded-lg bg-white/10 active:bg-white/20 text-white/90 text-[10px] font-medium transition text-center cursor-pointer"
                               >
                                 Focus
                               </button>
                               <button
                                 onClick={() => minimizeWindow(win.id)}
-                                className="py-1 px-2 rounded-lg bg-white/10 active:bg-white/20 text-white/90 text-[10px] font-medium transition text-center"
+                                className="py-1.5 px-2 rounded-lg bg-white/10 active:bg-white/20 text-white/90 text-[10px] font-medium transition text-center cursor-pointer"
                               >
                                 {win.minimized ? "Restore" : "Minimize"}
                               </button>
                               <button
                                 onClick={() => handleEndTask(win.id, win.title)}
-                                className="py-1 px-2 rounded-lg bg-rose-500/20 active:bg-rose-500/30 text-rose-300 text-[10px] font-medium transition text-center"
+                                className="py-1.5 px-2 rounded-lg bg-rose-500/20 active:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-[10px] font-semibold transition text-center cursor-pointer"
                               >
                                 End Task
                               </button>
