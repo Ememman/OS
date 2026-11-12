@@ -583,7 +583,7 @@ export default function Updates() {
   return (
     <div className="flex flex-col h-full bg-[#0a0a0f] text-white select-none overflow-hidden">
       {/* Top Header & Metrics Banner */}
-      <div className="p-3.5 sm:p-5 border-b border-white/10 bg-[#0c0d14]/95 backdrop-blur-md space-y-3 shrink-0 shadow-sm">
+      <div className="relative z-30 p-3.5 sm:p-5 border-b border-white/10 bg-[#0c0d14]/95 backdrop-blur-md space-y-3 shrink-0 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center text-accent shrink-0">
@@ -699,7 +699,7 @@ export default function Updates() {
           </div>
 
           {/* Row 2: Secondary Filters (Priority, Status, Sort) */}
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs pt-0.5 border-t border-white/5">
+          <div className="relative z-30 flex flex-wrap items-center justify-between gap-2 text-xs pt-0.5 border-t border-white/5">
             <div className="flex flex-wrap items-center gap-2.5">
               {/* Priority Filter */}
               <div className="flex items-center gap-1.5">
