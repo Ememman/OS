@@ -25,6 +25,8 @@ import {
   GIconUpload,
   GIconFileText,
   GIconChevronLeft,
+  GIconChevronDown,
+  GIconEye,
 } from "../icons/GravityIcons";
 import { soundFx } from "../../lib/soundFx";
 import { useOS } from "../../store/useOS";
@@ -45,23 +47,147 @@ export interface NoteItem {
 const NOTE_TEMPLATES = [
   {
     id: "standup",
-    name: "Daily Standup & Agenda",
-    content: `## Daily Standup & Agenda\n\n### Top Priorities Today\n- [ ] Priority 1\n- [ ] Priority 2\n- [ ] Priority 3\n\n### Completed Yesterday\n- [x] Feature implementation\n- [x] Code review\n\n### Blockers & Notes\n> No current blockers. All tests passing.`
+    name: "Daily Standup & Tasks",
+    badge: "Daily",
+    desc: "Priorities, completed work, and blockers",
+    content: `## Daily Standup & Tasks
+
+### Top Priorities Today
+- [ ] Priority 1: Finish core feature implementation
+- [ ] Priority 2: Write unit & regression test cases
+- [ ] Priority 3: Review open pull requests
+
+### Completed Yesterday
+- [x] Refactored responsive layout and styling
+- [x] Added persistent state and event hooks
+
+### Blockers & Notes
+> No current blockers. All tests passing.`
+  },
+  {
+    id: "meeting",
+    name: "Meeting Notes & Action Items",
+    badge: "Meeting",
+    desc: "Agenda, discussion points, and action items",
+    content: `## Team Meeting Notes
+
+**Date:** ${new Date().toLocaleDateString()}
+**Attendees:** Team Lead, Engineers, Product Designer
+
+### Agenda
+1. Review sprint goals and milestones
+2. Architecture design decisions
+3. Open Q&A and blockers
+
+### Key Discussion Points
+- Discussed database indexing strategy and query optimizations.
+- Finalized mobile responsive breakpoints and touch targets.
+
+### Action Items
+- [ ] Update API documentation with latest schemas
+- [ ] Deploy staging build for UX verification
+- [ ] Schedule follow-up sync for Friday`
+  },
+  {
+    id: "roadmap",
+    name: "Project Roadmap & Specs",
+    badge: "Project",
+    desc: "Milestones, technical stack, and goals",
+    content: `## Project Roadmap & Specifications
+
+**Project:** Portfolio OS Next Generation
+**Status:** In Active Development
+
+### Core Objectives
+- [x] Zero-latency local caching and synchronization
+- [x] Native window snapping and responsive mobile layouts
+- [ ] Global plugin system and extensibility
+
+### Architecture & Tech Stack
+- **Frontend:** React 19, TypeScript, Tailwind CSS v4, Zustand
+- **Backend:** Express 5, NestJS, Socket.IO, MongoDB Atlas
+- **Icons:** Gravity UI Icons (@gravity-ui/icons)
+
+### Timeline & Milestones
+- **Phase 1 (Q1):** Core desktop environment & system apps
+- **Phase 2 (Q2):** Mobile touch optimizations & gestures
+- **Phase 3 (Q3):** Community widgets & extensible plugins`
   },
   {
     id: "rfc",
     name: "Architecture RFC Spec",
-    content: `## RFC: Architecture Specification\n\n**Author:** Bron Mendoza\n**Status:** In Review\n\n### 1. Abstract\nHigh-level architectural proposal for the new system feature.\n\n### 2. Objectives & Non-Goals\n- [x] Zero-latency synchronization\n- [ ] Offline caching layer\n\n### 3. API Design\n\`\`\`typescript\ninterface ServiceResponse<T> {\n  ok: boolean;\n  data: T;\n  timestamp: number;\n}\n\`\`\`\n\n### 4. Security & Performance Considerations\nAll endpoints validate request bodies with strict length limits.`
+    badge: "RFC",
+    desc: "Formal proposal, API contracts, and design",
+    content: `## RFC: System Architecture Specification
+
+**Author:** James Mendoza (Emman)
+**Status:** In Review
+**Target:** Core Subsystem
+
+### 1. Abstract
+Proposal for optimizing state persistence and real-time synchronization between the web client and backend services.
+
+### 2. API Design & Data Contract
+\`\`\`typescript
+interface SystemEvent<T = unknown> {
+  id: string;
+  type: "sync" | "update" | "delete";
+  payload: T;
+  timestamp: number;
+}
+\`\`\`
+
+### 3. Security & Validation
+All incoming payloads undergo schema validation and rate limiting before persistence.`
   },
   {
     id: "bug",
     name: "Bug Report Ticket",
-    content: `## Bug Report: [Short Title]\n\n**Severity:** High / Medium / Low\n**Environment:** Chrome 124 / Windows 11\n\n### Steps to Reproduce\n1. Navigate to ...\n2. Click on ...\n3. Observe unexpected behaviour\n\n### Expected vs Actual\n- **Expected:** Window smoothly opens\n- **Actual:** Console shows warning\n\n### Proposed Fix\nCheck boundary condition in render handler.`
+    badge: "QA",
+    desc: "Environment, reproduction steps, and fix",
+    content: `## Bug Report: [Short Title]
+
+**Severity:** High / Medium / Low
+**Environment:** Chrome 124 / Windows 11 Fluent Edition
+
+### Steps to Reproduce
+1. Open the target application window
+2. Trigger the action or click dropdown
+3. Observe unexpected behaviour or layout clipping
+
+### Expected vs Actual
+- **Expected:** Element renders in front without overflow clipping
+- **Actual:** Element is hidden or positioned in the back
+
+### Proposed Fix
+Ensure parent container has overflow-visible and proper z-index elevation.`
   },
   {
     id: "scratchpad",
     name: "Quick Code Scratchpad",
-    content: `## Quick Code Scratchpad\n\n\`\`\`javascript\n// Test snippet\nconst greet = (name) => \`Hello, \${name}! Welcome to Portfolio OS.\`;\nconsole.log(greet("Developer"));\n\`\`\`\n\n### Ideas\n- Integrate Web Worker for heavy tasks\n- Optimize bundle chunks`
+    badge: "Code",
+    desc: "Snippets, algorithms, and experiments",
+    content: `## Developer Code Scratchpad
+
+\`\`\`typescript
+// Quick test snippet
+function calculateFibonacci(n: number): number {
+  if (n <= 1) return n;
+  let a = 0, b = 1;
+  for (let i = 2; i <= n; i++) {
+    const c = a + b;
+    a = b;
+    b = c;
+  }
+  return b;
+}
+
+console.log("Fib(10):", calculateFibonacci(10));
+\`\`\`
+
+### Benchmark Ideas
+- Test V8 JIT optimization on recursive vs iterative functions
+- Measure memory allocations during high-frequency execution`
   }
 ];
 
@@ -233,10 +359,20 @@ export default function Notes() {
   const applyTemplate = (templateContent: string) => {
     if (!activeNote) return;
     if (systemSounds) soundFx.playClick();
-    const nextContent = activeNote.content
-      ? `${activeNote.content}\n\n${templateContent}`
-      : templateContent;
-    updateActiveNote({ content: nextContent });
+    const isNoteBlank = !activeNote.content || activeNote.content.trim().length < 30;
+    const nextContent = isNoteBlank
+      ? templateContent
+      : `${activeNote.content.trim()}\n\n---\n\n${templateContent}`;
+
+    let nextTitle = activeNote.title;
+    if (!nextTitle || nextTitle === "Untitled Note") {
+      const match = templateContent.match(/^##?\s+(.+)$/m);
+      if (match && match[1].trim()) {
+        nextTitle = match[1].trim();
+      }
+    }
+
+    updateActiveNote({ content: nextContent, title: nextTitle });
     setTemplateMenuOpen(false);
     notify("Template Inserted", "Added template structure into note.", "update");
   };
@@ -300,6 +436,27 @@ export default function Notes() {
       line: lines.length,
       col: lines[lines.length - 1].length + 1,
     });
+  };
+
+  const handleContentChange = (newContent: string) => {
+    const fieldsToUpdate: Partial<NoteItem> = { content: newContent };
+    if (!activeNote?.title || activeNote.title === "Untitled Note") {
+      const firstLine = newContent.trim().split("\n")[0] || "";
+      const match = firstLine.match(/^#{1,3}\s+(.+)$/);
+      if (match && match[1].trim()) {
+        fieldsToUpdate.title = match[1].trim().slice(0, 45);
+      }
+    }
+    updateActiveNote(fieldsToUpdate);
+  };
+
+  const cycleNoteColor = () => {
+    if (!activeNote) return;
+    const colorIds = NOTE_COLORS.map((c) => c.id);
+    const currIdx = colorIds.indexOf(activeNote.color || "amber");
+    const nextColor = colorIds[(currIdx + 1) % colorIds.length];
+    updateActiveNote({ color: nextColor });
+    if (systemSounds) soundFx.playPop();
   };
 
   const createNote = () => {
@@ -617,6 +774,16 @@ export default function Notes() {
     const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
 
     if (cmdOrCtrl && !e.shiftKey && !e.altKey) {
+      if (e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        setMode((m) => (m === "preview" ? "edit" : "preview"));
+        return;
+      }
+      if (e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        syncWithCloud();
+        return;
+      }
       if (e.key.toLowerCase() === "b") {
         e.preventDefault();
         applyFormat("bold");
@@ -886,6 +1053,15 @@ export default function Notes() {
     return list;
   }, [notes, searchQuery, activeTagFilter]);
 
+  const tagCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: notes.length };
+    notes.forEach((n) => {
+      const t = (n.tag || "ideas").toLowerCase();
+      counts[t] = (counts[t] || 0) + 1;
+    });
+    return counts;
+  }, [notes]);
+
   const wordCount = activeNote?.content ? activeNote.content.trim().split(/\s+/).filter(Boolean).length : 0;
   const charCount = activeNote?.content ? activeNote.content.length : 0;
   const readTimeMin = Math.max(1, Math.ceil(wordCount / 200));
@@ -941,6 +1117,16 @@ export default function Notes() {
               placeholder="Search notes..."
               className="bg-transparent text-xs text-white placeholder:text-white/35 outline-none w-full"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="text-white/40 hover:text-white text-xs px-1"
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
           </div>
 
           {/* Category Filter Pills */}
@@ -958,7 +1144,7 @@ export default function Notes() {
                     : "bg-white/5 text-white/50 hover:text-white hover:bg-white/10"
                 }`}
               >
-                {t === "all" ? "All" : `#${t}`}
+                {t === "all" ? `All (${notes.length})` : `#${t} (${tagCounts[t] || 0})`}
               </button>
             ))}
           </div>
@@ -1066,7 +1252,17 @@ export default function Notes() {
                 <span>Notes</span>
               </button>
 
-              {/* Note color dot picker */}
+              {/* Mobile Note Color Cycle Button */}
+              <button
+                type="button"
+                onClick={cycleNoteColor}
+                className={`sm:hidden w-3.5 h-3.5 rounded-full transition shrink-0 ${
+                  NOTE_COLORS.find((c) => c.id === (activeNote.color || "amber"))?.bg || "bg-amber-500"
+                } ring-2 ring-white/60 active:scale-90`}
+                title="Tap to change note color"
+              />
+
+              {/* Note color dot picker (Desktop) */}
               <div className="hidden sm:flex items-center gap-1 shrink-0" title="Note Accent Color">
                 {NOTE_COLORS.map((c) => (
                   <button
@@ -1137,43 +1333,89 @@ export default function Notes() {
               >
                 <GIconDownload size={13} />
               </button>
+
+              {/* Quick Delete Note Button */}
+              <button
+                onClick={() => deleteNote(activeNote.id)}
+                className="w-7 h-7 aspect-square rounded-lg bg-white/10 hover:bg-rose-500/20 text-white/50 hover:text-rose-400 transition flex items-center justify-center cursor-pointer shrink-0"
+                title="Delete this note"
+              >
+                <GIconTrash size={13} />
+              </button>
             </div>
           </div>
 
-          {/* Sticky Formatting Toolbar */}
-          <div className="sticky top-[41px] sm:top-[45px] z-10 shrink-0 px-2.5 py-1.5 bg-[#0b0c13]/95 backdrop-blur-sm border-b border-white/5 flex items-center justify-between gap-1 overflow-x-auto no-scrollbar touch-pan-x text-xs">
-            {/* Left Tools Group */}
-            <div className="flex items-center gap-0.5 shrink-0">
-              {/* Templates Dropdown Button */}
-              <div className="relative">
-                <button
-                  onClick={() => setTemplateMenuOpen(!templateMenuOpen)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-[11px] text-white/70 hover:text-white transition cursor-pointer"
-                  title="Insert Note Template"
-                >
-                  <GIconFileText size={12} className="text-amber-400" />
-                  <span>Templates</span>
-                </button>
-                {templateMenuOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-48 rounded-xl bg-slate-900 border border-white/15 p-1.5 shadow-2xl z-50 animate-scaleIn">
-                    <div className="text-[10px] font-semibold text-white/40 px-2 py-1 uppercase tracking-wider">
-                      Insert Template
+          {/* Sticky Formatting Toolbar (Overflow-visible so templates dropdown never clips!) */}
+          <div className="sticky top-[41px] sm:top-[45px] z-30 shrink-0 px-2 sm:px-3 py-1.5 bg-[#0b0c13]/95 backdrop-blur-md border-b border-white/5 flex items-center justify-between gap-1.5 text-xs overflow-visible">
+            {/* Left Tools Group: Templates Dropdown (Fixed z-index elevation, floating over editor) */}
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setTemplateMenuOpen(!templateMenuOpen)}
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer border ${
+                  templateMenuOpen
+                    ? "bg-accent/25 border-accent/50 text-accent shadow-md"
+                    : "bg-white/5 hover:bg-white/10 border-white/10 text-white/80 hover:text-white"
+                }`}
+                title="Insert Note Template"
+              >
+                <GIconFileText size={12} className="text-amber-400 shrink-0" />
+                <span>Templates</span>
+                <GIconChevronDown
+                  size={10}
+                  className={`text-white/50 transition-transform duration-200 shrink-0 ${
+                    templateMenuOpen ? "rotate-180 text-accent" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Templates Dropdown Menu with Click-outside Backdrop */}
+              {templateMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setTemplateMenuOpen(false)}
+                  />
+                  <div className="absolute top-full left-0 mt-1.5 w-72 sm:w-80 rounded-xl bg-[#0f111c] border border-white/20 p-2 shadow-2xl z-50 animate-scaleIn backdrop-blur-xl divide-y divide-white/5">
+                    <div className="px-2 py-1.5 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">
+                        Insert Note Template
+                      </span>
+                      <span className="text-[10px] text-accent font-mono font-medium">
+                        {NOTE_TEMPLATES.length} templates
+                      </span>
                     </div>
-                    {NOTE_TEMPLATES.map((tmpl) => (
-                      <button
-                        key={tmpl.id}
-                        onClick={() => applyTemplate(tmpl.content)}
-                        className="w-full text-left px-2 py-1.5 text-xs text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition"
-                      >
-                        {tmpl.name}
-                      </button>
-                    ))}
+                    <div className="max-h-72 overflow-y-auto thin-scroll space-y-1 pt-1.5">
+                      {NOTE_TEMPLATES.map((tmpl) => (
+                        <button
+                          key={tmpl.id}
+                          type="button"
+                          onClick={() => applyTemplate(tmpl.content)}
+                          className="w-full text-left p-2 rounded-lg hover:bg-white/10 active:bg-accent/20 transition group cursor-pointer flex flex-col gap-0.5"
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-xs font-semibold text-white/90 group-hover:text-white truncate">
+                              {tmpl.name}
+                            </span>
+                            <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-white/10 text-amber-300 font-medium shrink-0">
+                              {tmpl.badge}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-white/45 group-hover:text-white/60 line-clamp-1">
+                            {tmpl.desc}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                )}
-              </div>
+                </>
+              )}
+            </div>
 
-              <div className="w-px h-4 bg-white/10 mx-1 shrink-0" />
+            <div className="w-px h-4 bg-white/10 shrink-0" />
 
+            {/* Center Strip: Horizontally Scrollable Formatting Actions */}
+            <div className="flex items-center gap-0.5 overflow-x-auto no-scrollbar touch-pan-x flex-1 min-w-0 py-0.5">
               {/* History Undo / Redo */}
               <button
                 onClick={handleUndo}
@@ -1230,21 +1472,21 @@ export default function Notes() {
               <button
                 onClick={() => applyFormat("h1")}
                 title="Heading 1 (#)"
-                className="px-1.5 py-0.5 rounded-md hover:bg-white/10 text-[11px] font-bold text-white/70 hover:text-white transition cursor-pointer"
+                className="px-1.5 py-0.5 rounded-md hover:bg-white/10 text-[11px] font-bold text-white/70 hover:text-white transition cursor-pointer shrink-0"
               >
                 H1
               </button>
               <button
                 onClick={() => applyFormat("h2")}
                 title="Heading 2 (##)"
-                className="px-1.5 py-0.5 rounded-md hover:bg-white/10 text-[11px] font-bold text-white/70 hover:text-white transition cursor-pointer"
+                className="px-1.5 py-0.5 rounded-md hover:bg-white/10 text-[11px] font-bold text-white/70 hover:text-white transition cursor-pointer shrink-0"
               >
                 H2
               </button>
               <button
                 onClick={() => applyFormat("h3")}
                 title="Heading 3 (###)"
-                className="px-1.5 py-0.5 rounded-md hover:bg-white/10 text-[11px] font-bold text-white/70 hover:text-white transition cursor-pointer"
+                className="px-1.5 py-0.5 rounded-md hover:bg-white/10 text-[11px] font-bold text-white/70 hover:text-white transition cursor-pointer shrink-0"
               >
                 H3
               </button>
@@ -1301,37 +1543,47 @@ export default function Notes() {
               <button
                 onClick={() => applyFormat("hr")}
                 title="Horizontal Divider (---)"
-                className="px-1.5 py-0.5 rounded-md hover:bg-white/10 text-[10px] text-white/70 hover:text-white font-mono transition cursor-pointer"
+                className="px-1.5 py-0.5 rounded-md hover:bg-white/10 text-[10px] text-white/70 hover:text-white font-mono transition cursor-pointer shrink-0"
               >
                 —
               </button>
             </div>
 
-            {/* Right: View Mode Toggle Pills (Edit | Split | Preview) */}
-            <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/10 shrink-0">
+            <div className="w-px h-4 bg-white/10 shrink-0" />
+
+            {/* Right: View Mode Toggle (Always visible, never scrolled offscreen!) */}
+            <div className="flex items-center gap-0.5 bg-black/50 p-0.5 rounded-lg border border-white/10 shrink-0">
               <button
+                type="button"
                 onClick={() => setMode("edit")}
-                className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition cursor-pointer ${
+                className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition cursor-pointer flex items-center gap-1 ${
                   mode === "edit" ? "bg-accent text-white shadow-sm" : "text-white/50 hover:text-white"
                 }`}
+                title="Edit Markdown (Ctrl+P)"
               >
-                Edit
+                <GIconCode size={11} />
+                <span>Edit</span>
               </button>
               <button
+                type="button"
                 onClick={() => setMode("split")}
-                className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition cursor-pointer hidden md:inline-block ${
+                className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition cursor-pointer hidden md:flex items-center gap-1 ${
                   mode === "split" ? "bg-accent text-white shadow-sm" : "text-white/50 hover:text-white"
                 }`}
+                title="Side-by-side Split View"
               >
-                Split
+                <span>Split</span>
               </button>
               <button
+                type="button"
                 onClick={() => setMode("preview")}
-                className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition cursor-pointer ${
+                className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition cursor-pointer flex items-center gap-1 ${
                   mode === "preview" ? "bg-accent text-white shadow-sm" : "text-white/50 hover:text-white"
                 }`}
+                title="Rendered Markdown Preview (Ctrl+P)"
               >
-                Preview
+                <GIconEye size={11} />
+                <span>Preview</span>
               </button>
             </div>
           </div>
@@ -1358,7 +1610,7 @@ export default function Notes() {
                   ref={textareaRef}
                   value={activeNote.content}
                   onChange={(e) => {
-                    updateActiveNote({ content: e.target.value });
+                    handleContentChange(e.target.value);
                     updateCursor(e.target);
                   }}
                   onSelect={(e) => updateCursor(e.currentTarget)}
@@ -1537,15 +1789,15 @@ export default function Notes() {
           </div>
 
           {/* Footer Stats & Real-Time Cursor Coordinates Bar */}
-          <div className="px-4 py-1.5 border-t border-white/10 bg-black/25 flex flex-wrap items-center justify-between gap-2 text-[10px] text-white/45 font-mono">
+          <div className="px-3 sm:px-4 py-1.5 border-t border-white/10 bg-black/25 flex items-center justify-between gap-2 text-[10px] text-white/45 font-mono shrink-0 select-none">
             {/* Word & Reading stats */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <span>{wordCount} words</span>
               <span className="hidden sm:inline">{charCount} chars</span>
-              <span>~{readTimeMin} min read</span>
+              <span>~{readTimeMin}m read</span>
             </div>
 
-            {/* Live Cursor Indicator */}
+            {/* Live Cursor Indicator & Auto-Save Badge */}
             <div className="flex items-center gap-2">
               <div
                 className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md border transition-all ${
@@ -1558,7 +1810,10 @@ export default function Notes() {
                 <GIconFontCursor size={11} className={isFocused ? "text-accent animate-pulse" : "text-white/40"} />
                 <span>Ln {cursorPos.line}, Col {cursorPos.col}</span>
               </div>
-              <span className="text-white/30 hidden md:inline">Auto-saved to browser</span>
+              <span className="text-emerald-400/80 items-center gap-1 hidden xs:inline-flex">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Saved</span>
+              </span>
             </div>
           </div>
         </div>
