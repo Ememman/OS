@@ -1108,7 +1108,7 @@ export default function Notes() {
 
         {/* Search bar & Tag Filters (Sticky header) */}
         <div className="p-2 border-b border-white/10 space-y-2 sticky top-[41px] z-10 bg-[#0a0a0f]/95 backdrop-blur-md shrink-0">
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5 border border-white/10">
+          <div className="focus-stroke flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5 border border-white/10 transition-all focus-within:border-[#0091ff] focus-within:ring-2 focus-within:ring-[#0091ff]/40 focus-within:shadow-[0_0_14px_rgba(0,145,255,0.28)]">
             <GIconSearch size={12} className="text-white/40 shrink-0" />
             <input
               type="text"
@@ -1284,14 +1284,14 @@ export default function Notes() {
                 value={activeNote.title}
                 onChange={(e) => updateActiveNote({ title: e.target.value })}
                 placeholder="Note Title"
-                className="bg-transparent text-xs sm:text-base font-semibold text-white outline-none flex-1 min-w-0 placeholder:text-white/30 truncate"
+                className="bg-transparent text-xs sm:text-base font-semibold text-white outline-none flex-1 min-w-0 placeholder:text-white/30 truncate px-2 py-0.5 rounded-lg border border-transparent focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
               />
 
               {/* Tag Selector Pill */}
               <select
                 value={activeNote.tag || "ideas"}
                 onChange={(e) => updateActiveNote({ tag: e.target.value })}
-                className="text-[10px] bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-white/70 focus:outline-none focus:border-accent shrink-0 hidden xs:inline-block"
+                className="text-[10px] bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-white/70 outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all shrink-0 hidden xs:inline-block"
               >
                 <option value="ideas">#ideas</option>
                 <option value="work">#work</option>

@@ -75,7 +75,7 @@ function StartMenu({ onClose }: { onClose: () => void }) {
       </div>
 
       <form onSubmit={(e) => { e.preventDefault(); if (results[0]) { openApp(results[0].app); onClose(); } }} className="mb-3 shrink-0">
-        <div className="flex items-center gap-2 bg-white/8 rounded-xl px-3 h-9 border border-white/10">
+        <div className="focus-stroke flex items-center gap-2 bg-white/8 rounded-xl px-3 h-9 border border-white/10 transition-all focus-within:border-[#0091ff] focus-within:ring-2 focus-within:ring-[#0091ff]/40 focus-within:shadow-[0_0_14px_rgba(0,145,255,0.28)]">
           <GIconSearch size={14} className="text-white/40 shrink-0" />
           <input
             autoFocus
