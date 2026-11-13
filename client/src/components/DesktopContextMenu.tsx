@@ -180,6 +180,17 @@ export default function DesktopContextMenu({ x, y, onClose, widgetsVisible }: Co
 
       <button
         onClick={() => {
+          useDesktopStore.getState().cleanUpDesktop();
+          onClose();
+        }}
+        className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors text-left"
+      >
+        <GIconLayoutCells size={14} className="text-sky-400" />
+        <span className="flex-1 font-medium">Clean Up Icons</span>
+      </button>
+
+      <button
+        onClick={() => {
           useDesktopStore.getState().resetDesktop();
           onClose();
         }}
