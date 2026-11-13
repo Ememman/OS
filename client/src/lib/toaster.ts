@@ -1,14 +1,11 @@
-import { toast } from "sonner";
-import { soundFx } from "./soundFx";
-import { useOS } from "../store/useOS";
-
-export { toast };
+import { useOS, type NotificationVariant } from "../store/useOS";
 
 export type ToastType = "success" | "error" | "info" | "warning" | "loading";
 
 export interface ToastOptions {
   description?: string;
   duration?: number;
+  id?: string | number;
   action?: {
     label: string;
     onClick: () => void;
@@ -20,52 +17,29 @@ export interface ToastOptions {
 }
 
 /**
- * Universal OS Toast Notification powered by Sonner with sound effects.
+ * Universal OS Toast Notification routed through OS-native notification toast system with sound effects.
  */
 export function showToast(type: ToastType, title: string, options?: ToastOptions) {
-  const systemSounds = useOS.getState().systemSounds;
+  const variant: NotificationVariant =
+    type === "error" ? "delete" : type === "success" ? "success" : type === "warning" ? "warning" : "info";
   const duration = options?.duration ?? 4000;
-
-  if (systemSounds) {
-    if (type === "error") soundFx.playClose();
-    else if (type === "success") soundFx.playPop();
-    else soundFx.playNotification();
-  }
-
-  switch (type) {
-    case "success":
-      return toast.success(title, {
-        description: options?.description,
-        duration,
-        action: options?.action,
-        cancel: options?.cancel,
-      });
-    case "error":
-      return toast.error(title, {
-        description: options?.description,
-        duration,
-        action: options?.action,
-        cancel: options?.cancel,
-      });
-    case "warning":
-      return toast.warning(title, {
-        description: options?.description,
-        duration,
-        action: options?.action,
-        cancel: options?.cancel,
-      });
-    case "loading":
-      return toast.loading(title, {
-        description: options?.description,
-        duration,
-      });
-    case "info":
-    default:
-      return toast.info(title, {
-        description: options?.description,
-        duration,
-        action: options?.action,
-        cancel: options?.cancel,
-      });
-  }
+  useOS.getState().notify(title, options?.description, variant, duration);
 }
+
+export const toast = {
+  success: (title: string, options?: ToastOptions) => {
+    showToast("success", title, options);
+  },
+  error: (title: string, options?: ToastOptions) => {
+    showToast("error", title, options);
+  },
+  warning: (title: string, options?: ToastOptions) => {
+    showToast("warning", title, options);
+  },
+  info: (title: string, options?: ToastOptions) => {
+    showToast("info", title, options);
+  },
+  dismiss: (id?: string | number) => {
+    useOS.getState().dismissNotification(typeof id === "number" ? id : undefined);
+  },
+};

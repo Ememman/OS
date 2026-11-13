@@ -247,6 +247,28 @@ function BgPicker({ current, onPick, onClose }: any) {
   );
 }
 
+function formatChatDateTime(ts: number | string | Date) {
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return { dateLabel: "", timeLabel: "", full: "" };
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+  const isThisYear = d.getFullYear() === now.getFullYear();
+
+  const dateLabel = isToday
+    ? "Today"
+    : isYesterday
+    ? "Yesterday"
+    : isThisYear
+    ? d.toLocaleDateString([], { month: "short", day: "numeric" })
+    : d.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+
+  const timeLabel = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return { dateLabel, timeLabel, full: `${dateLabel} · ${timeLabel}` };
+}
+
 export default function Chats() {
   const isMobile = useIsMobile();
   const chatSound = useOS((s) => s.chatSound);
@@ -1219,9 +1241,23 @@ export default function Chats() {
           const myReactionOnMsg = userReactions[m.id] || (m.userReactions && m.userReactions[clientId]);
           const hasAlreadyReacted = Boolean(myReactionOnMsg);
           const isFirstUnread = showNewDivider && idx === firstUnreadIndex;
+          const msgDateInfo = formatChatDateTime(m.ts);
+          const prevMsg = idx > 0 ? displayedMessages[idx - 1] : null;
+          const isNewDay = !prevMsg || new Date(prevMsg.ts).toDateString() !== new Date(m.ts).toDateString();
 
           return (
             <div key={m.id || m.tempId} className="w-full flex flex-col">
+              {/* Day separator header */}
+              {isNewDay && (
+                <div className="w-full my-3 sm:my-3.5 flex items-center justify-center select-none" role="separator">
+                  <div className="h-px flex-1 bg-white/10" />
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/5 border border-white/10 text-white/60 mx-2.5 shadow-xs">
+                    {msgDateInfo.dateLabel}
+                  </span>
+                  <div className="h-px flex-1 bg-white/10" />
+                </div>
+              )}
+
               {/* Discord-style NEW unread message divider */}
               {isFirstUnread && (
                 <div
@@ -1253,8 +1289,12 @@ export default function Chats() {
               <div className={`min-w-0 flex flex-col ${isSelf ? "items-end text-right" : "items-start text-left"}`}>
                 <div className="chat-meta text-xs font-medium mb-1 flex items-center gap-1.5 opacity-80">
                   <span className="font-semibold" title={m.name}>{isSelf ? "You" : formatUsername(m.name)}</span>
-                  <time className="font-normal opacity-60 text-[10px]" dateTime={new Date(m.ts).toISOString()}>
-                    · {new Date(m.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  <time
+                    className="font-normal opacity-60 text-[10px]"
+                    dateTime={new Date(m.ts).toISOString()}
+                    title={`${new Date(m.ts).toLocaleDateString()} ${new Date(m.ts).toLocaleTimeString()}`}
+                  >
+                    · {msgDateInfo.full}
                   </time>
                   {isPinned && <GIconPin size={10} className="text-amber-400" />}
                 </div>

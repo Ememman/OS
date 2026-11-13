@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { toast } from "sonner";
 import { soundFx } from "../lib/soundFx";
 import type {
   AccentColor,
@@ -102,11 +101,34 @@ interface OSState {
   focusWindow: (id: string) => void;
   restoreWindow: (id: string) => void;
   minimizeWindow: (id: string) => void;
+  requestMinimize: (id: string) => void;
+  minimizingWindowId: string | null;
+  dockApps: string[];
+  reorderDockApps: (fromApp: string, toApp: string) => void;
+  resetDockApps: () => void;
   toggleMaximize: (id: string) => void;
   toggleShowDesktop: () => void;
   moveWindow: (id: string, x: number, y: number) => void;
   resizeWindow: (id: string, w: number, h: number) => void;
 }
+
+export const DEFAULT_DOCK_APPS = [
+  "terminal",
+  "codeplay",
+  "notes",
+  "calculator",
+  "activity",
+  "guestbook",
+  "library",
+  "music",
+  "updates",
+  "chats",
+  "gallery",
+  "games",
+  "files",
+  "settings",
+  "resume",
+];
 
 export const APPS: Record<string, AppMetadata> = {
   library: { title: "Library", w: 860, h: 580 },
@@ -120,7 +142,7 @@ export const APPS: Record<string, AppMetadata> = {
   updates: { title: "Updates", w: 680, h: 640 },
   chats: { title: "Chats", w: 460, h: 640 },
   gallery: { title: "Gallery", w: 880, h: 600 },
-  games: { title: "Games", w: 720, h: 610 },
+  games: { title: "Games", w: 780, h: 630 },
   files: { title: "Files", w: 780, h: 540 },
   settings: { title: "Settings", w: 640, h: 520 },
   resume: { title: "Resume", w: 820, h: 740 },
@@ -214,17 +236,6 @@ export const useOS = create<OSState>((set, get) => ({
       else soundFx.playNotification();
     }
 
-    // Trigger Sonner toast with glassmorphism polish
-    if (variant === "delete") {
-      toast.error(title, { description: message, duration: durationMs, id });
-    } else if (variant === "success" || variant === "add") {
-      toast.success(title, { description: message, duration: durationMs, id });
-    } else if (variant === "warning") {
-      toast.warning(title, { description: message, duration: durationMs, id });
-    } else {
-      toast.info(title, { description: message, duration: durationMs, id });
-    }
-
     set((state) => ({
       notification: item,
       notifications: [item, ...state.notifications].slice(0, 5),
@@ -239,13 +250,11 @@ export const useOS = create<OSState>((set, get) => ({
   },
   dismissNotification: (id) => {
     if (id !== undefined) {
-      toast.dismiss(id);
       set((state) => ({
         notifications: state.notifications.filter((n) => n.id !== id),
         notification: state.notification?.id === id ? state.notifications.find((n) => n.id !== id) || null : state.notification,
       }));
     } else {
-      toast.dismiss();
       set({ notifications: [], notification: null });
     }
   },
@@ -547,6 +556,55 @@ export const useOS = create<OSState>((set, get) => ({
     });
   },
 
+  minimizingWindowId: null,
+  requestMinimize: (id) => {
+    const win = get().windows.find((w) => w.id === id);
+    if (!win || win.minimized) return;
+    if (get().systemSounds) soundFx.playMinimize();
+    set({ minimizingWindowId: id });
+    setTimeout(() => {
+      set((state) => ({
+        minimizingWindowId: state.minimizingWindowId === id ? null : state.minimizingWindowId,
+        windows: state.windows.map((w) =>
+          w.id === id ? { ...w, minimized: true } : w
+        ),
+      }));
+    }, 220);
+  },
+
+  dockApps: (() => {
+    const saved = localStorage.getItem("os_dock_apps_order");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const combined = Array.from(new Set([...parsed, ...DEFAULT_DOCK_APPS])).filter((a) =>
+            DEFAULT_DOCK_APPS.includes(a)
+          );
+          return combined;
+        }
+      } catch {}
+    }
+    return DEFAULT_DOCK_APPS;
+  })(),
+
+  reorderDockApps: (fromApp, toApp) => {
+    if (fromApp === toApp) return;
+    const current = [...get().dockApps];
+    const fromIdx = current.indexOf(fromApp);
+    const toIdx = current.indexOf(toApp);
+    if (fromIdx === -1 || toIdx === -1) return;
+    current.splice(fromIdx, 1);
+    current.splice(toIdx, 0, fromApp);
+    localStorage.setItem("os_dock_apps_order", JSON.stringify(current));
+    set({ dockApps: current });
+  },
+
+  resetDockApps: () => {
+    localStorage.removeItem("os_dock_apps_order");
+    set({ dockApps: DEFAULT_DOCK_APPS });
+  },
+
   minimizeWindow: (id) => {
     if (get().systemSounds) soundFx.playMinimize();
     set({
@@ -571,7 +629,7 @@ export const useOS = create<OSState>((set, get) => ({
     const isTopActive = existing.z >= maxZ;
 
     if (isTopActive) {
-      get().minimizeWindow(existing.id);
+      get().requestMinimize(existing.id);
     } else {
       get().focusWindow(existing.id);
     }

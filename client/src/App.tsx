@@ -1,5 +1,4 @@
 import { useEffect, useState, lazy, Suspense } from "react";
-import { Toaster } from "sonner";
 import { WindowAppSkeleton } from "./components/common/Skeletons";
 import { useOS } from "./store/useOS";
 import { applyHarmonizedPaletteToDoc } from "./lib/colorHarmonizer";
@@ -250,15 +249,6 @@ export default function App() {
       <MissionControl />
       <ControlCenter />
       <NotificationToast />
-      <Toaster
-        position="top-right"
-        theme="dark"
-        richColors
-        closeButton
-        expand
-        gap={10}
-        offset={isMobile ? 12 : 24}
-      />
       {contextMenu && (
         <DesktopContextMenu
           x={contextMenu.x}
