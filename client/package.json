@@ -16,10 +16,13 @@
     "@dicebear/styles": "^10.6.0",
     "@gravity-ui/icons": "^2.23.0",
     "framer-motion": "^14.10.1",
+    "motion": "^14.13.0",
     "next": "^15.1.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-loading-skeleton": "^3.5.0",
     "socket.io-client": "^4.8.3",
+    "sonner": "^2.0.8",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

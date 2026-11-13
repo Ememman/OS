@@ -27,6 +27,7 @@
     "@nestjs/platform-express": "^12.2.0",
     "@nestjs/platform-socket.io": "^12.2.0",
     "@nestjs/websockets": "^12.2.0",
+    "compression": "^1.8.2",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -37,6 +38,7 @@
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
+    "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.5",
