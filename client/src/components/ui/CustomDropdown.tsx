@@ -122,7 +122,7 @@ export default function CustomDropdown<T extends string = string>({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -4 }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className={`absolute z-[250] mt-1.5 min-w-[140px] max-w-[calc(100vw-32px)] sm:max-w-[260px] max-h-60 overflow-y-auto thin-scroll p-1 rounded-xl bg-[#0b101c]/95 border border-white/20 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 ${
+            className={`absolute z-[250] mt-1.5 min-w-[180px] w-max max-w-[calc(100vw-32px)] sm:max-w-[280px] max-h-60 overflow-y-auto thin-scroll p-1 rounded-xl bg-[#0b101c] border border-white/20 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 ${
               align === "right" ? "right-0" : "left-0"
             } ${menuClassName}`}
           >
