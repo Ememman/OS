@@ -70,7 +70,7 @@ export default function CustomDropdown<T extends string = string>({
   return (
     <div
       ref={containerRef}
-      className={`relative inline-block text-left ${isOpen ? "z-50" : "z-10"} ${containerClassName}`}
+      className={`relative ${containerClassName || "inline-block"} text-left ${isOpen ? "z-50" : "z-10"}`}
     >
       {/* Trigger Button */}
       <button
@@ -89,11 +89,11 @@ export default function CustomDropdown<T extends string = string>({
             : "hover:bg-white/10 hover:border-white/20"
         } ${sizeClasses} ${className}`}
       >
-        <span className="flex items-center gap-1.5 truncate">
+        <span className="flex items-center gap-1.5 truncate min-w-0 flex-1">
           {selectedOption?.icon && (
             <selectedOption.icon size={size === "xs" ? 11 : 13} className="shrink-0 text-white/60" />
           )}
-          <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
+          <span className="truncate min-w-0">{selectedOption ? selectedOption.label : placeholder}</span>
           {selectedOption?.badge && (
             <span
               className={`px-1.5 py-0.2 rounded-full text-[9px] font-mono border ${
