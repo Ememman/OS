@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "react-loading-skeleton/dist/skeleton.css";
 
 @theme {
   --breakpoint-xs: 420px;
@@ -621,11 +620,50 @@ select option:checked {
   color: #ffffff !important;
 }
 
-/* 5. React Loading Skeleton Dark Glass Theme */
+/* 5. React Loading Skeleton Dark Glass Theme & Keyframes */
+@keyframes react-loading-skeleton {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .react-loading-skeleton {
-  --base-color: rgba(255, 255, 255, 0.07) !important;
-  --highlight-color: rgba(255, 255, 255, 0.16) !important;
+  --base-color: rgba(255, 255, 255, 0.07);
+  --highlight-color: rgba(255, 255, 255, 0.16);
+  --animation-duration: 1.5s;
+  --animation-direction: normal;
+  --pseudo-element-display: block;
+  background-color: var(--base-color);
+  width: 100%;
   border-radius: 10px;
+  display: inline-flex;
+  line-height: 1;
+  position: relative;
+  user-select: none;
+  overflow: hidden;
+}
+
+.react-loading-skeleton::after {
+  content: " ";
+  display: var(--pseudo-element-display);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background-repeat: no-repeat;
+  background-image: linear-gradient(
+    90deg,
+    var(--base-color) 0%,
+    var(--highlight-color) 50%,
+    var(--base-color) 100%
+  );
+  transform: translateX(-100%);
+  animation-name: react-loading-skeleton;
+  animation-direction: var(--animation-direction);
+  animation-duration: var(--animation-duration);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
 }
 
 /* 6. Sonner Glass Toast Polish */
