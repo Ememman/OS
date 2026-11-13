@@ -70,6 +70,17 @@ export default function PowerOffScreen() {
             <span>Switch OS Style</span>
           </button>
         </div>
+
+        <button
+          onClick={() => {
+            try {
+              window.close();
+            } catch {}
+          }}
+          className="text-[11px] text-white/40 hover:text-rose-400 transition-colors underline underline-offset-4 cursor-pointer pt-1"
+        >
+          Close tab / Exit system
+        </button>
       </div>
     </div>
   );

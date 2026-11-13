@@ -164,6 +164,8 @@ export default function SnakeRetro() {
           player: cleanName,
           score: scoreToSync,
           details: `${scoreToSync / 10} Apples (${SPEEDS[speedIdx].label})`,
+          time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+          ts: Date.now(),
         }),
       });
       if (res.ok) setScoreSubmitted(true);
@@ -354,9 +356,9 @@ export default function SnakeRetro() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-3 text-white select-none max-w-md mx-auto h-full overflow-y-auto thin-scroll">
+    <div className="flex flex-col items-center justify-start p-3 sm:p-4 pb-12 sm:pb-16 text-white select-none max-w-md mx-auto min-h-full overflow-y-auto thin-scroll space-y-2.5">
       {/* Top Header & Stats */}
-      <div className="w-full max-w-[min(90vw,340px)] flex items-center justify-between pb-2 mb-2 border-b border-white/10 shrink-0">
+      <div className="w-full max-w-[min(84vw,275px)] flex items-center justify-between pb-2 mb-1 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-2">
           <div className="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-xs">
             <span className="text-white/50 mr-1.5 font-semibold">Score</span>
@@ -404,7 +406,7 @@ export default function SnakeRetro() {
       <div
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className="relative aspect-square w-full max-w-[min(90vw,340px)] bg-[#070b14]/90 rounded-2xl border-2 border-white/15 shadow-2xl overflow-hidden p-1 backdrop-blur-md touch-none select-none shrink-0"
+        className="relative aspect-square w-full max-w-[min(84vw,275px)] bg-[#070b14]/90 rounded-2xl border-2 border-white/15 shadow-2xl overflow-hidden p-1 backdrop-blur-md touch-none select-none shrink-0"
         style={{ touchAction: "none" }}
       >
         <div
@@ -556,21 +558,21 @@ export default function SnakeRetro() {
       </div>
 
       {/* On-Screen D-Pad for Mobile & Touch Controls */}
-      <div className="mt-2.5 flex flex-col items-center gap-1.5 shrink-0">
+      <div className="mt-1 flex flex-col items-center gap-1 shrink-0 pb-2">
         <button
           onClick={() => changeDirection("UP")}
-          className="w-12 h-11 rounded-2xl bg-white/10 active:bg-accent active:scale-90 active:text-white flex items-center justify-center transition border border-white/15 shadow-md cursor-pointer text-white/80 hover:text-white"
+          className="w-11 h-9 sm:w-12 sm:h-10 rounded-xl bg-white/10 active:bg-accent active:scale-90 active:text-white flex items-center justify-center transition border border-white/15 shadow-md cursor-pointer text-white/80 hover:text-white"
           title="Move Up"
         >
-          <GIconChevronUp size={22} />
+          <GIconChevronUp size={20} />
         </button>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button
             onClick={() => changeDirection("LEFT")}
-            className="w-12 h-11 rounded-2xl bg-white/10 active:bg-accent active:scale-90 active:text-white flex items-center justify-center transition border border-white/15 shadow-md cursor-pointer text-white/80 hover:text-white"
+            className="w-11 h-9 sm:w-12 sm:h-10 rounded-xl bg-white/10 active:bg-accent active:scale-90 active:text-white flex items-center justify-center transition border border-white/15 shadow-md cursor-pointer text-white/80 hover:text-white"
             title="Move Left"
           >
-            <GIconChevronLeft size={22} />
+            <GIconChevronLeft size={20} />
           </button>
           <button
             onClick={() => {
@@ -578,25 +580,25 @@ export default function SnakeRetro() {
               else if (hasStarted) setIsPaused(!isPaused);
               else setHasStarted(true);
             }}
-            className="w-12 h-11 rounded-2xl bg-accent/20 active:scale-90 border border-accent/40 text-accent font-mono text-xs flex items-center justify-center font-bold shadow-md cursor-pointer"
+            className="w-11 h-9 sm:w-12 sm:h-10 rounded-xl bg-accent/20 active:scale-90 border border-accent/40 text-accent font-mono text-xs flex items-center justify-center font-bold shadow-md cursor-pointer"
             title={isGameOver ? "Play Again" : isPaused ? "Resume" : "Pause"}
           >
             {isGameOver ? "REV" : isPaused ? "GO" : "PAU"}
           </button>
           <button
             onClick={() => changeDirection("RIGHT")}
-            className="w-12 h-11 rounded-2xl bg-white/10 active:bg-accent active:scale-90 active:text-white flex items-center justify-center transition border border-white/15 shadow-md cursor-pointer text-white/80 hover:text-white"
+            className="w-11 h-9 sm:w-12 sm:h-10 rounded-xl bg-white/10 active:bg-accent active:scale-90 active:text-white flex items-center justify-center transition border border-white/15 shadow-md cursor-pointer text-white/80 hover:text-white"
             title="Move Right"
           >
-            <GIconChevronRight size={22} />
+            <GIconChevronRight size={20} />
           </button>
         </div>
         <button
           onClick={() => changeDirection("DOWN")}
-          className="w-12 h-11 rounded-2xl bg-white/10 active:bg-accent active:scale-90 active:text-white flex items-center justify-center transition border border-white/15 shadow-md cursor-pointer text-white/80 hover:text-white"
+          className="w-11 h-9 sm:w-12 sm:h-10 rounded-xl bg-white/10 active:bg-accent active:scale-90 active:text-white flex items-center justify-center transition border border-white/15 shadow-md cursor-pointer text-white/80 hover:text-white"
           title="Move Down"
         >
-          <GIconChevronDown size={22} />
+          <GIconChevronDown size={20} />
         </button>
       </div>
 

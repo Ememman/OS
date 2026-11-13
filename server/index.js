@@ -3,6 +3,7 @@ import dns from "node:dns";
 import os from "node:os";
 import express from "express";
 import cors from "cors";
+import compression from "compression";
 import http from "http";
 import { Server } from "socket.io";
 import { customAlphabet } from "nanoid";
@@ -39,6 +40,7 @@ app.use((req, res, next) => {
 });
 
 app.use(cors({ origin: "*" }));
+app.use(compression({ threshold: 512 }));
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
@@ -1132,11 +1134,12 @@ app.get("/api/games/leaderboard", async (req, res) => {
 });
 
 app.post("/api/games/leaderboard", leaderboardLimiter, (req, res) => {
-  const { game, player, score, details } = req.body || {};
+  const { game, player, score, details, time } = req.body || {};
   const cleanPlayer = sanitizePlain(player, 25) || "Anonymous Pilot";
   const cleanGame = String(game || "").trim().toLowerCase();
   const numScore = Number(score);
   const cleanDetails = sanitizePlain(details || "", 60);
+  const cleanTime = sanitizePlain(time || "", 30) || new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
   const validGames = {
     blockblast: "Block Blast",
@@ -1186,12 +1189,13 @@ app.post("/api/games/leaderboard", leaderboardLimiter, (req, res) => {
       existing.score = numScore;
       if (cleanDetails) existing.details = cleanDetails;
       existing.ts = Date.now();
+      existing.time = cleanTime;
       existing.badge = badge;
       io.emit("game:score_submitted", existing);
       if (isDbConnected) {
         GameScoreModel.updateOne(
           { id: existing.id },
-          { score: numScore, details: cleanDetails, ts: existing.ts, badge }
+          { score: numScore, details: cleanDetails, ts: existing.ts, time: cleanTime, badge }
         ).catch((err) => console.error("[DB] Failed to update game score:", err.message));
       }
       return res.status(200).json({ ok: true, entry: existing, updated: true });
@@ -1207,6 +1211,7 @@ app.post("/api/games/leaderboard", leaderboardLimiter, (req, res) => {
     player: cleanPlayer,
     score: numScore,
     details: cleanDetails,
+    time: cleanTime,
     ts: Date.now(),
     badge
   };

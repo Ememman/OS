@@ -37,6 +37,7 @@ const GameScoreSchema = new mongoose.Schema(
     player: { type: String, required: true, index: true },
     score: { type: Number, required: true, index: true },
     details: { type: String, default: "" },
+    time: { type: String, default: "" },
     badge: { type: String, default: "🎮 Player" },
     ts: { type: Number, required: true, index: true },
   },

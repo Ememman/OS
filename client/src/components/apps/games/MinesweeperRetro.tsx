@@ -122,6 +122,25 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
   const [faceState, setFaceState] = useState<"normal" | "surprised" | "won" | "lost">("normal");
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("os_mines_sound") !== "off");
 
+  // Persistent Best Time per difficulty
+  const [bestTime, setBestTime] = useState<number | null>(() => {
+    try {
+      const saved = localStorage.getItem(`os_mines_best_${diff}`);
+      return saved ? parseInt(saved, 10) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`os_mines_best_${diff}`);
+      setBestTime(saved ? parseInt(saved, 10) : null);
+    } catch {
+      setBestTime(null);
+    }
+  }, [diff]);
+
   // Leaderboard submission dialog
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [playerName, setPlayerName] = useState(() => getEffectiveChatName());
@@ -320,26 +339,42 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
     setGrid(currentGrid);
 
     if (unrevealedSafeCells === 0) {
+      const finalTime = Math.max(1, elapsed);
       setStatus("won");
       setFaceState("won");
       setFlagsLeft(0);
       setShowSubmitModal(true);
       sfx.win();
-      notify("Clear Victory!", `All mines defused in ${elapsed}s!`, "success");
+      notify("Clear Victory!", `All mines defused in ${finalTime}s!`, "success");
+
+      // Save Best Time locally
+      if (!bestTime || finalTime < bestTime) {
+        setBestTime(finalTime);
+        try {
+          localStorage.setItem(`os_mines_best_${diff}`, String(finalTime));
+        } catch {}
+      }
 
       // Auto-submit victory clear time in real-time
       const cleanName = getEffectiveChatName();
+      saveChatName(cleanName);
+      const timeStr = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
       fetch(`${API_URL}/api/games/leaderboard`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           game: "minesweeper",
           player: cleanName,
-          score: elapsed,
-          details: `${config.label.split(" ")[0]} Clear (${elapsed}s)`,
+          score: finalTime,
+          details: `${config.label.split(" ")[0]} Clear (${finalTime}s)`,
+          time: timeStr,
+          ts: Date.now(),
         }),
       })
-        .then((r) => r.ok && setSubmitted(true))
+        .then((r) => {
+          if (r.ok) setSubmitted(true);
+        })
         .catch(() => {});
     }
   };
@@ -412,12 +447,21 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
   // Submit high score to backend
   const handleSubmitScore = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!playerName.trim() || submitting || submitted) return;
+    if (!playerName.trim() || submitting) return;
 
     setSubmitting(true);
     const cleanName = playerName.trim() || getEffectiveChatName();
     saveChatName(cleanName);
     localStorage.setItem("os_player_name", cleanName);
+    const finalTime = Math.max(1, elapsed);
+    const timeStr = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+    if (!bestTime || finalTime < bestTime) {
+      setBestTime(finalTime);
+      try {
+        localStorage.setItem(`os_mines_best_${diff}`, String(finalTime));
+      } catch {}
+    }
 
     try {
       const res = await fetch(`${API_URL}/api/games/leaderboard`, {
@@ -426,19 +470,27 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
         body: JSON.stringify({
           game: "minesweeper",
           player: cleanName,
-          score: elapsed,
-          details: `${config.label.split(" ")[0]} Clear (${elapsed}s)`,
+          score: finalTime,
+          details: `${config.label.split(" ")[0]} Clear (${finalTime}s)`,
+          time: timeStr,
+          ts: Date.now(),
         }),
       });
 
       if (res.ok) {
         setSubmitted(true);
-        notify("Score Recorded!", `Your ${elapsed}s record was posted to the Arcade Leaderboard!`, "success");
+        notify("Score Recorded!", `Your ${finalTime}s record was posted to the Arcade Leaderboard!`, "success");
         if (onOpenLeaderboard) {
           setTimeout(onOpenLeaderboard, 1200);
         }
+      } else {
+        setSubmitted(true);
+        notify("Saved Locally!", `Your ${finalTime}s record is saved on this device.`, "success");
       }
-    } catch {}
+    } catch {
+      setSubmitted(true);
+      notify("Saved Locally!", `Your ${finalTime}s record is saved on this device.`, "success");
+    }
     setSubmitting(false);
   };
 
@@ -450,7 +502,7 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
   };
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-full p-3 sm:p-4 select-none h-full overflow-y-auto thin-scroll">
+    <div className="flex flex-col items-center justify-start min-h-full p-3 sm:p-4 pb-14 sm:pb-20 select-none h-full overflow-y-auto thin-scroll">
       {/* Top Controls Bar */}
       <div className="w-full max-w-xl flex flex-wrap items-center justify-between gap-2 mb-3 bg-white/5 border border-white/10 rounded-2xl px-3 py-2 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-1.5 text-xs">
@@ -469,6 +521,13 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
               {d}
             </button>
           ))}
+          <div
+            className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/15 border border-amber-500/25 text-[10.5px] text-amber-300 font-mono font-bold ml-1"
+            title="Personal Best Time on this difficulty"
+          >
+            <GIconTrophy size={11} className="text-amber-400" />
+            <span>{bestTime !== null ? `${bestTime}s` : "--"}</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">

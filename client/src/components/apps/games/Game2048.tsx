@@ -219,6 +219,8 @@ export default function Game2048() {
           player: cleanName,
           score: scoreToSync,
           details: `Max Tile: ${maxTile}`,
+          time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+          ts: Date.now(),
         }),
       });
       if (res.ok) {
@@ -429,12 +431,12 @@ export default function Game2048() {
 
   return (
     <div
-      className="flex flex-col items-center justify-between h-full p-3 sm:p-4 select-none touch-none bg-black/30 text-white overflow-y-auto thin-scroll gap-2"
+      className="flex flex-col items-center justify-start min-h-full p-3 sm:p-4 pb-12 sm:pb-16 select-none touch-none bg-black/30 text-white overflow-y-auto thin-scroll gap-3"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
       {/* Top Header & Scoreboard */}
-      <div className="w-full max-w-[min(90vw,330px)] flex items-center justify-between shrink-0">
+      <div className="w-full max-w-[min(84vw,285px)] flex items-center justify-between shrink-0">
         <div>
           <h3 className="font-display text-2xl font-black tracking-tight text-white flex items-center gap-1.5">
             2048
@@ -494,7 +496,7 @@ export default function Game2048() {
 
       {/* 4x4 Responsive Grid Board */}
       <div
-        className="relative w-full max-w-[min(90vw,330px)] aspect-square bg-[#0d1220]/90 p-2 sm:p-2.5 rounded-2xl border-2 border-white/15 shadow-2xl flex flex-col justify-between shrink-0 touch-none"
+        className="relative w-full max-w-[min(84vw,285px)] aspect-square bg-[#0d1220]/90 p-2 sm:p-2.5 rounded-2xl border-2 border-white/15 shadow-2xl flex flex-col justify-between shrink-0 touch-none"
         style={{ touchAction: "none" }}
       >
         {board.map((row, r) => (

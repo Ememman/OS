@@ -3,6 +3,7 @@ import { useOS } from "../../store/useOS";
 import { soundFx } from "../../lib/soundFx";
 import { API_URL } from "../../lib/config";
 import { getSocket } from "../../lib/socket";
+import { ActivityMonitorSkeleton } from "../common/Skeletons";
 import {
   GIconActivity,
   GIconSignal,
@@ -1648,8 +1649,12 @@ export default function ActivityMonitor() {
 
       {/* Main Content View */}
       <div className="flex-1 overflow-auto thin-scroll p-3 sm:p-4">
-        {/* Processes Tab */}
-        {activeTab === "processes" && (
+        {loading && !sysInfo && metrics.length === 0 ? (
+          <ActivityMonitorSkeleton />
+        ) : (
+          <>
+            {/* Processes Tab */}
+            {activeTab === "processes" && (
           <div className="space-y-4">
             {/* Telemetry KPI Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -2988,6 +2993,8 @@ export default function ActivityMonitor() {
               )}
             </div>
           </div>
+        )}
+          </>
         )}
       </div>
 
