@@ -16,7 +16,17 @@ interface DesktopStoreState {
   namingModal: { isOpen: boolean; folderId: string; initialName: string } | null;
 
   // Actions
-  moveItem: (id: string, x: number, y: number) => void;
+  moveItem: (
+    id: string,
+    x: number,
+    y: number,
+    extra?: {
+      lastSafeX?: number;
+      lastSafeY?: number;
+      widgetZoneX?: number | null;
+      widgetZoneY?: number | null;
+    }
+  ) => void;
   combineItems: (draggedId: string, targetId: string) => void;
   renameFolder: (folderId: string, newName: string) => void;
   removeAppFromFolder: (folderId: string, appId: string) => void;
@@ -80,10 +90,31 @@ export const useDesktopStore = create<DesktopStoreState>((set, get) => ({
   activeFolderId: null,
   namingModal: null,
 
-  moveItem: (id: string, x: number, y: number) => {
+  moveItem: (
+    id: string,
+    x: number,
+    y: number,
+    extra?: {
+      lastSafeX?: number;
+      lastSafeY?: number;
+      widgetZoneX?: number | null;
+      widgetZoneY?: number | null;
+    }
+  ) => {
     const updated = get().items.map((it) => {
       if (it.id === id) {
-        return { ...it, x, y };
+        const itemCopy: DesktopItem = { ...it, x, y };
+        if (extra?.lastSafeX !== undefined) itemCopy.lastSafeX = extra.lastSafeX;
+        if (extra?.lastSafeY !== undefined) itemCopy.lastSafeY = extra.lastSafeY;
+        if (extra?.widgetZoneX !== undefined) {
+          if (extra.widgetZoneX === null) delete itemCopy.widgetZoneX;
+          else itemCopy.widgetZoneX = extra.widgetZoneX;
+        }
+        if (extra?.widgetZoneY !== undefined) {
+          if (extra.widgetZoneY === null) delete itemCopy.widgetZoneY;
+          else itemCopy.widgetZoneY = extra.widgetZoneY;
+        }
+        return itemCopy;
       }
       return it;
     });
@@ -320,6 +351,10 @@ export const useDesktopStore = create<DesktopStoreState>((set, get) => ({
       const copy = { ...it };
       delete copy.x;
       delete copy.y;
+      delete copy.lastSafeX;
+      delete copy.lastSafeY;
+      delete copy.widgetZoneX;
+      delete copy.widgetZoneY;
       return copy;
     });
     persistItems(cleared);
