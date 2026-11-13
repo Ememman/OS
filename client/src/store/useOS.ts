@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { toast } from "sonner";
 import { soundFx } from "../lib/soundFx";
 import type {
   AccentColor,
@@ -111,7 +112,7 @@ export const APPS: Record<string, AppMetadata> = {
   library: { title: "Library", w: 860, h: 580 },
   music: { title: "Music", w: 760, h: 520 },
   terminal: { title: "Terminal", w: 740, h: 480 },
-  calculator: { title: "Calculator", w: 360, h: 520 },
+  calculator: { title: "Calculator", w: 385, h: 620 },
   notes: { title: "Notes", w: 780, h: 540 },
   activity: { title: "Activity Monitor", w: 780, h: 540 },
   guestbook: { title: "Guestbook", w: 820, h: 560 },
@@ -119,7 +120,7 @@ export const APPS: Record<string, AppMetadata> = {
   updates: { title: "Updates", w: 680, h: 640 },
   chats: { title: "Chats", w: 460, h: 640 },
   gallery: { title: "Gallery", w: 880, h: 600 },
-  games: { title: "Games", w: 560, h: 700 },
+  games: { title: "Games", w: 720, h: 610 },
   files: { title: "Files", w: 780, h: 540 },
   settings: { title: "Settings", w: 640, h: 520 },
   resume: { title: "Resume", w: 820, h: 740 },
@@ -213,6 +214,17 @@ export const useOS = create<OSState>((set, get) => ({
       else soundFx.playNotification();
     }
 
+    // Trigger Sonner toast with glassmorphism polish
+    if (variant === "delete") {
+      toast.error(title, { description: message, duration: durationMs, id });
+    } else if (variant === "success" || variant === "add") {
+      toast.success(title, { description: message, duration: durationMs, id });
+    } else if (variant === "warning") {
+      toast.warning(title, { description: message, duration: durationMs, id });
+    } else {
+      toast.info(title, { description: message, duration: durationMs, id });
+    }
+
     set((state) => ({
       notification: item,
       notifications: [item, ...state.notifications].slice(0, 5),
@@ -227,11 +239,13 @@ export const useOS = create<OSState>((set, get) => ({
   },
   dismissNotification: (id) => {
     if (id !== undefined) {
+      toast.dismiss(id);
       set((state) => ({
         notifications: state.notifications.filter((n) => n.id !== id),
         notification: state.notification?.id === id ? state.notifications.find((n) => n.id !== id) || null : state.notification,
       }));
     } else {
+      toast.dismiss();
       set({ notifications: [], notification: null });
     }
   },
@@ -280,6 +294,9 @@ export const useOS = create<OSState>((set, get) => ({
   isSleeping: false,
   powerOff: () => {
     if (get().systemSounds) soundFx.playClose();
+    try {
+      window.close();
+    } catch {}
     set({
       isPoweredOff: true,
       isSleeping: false,

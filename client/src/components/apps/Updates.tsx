@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { TimelineSkeleton } from "../common/Skeletons";
 import {
   GIconWrench,
   GIconUpdates,
@@ -757,10 +758,7 @@ export default function Updates() {
       {/* PR Updates Feed List */}
       <div className="flex-1 overflow-y-auto thin-scroll p-3.5 sm:p-5 space-y-3.5">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-white/40 space-y-2">
-            <GIconRotateRight size={24} className="animate-spin text-accent" />
-            <span className="text-xs">Fetching real-time Pull Requests from GitHub...</span>
-          </div>
+          <TimelineSkeleton count={4} />
         ) : filteredUpdates.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-white/40 text-center space-y-2">
             <GIconSearch size={24} className="opacity-40" />

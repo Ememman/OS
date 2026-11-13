@@ -1,4 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from "react";
+import { Toaster } from "sonner";
+import { WindowAppSkeleton } from "./components/common/Skeletons";
 import { useOS } from "./store/useOS";
 import { applyHarmonizedPaletteToDoc } from "./lib/colorHarmonizer";
 import { useIsMobile, useIsTablet } from "./lib/useMediaQuery";
@@ -234,14 +236,7 @@ export default function App() {
         return (
           <Window key={win.id} win={win}>
             <ErrorBoundary fallbackTitle={win.title} onClose={() => closeWindow(win.id)}>
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex flex-col items-center justify-center p-8 gap-2.5 text-white/50 select-none">
-                    <div className="w-5 h-5 border-2 border-white/20 border-t-accent rounded-full animate-spin" />
-                    <span className="text-[11px] font-mono">Loading {win.title}...</span>
-                  </div>
-                }
-              >
+              <Suspense fallback={<WindowAppSkeleton title={win.title} />}>
                 <Comp />
               </Suspense>
             </ErrorBoundary>
@@ -255,6 +250,15 @@ export default function App() {
       <MissionControl />
       <ControlCenter />
       <NotificationToast />
+      <Toaster
+        position="top-right"
+        theme="dark"
+        richColors
+        closeButton
+        expand
+        gap={10}
+        offset={isMobile ? 12 : 24}
+      />
       {contextMenu && (
         <DesktopContextMenu
           x={contextMenu.x}

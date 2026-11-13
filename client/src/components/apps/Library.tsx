@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ProjectCardsSkeleton } from "../common/Skeletons";
 import {
   GIconExternalLink,
   GIconGithub,
@@ -70,6 +71,7 @@ function getProjectCategories(p: ProjectItem): string[] {
 export default function Library() {
   const { systemSounds, notify } = useOS();
   const [projects, setProjects] = useState<ProjectItem[]>(fallbackProjects);
+  const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [active, setActive] = useState<ProjectItem | null>(null);
@@ -91,6 +93,7 @@ export default function Library() {
   });
 
   useEffect(() => {
+    setLoading(true);
     fetch(`${API_URL}/api/projects`)
       .then((r) => r.json())
       .then((data) => {
@@ -98,7 +101,8 @@ export default function Library() {
           setProjects(data);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
 
     fetch("https://api.github.com/users/Ememman/repos?sort=updated")
       .then((r) => r.json())
@@ -373,7 +377,9 @@ export default function Library() {
 
       {/* Projects Grid */}
       <div className="flex-1 overflow-auto thin-scroll p-4 sm:p-5">
-        {shown.length === 0 ? (
+        {loading && projects.length === 0 ? (
+          <ProjectCardsSkeleton count={6} />
+        ) : shown.length === 0 ? (
           <div className="text-center py-16 text-white/40">
             <p className="font-medium text-sm">No projects match "{search}"</p>
             <p className="text-xs text-white/30 mt-1">Try searching for "React Native", "Expo", or "MongoDB".</p>

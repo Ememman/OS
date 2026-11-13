@@ -141,7 +141,14 @@ export default function PowerDialog({ onClose }: PowerDialogProps) {
               whileHover={{ scale: 1.015, x: 2 }}
               whileTap={{ scale: 0.985 }}
               transition={{ type: "spring", stiffness: 450, damping: 24 }}
-              onClick={() => handleAction(powerOff)}
+              onClick={() =>
+                handleAction(() => {
+                  powerOff();
+                  try {
+                    window.close();
+                  } catch {}
+                })
+              }
               className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 hover:border-rose-500/50 transition-colors text-left group cursor-pointer"
             >
               <div className="w-9 h-9 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">

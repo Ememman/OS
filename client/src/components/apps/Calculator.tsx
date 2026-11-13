@@ -535,26 +535,25 @@ export default function Calculator() {
   const isOpActive = (op: string) => operation === op && waitingForOperand;
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0f] p-3 text-white select-none relative overflow-hidden">
+    <div className="flex flex-col h-full bg-[#0a0a0f] p-2.5 sm:p-3 text-white select-none relative overflow-y-auto thin-scroll">
       {/* Top Header Mode Bar */}
       <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10 text-xs gap-1.5 shrink-0 sticky top-0 bg-[#0a0a0f]/95 backdrop-blur-md z-10">
         {/* Responsive Segmented Mode Tabs: Equal width grid prevents ANY truncation */}
-        <div className="flex-1 min-w-0 grid grid-cols-4 gap-0.5 bg-white/[0.04] p-0.5 rounded-xl border border-white/10 text-[10.5px]">
+        <div className="flex-1 min-w-0 grid grid-cols-4 gap-0.5 bg-white/[0.04] p-0.5 rounded-xl border border-white/10 text-[9.5px] sm:text-[10px]">
           {MODES.map((m) => {
             const isActive = mode === m.id;
             return (
               <button
                 key={m.id}
                 onClick={() => { playClick(); setMode(m.id); }}
-                className={`py-1 px-1 rounded-lg font-medium transition-all text-center truncate cursor-pointer ${
+                className={`py-1 px-0.5 rounded-lg font-medium transition-all text-center truncate cursor-pointer ${
                   isActive
                     ? "bg-accent text-white shadow-sm shadow-accent/30 font-semibold"
                     : "text-white/60 hover:text-white hover:bg-white/[0.06]"
                 }`}
                 title={m.label}
               >
-                <span className="hidden min-[380px]:inline">{m.label}</span>
-                <span className="min-[380px]:hidden">{m.short}</span>
+                <span>{m.label}</span>
               </button>
             );
           })}
@@ -685,34 +684,36 @@ export default function Calculator() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-2 gap-1.5 pb-2">
                 {filteredConstants.map((c, i) => (
                   <button
                     key={c.symbol + i}
                     onClick={() => insertConstant(c)}
-                    className="group relative flex flex-col p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] active:bg-white/[0.14] border border-white/10 hover:border-amber-400/40 transition-all text-left overflow-hidden shadow-sm cursor-pointer"
+                    className="group relative flex flex-col justify-between p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.09] active:bg-white/[0.14] border border-white/10 hover:border-amber-400/40 transition-all text-left overflow-hidden shadow-sm cursor-pointer"
                     title={`${c.name} (${c.symbol})\nValue: ${c.value} ${c.unit || ""}\n${c.desc || ""}\nClick to insert`}
                   >
                     {/* Top Row: Symbol badge + Name + Unit */}
-                    <div className="flex items-center gap-1.5 mb-1 min-w-0 w-full">
-                      <span className="shrink-0 w-5 h-5 rounded-md bg-amber-400/15 border border-amber-400/30 text-amber-300 font-mono font-bold text-xs flex items-center justify-center">
-                        {c.symbol}
-                      </span>
-                      <span className="text-[11px] font-medium text-white/90 truncate flex-1 min-w-0">
-                        {c.name}
-                      </span>
+                    <div className="flex items-center justify-between gap-1 mb-1.5 w-full min-w-0">
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <span className="shrink-0 w-5 h-5 rounded-md bg-amber-400/15 border border-amber-400/30 text-amber-300 font-mono font-bold text-xs flex items-center justify-center">
+                          {c.symbol}
+                        </span>
+                        <span className="text-[10.5px] font-medium text-white/90 truncate flex-1 min-w-0">
+                          {c.name}
+                        </span>
+                      </div>
                       {c.unit && (
-                        <span className="shrink-0 text-[8.5px] font-mono px-1 py-0.2 rounded bg-white/5 text-white/45 border border-white/5">
+                        <span className="shrink-0 text-[8px] font-mono px-1 py-0.2 rounded bg-white/5 text-white/45 border border-white/5">
                           {c.unit}
                         </span>
                       )}
                     </div>
 
-                    {/* Bottom Row: Formatted Monospace Value + Use Pill */}
-                    <div className="flex items-center justify-between text-white/45 group-hover:text-amber-200/90 font-mono text-[10px] tracking-tight w-full min-w-0">
+                    {/* Dedicated Bottom Monospace Value Pill */}
+                    <div className="flex items-center justify-between bg-black/40 px-2 py-1 rounded-lg border border-white/5 text-amber-300/90 font-mono text-[9.5px] tracking-tight w-full min-w-0">
                       <span className="truncate">{formatConstantDisplay(c.value)}</span>
-                      <span className="opacity-0 group-hover:opacity-100 text-[8.5px] text-amber-400 font-sans shrink-0 ml-1 font-semibold uppercase tracking-wider">
-                        Use
+                      <span className="opacity-0 group-hover:opacity-100 text-[8.5px] text-amber-400 font-sans shrink-0 ml-1 font-semibold uppercase tracking-wider transition-opacity">
+                        Insert
                       </span>
                     </div>
                   </button>
@@ -1004,10 +1005,10 @@ export default function Calculator() {
 
           {/* Programmer Bitwise Extras Row */}
           {mode === "programmer" && (
-            <div className="grid grid-cols-4 gap-1 text-xs font-mono">
+            <div className="grid grid-cols-4 gap-1 text-[11px] font-mono">
               <button
                 onClick={() => performOperation("AND")}
-                className={`p-2 rounded-xl border transition cursor-pointer ${
+                className={`py-1.5 px-1 rounded-xl border transition cursor-pointer ${
                   isOpActive("AND") ? "bg-sky-400 text-slate-950 font-bold" : "bg-white/5 border-white/5 hover:bg-white/10 text-sky-300"
                 }`}
               >
@@ -1015,7 +1016,7 @@ export default function Calculator() {
               </button>
               <button
                 onClick={() => performOperation("OR")}
-                className={`p-2 rounded-xl border transition cursor-pointer ${
+                className={`py-1.5 px-1 rounded-xl border transition cursor-pointer ${
                   isOpActive("OR") ? "bg-sky-400 text-slate-950 font-bold" : "bg-white/5 border-white/5 hover:bg-white/10 text-sky-300"
                 }`}
               >
@@ -1023,7 +1024,7 @@ export default function Calculator() {
               </button>
               <button
                 onClick={() => performOperation("XOR")}
-                className={`p-2 rounded-xl border transition cursor-pointer ${
+                className={`py-1.5 px-1 rounded-xl border transition cursor-pointer ${
                   isOpActive("XOR") ? "bg-sky-400 text-slate-950 font-bold" : "bg-white/5 border-white/5 hover:bg-white/10 text-sky-300"
                 }`}
               >
@@ -1035,14 +1036,14 @@ export default function Calculator() {
                   const num = Math.floor(parseFloat(display) || 0);
                   setDisplay(String(~num));
                 }}
-                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-sky-300 transition cursor-pointer"
+                className="py-1.5 px-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-sky-300 transition cursor-pointer"
               >
                 NOT
               </button>
 
               <button
                 onClick={() => performOperation("<<")}
-                className={`p-2 rounded-xl border transition cursor-pointer ${
+                className={`py-1.5 px-1 rounded-xl border transition cursor-pointer ${
                   isOpActive("<<") ? "bg-emerald-400 text-slate-950 font-bold" : "bg-white/5 border-white/5 hover:bg-white/10 text-emerald-300"
                 }`}
               >
@@ -1050,7 +1051,7 @@ export default function Calculator() {
               </button>
               <button
                 onClick={() => performOperation(">>")}
-                className={`p-2 rounded-xl border transition cursor-pointer ${
+                className={`py-1.5 px-1 rounded-xl border transition cursor-pointer ${
                   isOpActive(">>") ? "bg-emerald-400 text-slate-950 font-bold" : "bg-white/5 border-white/5 hover:bg-white/10 text-emerald-300"
                 }`}
               >
@@ -1058,13 +1059,13 @@ export default function Calculator() {
               </button>
               <button
                 onClick={() => { playClick(); setDisplay(String(parsedNum >>> 0)); }}
-                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-white/80 transition cursor-pointer"
+                className="py-1.5 px-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-white/80 transition cursor-pointer"
               >
                 UINT
               </button>
               <button
                 onClick={handleBackspace}
-                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-rose-300 transition cursor-pointer"
+                className="py-1.5 px-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-rose-300 transition cursor-pointer"
               >
                 ⌫
               </button>
@@ -1072,31 +1073,31 @@ export default function Calculator() {
           )}
 
           {/* Standard Numeric Keypad with macOS / Fluent Polish */}
-          <div className="grid grid-cols-4 gap-1.5 text-base font-medium">
+          <div className="grid grid-cols-4 gap-1.5 text-sm sm:text-base font-medium pb-1">
             <button
               onClick={display === "0" && prevValue === null ? clearAll : clearEntry}
-              className="p-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] active:scale-95 text-rose-400 font-semibold border border-white/10 transition cursor-pointer"
+              className="py-2 sm:py-2.5 px-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] active:scale-95 text-rose-400 font-semibold border border-white/10 transition cursor-pointer"
               title={display === "0" ? "All Clear" : "Clear Entry"}
             >
               {display === "0" && prevValue === null ? "AC" : "C"}
             </button>
             <button
               onClick={toggleSign}
-              className="p-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] active:scale-95 text-white/75 border border-white/10 transition cursor-pointer"
+              className="py-2 sm:py-2.5 px-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] active:scale-95 text-white/75 border border-white/10 transition cursor-pointer"
               title="Negate"
             >
               ±
             </button>
             <button
               onClick={inputPercent}
-              className="p-2.5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] active:scale-95 text-white/75 border border-white/10 transition cursor-pointer"
+              className="py-2 sm:py-2.5 px-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] active:scale-95 text-white/75 border border-white/10 transition cursor-pointer"
               title="Percent"
             >
               %
             </button>
             <button
               onClick={() => performOperation("÷")}
-              className={`p-2.5 rounded-xl font-bold text-lg active:scale-95 transition cursor-pointer border ${
+              className={`py-2 sm:py-2.5 px-2 rounded-xl font-bold text-base sm:text-lg active:scale-95 transition cursor-pointer border ${
                 isOpActive("÷")
                   ? "bg-accent text-white border-accent shadow-[0_0_12px_rgba(0,145,255,0.5)] ring-2 ring-accent/50"
                   : "bg-accent/20 hover:bg-accent/30 text-accent border-accent/25"
@@ -1107,25 +1108,25 @@ export default function Calculator() {
 
             <button
               onClick={() => inputDigit(7)}
-              className="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
+              className="py-2 sm:py-2.5 px-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
             >
               7
             </button>
             <button
               onClick={() => inputDigit(8)}
-              className="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
+              className="py-2 sm:py-2.5 px-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
             >
               8
             </button>
             <button
               onClick={() => inputDigit(9)}
-              className="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
+              className="py-2 sm:py-2.5 px-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
             >
               9
             </button>
             <button
               onClick={() => performOperation("×")}
-              className={`p-2.5 rounded-xl font-bold text-lg active:scale-95 transition cursor-pointer border ${
+              className={`py-2 sm:py-2.5 px-2 rounded-xl font-bold text-base sm:text-lg active:scale-95 transition cursor-pointer border ${
                 isOpActive("×")
                   ? "bg-accent text-white border-accent shadow-[0_0_12px_rgba(0,145,255,0.5)] ring-2 ring-accent/50"
                   : "bg-accent/20 hover:bg-accent/30 text-accent border-accent/25"
@@ -1136,25 +1137,25 @@ export default function Calculator() {
 
             <button
               onClick={() => inputDigit(4)}
-              className="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
+              className="py-2 sm:py-2.5 px-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
             >
               4
             </button>
             <button
               onClick={() => inputDigit(5)}
-              className="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
+              className="py-2 sm:py-2.5 px-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
             >
               5
             </button>
             <button
               onClick={() => inputDigit(6)}
-              className="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
+              className="py-2 sm:py-2.5 px-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
             >
               6
             </button>
             <button
               onClick={() => performOperation("-")}
-              className={`p-2.5 rounded-xl font-bold text-lg active:scale-95 transition cursor-pointer border ${
+              className={`py-2 sm:py-2.5 px-2 rounded-xl font-bold text-base sm:text-lg active:scale-95 transition cursor-pointer border ${
                 isOpActive("-")
                   ? "bg-accent text-white border-accent shadow-[0_0_12px_rgba(0,145,255,0.5)] ring-2 ring-accent/50"
                   : "bg-accent/20 hover:bg-accent/30 text-accent border-accent/25"
@@ -1165,25 +1166,25 @@ export default function Calculator() {
 
             <button
               onClick={() => inputDigit(1)}
-              className="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
+              className="py-2 sm:py-2.5 px-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
             >
               1
             </button>
             <button
               onClick={() => inputDigit(2)}
-              className="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
+              className="py-2 sm:py-2.5 px-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
             >
               2
             </button>
             <button
               onClick={() => inputDigit(3)}
-              className="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
+              className="py-2 sm:py-2.5 px-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition cursor-pointer"
             >
               3
             </button>
             <button
               onClick={() => performOperation("+")}
-              className={`p-2.5 rounded-xl font-bold text-lg active:scale-95 transition cursor-pointer border ${
+              className={`py-2 sm:py-2.5 px-2 rounded-xl font-bold text-base sm:text-lg active:scale-95 transition cursor-pointer border ${
                 isOpActive("+")
                   ? "bg-accent text-white border-accent shadow-[0_0_12px_rgba(0,145,255,0.5)] ring-2 ring-accent/50"
                   : "bg-accent/20 hover:bg-accent/30 text-accent border-accent/25"
@@ -1194,19 +1195,19 @@ export default function Calculator() {
 
             <button
               onClick={() => inputDigit(0)}
-              className="col-span-2 p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition text-left pl-5 cursor-pointer"
+              className="col-span-2 py-2 sm:py-2.5 px-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white border border-white/[0.06] transition text-left pl-5 cursor-pointer"
             >
               0
             </button>
             <button
               onClick={inputDecimal}
-              className="p-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white font-bold border border-white/[0.06] transition cursor-pointer"
+              className="py-2 sm:py-2.5 px-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.11] active:bg-white/[0.16] active:scale-95 text-white font-bold border border-white/[0.06] transition cursor-pointer"
             >
               .
             </button>
             <button
               onClick={handleEquals}
-              className="p-2.5 rounded-xl bg-gradient-to-r from-accent to-blue-600 hover:brightness-110 active:scale-95 text-white font-bold text-lg shadow-lg shadow-accent/25 transition cursor-pointer"
+              className="py-2 sm:py-2.5 px-2 rounded-xl bg-gradient-to-r from-accent to-blue-600 hover:brightness-110 active:scale-95 text-white font-bold text-base sm:text-lg shadow-lg shadow-accent/25 transition cursor-pointer"
             >
               =
             </button>
