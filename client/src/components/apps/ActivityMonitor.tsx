@@ -1800,7 +1800,6 @@ export default function ActivityMonitor() {
                             return (
                               <tr key={win.id} className="hover:bg-white/5 transition-colors">
                                 <td className="py-2.5 px-3 font-medium flex items-center gap-2 whitespace-nowrap">
-                                  <span className="w-2 h-2 rounded-full bg-accent animate-pulse shrink-0" />
                                   <span className="text-white font-medium truncate max-w-[160px]">{win.title}</span>
                                 </td>
                                 <td className="py-2.5 px-3 font-mono text-white/40 whitespace-nowrap">
@@ -1814,11 +1813,6 @@ export default function ActivityMonitor() {
                                         : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
                                     }`}
                                   >
-                                    <span
-                                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                        win.minimized ? "bg-amber-400" : "bg-emerald-400 animate-pulse"
-                                      }`}
-                                    />
                                     {win.minimized ? "Minimized" : "Active / Visible"}
                                   </span>
                                 </td>
@@ -1878,7 +1872,6 @@ export default function ActivityMonitor() {
                           <div key={win.id} className="p-3 rounded-xl border border-white/10 bg-white/[0.03] space-y-2.5">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex items-center gap-2 min-w-0">
-                                <span className="w-2 h-2 rounded-full bg-accent animate-pulse shrink-0" />
                                 <span className="font-semibold text-white truncate text-xs">{win.title}</span>
                               </div>
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border shrink-0 ${
@@ -2115,7 +2108,6 @@ export default function ActivityMonitor() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 text-[10px] font-mono">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                     Gateway Online
                   </span>
                   <button
@@ -2144,7 +2136,6 @@ export default function ActivityMonitor() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[10px] sm:text-[11px] text-white/70">
                     <div className="p-2 rounded-lg bg-black/30 border border-white/5 space-y-1">
                       <div className="font-semibold text-emerald-400 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                         1. Safe Public Routes (GET)
                       </div>
                       <p className="text-white/60 text-[10px] leading-relaxed">
@@ -2154,7 +2145,6 @@ export default function ActivityMonitor() {
 
                     <div className="p-2 rounded-lg bg-black/30 border border-white/5 space-y-1">
                       <div className="font-semibold text-sky-400 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
                         2. Sandbox Mutations (POST/PUT/DELETE)
                       </div>
                       <p className="text-white/60 text-[10px] leading-relaxed">
@@ -2164,7 +2154,6 @@ export default function ActivityMonitor() {
 
                     <div className="p-2 rounded-lg bg-black/30 border border-white/5 space-y-1">
                       <div className="font-semibold text-rose-400 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
                         3. Zero Secrets Disclosure
                       </div>
                       <p className="text-white/60 text-[10px] leading-relaxed">
@@ -2348,7 +2337,6 @@ export default function ActivityMonitor() {
                                   <span className="text-amber-400 text-[10px] animate-pulse">Executing...</span>
                                 ) : test.ok ? (
                                   <span className="text-emerald-400 text-[10px] flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                                     {test.status} ({test.latency}ms)
                                   </span>
                                 ) : (
@@ -2431,7 +2419,6 @@ export default function ActivityMonitor() {
                                 <span className="text-amber-400 animate-pulse">Executing...</span>
                               ) : test.ok ? (
                                 <span className="text-emerald-400 flex items-center gap-1">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                                   {test.status} ({test.latency}ms)
                                 </span>
                               ) : (
@@ -3183,7 +3170,6 @@ export default function ActivityMonitor() {
       <div className="border-t border-white/10 px-3 sm:px-4 py-2 bg-white/5 flex items-center justify-between text-[11px] text-white/40">
         <span>Portfolio OS Kernel v2.4</span>
         <span className="font-mono text-emerald-400/80 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           <span>Status: Healthy</span>
         </span>
       </div>

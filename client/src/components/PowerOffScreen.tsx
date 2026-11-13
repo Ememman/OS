@@ -1,10 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GIconPower, GIconSliders } from "./icons/GravityIcons";
 import { useOS } from "../store/useOS";
 
 export default function PowerOffScreen() {
   const { powerOn, reopenPicker, osMode } = useOS();
   const [booting, setBooting] = useState(false);
+
+  useEffect(() => {
+    try {
+      window.open("", "_self");
+      window.close();
+    } catch {}
+    const timer = setTimeout(() => {
+      try {
+        window.close();
+      } catch {}
+      try {
+        window.location.replace("about:blank");
+      } catch {}
+    }, 450);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handlePowerOn = () => {
     setBooting(true);
@@ -18,6 +34,16 @@ export default function PowerOffScreen() {
     setTimeout(() => {
       reopenPicker();
     }, 350);
+  };
+
+  const handleExit = () => {
+    try {
+      window.open("", "_self");
+      window.close();
+    } catch {}
+    try {
+      window.location.replace("about:blank");
+    } catch {}
   };
 
   return (
@@ -72,12 +98,8 @@ export default function PowerOffScreen() {
         </div>
 
         <button
-          onClick={() => {
-            try {
-              window.close();
-            } catch {}
-          }}
-          className="text-[11px] text-white/40 hover:text-rose-400 transition-colors underline underline-offset-4 cursor-pointer pt-1"
+          onClick={handleExit}
+          className="text-[11px] text-white/50 hover:text-rose-400 transition-colors underline underline-offset-4 cursor-pointer pt-1"
         >
           Close tab / Exit system
         </button>

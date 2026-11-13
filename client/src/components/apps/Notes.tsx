@@ -1814,8 +1814,7 @@ export default function Notes() {
                 <GIconFontCursor size={11} className={isFocused ? "text-accent animate-pulse" : "text-white/40"} />
                 <span>Ln {cursorPos.line}, Col {cursorPos.col}</span>
               </div>
-              <span className="text-emerald-400/80 items-center gap-1 hidden xs:inline-flex">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-emerald-400/80 items-center gap-1 hidden xs:inline-flex text-[11px] font-medium">
                 <span>Saved</span>
               </span>
             </div>

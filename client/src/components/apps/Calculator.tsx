@@ -535,7 +535,7 @@ export default function Calculator() {
   const isOpActive = (op: string) => operation === op && waitingForOperand;
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0f] p-2.5 sm:p-3 text-white select-none relative overflow-y-auto thin-scroll">
+    <div className="flex flex-col h-full bg-[#0a0a0f] p-2.5 sm:p-3 pb-6 text-white select-none relative overflow-y-auto thin-scroll">
       {/* Top Header Mode Bar */}
       <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10 text-xs gap-1.5 shrink-0 sticky top-0 bg-[#0a0a0f]/95 backdrop-blur-md z-10">
         {/* Responsive Segmented Mode Tabs: Equal width grid prevents ANY truncation */}
@@ -553,7 +553,8 @@ export default function Calculator() {
                 }`}
                 title={m.label}
               >
-                <span>{m.label}</span>
+                <span className="hidden min-[360px]:inline">{m.label}</span>
+                <span className="min-[360px]:hidden">{m.short}</span>
               </button>
             );
           })}
@@ -1073,7 +1074,7 @@ export default function Calculator() {
           )}
 
           {/* Standard Numeric Keypad with macOS / Fluent Polish */}
-          <div className="grid grid-cols-4 gap-1.5 text-sm sm:text-base font-medium pb-1">
+          <div className="grid grid-cols-4 gap-1.5 text-sm sm:text-base font-medium pb-2 sm:pb-3">
             <button
               onClick={display === "0" && prevValue === null ? clearAll : clearEntry}
               className="py-2 sm:py-2.5 px-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] active:scale-95 text-rose-400 font-semibold border border-white/10 transition cursor-pointer"

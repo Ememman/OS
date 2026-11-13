@@ -134,7 +134,7 @@ export const APPS: Record<string, AppMetadata> = {
   library: { title: "Library", w: 860, h: 580 },
   music: { title: "Music", w: 760, h: 520 },
   terminal: { title: "Terminal", w: 740, h: 480 },
-  calculator: { title: "Calculator", w: 385, h: 620 },
+  calculator: { title: "Calculator", w: 395, h: 635 },
   notes: { title: "Notes", w: 780, h: 540 },
   activity: { title: "Activity Monitor", w: 780, h: 540 },
   guestbook: { title: "Guestbook", w: 820, h: 560 },
@@ -142,7 +142,7 @@ export const APPS: Record<string, AppMetadata> = {
   updates: { title: "Updates", w: 680, h: 640 },
   chats: { title: "Chats", w: 460, h: 640 },
   gallery: { title: "Gallery", w: 880, h: 600 },
-  games: { title: "Games", w: 780, h: 630 },
+  games: { title: "Games", w: 880, h: 700 },
   files: { title: "Files", w: 780, h: 540 },
   settings: { title: "Settings", w: 640, h: 520 },
   resume: { title: "Resume", w: 820, h: 740 },
@@ -303,9 +303,6 @@ export const useOS = create<OSState>((set, get) => ({
   isSleeping: false,
   powerOff: () => {
     if (get().systemSounds) soundFx.playClose();
-    try {
-      window.close();
-    } catch {}
     set({
       isPoweredOff: true,
       isSleeping: false,
@@ -314,6 +311,18 @@ export const useOS = create<OSState>((set, get) => ({
       spotlightOpen: false,
       powerDialogOpen: false,
     });
+    try {
+      window.open("", "_self");
+      window.close();
+    } catch {}
+    setTimeout(() => {
+      try {
+        window.close();
+      } catch {}
+      try {
+        window.location.replace("about:blank");
+      } catch {}
+    }, 200);
   },
   powerOn: () => {
     if (get().systemSounds) soundFx.playOpen();

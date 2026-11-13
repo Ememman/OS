@@ -1,5 +1,72 @@
 export const updates = [
   {
+    id: "pr-189",
+    prNumber: 189,
+    title: "Updated Main │ Implement the dragging function to the dock applications",
+    body: "Merged dock dragging and reordering capabilities into main branch.",
+    date: "2026-11-13",
+    category: "feature",
+    priority: "high",
+    status: "merged",
+    author: "EmanExe",
+    branch: "dev",
+    url: "https://github.com/EmanExe/OS/pull/189",
+    pinned: true,
+  },
+  {
+    id: "pr-188",
+    prNumber: 188,
+    title: "Implement the dragging function to the dock applications",
+    body: "Allowed users to drag and reorder application icons inside the macOS Dock and Windows Taskbar with persisted arrangement.",
+    date: "2026-11-13",
+    category: "feature",
+    priority: "high",
+    status: "merged",
+    author: "EmanExe",
+    branch: "fix/dock-dragging-applications",
+    url: "https://github.com/EmanExe/OS/pull/188",
+    pinned: true,
+  },
+  {
+    id: "pr-187",
+    prNumber: 187,
+    title: "Updated Main │ Fixes in Deployment in Render & Github Pages",
+    body: "Resolved PostCSS skeleton CSS resolution on GitHub Pages and compression module handling on Render.",
+    date: "2026-11-13",
+    category: "fix",
+    priority: "critical",
+    status: "merged",
+    author: "EmanExe",
+    branch: "dev",
+    url: "https://github.com/EmanExe/OS/pull/187",
+  },
+  {
+    id: "pr-186",
+    prNumber: 186,
+    title: "Fixes in Deployment in Render & Github Pages",
+    body: "Fixed production build pipeline issues across static and dynamic deployment targets.",
+    date: "2026-11-13",
+    category: "fix",
+    priority: "critical",
+    status: "merged",
+    author: "EmanExe",
+    branch: "fix/deployment-error",
+    url: "https://github.com/EmanExe/OS/pull/186",
+  },
+  {
+    id: "pr-185",
+    prNumber: 185,
+    title: "Main Updated │ Did some major fixes & configurations in the system",
+    body: "Sonner removal, native glassmorphism notification integration, and calculator programmer mode improvements.",
+    date: "2026-11-13",
+    category: "fix",
+    priority: "high",
+    status: "merged",
+    author: "EmanExe",
+    branch: "dev",
+    url: "https://github.com/EmanExe/OS/pull/185",
+  },
+  {
     id: "pr-151",
     prNumber: 151,
     title: "Change the preview image for the project in Library",
@@ -7,11 +74,10 @@ export const updates = [
     date: "2026-11-12",
     category: "feature",
     priority: "medium",
-    status: "open",
-    author: "Ememman",
+    status: "merged",
+    author: "EmanExe",
     branch: "feat/library-preview-image",
-    url: "https://github.com/Ememman/OS/pull/151",
-    pinned: true
+    url: "https://github.com/EmanExe/OS/pull/151",
   },
   {
     id: "pr-150",
@@ -21,11 +87,10 @@ export const updates = [
     date: "2026-11-12",
     category: "fix",
     priority: "high",
-    status: "open",
-    author: "Ememman",
+    status: "merged",
+    author: "EmanExe",
     branch: "fix/activity-monitor-enhancement",
-    url: "https://github.com/Ememman/OS/pull/150",
-    pinned: true
+    url: "https://github.com/EmanExe/OS/pull/150",
   },
   {
     id: "pr-149",
@@ -38,7 +103,7 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/Ememman/OS/pull/149"
+    url: "https://github.com/EmanExe/OS/pull/149"
   },
   {
     id: "pr-148",
@@ -51,7 +116,7 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "fix/remove-dev-in-the-deployment",
-    url: "https://github.com/Ememman/OS/pull/148"
+    url: "https://github.com/EmanExe/OS/pull/148"
   },
   {
     id: "pr-147",
@@ -64,7 +129,7 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "fix/notes-layouts-templates",
-    url: "https://github.com/Ememman/OS/pull/147"
+    url: "https://github.com/EmanExe/OS/pull/147"
   },
   {
     id: "pr-146",
@@ -77,7 +142,7 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/Ememman/OS/pull/146"
+    url: "https://github.com/EmanExe/OS/pull/146"
   },
   {
     id: "pr-145",
@@ -90,7 +155,7 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "fix/terminal-reponsiveness",
-    url: "https://github.com/Ememman/OS/pull/145"
+    url: "https://github.com/EmanExe/OS/pull/145"
   },
   {
     id: "pr-144",
@@ -103,7 +168,7 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/Ememman/OS/pull/144"
+    url: "https://github.com/EmanExe/OS/pull/144"
   },
   {
     id: "pr-143",
@@ -116,7 +181,7 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "fix/codeplay-preview-issue",
-    url: "https://github.com/Ememman/OS/pull/143"
+    url: "https://github.com/EmanExe/OS/pull/143"
   },
   {
     id: "pr-142",
@@ -129,6 +194,6 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/Ememman/OS/pull/142"
+    url: "https://github.com/EmanExe/OS/pull/142"
   }
 ];
