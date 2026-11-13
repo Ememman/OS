@@ -81,27 +81,23 @@ const CATEGORY_META: Record<
 
 const PRIORITY_META: Record<
   UpdatePriority,
-  { label: string; badgeClass: string; dotClass?: string }
+  { label: string; badgeClass: string }
 > = {
   critical: {
     label: "Critical",
     badgeClass: "bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-sm shadow-rose-500/20",
-    dotClass: "bg-rose-400 animate-pulse",
   },
   high: {
     label: "High",
     badgeClass: "bg-amber-500/20 text-amber-300 border-amber-500/40",
-    dotClass: "bg-amber-400",
   },
   medium: {
     label: "Medium",
     badgeClass: "bg-sky-500/20 text-sky-300 border-sky-500/40",
-    dotClass: "bg-sky-400",
   },
   low: {
     label: "Low",
     badgeClass: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-    dotClass: "bg-emerald-400",
   },
 };
 
@@ -127,8 +123,75 @@ const REACTION_BUTTONS = [
   { type: "party" as const, Icon: GIconTrophy, label: "Celebrate", color: "text-emerald-400" },
 ];
 
-// Fallback PR list representing real repository pull requests
+// Fallback PR list representing real repository pull requests on EmanExe/OS
 const FALLBACK_UPDATES: UpdateItem[] = [
+  {
+    id: "pr-189",
+    prNumber: 189,
+    title: "Updated Main │ Implement the dragging function to the dock applications",
+    body: "Merged dock dragging and reordering capabilities into main branch.",
+    date: "2026-11-13",
+    category: "feature",
+    priority: "high",
+    status: "merged",
+    author: "EmanExe",
+    branch: "dev",
+    url: "https://github.com/EmanExe/OS/pull/189",
+    pinned: true,
+  },
+  {
+    id: "pr-188",
+    prNumber: 188,
+    title: "Implement the dragging function to the dock applications",
+    body: "Allowed users to drag and reorder application icons inside the macOS Dock and Windows Taskbar with persisted arrangement.",
+    date: "2026-11-13",
+    category: "feature",
+    priority: "high",
+    status: "merged",
+    author: "EmanExe",
+    branch: "fix/dock-dragging-applications",
+    url: "https://github.com/EmanExe/OS/pull/188",
+    pinned: true,
+  },
+  {
+    id: "pr-187",
+    prNumber: 187,
+    title: "Updated Main │ Fixes in Deployment in Render & Github Pages",
+    body: "Resolved PostCSS skeleton CSS resolution on GitHub Pages and compression module handling on Render.",
+    date: "2026-11-13",
+    category: "fix",
+    priority: "critical",
+    status: "merged",
+    author: "EmanExe",
+    branch: "dev",
+    url: "https://github.com/EmanExe/OS/pull/187",
+  },
+  {
+    id: "pr-186",
+    prNumber: 186,
+    title: "Fixes in Deployment in Render & Github Pages",
+    body: "Fixed production build pipeline issues across static and dynamic deployment targets.",
+    date: "2026-11-13",
+    category: "fix",
+    priority: "critical",
+    status: "merged",
+    author: "EmanExe",
+    branch: "fix/deployment-error",
+    url: "https://github.com/EmanExe/OS/pull/186",
+  },
+  {
+    id: "pr-185",
+    prNumber: 185,
+    title: "Main Updated │ Did some major fixes & configurations in the system",
+    body: "Sonner removal, native glassmorphism notification integration, and calculator programmer mode improvements.",
+    date: "2026-11-13",
+    category: "fix",
+    priority: "high",
+    status: "merged",
+    author: "EmanExe",
+    branch: "dev",
+    url: "https://github.com/EmanExe/OS/pull/185",
+  },
   {
     id: "pr-151",
     prNumber: 151,
@@ -137,11 +200,10 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     date: "2026-11-12",
     category: "feature",
     priority: "medium",
-    status: "open",
-    author: "Ememman",
+    status: "merged",
+    author: "EmanExe",
     branch: "feat/library-preview-image",
-    url: "https://github.com/Ememman/OS/pull/151",
-    pinned: true,
+    url: "https://github.com/EmanExe/OS/pull/151",
   },
   {
     id: "pr-150",
@@ -151,11 +213,10 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     date: "2026-11-12",
     category: "fix",
     priority: "high",
-    status: "open",
-    author: "Ememman",
+    status: "merged",
+    author: "EmanExe",
     branch: "fix/activity-monitor-enhancement",
-    url: "https://github.com/Ememman/OS/pull/150",
-    pinned: true,
+    url: "https://github.com/EmanExe/OS/pull/150",
   },
   {
     id: "pr-149",
@@ -168,7 +229,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/Ememman/OS/pull/149",
+    url: "https://github.com/EmanExe/OS/pull/149",
   },
   {
     id: "pr-148",
@@ -181,7 +242,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "fix/remove-dev-in-the-deployment",
-    url: "https://github.com/Ememman/OS/pull/148",
+    url: "https://github.com/EmanExe/OS/pull/148",
   },
   {
     id: "pr-147",
@@ -194,7 +255,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "fix/notes-layouts-templates",
-    url: "https://github.com/Ememman/OS/pull/147",
+    url: "https://github.com/EmanExe/OS/pull/147",
   },
   {
     id: "pr-146",
@@ -207,7 +268,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/Ememman/OS/pull/146",
+    url: "https://github.com/EmanExe/OS/pull/146",
   },
   {
     id: "pr-145",
@@ -220,7 +281,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "fix/terminal-reponsiveness",
-    url: "https://github.com/Ememman/OS/pull/145",
+    url: "https://github.com/EmanExe/OS/pull/145",
   },
   {
     id: "pr-144",
@@ -233,7 +294,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/Ememman/OS/pull/144",
+    url: "https://github.com/EmanExe/OS/pull/144",
   },
   {
     id: "pr-143",
@@ -246,7 +307,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "fix/codeplay-preview-issue",
-    url: "https://github.com/Ememman/OS/pull/143",
+    url: "https://github.com/EmanExe/OS/pull/143",
   },
   {
     id: "pr-142",
@@ -259,7 +320,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/Ememman/OS/pull/142",
+    url: "https://github.com/EmanExe/OS/pull/142",
   },
 ];
 
@@ -272,7 +333,7 @@ function parseGithubPR(pr: any): UpdateItem {
   const branch = pr.head?.ref || "main";
   const status: UpdateStatus = pr.merged_at ? "merged" : pr.state === "closed" ? "closed" : "open";
   const date = pr.created_at ? pr.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10);
-  const url = pr.html_url || `https://github.com/Ememman/OS/pull/${prNumber}`;
+  const url = pr.html_url || `https://github.com/EmanExe/OS/pull/${prNumber}`;
   const rawBody = (pr.body || "").trim();
   const body = rawBody || `Pull Request #${prNumber} on Ememman/OS: ${title}. Branch: ${branch}`;
 
@@ -365,11 +426,11 @@ export default function Updates() {
     else setLoading(true);
 
     try {
-      // Fetch backend updates & reactions and live GitHub Pull Requests simultaneously
+      // Fetch backend updates & reactions and live GitHub Pull Requests simultaneously from EmanExe/OS
       const [uRes, rRes, ghRes] = await Promise.all([
         fetch(`${API_URL}/api/updates`).catch(() => null),
         fetch(`${API_URL}/api/updates/reactions`).catch(() => null),
-        fetch("https://api.github.com/repos/Ememman/OS/pulls?state=all&per_page=30", {
+        fetch("https://api.github.com/repos/EmanExe/OS/pulls?state=all&per_page=30", {
           headers: { Accept: "application/vnd.github.v3+json" },
         }).catch(() => null),
       ]);
@@ -390,10 +451,11 @@ export default function Updates() {
         }
       }
 
-      // Merge live GitHub PRs
+      // Merge live GitHub PRs from EmanExe/OS
       if (ghRes && ghRes.ok) {
         const ghPulls = await ghRes.json();
-        if (Array.isArray(ghPulls)) {
+        if (Array.isArray(ghPulls) && ghPulls.length > 0) {
+          mergedMap.clear();
           ghPulls.forEach((pr: any) => {
             const parsed = parseGithubPR(pr);
             mergedMap.set(parsed.id, parsed);
@@ -596,12 +658,11 @@ export default function Updates() {
                   System Updates & Pull Requests
                 </h2>
                 <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 shadow-sm shadow-emerald-500/10">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                   Live PRs
                 </span>
               </div>
               <p className="text-xs text-white/50">
-                Direct changelog from GitHub pull requests on <code className="text-accent/80">Ememman/OS</code>.
+                Direct changelog from GitHub pull requests on <code className="text-accent/80">EmanExe/OS</code>.
               </p>
             </div>
           </div>
@@ -815,11 +876,8 @@ export default function Updates() {
 
                     {/* Priority Badge (Critical, High, Medium, Low) */}
                     <span
-                      className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold border flex items-center gap-1.5 ${priorityMeta.badgeClass}`}
+                      className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold border flex items-center gap-1 ${priorityMeta.badgeClass}`}
                     >
-                      {priorityMeta.dotClass && (
-                        <span className={`w-1.5 h-1.5 rounded-full ${priorityMeta.dotClass}`} />
-                      )}
                       <span>{priorityMeta.label} Priority</span>
                     </span>
                   </div>

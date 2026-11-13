@@ -145,8 +145,17 @@ export default function PowerDialog({ onClose }: PowerDialogProps) {
                 handleAction(() => {
                   powerOff();
                   try {
+                    window.open("", "_self");
                     window.close();
                   } catch {}
+                  setTimeout(() => {
+                    try {
+                      window.close();
+                    } catch {}
+                    try {
+                      window.location.replace("about:blank");
+                    } catch {}
+                  }, 200);
                 })
               }
               className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 hover:border-rose-500/50 transition-colors text-left group cursor-pointer"

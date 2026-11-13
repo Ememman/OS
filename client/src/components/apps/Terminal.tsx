@@ -1196,9 +1196,8 @@ export default function Terminal() {
           </span>
         </div>
         <div className="flex items-center gap-2 text-[10px] text-white/40 shrink-0">
-          <span className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-white/60">bash 5.2</span>
+          <span className="flex items-center gap-1.5 text-white/60">
+            bash 5.2
           </span>
           <span className="hidden sm:inline px-1 py-0.2 rounded bg-white/5 border border-white/10 text-[9px] text-white/50">UTF-8</span>
         </div>

@@ -177,11 +177,6 @@ export default function Gallery() {
                             : "bg-sky-500/20 text-sky-300 border-sky-500/35"
                         }`}
                       >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            isEnhancement ? "bg-amber-400" : "bg-sky-400"
-                          } animate-pulse`}
-                        />
                         {g.status || "Currently on Development"}
                       </span>
                     </div>
@@ -291,7 +286,6 @@ export default function Gallery() {
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 text-xs text-white/50 bg-white/5 px-2.5 py-1 rounded-xl border border-white/10">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                   <span>Project Status Inspector</span>
                 </div>
               )}
@@ -372,13 +366,6 @@ export default function Gallery() {
                             : "bg-sky-500/20 text-sky-300 border-sky-500/40"
                         }`}
                       >
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            currentItem.status?.toLowerCase().includes("enhancement")
-                              ? "bg-amber-400"
-                              : "bg-sky-400"
-                          } animate-pulse`}
-                        />
                         {currentItem.status || "Currently on Development"}
                       </span>
                       {currentItem.statusBadge && (

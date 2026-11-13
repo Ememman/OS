@@ -581,11 +581,6 @@ export default function CodePlay() {
             </div>
 
             <span className="flex items-center gap-1">
-              <span
-                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                  autoRunWeb ? "bg-emerald-400 animate-pulse" : "bg-white/30"
-                }`}
-              />
               <span className="hidden sm:inline">Live Auto-Update</span>
               <span className="sm:hidden">Live</span>
             </span>

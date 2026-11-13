@@ -134,7 +134,6 @@ function OsCard({ option, isSelected, onSelect }: OsCardProps) {
         <ul className="space-y-1 pt-1.5 border-t border-white/10 hidden sm:block">
           {features.map((f, i) => (
             <li key={i} className="text-[11px] text-white/50 flex items-center gap-1.5">
-              <span className="w-1 h-1 rounded-full bg-accent shrink-0" />
               <span>{f}</span>
             </li>
           ))}
@@ -188,7 +187,6 @@ export default function OsPicker() {
           {/* Header */}
           <div className="space-y-1.5 mb-4 sm:mb-6">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/15 border border-accent/30 text-accent text-[11px] font-semibold tracking-wider uppercase mb-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
               <span>Portfolio OS Experience</span>
             </div>
             <h1 className="font-display text-xl sm:text-3xl font-extrabold tracking-tight text-white">

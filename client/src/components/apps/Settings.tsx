@@ -303,7 +303,6 @@ export default function Settings() {
 
               {/* Window Header Title */}
               <div className="flex items-center gap-1.5 text-[11px] font-mono text-white/60 truncate">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse shrink-0" />
                 <span className="truncate">Window Header — Live Preview</span>
               </div>
 
