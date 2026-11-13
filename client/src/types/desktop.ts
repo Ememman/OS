@@ -25,6 +25,10 @@ export interface DesktopAppItem {
   color: string; // accent tint e.g. "#4B5A73"
   x?: number; // custom desktop X position in px
   y?: number; // custom desktop Y position in px
+  lastSafeX?: number; // last position outside the widget area
+  lastSafeY?: number; // last position outside the widget area
+  widgetZoneX?: number; // position within widget area when widgets were hidden
+  widgetZoneY?: number; // position within widget area when widgets were hidden
 }
 
 export interface DesktopFolderItem {
@@ -35,6 +39,10 @@ export interface DesktopFolderItem {
   apps: DesktopAppItem[]; // nested apps
   x?: number; // custom desktop X position in px
   y?: number; // custom desktop Y position in px
+  lastSafeX?: number; // last position outside the widget area
+  lastSafeY?: number; // last position outside the widget area
+  widgetZoneX?: number; // position within widget area when widgets were hidden
+  widgetZoneY?: number; // position within widget area when widgets were hidden
 }
 
 export type DesktopItem = DesktopAppItem | DesktopFolderItem;
