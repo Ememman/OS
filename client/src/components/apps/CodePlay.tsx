@@ -398,12 +398,12 @@ export default function CodePlay() {
       {/* 1. TOP HEADER & CONTROLS (Sticky Header) */}
       <div className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 border-b border-white/10 flex items-center justify-between gap-1.5 sm:gap-2 bg-[#0a0a0f]/95 backdrop-blur-md shrink-0 sticky top-0 z-20 shadow-sm w-full max-w-full overflow-hidden">
         {/* On Mobile (< md): Interactive Template Dropdown directly in header */}
-        <div className="md:hidden flex items-center gap-1.5 min-w-0 flex-1 mr-1">
+        <div className="md:hidden flex items-center gap-1.5 min-w-0 flex-1 mr-1.5">
           <div className="w-7 h-7 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center text-accent shrink-0">
             <GIconCode size={14} />
           </div>
           {availableTemplates.length > 0 && (
-            <div className="flex-1 min-w-0 max-w-[190px] xs:max-w-[220px]">
+            <div className="flex-1 min-w-0 max-w-[150px] xs:max-w-[180px] sm:max-w-xs">
               <CustomDropdown
                 value={activeTemplateId}
                 onChange={(newId) => {
@@ -415,7 +415,8 @@ export default function CodePlay() {
                   label: t.title,
                 }))}
                 size="xs"
-                className="w-full text-xs font-medium"
+                containerClassName="w-full min-w-0 max-w-full block"
+                className="w-full min-w-0 max-w-full text-xs font-medium"
               />
             </div>
           )}
@@ -508,10 +509,10 @@ export default function CodePlay() {
             <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
           </button>
 
-          {/* Export / Download */}
+          {/* Export / Download - Hidden on mobile to keep top header collision-free */}
           <button
             onClick={handleDownload}
-            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition active:scale-95"
+            className="hidden sm:flex p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition active:scale-95 shrink-0"
             title="Export / Download File"
           >
             <GIconDownload size={13} />
@@ -521,7 +522,7 @@ export default function CodePlay() {
           <button
             onClick={runActiveCode}
             disabled={isRunning}
-            className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-lg sm:rounded-xl bg-accent hover:brightness-110 active:scale-95 text-xs font-semibold text-white shadow-md shadow-accent/25 transition ml-0.5 cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-1.5 px-2.5 sm:px-4 py-1.5 rounded-lg sm:rounded-xl bg-accent hover:brightness-110 active:scale-95 text-xs font-semibold text-white shadow-md shadow-accent/25 transition ml-0.5 cursor-pointer disabled:opacity-50 shrink-0"
             title="Run Code"
           >
             <GIconPlay size={13} />
@@ -619,14 +620,14 @@ export default function CodePlay() {
       )}
 
       {/* 3B. MOBILE UNIFIED TOOLBAR: FILE TABS / VIEW STATE & SWITCHER (< md) */}
-      <div className="md:hidden px-2.5 py-1.5 bg-[#0b0c12] border-b border-white/10 flex items-center justify-between gap-1.5 shrink-0">
+      <div className="md:hidden px-2 py-1 bg-[#0b0c12] border-b border-white/10 flex items-center justify-between gap-1 shrink-0 w-full max-w-full overflow-hidden">
         {/* Left: Web File Sub-tabs (html / css / js) if in web mode & in code editor view */}
         {selectedLang === "web" && mobileTab === "editor" ? (
-          <div className="flex items-center gap-1 font-mono text-xs">
+          <div className="flex items-center gap-1 font-mono text-[11px] shrink-0">
             <button
               type="button"
               onClick={() => setActiveWebTab("html")}
-              className={`px-2 py-0.5 rounded transition flex items-center gap-1.5 ${
+              className={`px-1.5 py-0.5 rounded transition flex items-center gap-1 ${
                 activeWebTab === "html"
                   ? "bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/40"
                   : "text-white/50 hover:text-white bg-white/5"
@@ -638,7 +639,7 @@ export default function CodePlay() {
             <button
               type="button"
               onClick={() => setActiveWebTab("css")}
-              className={`px-2 py-0.5 rounded transition flex items-center gap-1.5 ${
+              className={`px-1.5 py-0.5 rounded transition flex items-center gap-1 ${
                 activeWebTab === "css"
                   ? "bg-sky-500/20 text-sky-300 font-semibold border border-sky-500/40"
                   : "text-white/50 hover:text-white bg-white/5"
@@ -650,7 +651,7 @@ export default function CodePlay() {
             <button
               type="button"
               onClick={() => setActiveWebTab("js")}
-              className={`px-2 py-0.5 rounded transition flex items-center gap-1.5 ${
+              className={`px-1.5 py-0.5 rounded transition flex items-center gap-1 ${
                 activeWebTab === "js"
                   ? "bg-yellow-500/20 text-yellow-300 font-semibold border border-yellow-500/40"
                   : "text-white/50 hover:text-white bg-white/5"
@@ -661,23 +662,23 @@ export default function CodePlay() {
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 text-xs text-white/70 min-w-0 truncate">
+          <div className="flex items-center gap-1.5 text-xs text-white/70 min-w-0 truncate flex-1">
             {mobileTab === "preview" ? (
-              <span className="flex items-center gap-1.5 text-accent font-semibold text-xs">
-                <GIconEye size={13} className="text-accent" />
-                <span>Live Preview</span>
+              <span className="flex items-center gap-1.5 text-accent font-semibold text-xs truncate">
+                <GIconEye size={13} className="text-accent shrink-0" />
+                <span className="truncate">Live Preview</span>
                 {execTime !== null && (
-                  <span className="text-[10px] text-accent/70 font-mono">({execTime}ms)</span>
+                  <span className="text-[10px] text-accent/70 font-mono shrink-0">({execTime}ms)</span>
                 )}
               </span>
             ) : mobileTab === "console" ? (
-              <span className="flex items-center gap-1.5 text-emerald-400 font-semibold text-xs">
-                <GIconTerminal size={13} className="text-emerald-400" />
-                <span>{selectedLang === "sql" ? "Table Results" : "Console Logs"}</span>
+              <span className="flex items-center gap-1.5 text-emerald-400 font-semibold text-xs truncate">
+                <GIconTerminal size={13} className="text-emerald-400 shrink-0" />
+                <span className="truncate">{selectedLang === "sql" ? "Table Results" : "Console Logs"}</span>
                 {outputLogs.length > 0 && (
                   <button
                     onClick={() => setOutputLogs([])}
-                    className="ml-1 text-white/40 hover:text-rose-400 p-0.5 transition"
+                    className="ml-1 text-white/40 hover:text-rose-400 p-0.5 transition shrink-0"
                     title="Clear Logs"
                   >
                     <GIconTrash size={11} />
@@ -685,9 +686,9 @@ export default function CodePlay() {
                 )}
               </span>
             ) : (
-              <span className="text-[11px] font-mono text-white/50 flex items-center gap-1">
-                <GIconCode size={12} className="text-white/40" />
-                <span>{LANGUAGE_OPTIONS.find((l) => l.id === selectedLang)?.label} Editor</span>
+              <span className="text-[11px] font-mono text-white/50 flex items-center gap-1 truncate">
+                <GIconCode size={12} className="text-white/40 shrink-0" />
+                <span className="truncate">{LANGUAGE_OPTIONS.find((l) => l.id === selectedLang)?.label}</span>
               </span>
             )}
           </div>
@@ -701,13 +702,13 @@ export default function CodePlay() {
               setMobileTab("editor");
               setViewMode("editor");
             }}
-            className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition flex items-center gap-1 ${
+            className={`px-1.5 py-0.5 rounded-md text-[10.5px] font-medium transition flex items-center gap-1 ${
               mobileTab === "editor"
                 ? "bg-accent text-white shadow-sm font-semibold"
                 : "text-white/60 hover:text-white"
             }`}
           >
-            <GIconCode size={12} />
+            <GIconCode size={11} />
             <span>Code</span>
           </button>
 
@@ -718,13 +719,13 @@ export default function CodePlay() {
                 setMobileTab("preview");
                 setViewMode("preview");
               }}
-              className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition flex items-center gap-1 ${
+              className={`px-1.5 py-0.5 rounded-md text-[10.5px] font-medium transition flex items-center gap-1 ${
                 mobileTab === "preview"
                   ? "bg-accent text-white shadow-sm font-semibold"
                   : "text-white/60 hover:text-white"
               }`}
             >
-              <GIconEye size={12} />
+              <GIconEye size={11} />
               <span>Preview</span>
             </button>
           )}
@@ -736,13 +737,13 @@ export default function CodePlay() {
                 setMobileTab("console");
                 setViewMode("console");
               }}
-              className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition flex items-center gap-1 ${
+              className={`px-1.5 py-0.5 rounded-md text-[10.5px] font-medium transition flex items-center gap-1 ${
                 mobileTab === "console"
                   ? "bg-accent text-white shadow-sm font-semibold"
                   : "text-white/60 hover:text-white"
               }`}
             >
-              <GIconTerminal size={12} />
+              <GIconTerminal size={11} />
               <span>{selectedLang === "sql" ? "Table" : "Logs"}</span>
             </button>
           )}
