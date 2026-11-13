@@ -158,33 +158,35 @@ export default function App() {
 
       {/* Desktop Content & Widgets */}
       {isTablet ? (
-        /* Mobile & Tablet: Unified natural scroll container — desktop icons scroll with widgets and are NOT fixed */
-        <div
-          className={`absolute ${
-            !isWin ? "top-8 sm:top-9" : "top-2"
-          } left-0 right-0 bottom-0 overflow-y-auto overscroll-contain thin-scroll px-3 pt-2 pb-44 flex flex-col items-center gap-4 z-10 pointer-events-auto`}
-          style={{ touchAction: "pan-y" }}
-        >
-          {/* Applications on desktop — responsive grid that scrolls with content and supports drag-to-combine folders */}
-          <div className="reveal w-full max-w-sm sm:max-w-none" style={{ animationDelay: "50ms" }}>
+        /* Mobile & Tablet: Fullscreen freeform desktop with scrollable widget stack */
+        <>
+          {/* Applications on desktop — draggable to any position on desktop canvas, avoiding widgets when active */}
+          <div
+            className="absolute inset-0 z-10 pointer-events-none reveal overflow-hidden"
+            style={{ animationDelay: "50ms" }}
+          >
             <DesktopAppsGrid isMobile={true} />
           </div>
 
           {/* Widget stack below icons — macOS style only */}
           {!isWin && widgetsVisible && (
-            <div data-widget-area="true" className="w-full flex flex-col items-center gap-4">
+            <div
+              data-widget-area="true"
+              className={`absolute ${
+                !isWin ? "top-60 sm:top-68" : "top-56"
+              } left-0 right-0 bottom-0 overflow-y-auto overscroll-contain thin-scroll px-3 pt-2 pb-28 flex flex-col items-center gap-4 z-20 pointer-events-auto`}
+              style={{ touchAction: "pan-y" }}
+            >
               <div className="reveal w-full flex justify-center" style={{ animationDelay: "120ms" }}><PhotoWidget /></div>
               <div className="reveal w-full flex justify-center" style={{ animationDelay: "150ms" }}><WeatherWidget /></div>
               <div className="reveal w-full flex justify-center" style={{ animationDelay: "180ms" }}><ClockWidget /></div>
               <div className="reveal w-full flex justify-center" style={{ animationDelay: "210ms" }}><AgendaWidget /></div>
               <div className="reveal w-full flex justify-center" style={{ animationDelay: "240ms" }}><NoteWidget /></div>
               <div className="reveal w-full flex justify-center" style={{ animationDelay: "270ms" }}><ShortcutTiles /></div>
+              <div className="h-20 shrink-0 w-full" aria-hidden="true" />
             </div>
           )}
-
-          {/* Generous bottom scroll clearance so every widget sits completely clear of the fixed dock footer */}
-          <div className="h-28 shrink-0 w-full" aria-hidden="true" />
-        </div>
+        </>
       ) : (
         /* Desktop: Spacious multi-column layout with scrollable widget columns so lower widgets are never cut off */
         <>

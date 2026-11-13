@@ -10,6 +10,8 @@ import {
   GIconFlag,
   GIconRotateRight,
   GIconSmile,
+  GIconVolume,
+  GIconVolumeMute,
 } from "../../icons/GravityIcons";
 
 type Difficulty = "beginner" | "intermediate" | "expert";
@@ -38,18 +40,77 @@ interface Cell {
 }
 
 const NUMBER_COLORS: Record<number, string> = {
-  1: "text-blue-400 font-bold",
-  2: "text-emerald-400 font-bold",
-  3: "text-rose-400 font-bold",
-  4: "text-purple-400 font-bold",
-  5: "text-amber-400 font-bold",
-  6: "text-cyan-400 font-bold",
-  7: "text-pink-400 font-bold",
+  1: "text-blue-400 font-extrabold",
+  2: "text-emerald-400 font-extrabold",
+  3: "text-rose-400 font-extrabold",
+  4: "text-purple-400 font-extrabold",
+  5: "text-amber-400 font-extrabold",
+  6: "text-cyan-400 font-extrabold",
+  7: "text-pink-400 font-extrabold",
   8: "text-red-500 font-black",
 };
 
+// Procedural Audio Engine for Minesweeper
+function useMinesAudio(enabled: boolean) {
+  const ctxRef = useRef<AudioContext | null>(null);
+
+  const getCtx = () => {
+    if (!enabled || typeof window === "undefined") return null;
+    if (!ctxRef.current) {
+      try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        ctxRef.current = new AudioContextClass();
+      } catch {
+        return null;
+      }
+    }
+    if (ctxRef.current.state === "suspended") ctxRef.current.resume().catch(() => {});
+    return ctxRef.current;
+  };
+
+  const tone = (freq: number, dur: number, type: OscillatorType = "sine", gainVal = 0.08, delay = 0) => {
+    const ctx = getCtx();
+    if (!ctx) return;
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      const t = ctx.currentTime + delay;
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(gainVal, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + dur);
+    } catch {}
+  };
+
+  return {
+    dig: () => tone(480, 0.05, "triangle", 0.06),
+    flag: () => {
+      tone(600, 0.04, "sine", 0.05);
+      tone(800, 0.06, "sine", 0.06, 0.02);
+    },
+    chord: () => {
+      tone(400, 0.08, "sine", 0.06);
+      tone(500, 0.08, "sine", 0.06, 0.04);
+      tone(600, 0.1, "sine", 0.07, 0.08);
+    },
+    explode: () => {
+      tone(180, 0.35, "sawtooth", 0.12);
+      tone(90, 0.5, "sawtooth", 0.14, 0.08);
+    },
+    win: () => {
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+        tone(f, 0.25, "sine", 0.09, i * 0.08);
+      });
+    },
+  };
+}
+
 export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderboard?: () => void }) {
-  const { systemSounds, notify } = useOS();
+  const { notify } = useOS();
   const [diff, setDiff] = useState<Difficulty>("beginner");
   const config = DIFFICULTIES[diff];
 
@@ -57,8 +118,9 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
   const [status, setStatus] = useState<"idle" | "playing" | "won" | "lost">("idle");
   const [flagsLeft, setFlagsLeft] = useState(config.mines);
   const [elapsed, setElapsed] = useState(0);
-  const [flagMode, setFlagMode] = useState(false); // Mobile friendly flag toggle
+  const [flagMode, setFlagMode] = useState(false);
   const [faceState, setFaceState] = useState<"normal" | "surprised" | "won" | "lost">("normal");
+  const [soundOn, setSoundOn] = useState(() => localStorage.getItem("os_mines_sound") !== "off");
 
   // Leaderboard submission dialog
   const [showSubmitModal, setShowSubmitModal] = useState(false);
@@ -67,6 +129,13 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
   const [submitted, setSubmitted] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLongPressRef = useRef(false);
+  const sfx = useMinesAudio(soundOn);
+
+  useEffect(() => {
+    localStorage.setItem("os_mines_sound", soundOn ? "on" : "off");
+  }, [soundOn]);
 
   const initBoard = useCallback((difficultyKey: Difficulty) => {
     const cfg = DIFFICULTIES[difficultyKey];
@@ -150,6 +219,33 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
     }
   };
 
+  // Toggle flag on cell
+  const toggleFlag = (r: number, c: number, e?: React.MouseEvent | React.TouchEvent) => {
+    if (e && "preventDefault" in e) e.preventDefault();
+    if (status === "won" || status === "lost") return;
+
+    const currentGrid = grid.map((row) => row.map((cell) => ({ ...cell })));
+    const target = currentGrid[r][c];
+
+    if (target.revealed) return;
+
+    sfx.flag();
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(25);
+    }
+
+    if (target.flagged) {
+      target.flagged = false;
+      setFlagsLeft((f) => f + 1);
+    } else {
+      if (flagsLeft <= 0) return;
+      target.flagged = true;
+      setFlagsLeft((f) => f - 1);
+    }
+
+    setGrid(currentGrid);
+  };
+
   // Reveal cell cascade
   const revealCell = (r: number, c: number) => {
     if (status === "won" || status === "lost") return;
@@ -158,8 +254,6 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
     const target = currentGrid[r][c];
 
     if (target.flagged || target.revealed) return;
-
-    if (systemSounds) soundFx.playClick();
 
     // First click: generate mines safely
     if (status === "idle") {
@@ -170,7 +264,6 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
     if (target.isMine) {
       // Stepped on a mine!
       target.exploded = true;
-      // Reveal all mines
       currentGrid.forEach((row) =>
         row.forEach((cell) => {
           if (cell.isMine) cell.revealed = true;
@@ -179,9 +272,15 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
       setGrid(currentGrid);
       setStatus("lost");
       setFaceState("lost");
+      sfx.explode();
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        navigator.vibrate([60, 40, 100]);
+      }
       notify("Mine Detonated!", `You survived ${elapsed} seconds in ${config.label}.`, "warning");
       return;
     }
+
+    sfx.dig();
 
     // Recursive flood fill reveal
     const queue: [number, number][] = [[r, c]];
@@ -225,7 +324,8 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
       setFaceState("won");
       setFlagsLeft(0);
       setShowSubmitModal(true);
-      notify("Clear Victory!", `All mines defused in ${elapsed}s! Score synced to leaderboard!`, "success");
+      sfx.win();
+      notify("Clear Victory!", `All mines defused in ${elapsed}s!`, "success");
 
       // Auto-submit victory clear time in real-time
       const cleanName = getEffectiveChatName();
@@ -236,42 +336,19 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
           game: "minesweeper",
           player: cleanName,
           score: elapsed,
-          details: `${config.label.split(" ")[0]} Clear (${elapsed}s)`
-        })
-      }).then((r) => r.ok && setSubmitted(true)).catch(() => {});
+          details: `${config.label.split(" ")[0]} Clear (${elapsed}s)`,
+        }),
+      })
+        .then((r) => r.ok && setSubmitted(true))
+        .catch(() => {});
     }
   };
 
-  // Toggle flag
-  const toggleFlag = (r: number, c: number, e?: React.MouseEvent) => {
-    if (e) e.preventDefault();
-    if (status === "won" || status === "lost") return;
-
-    const currentGrid = grid.map((row) => row.map((cell) => ({ ...cell })));
-    const target = currentGrid[r][c];
-
-    if (target.revealed) return;
-
-    if (systemSounds) soundFx.playPop();
-
-    if (target.flagged) {
-      target.flagged = false;
-      setFlagsLeft((f) => f + 1);
-    } else {
-      if (flagsLeft <= 0) return;
-      target.flagged = true;
-      setFlagsLeft((f) => f - 1);
-    }
-
-    setGrid(currentGrid);
-  };
-
-  // Chording: clicking an already revealed cell
+  // Chording: clicking an already revealed cell whose neighbor flags match
   const handleChord = (r: number, c: number) => {
     const cell = grid[r][c];
     if (!cell.revealed || cell.neighborMines === 0) return;
 
-    // Count neighbor flags
     let flagCount = 0;
     for (let dr = -1; dr <= 1; dr++) {
       for (let dc = -1; dc <= 1; dc++) {
@@ -284,7 +361,7 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
     }
 
     if (flagCount === cell.neighborMines) {
-      // Reveal unflagged neighbors
+      sfx.chord();
       for (let dr = -1; dr <= 1; dr++) {
         for (let dc = -1; dc <= 1; dc++) {
           const nr = r + dr;
@@ -300,6 +377,10 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
   };
 
   const handleCellClick = (r: number, c: number) => {
+    if (isLongPressRef.current) {
+      isLongPressRef.current = false;
+      return;
+    }
     if (flagMode) {
       toggleFlag(r, c);
     } else {
@@ -309,6 +390,22 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
       } else {
         revealCell(r, c);
       }
+    }
+  };
+
+  // Mobile Touch Long Press to Flag
+  const handleTouchStart = (r: number, c: number) => {
+    isLongPressRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      toggleFlag(r, c);
+    }, 280);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
     }
   };
 
@@ -330,8 +427,8 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
           game: "minesweeper",
           player: cleanName,
           score: elapsed,
-          details: `${config.label.split(" ")[0]} Clear (${elapsed}s)`
-        })
+          details: `${config.label.split(" ")[0]} Clear (${elapsed}s)`,
+        }),
       });
 
       if (res.ok) {
@@ -340,28 +437,30 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
         if (onOpenLeaderboard) {
           setTimeout(onOpenLeaderboard, 1200);
         }
-      } else {
-        notify("Submission Error", "Could not submit score to server.", "warning");
       }
-    } catch {
-      notify("Network Error", "Unable to connect to leaderboard server.", "warning");
-    } finally {
-      setSubmitting(false);
-    }
+    } catch {}
+    setSubmitting(false);
+  };
+
+  // Dynamic responsive cell sizing: computes optimal cell size to fit cleanly on screen
+  const getCellSizeClass = () => {
+    if (diff === "beginner") return "w-8 h-8 sm:w-9 sm:h-9 text-xs sm:text-sm";
+    if (diff === "intermediate") return "w-6 h-6 sm:w-7 sm:h-7 text-[10px] sm:text-xs";
+    return "w-5 h-5 sm:w-6 sm:h-6 text-[9px] sm:text-[10px]";
   };
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-full p-4 select-none">
+    <div className="flex flex-col items-center justify-start min-h-full p-3 sm:p-4 select-none h-full overflow-y-auto thin-scroll">
       {/* Top Controls Bar */}
-      <div className="w-full max-w-xl flex flex-wrap items-center justify-between gap-2 mb-3 bg-white/5 border border-white/10 rounded-xl px-3 py-2 backdrop-blur-md">
+      <div className="w-full max-w-xl flex flex-wrap items-center justify-between gap-2 mb-3 bg-white/5 border border-white/10 rounded-2xl px-3 py-2 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-1.5 text-xs">
           <GIconSliders size={14} className="text-accent" />
-          <span className="text-white/60 font-medium">Difficulty:</span>
+          <span className="text-white/60 font-semibold hidden xs:inline">Difficulty:</span>
           {(["beginner", "intermediate", "expert"] as Difficulty[]).map((d) => (
             <button
               key={d}
               onClick={() => setDiff(d)}
-              className={`px-2 py-0.5 rounded text-[11px] font-semibold capitalize transition ${
+              className={`px-2 py-0.5 rounded-lg text-[10.5px] font-semibold capitalize transition cursor-pointer ${
                 diff === d
                   ? "bg-accent text-white shadow-sm"
                   : "bg-white/5 hover:bg-white/10 text-white/70 hover:text-white"
@@ -373,13 +472,22 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Mobile Flag Mode Toggle */}
+          {/* Audio Toggle */}
+          <button
+            onClick={() => setSoundOn(!soundOn)}
+            className="p-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition cursor-pointer"
+            title={soundOn ? "Mute" : "Unmute"}
+          >
+            {soundOn ? <GIconVolume size={14} /> : <GIconVolumeMute size={14} className="text-white/40" />}
+          </button>
+
+          {/* Mode Toggle between Dig and Flag */}
           <button
             onClick={() => {
-              if (systemSounds) soundFx.playClick();
+              soundFx.playClick();
               setFlagMode(!flagMode);
             }}
-            className={`px-2.5 py-1 rounded-lg text-xs flex items-center gap-1.5 font-medium transition cursor-pointer ${
+            className={`px-2.5 py-1 rounded-xl text-xs flex items-center gap-1.5 font-semibold transition cursor-pointer ${
               flagMode
                 ? "bg-rose-500 text-white shadow-md shadow-rose-500/30 ring-2 ring-rose-400/50"
                 : "bg-white/10 hover:bg-white/15 text-white/80"
@@ -387,59 +495,59 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
             title="Toggle click mode between Dig and Flag"
           >
             <GIconFlag size={12} className={flagMode ? "text-white" : "text-rose-400"} />
-            <span className="font-semibold">{flagMode ? "Mode: Flag 🚩" : "Mode: Dig ⛏️"}</span>
+            <span>{flagMode ? "Mode: Flag 🚩" : "Mode: Dig ⛏️"}</span>
           </button>
 
           {onOpenLeaderboard && (
             <button
               onClick={onOpenLeaderboard}
-              className="px-2.5 py-1 rounded text-xs flex items-center gap-1 font-medium bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:bg-amber-500/30 transition"
+              className="px-2.5 py-1 rounded-xl text-xs flex items-center gap-1 font-semibold bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:bg-amber-500/30 transition cursor-pointer"
               title="View Global Arcade High Scores"
             >
               <GIconTrophy size={13} />
-              <span>Leaderboard</span>
+              <span className="hidden xs:inline">Scores</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Retro Arcade Container */}
-      <div className="bg-[#1e2330] p-3 rounded-2xl border-4 border-slate-700/80 shadow-2xl inline-flex flex-col items-center max-w-full overflow-x-auto thin-scroll">
-        {/* Header: LED Mines Count, Smiley Face, LED Timer */}
-        <div className="w-full flex items-center justify-between px-3 py-2 mb-3 bg-[#11141c] rounded-xl border border-white/10">
+      {/* Retro Arcade Board Enclosure */}
+      <div className="bg-[#181d29] p-3 rounded-2xl border-4 border-slate-700/80 shadow-2xl inline-flex flex-col items-center max-w-full overflow-x-auto thin-scroll shrink-0">
+        {/* Header: Digital LED Mines Count, Smiley Face, Digital LED Timer */}
+        <div className="w-full flex items-center justify-between px-3 py-2 mb-3 bg-[#0d1017] rounded-xl border border-white/10">
           {/* Mines remaining counter */}
-          <div className="bg-black/80 px-3 py-1 rounded border border-rose-950 font-mono text-xl font-black text-rose-500 tracking-widest shadow-inner">
+          <div className="bg-black/90 px-2.5 py-1 rounded-lg border border-rose-950/80 font-mono text-xl font-black text-rose-500 tracking-widest shadow-inner drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]">
             {String(Math.max(-99, flagsLeft)).padStart(3, "0")}
           </div>
 
-          {/* Reset / Status Button */}
+          {/* Reset / Smiley Status Button */}
           <button
             onClick={() => initBoard(diff)}
             onMouseDown={() => setFaceState("surprised")}
             onMouseUp={() => setFaceState(status === "won" ? "won" : status === "lost" ? "lost" : "normal")}
-            className="w-10 h-10 rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 hover:from-amber-200 hover:to-amber-400 active:scale-95 flex items-center justify-center shadow-lg border-2 border-amber-600 transition text-slate-900 cursor-pointer"
+            className="w-10 h-10 rounded-xl bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 hover:brightness-110 active:scale-95 flex items-center justify-center shadow-lg border-2 border-amber-600 transition text-slate-950 cursor-pointer"
             title="Click to Restart"
           >
             {faceState === "won" ? (
-              <GIconTrophy size={20} className="text-slate-900" />
+              <GIconTrophy size={20} className="text-slate-950" />
             ) : faceState === "lost" ? (
-              <GIconRotateRight size={20} className="text-slate-900" />
+              <GIconRotateRight size={20} className="text-slate-950" />
             ) : (
-              <GIconSmile size={20} className="text-slate-900" />
+              <GIconSmile size={20} className="text-slate-950" />
             )}
           </button>
 
           {/* Elapsed Timer */}
-          <div className="bg-black/80 px-3 py-1 rounded border border-rose-950 font-mono text-xl font-black text-rose-500 tracking-widest shadow-inner">
+          <div className="bg-black/90 px-2.5 py-1 rounded-lg border border-rose-950/80 font-mono text-xl font-black text-rose-500 tracking-widest shadow-inner drop-shadow-[0_0_8px_rgba(244,63,94,0.4)]">
             {String(elapsed).padStart(3, "0")}
           </div>
         </div>
 
         {/* Minesweeper Grid */}
         <div
-          className="grid gap-[2px] bg-slate-900/90 p-2 rounded-xl border border-white/10 select-none"
+          className="grid gap-[2.5px] bg-slate-950/90 p-2 rounded-xl border border-white/10 select-none overflow-x-auto thin-scroll max-w-full"
           style={{
-            gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))`
+            gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))`,
           }}
         >
           {grid.map((row, r) =>
@@ -453,15 +561,17 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
                   key={`${r}-${c}`}
                   onClick={() => handleCellClick(r, c)}
                   onContextMenu={(e) => toggleFlag(r, c, e)}
+                  onTouchStart={() => handleTouchStart(r, c)}
+                  onTouchEnd={handleTouchEnd}
                   disabled={status === "won" || (status === "lost" && !cell.isMine)}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-xs font-mono font-bold transition-all rounded-[4px] cursor-pointer ${
+                  className={`${getCellSizeClass()} flex items-center justify-center font-mono font-bold transition-all rounded-[4px] cursor-pointer select-none ${
                     isRevealed
                       ? isMine
                         ? isExploded
                           ? "bg-rose-600 text-white shadow-inner scale-95"
                           : "bg-rose-950/80 text-rose-400"
-                        : "bg-[#161a23] shadow-inner text-white"
-                      : "bg-[#2d3446] hover:bg-[#394258] active:bg-[#202533] border-t-2 border-l-2 border-white/20 border-b-2 border-r-2 border-black/40 shadow-sm"
+                        : "bg-[#131722] shadow-inner text-white border border-white/5"
+                      : "bg-[#283042] hover:bg-[#343e54] active:bg-[#1e2432] border-t-2 border-l-2 border-white/25 border-b-2 border-r-2 border-black/50 shadow-sm"
                   }`}
                 >
                   {isRevealed ? (
@@ -473,7 +583,7 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
                       </span>
                     ) : null
                   ) : cell.flagged ? (
-                    <GIconFlag size={13} className="text-rose-400 drop-shadow" />
+                    <GIconFlag size={12} className="text-rose-400 drop-shadow" />
                   ) : null}
                 </button>
               );
@@ -482,21 +592,25 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
         </div>
       </div>
 
+      <p className="text-[10px] text-white/40 mt-2 font-mono text-center">
+        Left-click to reveal · Right-click or hold to flag · Click revealed numbers to chord
+      </p>
+
       {/* Game Over / Victory Modal */}
       {showSubmitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-[#1c2230] border border-white/15 rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center">
-            <div className="flex justify-center mb-2 text-amber-400">
-              <GIconTrophy size={42} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-[#181e2b] border border-white/15 rounded-2xl p-6 max-w-sm w-full shadow-2xl text-center">
+            <div className="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center mx-auto mb-3 text-amber-300">
+              <GIconTrophy size={26} />
             </div>
-            <h3 className="text-lg font-bold text-white mb-1">Minefield Cleared!</h3>
+            <h3 className="text-lg font-bold text-white mb-1">Minefield Defused!</h3>
             <p className="text-white/60 text-xs mb-4">
-              You defused all mines in <span className="text-emerald-400 font-bold">{elapsed}s</span> on{" "}
+              All mines cleared in <span className="text-emerald-400 font-bold">{elapsed}s</span> on{" "}
               <span className="text-accent font-semibold">{config.label.split(" ")[0]}</span>!
             </p>
 
             {submitted ? (
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-300 text-xs flex items-center justify-center gap-2">
+              <div className="p-3 bg-emerald-500/15 border border-emerald-500/30 rounded-xl text-emerald-300 text-xs flex items-center justify-center gap-2 font-medium">
                 <GIconCheck size={16} />
                 <span>Score posted to Global Leaderboard!</span>
               </div>
@@ -510,7 +624,7 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
                     value={playerName}
                     onChange={(e) => setPlayerName(e.target.value)}
                     placeholder="Enter call-sign"
-                    className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
+                    className="w-full px-3 py-2 bg-black/40 border border-white/10 rounded-xl text-white text-xs outline-none focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 transition-all font-mono"
                     required
                   />
                 </div>
@@ -519,16 +633,16 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
                   <button
                     type="button"
                     onClick={() => setShowSubmitModal(false)}
-                    className="flex-1 py-2 rounded-xl text-xs bg-white/5 hover:bg-white/10 text-white/70 transition"
+                    className="flex-1 py-2 rounded-xl text-xs bg-white/5 hover:bg-white/10 text-white/70 transition cursor-pointer"
                   >
-                    Skip
+                    Close
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 py-2 rounded-xl text-xs font-semibold bg-accent hover:bg-accent/80 text-white shadow-lg shadow-accent/20 transition flex items-center justify-center gap-1.5"
+                    className="flex-1 py-2 rounded-xl text-xs font-bold bg-accent hover:brightness-110 active:scale-95 text-white shadow-lg shadow-accent/25 transition flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    {submitting ? "Posting..." : "Post Record"}
+                    {submitting ? "Posting..." : "Post Score"}
                   </button>
                 </div>
               </form>

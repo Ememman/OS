@@ -941,7 +941,7 @@ interface MetricPoint {
 }
 
 export default function ActivityMonitor() {
-  const { windows, closeWindow, focusWindow, minimizeWindow, osMode, systemSounds, notify } = useOS();
+  const { windows, closeWindow, focusWindow, restoreWindow, minimizeWindow, osMode, systemSounds, notify } = useOS();
   const isWin = osMode === "win";
 
   const [activeTab, setActiveTab] = useState<
@@ -1837,7 +1837,13 @@ export default function ActivityMonitor() {
                                       Focus
                                     </button>
                                     <button
-                                      onClick={() => minimizeWindow(win.id)}
+                                      onClick={() => {
+                                        if (win.minimized) {
+                                          restoreWindow(win.id);
+                                        } else {
+                                          minimizeWindow(win.id);
+                                        }
+                                      }}
                                       className="h-7 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white/90 hover:text-white transition text-[11px] font-medium cursor-pointer"
                                       title={win.minimized ? "Restore window" : "Minimize window"}
                                     >
@@ -1897,7 +1903,13 @@ export default function ActivityMonitor() {
                                 Focus
                               </button>
                               <button
-                                onClick={() => minimizeWindow(win.id)}
+                                onClick={() => {
+                                  if (win.minimized) {
+                                    restoreWindow(win.id);
+                                  } else {
+                                    minimizeWindow(win.id);
+                                  }
+                                }}
                                 className="py-1.5 px-2 rounded-lg bg-white/10 active:bg-white/20 text-white/90 text-[10px] font-medium transition text-center cursor-pointer"
                               >
                                 {win.minimized ? "Restore" : "Minimize"}
