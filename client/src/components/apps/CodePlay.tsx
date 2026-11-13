@@ -396,7 +396,7 @@ export default function CodePlay() {
   return (
     <div className="flex flex-col h-full bg-[#0a0a0f] text-white select-none w-full max-w-full overflow-hidden">
       {/* 1. TOP HEADER & CONTROLS (Sticky Header) */}
-      <div className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 border-b border-white/10 flex items-center justify-between gap-1.5 sm:gap-2 bg-[#0a0a0f]/95 backdrop-blur-md shrink-0 sticky top-0 z-20 shadow-sm w-full max-w-full overflow-hidden">
+      <div className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 border-b border-white/10 flex items-center justify-between gap-1.5 sm:gap-2 bg-[#0a0a0f]/95 backdrop-blur-md shrink-0 sticky top-0 z-40 shadow-sm w-full max-w-full overflow-visible">
         {/* On Mobile (< md): Interactive Template Dropdown directly in header */}
         <div className="md:hidden flex items-center gap-1.5 min-w-0 flex-1 mr-1.5">
           <div className="w-7 h-7 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center text-accent shrink-0">
