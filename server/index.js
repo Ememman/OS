@@ -3,7 +3,6 @@ import dns from "node:dns";
 import os from "node:os";
 import express from "express";
 import cors from "cors";
-import compression from "compression";
 import http from "http";
 import { Server } from "socket.io";
 import { customAlphabet } from "nanoid";
@@ -40,7 +39,16 @@ app.use((req, res, next) => {
 });
 
 app.use(cors({ origin: "*" }));
-app.use(compression({ threshold: 512 }));
+
+// Gzip & Brotli HTTP payload compression (graceful fallback if package is absent)
+try {
+  const { default: compression } = await import("compression");
+  if (typeof compression === "function") {
+    app.use(compression({ threshold: 512 }));
+  }
+} catch {
+  console.warn("[Server] 'compression' module not available, running without compression.");
+}
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
