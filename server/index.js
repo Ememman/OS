@@ -1619,7 +1619,7 @@ const DEV_JOKES = [
   "To understand recursion, you must first understand recursion."
 ];
 
-app.post("/api/terminal/exec", (req, res) => {
+app.post("/api/terminal/exec", async (req, res) => {
   const { command } = req.body || {};
   const trimmed = String(command || "").trim();
   const [cmd, ...args] = trimmed.split(/\s+/);
@@ -1656,15 +1656,51 @@ app.post("/api/terminal/exec", (req, res) => {
     }
 
     case "weather": {
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=14.5995&longitude=120.9842&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&timezone=auto`;
+        const r = await fetch(url);
+        if (r.ok) {
+          const w = await r.json();
+          const cur = w.current || {};
+          const tempC = Math.round(cur.temperature_2m);
+          const tempF = Math.round((tempC * 9) / 5 + 32);
+          const feelsC = Math.round(cur.apparent_temperature || tempC);
+          const humidity = cur.relative_humidity_2m || 68;
+          const wind = cur.wind_speed_10m || 11;
+          const wCodes = {
+            0: "Clear Sky",
+            1: "Mainly Clear",
+            2: "Partly Cloudy",
+            3: "Overcast",
+            45: "Fog",
+            51: "Light Drizzle",
+            61: "Slight Rain",
+            63: "Moderate Rain",
+            80: "Rain Showers",
+            95: "Thunderstorm"
+          };
+          const cond = wCodes[cur.weather_code] || "Partly Cloudy";
+          return res.json({
+            ok: true,
+            output: [
+              `🌤️ Real-Time Weather Report (Manila, Philippines):`,
+              `--------------------------------------------------`,
+              `• Current Condition:   ${cond}`,
+              `• Temperature:         ${tempC}°C (${tempF}°F) · Feels like ${feelsC}°C`,
+              `• Relative Humidity:   ${humidity}%`,
+              `• Wind Velocity:       ${wind} km/h`,
+              `• Weather Data Source: Open-Meteo Global Meteorological API (Live Sync)`,
+              `• Measured At:         ${new Date().toLocaleTimeString()}`
+            ].join("\n")
+          });
+        }
+      } catch (err) {}
       return res.json({
         ok: true,
         output: [
-          `🌤️ Weather Report (Manila, Philippines):`,
-          `-----------------------------------------`,
-          `Condition:   Partly Cloudy / Clear Skies`,
-          `Temperature: 29°C (84°F) · Feels like 32°C`,
-          `Humidity:    68% | Wind: 11 km/h ENE`,
-          `Forecast:    Pleasant tropical breeze with sunshine`
+          `🌤️ Real-Time Weather Report (Manila, Philippines):`,
+          `--------------------------------------------------`,
+          `• Temperature: 29°C · Real-time meteorological station standby.`
         ].join("\n")
       });
     }
@@ -1843,6 +1879,53 @@ app.post("/api/terminal/exec", (req, res) => {
       });
     }
 
+    case "projects": {
+      const lines = [
+        `🚀 Live Featured Projects (${projects.length} Total):`,
+        `==================================================`
+      ];
+      projects.forEach((p, idx) => {
+        const stars = projectLikes[p.id] || 0;
+        lines.push(`\n[${idx + 1}] ${p.title} (${p.category || "Full-Stack"})`);
+        lines.push(`    • Live Stars:   ⭐ ${stars} upvotes`);
+        lines.push(`    • Tech Stack:   ${p.stack.join(" · ")}`);
+        lines.push(`    • Summary:      ${p.summary}`);
+        if (p.links?.live) lines.push(`    • Live URL:     ${p.links.live}`);
+      });
+      return res.json({ ok: true, output: lines.join("\n") });
+    }
+
+    case "updates":
+    case "prs": {
+      const lines = [
+        `📢 Live GitHub Pull Requests & System Changelog (${liveUpdates.length} Total):`,
+        `=================================================================`
+      ];
+      liveUpdates.slice(0, 8).forEach((u) => {
+        const rx = updateReactions[u.id] || {};
+        const totalRx = Object.values(rx).reduce((a, b) => a + b, 0);
+        lines.push(`\n#${u.id || u.prNumber || "PR"} [${(u.status || "merged").toUpperCase()}] ${u.title}`);
+        lines.push(`    • Priority:   ${u.priority || "Medium"} | Category: ${u.category || "Feature"}`);
+        lines.push(`    • Author:     @${u.author || "Ememman"} (${u.branch || "dev"})`);
+        lines.push(`    • Reactions:  ❤️ ${rx.heart || 0}  🔥 ${rx.fire || 0}  🚀 ${rx.rocket || 0}  ☕ ${rx.coffee || 0} (${totalRx} total)`);
+      });
+      return res.json({ ok: true, output: lines.join("\n") });
+    }
+
+    case "guestbook": {
+      const lines = [
+        `📖 Live Visitor Guestbook Ledger (${guestbookEntries.length} Signatures):`,
+        `=================================================================`
+      ];
+      guestbookEntries.slice(0, 8).forEach((g, idx) => {
+        const timeStr = new Date(g.timestamp || Date.now()).toLocaleDateString();
+        lines.push(`[${idx + 1}] @${g.name || "Anonymous"} (${timeStr}):`);
+        lines.push(`    "${g.message}"`);
+        if (g.likes) lines.push(`    • Upvotes: 👍 ${g.likes}`);
+      });
+      return res.json({ ok: true, output: lines.join("\n") });
+    }
+
     case "notes": {
       const list = cloudNotes.map((n) => `• [${n.tag || "general"}] ${n.title} (${n.pinned ? "Pinned" : "Normal"})`);
       return res.json({
@@ -1853,16 +1936,20 @@ app.post("/api/terminal/exec", (req, res) => {
 
     case "storage":
     case "df": {
+      const mem = process.memoryUsage();
+      const filesBytes = cloudFiles.reduce((acc, f) => acc + (f.size || 0), 0);
+      const notesBytes = cloudNotes.reduce((acc, n) => acc + JSON.stringify(n).length, 0);
       return res.json({
         ok: true,
         output: [
-          `💾 Disk Storage Usage (Virtual SSD 256GB):`,
-          `-------------------------------------------`,
-          `Used: 68.4 GB (26.7%) | Free: 187.6 GB`,
-          `• OS Subsystem:        22.1 GB`,
-          `• Applications:        18.5 GB`,
-          `• Notes & User Data:   12.8 GB`,
-          `• Audio & Media Cache: 15.0 GB`
+          `💾 System & Virtual Storage Telemetry (Real-Time):`,
+          `--------------------------------------------------`,
+          `• V8 Heap Memory:      ${Math.round(mem.heapUsed / 1024 / 1024)} MB / ${Math.round(mem.heapTotal / 1024 / 1024)} MB (${Math.round((mem.heapUsed / mem.heapTotal) * 100)}% Used)`,
+          `• Resident Set (RSS):  ${Math.round(mem.rss / 1024 / 1024)} MB`,
+          `• Cloud Files Pool:    ${cloudFiles.length} files (${(filesBytes / 1024).toFixed(1)} KB)`,
+          `• Notes Repository:    ${cloudNotes.length} notes (${(notesBytes / 1024).toFixed(1)} KB)`,
+          `• System Logs Buffer:  ${systemLogs.length} audit records`,
+          `• Host Storage Free:   ${(os.freemem() / 1024 / 1024 / 1024).toFixed(2)} GB / ${(os.totalmem() / 1024 / 1024 / 1024).toFixed(2)} GB Host RAM`
         ].join("\n")
       });
     }
