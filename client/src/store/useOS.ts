@@ -96,10 +96,13 @@ interface OSState {
   setWallpaper: (id: string) => void;
   toggleMotion: () => void;
   openApp: (app: string) => void;
+  toggleApp: (app: string) => void;
   closeWindow: (id: string) => void;
   focusWindow: (id: string) => void;
+  restoreWindow: (id: string) => void;
   minimizeWindow: (id: string) => void;
   toggleMaximize: (id: string) => void;
+  toggleShowDesktop: () => void;
   moveWindow: (id: string, x: number, y: number) => void;
   resizeWindow: (id: string, w: number, h: number) => void;
 }
@@ -467,10 +470,11 @@ export const useOS = create<OSState>((set, get) => ({
     }
     const existing = get().windows.find((w) => w.app === app);
     if (existing) {
-      get().focusWindow(existing.id);
+      z += 1;
+      const zz = z;
       set({
         windows: get().windows.map((w) =>
-          w.id === existing.id ? { ...w, minimized: false } : w,
+          w.id === existing.id ? { ...w, minimized: false, z: zz } : w,
         ),
       });
       return;
@@ -509,7 +513,20 @@ export const useOS = create<OSState>((set, get) => ({
       get().clearUnreadChat();
     }
     set({
-      windows: get().windows.map((w) => (w.id === id ? { ...w, z: zz } : w)),
+      windows: get().windows.map((w) => (w.id === id ? { ...w, z: zz, minimized: false } : w)),
+    });
+  },
+
+  restoreWindow: (id) => {
+    if (get().systemSounds) soundFx.playOpen();
+    z += 1;
+    const zz = z;
+    const targetWin = get().windows.find((w) => w.id === id);
+    if (targetWin?.app === "chats") {
+      get().clearUnreadChat();
+    }
+    set({
+      windows: get().windows.map((w) => (w.id === id ? { ...w, z: zz, minimized: false } : w)),
     });
   },
 
@@ -520,6 +537,42 @@ export const useOS = create<OSState>((set, get) => ({
         w.id === id ? { ...w, minimized: true } : w,
       ),
     });
+  },
+
+  toggleApp: (app) => {
+    const existing = get().windows.find((w) => w.app === app);
+    if (!existing) {
+      get().openApp(app);
+      return;
+    }
+    if (existing.minimized) {
+      get().restoreWindow(existing.id);
+      return;
+    }
+    const openWindows = get().windows.filter((w) => !w.minimized);
+    const maxZ = openWindows.length > 0 ? Math.max(...openWindows.map((w) => w.z)) : 0;
+    const isTopActive = existing.z >= maxZ;
+
+    if (isTopActive) {
+      get().minimizeWindow(existing.id);
+    } else {
+      get().focusWindow(existing.id);
+    }
+  },
+
+  toggleShowDesktop: () => {
+    const hasUnminimized = get().windows.some((w) => !w.minimized);
+    if (hasUnminimized) {
+      if (get().systemSounds) soundFx.playMinimize();
+      set({
+        windows: get().windows.map((w) => ({ ...w, minimized: true })),
+      });
+    } else {
+      if (get().systemSounds) soundFx.playOpen();
+      set({
+        windows: get().windows.map((w) => ({ ...w, minimized: false })),
+      });
+    }
   },
 
   toggleMaximize: (id) =>

@@ -4,9 +4,42 @@ import {
   GIconLayoutColumns,
   GIconLayoutHeader,
   GIconLayoutCells,
+  GIconTerminal,
+  GIconCode,
+  GIconNotes,
+  GIconCalculator,
+  GIconActivity,
+  GIconBookOpen,
+  GIconLibrary,
+  GIconMusic,
+  GIconUpdates,
+  GIconChats,
+  GIconGallery,
+  GIconGames,
+  GIconFiles,
+  GIconSettings,
+  GIconResume,
 } from "./icons/GravityIcons";
 import { useOS } from "../store/useOS";
 import { useIsMobile } from "../lib/useMediaQuery";
+
+const WIN_APP_ICONS: Record<string, { icon: React.ComponentType<any>; color: string }> = {
+  terminal: { icon: GIconTerminal, color: "#22c55e" },
+  codeplay: { icon: GIconCode, color: "#38bdf8" },
+  notes: { icon: GIconNotes, color: "#f59e0b" },
+  calculator: { icon: GIconCalculator, color: "#06b6d4" },
+  activity: { icon: GIconActivity, color: "#10b981" },
+  guestbook: { icon: GIconBookOpen, color: "#8b5cf6" },
+  library: { icon: GIconLibrary, color: "#5BB8B0" },
+  music: { icon: GIconMusic, color: "#D9678C" },
+  updates: { icon: GIconUpdates, color: "#5FBF7C" },
+  chats: { icon: GIconChats, color: "#8E7BE0" },
+  gallery: { icon: GIconGallery, color: "#B8C25A" },
+  games: { icon: GIconGames, color: "#D98A4E" },
+  files: { icon: GIconFiles, color: "#E0B84E" },
+  settings: { icon: GIconSettings, color: "#8892A6" },
+  resume: { icon: GIconResume, color: "#4B5A73" },
+};
 
 export default function Window({ win, children }) {
   const {
@@ -385,14 +418,23 @@ export default function Window({ win, children }) {
     );
   };
 
+  const appMeta = WIN_APP_ICONS[win.app];
+  const AppIcon = appMeta?.icon;
+
   return (
     <div
       ref={windowRef}
       className={`absolute glass shadow-2xl flex flex-col overflow-hidden transition-shadow ${
-        isMobile ? "rounded-none border-0 fixed inset-0 w-full h-[100dvh]" : isWin ? "rounded-lg" : "rounded-2xl"
+        isMobile
+          ? "rounded-none border-0 fixed inset-0 w-full h-[100dvh]"
+          : isWin
+            ? "rounded-xl border border-white/15"
+            : "rounded-2xl"
       } ${
         isFocused
-          ? "ring-1 ring-white/15"
+          ? isWin
+            ? "ring-1 ring-accent/30 border-white/25 shadow-[0_24px_65px_rgba(0,0,0,0.75),0_0_20px_rgba(0,145,255,0.12)]"
+            : "ring-1 ring-white/15"
           : isMobile
             ? "opacity-95"
             : "brightness-[0.82] saturate-[0.85]"
@@ -410,25 +452,30 @@ export default function Window({ win, children }) {
         onDoubleClick={() => !isMobile && toggleMaximize(win.id)}
         style={{ touchAction: "none" }}
       >
-        {/* Window Title: Right-aligned on mobile for macOS mode, centered on desktop */}
-        {isMobile ? (
-          !isWin ? (
-            /* macOS Mobile: traffic lights on left, title on right-side */
-            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-10">
-              <span className="text-xs text-white/85 font-medium tracking-wide truncate max-w-[calc(100vw-110px)]">
-                {win.title}
-              </span>
-            </div>
-          ) : (
-            /* Windows Mobile: controls on right, title on left */
-            <div className="flex items-center pl-1 pointer-events-none z-10">
-              <span className="text-xs text-white/85 font-medium tracking-wide truncate max-w-[calc(100vw-120px)]">
-                {win.title}
-              </span>
-            </div>
-          )
+        {/* Window Title & Icon */}
+        {isWin ? (
+          <div className="flex items-center gap-2 pl-0.5 pointer-events-none z-10 min-w-0">
+            {AppIcon && (
+              <div
+                className="w-4 h-4 rounded-[3px] flex items-center justify-center shrink-0"
+                style={{ color: appMeta?.color || "#38bdf8" }}
+              >
+                <AppIcon size={14} color="currentColor" />
+              </div>
+            )}
+            <span className="text-xs text-white/90 font-medium tracking-wide truncate max-w-[calc(100vw-130px)] sm:max-w-[420px]">
+              {win.title}
+            </span>
+          </div>
+        ) : isMobile ? (
+          /* macOS Mobile: traffic lights on left, title on right-side */
+          <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-10">
+            <span className="text-xs text-white/85 font-medium tracking-wide truncate max-w-[calc(100vw-110px)]">
+              {win.title}
+            </span>
+          </div>
         ) : (
-          /* Desktop: centered */
+          /* macOS Desktop: centered */
           <div className="absolute inset-x-0 mx-auto flex items-center justify-center pointer-events-none px-16 sm:px-24">
             <span className="text-xs text-white/80 font-medium tracking-wide truncate max-w-full">
               {win.title}
@@ -445,7 +492,7 @@ export default function Window({ win, children }) {
               {/* Minimize */}
               <button
                 onClick={requestMinimize}
-                className="w-11 h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors cursor-pointer"
+                className="w-11 sm:w-12 h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 active:bg-white/20 transition-colors cursor-pointer"
                 aria-label="Minimize window"
                 title="Minimize"
               >
@@ -460,7 +507,7 @@ export default function Window({ win, children }) {
                   onClick={() => toggleMaximize(win.id)}
                   onMouseEnter={handleSnapEnter}
                   onMouseLeave={handleSnapLeave}
-                  className="w-11 h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors relative cursor-pointer"
+                  className="w-11 sm:w-12 h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 active:bg-white/20 transition-colors relative cursor-pointer"
                   aria-label={win.maximized ? "Restore window" : "Maximize window"}
                   title={win.maximized ? "Restore" : "Maximize"}
                 >
@@ -480,7 +527,7 @@ export default function Window({ win, children }) {
               {/* Close */}
               <button
                 onClick={requestClose}
-                className="w-11 h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-[#e81123] active:bg-[#c4101e] transition-colors cursor-pointer rounded-tr-lg"
+                className="w-11 sm:w-12 h-full flex items-center justify-center text-white/70 hover:text-white hover:bg-[#e81123] active:bg-[#c4101e] transition-colors cursor-pointer rounded-tr-xl"
                 aria-label="Close window"
                 title="Close"
               >
