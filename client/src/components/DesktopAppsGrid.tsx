@@ -25,40 +25,73 @@ interface DragState {
 }
 
 /**
- * Checks if a given coordinate bounding box overlaps with any active desktop widgets.
+ * Checks if a given coordinate bounding box overlaps with the widget columns.
+ * Works both when widgets are mounted in the DOM and when they are unmounted/hidden.
  */
-function isPositionOverWidgets(x: number, y: number, width = 80, height = 86): boolean {
-  if (typeof document === "undefined") return false;
+function checkWidgetZoneCollision(
+  x: number,
+  y: number,
+  width = 80,
+  height = 86,
+  macDockLeft = false,
+  macDockRight = false,
+  isWin = false
+): boolean {
+  if (isWin || typeof window === "undefined") return false;
+
+  // 1. If DOM widgets are currently mounted, check their live bounding rects:
   const widgetElements = document.querySelectorAll("[data-widget-area='true']");
-  const margin = 12; // Safety buffer around widget boundaries
-
-  for (const el of Array.from(widgetElements)) {
-    const rect = el.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) continue;
-
-    const itemLeft = x;
-    const itemRight = x + width;
-    const itemTop = y;
-    const itemBottom = y + height;
-
-    const widgetLeft = rect.left - margin;
-    const widgetRight = rect.right + margin;
-    const widgetTop = rect.top - margin;
-    const widgetBottom = rect.bottom + margin;
-
-    const overlaps =
-      itemLeft < widgetRight &&
-      itemRight > widgetLeft &&
-      itemTop < widgetBottom &&
-      itemBottom > widgetTop;
-
-    if (overlaps) return true;
+  if (widgetElements.length > 0) {
+    const margin = 12;
+    for (const el of Array.from(widgetElements)) {
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) continue;
+      if (
+        x < rect.right + margin &&
+        x + width > rect.left - margin &&
+        y < rect.bottom + margin &&
+        y + height > rect.top - margin
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
+
+  // 2. If DOM widgets are unmounted (widgets hidden), calculate the reserved widget column zones:
+  // Left widget column (Photo, Shortcuts, Notes)
+  const leftX = macDockLeft ? 96 : 24;
+  const leftW = 210;
+  const leftTop = 135;
+  const leftBottom = window.innerHeight - 130;
+  if (
+    x < leftX + leftW &&
+    x + width > leftX &&
+    y < leftBottom &&
+    y + height > leftTop
+  ) {
+    return true;
+  }
+
+  // Right widget column (Weather, Clock, Agenda)
+  const rightW = 240;
+  const rightX = window.innerWidth - (macDockRight ? 96 : 24) - rightW;
+  const rightTop = 40;
+  const rightBottom = window.innerHeight - 70;
+  if (
+    x < rightX + rightW &&
+    x + width > rightX &&
+    y < rightBottom &&
+    y + height > rightTop
+  ) {
+    return true;
+  }
+
   return false;
 }
 
 /**
- * If dropped over a widget, attempts to locate the closest open desktop position.
+ * If dropped over a widget when widgets are active, attempts to locate the closest open desktop position.
  */
 function findSafePositionNearby(
   x: number,
@@ -66,7 +99,10 @@ function findSafePositionNearby(
   minX: number,
   maxX: number,
   minY: number,
-  maxY: number
+  maxY: number,
+  macDockLeft: boolean,
+  macDockRight: boolean,
+  isWin: boolean
 ): { x: number; y: number } | null {
   const steps = [
     { dx: 110, dy: 0 },
@@ -80,7 +116,7 @@ function findSafePositionNearby(
   for (const step of steps) {
     const testX = Math.max(minX, Math.min(maxX, x + step.dx));
     const testY = Math.max(minY, Math.min(maxY, y + step.dy));
-    if (!isPositionOverWidgets(testX, testY)) {
+    if (!checkWidgetZoneCollision(testX, testY, 80, 86, macDockLeft, macDockRight, isWin)) {
       return { x: testX, y: testY };
     }
   }
@@ -130,6 +166,84 @@ export default function DesktopAppsGrid({ isMobile }: DesktopAppsGridProps) {
     [isWin, macDockLeft, widgetsVisible]
   );
 
+  // --------------------------------------------------------------------------------------------------
+  // WIDGET TOGGLE REACTIVITY:
+  // When widgets are turned ON: Any item occupying the widget zone retreats back to its last position.
+  // When widgets are turned OFF: Any item that was in the widget zone returns to take that place.
+  // --------------------------------------------------------------------------------------------------
+  const prevWidgetsVisibleRef = useRef(widgetsVisible);
+
+  useEffect(() => {
+    if (isMobile) return;
+
+    const wasVisible = prevWidgetsVisibleRef.current;
+    prevWidgetsVisibleRef.current = widgetsVisible;
+
+    // Transition: OFF -> ON (User clicks to turn widgets ON)
+    if (!wasVisible && widgetsVisible) {
+      let movedCount = 0;
+      const updated = items.map((item, index) => {
+        const def = getDefaultPosition(index);
+        const curX = typeof item.x === "number" ? item.x : def.x;
+        const curY = typeof item.y === "number" ? item.y : def.y;
+
+        const isOver = checkWidgetZoneCollision(curX, curY, 80, 86, macDockLeft, macDockRight, isWin);
+        if (isOver) {
+          movedCount++;
+          // Retreat back to last safe position outside widget space (or default slot)
+          const targetX = typeof item.lastSafeX === "number" ? item.lastSafeX : def.x;
+          const targetY = typeof item.lastSafeY === "number" ? item.lastSafeY : def.y;
+          return {
+            ...item,
+            x: targetX,
+            y: targetY,
+            // Preserve the widget space coordinates so it can return when widgets are turned off!
+            widgetZoneX: curX,
+            widgetZoneY: curY,
+          };
+        }
+        return item;
+      });
+
+      if (movedCount > 0) {
+        useDesktopStore.setState({ items: updated });
+        try {
+          localStorage.setItem("portfolio_os_desktop_items_v2", JSON.stringify(updated));
+        } catch {}
+        soundFx.playPop();
+        notify(
+          "Widgets Enabled",
+          `${movedCount} application${movedCount > 1 ? "s" : ""} moved back to their last position.`,
+          "info"
+        );
+      }
+    }
+
+    // Transition: ON -> OFF (User clicks to turn widgets OFF)
+    if (wasVisible && !widgetsVisible) {
+      let restoredCount = 0;
+      const updated = items.map((item) => {
+        if (typeof item.widgetZoneX === "number" && typeof item.widgetZoneY === "number") {
+          restoredCount++;
+          return {
+            ...item,
+            x: item.widgetZoneX,
+            y: item.widgetZoneY,
+          };
+        }
+        return item;
+      });
+
+      if (restoredCount > 0) {
+        useDesktopStore.setState({ items: updated });
+        try {
+          localStorage.setItem("portfolio_os_desktop_items_v2", JSON.stringify(updated));
+        } catch {}
+        soundFx.playClick();
+      }
+    }
+  }, [widgetsVisible, isMobile, items, getDefaultPosition, macDockLeft, macDockRight, isWin, notify]);
+
   // Clean up timer and animations on unmount
   useEffect(() => {
     return () => {
@@ -160,7 +274,7 @@ export default function DesktopAppsGrid({ isMobile }: DesktopAppsGridProps) {
 
     const isTouch = e.pointerType === "touch";
 
-    // For touch: keep a subtle 190ms hold to preserve smooth page scrolling on mobile
+    // For touch: subtle 190ms hold to preserve smooth page scrolling on mobile
     // For mouse: 0ms delay! Drag starts as soon as mouse moves past threshold!
     if (isTouch) {
       holdTimerRef.current = setTimeout(() => {
@@ -186,6 +300,9 @@ export default function DesktopAppsGrid({ isMobile }: DesktopAppsGridProps) {
     const targetX = Math.max(minX, Math.min(maxX, startItemPosRef.current.x));
     const targetY = Math.max(minY, Math.min(maxY, startItemPosRef.current.y));
 
+    // Only flag over widget if widgets are actively visible
+    const isOver = widgetsVisible && !isMobile && checkWidgetZoneCollision(targetX, targetY, 80, 86, macDockLeft, macDockRight, isWin);
+
     setDragState({
       item: activeItemRef.current,
       originX: startItemPosRef.current.x,
@@ -194,7 +311,7 @@ export default function DesktopAppsGrid({ isMobile }: DesktopAppsGridProps) {
       currentY: clientY,
       targetX,
       targetY,
-      isOverWidget: !isMobile && isPositionOverWidgets(targetX, targetY),
+      isOverWidget: isOver,
       hoverTargetId: null,
       isDragging: true,
     });
@@ -237,8 +354,8 @@ export default function DesktopAppsGrid({ isMobile }: DesktopAppsGridProps) {
     const targetId = targetEl?.getAttribute("data-desktop-item-id") || null;
     const isTargetItem = targetId !== null && targetId !== item.id;
 
-    // Check collision with widget area
-    const overWidget = !isTargetItem && !isMobile && isPositionOverWidgets(clampedTargetX, clampedTargetY);
+    // Check collision with widget area ONLY if widgets are currently visible!
+    const overWidget = widgetsVisible && !isTargetItem && !isMobile && checkWidgetZoneCollision(clampedTargetX, clampedTargetY, 80, 86, macDockLeft, macDockRight, isWin);
 
     if (!rafId.current) {
       rafId.current = requestAnimationFrame(() => {
@@ -287,21 +404,74 @@ export default function DesktopAppsGrid({ isMobile }: DesktopAppsGridProps) {
         let finalX = Math.round(currentDrag.targetX / 12) * 12;
         let finalY = Math.round(currentDrag.targetY / 12) * 12;
 
-        if (currentDrag.isOverWidget) {
-          // Cannot position directly over widgets! Try gently nudging nearby or restore
-          const safe = findSafePositionNearby(finalX, finalY, minX, maxX, minY, maxY);
-          if (safe) {
-            moveItem(item.id, safe.x, safe.y);
-            soundFx.playClick();
-            notify("Repositioned Safely", "Application positioned alongside the widget area.", "info");
+        if (widgetsVisible) {
+          // Widgets ARE visible: cannot place over active widgets
+          if (currentDrag.isOverWidget) {
+            const safe = findSafePositionNearby(finalX, finalY, minX, maxX, minY, maxY, macDockLeft, macDockRight, isWin);
+            if (safe) {
+              moveItem(item.id, safe.x, safe.y, {
+                lastSafeX: safe.x,
+                lastSafeY: safe.y,
+                widgetZoneX: null,
+                widgetZoneY: null,
+              });
+              soundFx.playClick();
+              notify("Repositioned Safely", "Application positioned alongside the widget area.", "info");
+            } else {
+              // Revert to origin position
+              soundFx.playClose();
+              notify("Widget Space Reserved", "Desktop applications cannot be placed over widgets.", "warning");
+            }
           } else {
-            // Revert to origin position
-            soundFx.playClose();
-            notify("Widget Space Reserved", "Desktop applications cannot be placed over widgets.", "warning");
+            // Valid placement outside widgets
+            moveItem(item.id, finalX, finalY, {
+              lastSafeX: finalX,
+              lastSafeY: finalY,
+              widgetZoneX: null,
+              widgetZoneY: null,
+            });
+            soundFx.playClick();
           }
         } else {
-          // Valid placement anywhere on the desktop canvas!
-          moveItem(item.id, finalX, finalY);
+          // Widgets are NOT visible:
+          // The application CAN take their place/position!
+          const itemIdx = items.findIndex((it) => it.id === item.id);
+          const defPos = getDefaultPosition(itemIdx);
+
+          const isInsideWidgetSpace = checkWidgetZoneCollision(finalX, finalY, 80, 86, macDockLeft, macDockRight, isWin);
+
+          // Track last known safe position outside the widget area
+          const prevSafeX =
+            typeof item.lastSafeX === "number"
+              ? item.lastSafeX
+              : typeof item.x === "number" && !checkWidgetZoneCollision(item.x, item.y, 80, 86, macDockLeft, macDockRight, isWin)
+              ? item.x
+              : defPos.x;
+
+          const prevSafeY =
+            typeof item.lastSafeY === "number"
+              ? item.lastSafeY
+              : typeof item.y === "number" && !checkWidgetZoneCollision(item.x, item.y, 80, 86, macDockLeft, macDockRight, isWin)
+              ? item.y
+              : defPos.y;
+
+          if (isInsideWidgetSpace) {
+            // Taking the place/position of the widgets!
+            moveItem(item.id, finalX, finalY, {
+              widgetZoneX: finalX,
+              widgetZoneY: finalY,
+              lastSafeX: prevSafeX,
+              lastSafeY: prevSafeY,
+            });
+          } else {
+            // Placed outside widget space
+            moveItem(item.id, finalX, finalY, {
+              lastSafeX: finalX,
+              lastSafeY: finalY,
+              widgetZoneX: null,
+              widgetZoneY: null,
+            });
+          }
           soundFx.playClick();
         }
       }
@@ -414,7 +584,7 @@ export default function DesktopAppsGrid({ isMobile }: DesktopAppsGridProps) {
         </div>
 
         {/* Floating clone portal on mobile */}
-        {renderFloatingClone(dragState)}
+        {renderFloatingClone(dragState, cloneRef)}
       </>
     );
   }
@@ -438,15 +608,18 @@ export default function DesktopAppsGrid({ isMobile }: DesktopAppsGridProps) {
 
           if (item.type === "folder") {
             return (
-              <div
+              <motion.div
                 key={item.id}
                 data-desktop-item-id={item.id}
                 onPointerDown={(e) => handlePointerDown(e, item, currentPos)}
                 onClick={() => handleItemClick(item)}
+                initial={false}
+                animate={{ x: currentPos.x, y: currentPos.y }}
+                transition={{ type: "spring", stiffness: 380, damping: 28 }}
                 style={{
                   position: "absolute",
-                  left: `${currentPos.x}px`,
-                  top: `${currentPos.y}px`,
+                  left: 0,
+                  top: 0,
                   pointerEvents: "auto",
                 }}
                 className={`transition-opacity duration-150 cursor-grab active:cursor-grabbing ${
@@ -463,7 +636,7 @@ export default function DesktopAppsGrid({ isMobile }: DesktopAppsGridProps) {
                     + Add to Folder
                   </div>
                 )}
-              </div>
+              </motion.div>
             );
           }
 
@@ -474,15 +647,18 @@ export default function DesktopAppsGrid({ isMobile }: DesktopAppsGridProps) {
           const color = item.color || reg?.color || "#38bdf8";
 
           return (
-            <div
+            <motion.div
               key={item.id}
               data-desktop-item-id={item.id}
               onPointerDown={(e) => handlePointerDown(e, item, currentPos)}
               onClick={() => handleItemClick(item)}
+              initial={false}
+              animate={{ x: currentPos.x, y: currentPos.y }}
+              transition={{ type: "spring", stiffness: 380, damping: 28 }}
               style={{
                 position: "absolute",
-                left: `${currentPos.x}px`,
-                top: `${currentPos.y}px`,
+                left: 0,
+                top: 0,
                 pointerEvents: "auto",
               }}
               className={`transition-opacity duration-150 cursor-grab active:cursor-grabbing ${
@@ -526,7 +702,7 @@ export default function DesktopAppsGrid({ isMobile }: DesktopAppsGridProps) {
                   + Combine into Folder
                 </div>
               )}
-            </div>
+            </motion.div>
           );
         })}
       </div>
