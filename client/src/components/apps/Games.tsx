@@ -78,6 +78,16 @@ const UPCOMING_GAMES: UpcomingGame[] = [
     features: ["Daily mystery word", "Virtual on-screen keyboard", "Shareable score grid", "Dictionary definitions"],
     version: "v1.4",
   },
+  {
+    id: "asteroids",
+    name: "Neon Asteroids 2084",
+    genre: "Vector Arcade",
+    desc: "Cosmic vector boulder blaster with 360° twin-stick firing, hyperspace jumps, and UFO boss encounters.",
+    status: "Design Phase",
+    badgeColor: "bg-cyan-500/15 border-cyan-500/30 text-cyan-400",
+    features: ["Vector glow physics", "Hyperspace emergency warp", "UFO boss encounters", "Chiptune soundscape"],
+    version: "v1.5",
+  },
 ];
 
 function GameHeader({
@@ -141,6 +151,7 @@ export default function Games() {
   const [open, setOpen] = useState<string | null>("blockblast");
   const [previewGame, setPreviewGame] = useState<UpcomingGame | null>(null);
   const [notifiedGames, setNotifiedGames] = useState<Set<string>>(new Set());
+  const [arcadeTab, setArcadeTab] = useState<"all" | "playable" | "upcoming">("all");
 
   const toggleNotify = (gameId: string) => {
     setNotifiedGames((prev) => {
@@ -204,16 +215,16 @@ export default function Games() {
   }
 
   return (
-    <div className="p-3 sm:p-4.5 pb-6 sm:pb-8 space-y-3.5 sm:space-y-4 text-white select-none h-full overflow-y-auto thin-scroll">
-      {/* Arcade Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-white/10 pb-3">
+    <div className="p-3.5 sm:p-5 pb-8 sm:pb-10 space-y-4 text-white select-none h-full overflow-y-auto thin-scroll">
+      {/* Arcade Header Banner with Category Filter Pills */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3.5">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h2 className="font-display text-lg sm:text-xl font-black text-white tracking-tight flex items-center gap-2">
               Portfolio Arcade & Games
             </h2>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-accent/20 border border-accent/40 text-accent font-bold">
-              4 Playable Games
+              4 Playable · {UPCOMING_GAMES.length} Upcoming
             </span>
           </div>
           <p className="text-xs text-white/50 max-w-lg">
@@ -221,188 +232,239 @@ export default function Games() {
           </p>
         </div>
 
-        <button
-          onClick={() => setOpen("leaderboard")}
-          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 shadow-lg shadow-amber-500/20 shrink-0 self-start sm:self-auto cursor-pointer"
-        >
-          <GIconTrophy size={14} />
-          <span>Global Leaderboard</span>
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Quick Segmented Tabs */}
+          <div className="flex items-center gap-1 bg-white/5 border border-white/10 p-0.5 rounded-xl text-xs">
+            <button
+              onClick={() => setArcadeTab("all")}
+              className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer text-xs ${
+                arcadeTab === "all" ? "bg-white/15 text-white shadow-xs font-semibold" : "text-white/60 hover:text-white"
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setArcadeTab("playable")}
+              className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer text-xs ${
+                arcadeTab === "playable" ? "bg-emerald-500/20 text-emerald-300 shadow-xs font-semibold" : "text-white/60 hover:text-white"
+              }`}
+            >
+              Playable (4)
+            </button>
+            <button
+              onClick={() => setArcadeTab("upcoming")}
+              className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer text-xs ${
+                arcadeTab === "upcoming" ? "bg-amber-500/20 text-amber-300 shadow-xs font-semibold" : "text-white/60 hover:text-white"
+              }`}
+            >
+              Upcoming ({UPCOMING_GAMES.length})
+            </button>
+          </div>
+
+          <button
+            onClick={() => setOpen("leaderboard")}
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 shadow-lg shadow-amber-500/20 shrink-0 cursor-pointer"
+          >
+            <GIconTrophy size={13} />
+            <span>Leaderboard</span>
+          </button>
+        </div>
       </div>
 
       {/* Primary Playable Games Grid */}
-      <div>
-        <div className="text-[11px] text-white/50 uppercase tracking-wider mb-2 font-bold flex items-center gap-1.5">
-          <GIconPlay size={12} className="text-emerald-400" />
-          <span>Instant Play Minigames</span>
+      {(arcadeTab === "all" || arcadeTab === "playable") && (
+        <div className="space-y-3">
+          <div className="text-xs text-white/60 uppercase tracking-wider font-bold flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <GIconPlay size={13} className="text-emerald-400" />
+              <span>Instant Play Minigames</span>
+            </span>
+            <span className="text-[11px] font-mono text-emerald-400/80 font-normal">
+              4 Fully Playable Titles
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
+            {/* Block Blast */}
+            <button
+              onClick={() => setOpen("blockblast")}
+              className="flex flex-col justify-between min-h-[180px] p-4 rounded-2xl border border-accent/40 bg-gradient-to-b from-accent/15 to-accent/5 hover:from-accent/25 hover:to-accent/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-accent/20 active:scale-[0.98] overflow-hidden"
+            >
+              <div className="flex-1 min-w-0 overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between mb-2 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+                    <GIconPuzzle className="text-accent" size={20} />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-accent/20 text-accent border border-accent/30">
+                    Drag & Drop
+                  </span>
+                </div>
+                <div className="text-base font-bold text-white group-hover:text-accent transition-colors shrink-0">
+                  Block Blast
+                </div>
+                <div className="text-xs text-white/65 mt-1.5 line-clamp-2 leading-relaxed overflow-hidden">
+                  Drag blocks onto the 8×8 board to clear rows and columns with combos.
+                </div>
+              </div>
+              <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full">
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition">
+                  <GIconPlay size={10} />
+                  <span>Play Now</span>
+                </span>
+                <span className="text-white/40 text-[10.5px] font-mono">Scores Enabled</span>
+              </div>
+            </button>
+
+            {/* 2048 Puzzle */}
+            <button
+              onClick={() => setOpen("2048")}
+              className="flex flex-col justify-between min-h-[180px] p-4 rounded-2xl border border-amber-500/40 bg-gradient-to-b from-amber-500/15 to-amber-500/5 hover:from-amber-500/25 hover:to-amber-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-amber-500/20 active:scale-[0.98] overflow-hidden"
+            >
+              <div className="flex-1 min-w-0 overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between mb-2 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+                    <GIconTrophy className="text-amber-400" size={19} />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    Undo + Merge
+                  </span>
+                </div>
+                <div className="text-base font-bold text-white group-hover:text-amber-300 transition-colors shrink-0">
+                  2048 Puzzle
+                </div>
+                <div className="text-xs text-white/65 mt-1.5 line-clamp-2 leading-relaxed overflow-hidden">
+                  Slide and merge matching number tiles to build the legendary 2048 tile.
+                </div>
+              </div>
+              <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full">
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition">
+                  <GIconPlay size={10} />
+                  <span>Play Now</span>
+                </span>
+                <span className="text-white/40 text-[10.5px] font-mono">Scores Enabled</span>
+              </div>
+            </button>
+
+            {/* Snake Retro */}
+            <button
+              onClick={() => setOpen("snake")}
+              className="flex flex-col justify-between min-h-[180px] p-4 rounded-2xl border border-emerald-500/40 bg-gradient-to-b from-emerald-500/15 to-emerald-500/5 hover:from-emerald-500/25 hover:to-emerald-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-emerald-500/20 active:scale-[0.98] overflow-hidden"
+            >
+              <div className="flex-1 min-w-0 overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between mb-2 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+                    <GIconPlay className="text-emerald-400" size={19} />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Tuned Speed
+                  </span>
+                </div>
+                <div className="text-base font-bold text-white group-hover:text-emerald-300 transition-colors shrink-0">
+                  Snake Retro
+                </div>
+                <div className="text-xs text-white/65 mt-1.5 line-clamp-2 leading-relaxed overflow-hidden">
+                  Classic arcade snake with tuned playable speed, golden apples, & touch D-pad.
+                </div>
+              </div>
+              <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full">
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition">
+                  <GIconPlay size={10} />
+                  <span>Play Now</span>
+                </span>
+                <span className="text-white/40 text-[10.5px] font-mono">Scores Enabled</span>
+              </div>
+            </button>
+
+            {/* Minesweeper */}
+            <button
+              onClick={() => setOpen("minesweeper")}
+              className="flex flex-col justify-between min-h-[180px] p-4 rounded-2xl border border-rose-500/40 bg-gradient-to-b from-rose-500/15 to-rose-500/5 hover:from-rose-500/25 hover:to-rose-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-rose-500/20 active:scale-[0.98] overflow-hidden"
+            >
+              <div className="flex-1 min-w-0 overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between mb-2 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm text-rose-400">
+                    <GIconFlag size={19} />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                    Chording + Flags
+                  </span>
+                </div>
+                <div className="text-base font-bold text-white group-hover:text-rose-400 transition-colors shrink-0">
+                  Minesweeper Retro
+                </div>
+                <div className="text-xs text-white/65 mt-1.5 line-clamp-2 leading-relaxed overflow-hidden">
+                  Defuse minefields with responsive auto-scale, digital timers, & chording.
+                </div>
+              </div>
+              <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full">
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition">
+                  <GIconPlay size={10} />
+                  <span>Play Now</span>
+                </span>
+                <span className="text-white/40 text-[10.5px] font-mono">Scores Enabled</span>
+              </div>
+            </button>
+          </div>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-          {/* Block Blast */}
-          <button
-            onClick={() => setOpen("blockblast")}
-            className="flex flex-col justify-between p-3 sm:p-3.5 rounded-2xl border border-accent/40 bg-gradient-to-b from-accent/15 to-accent/5 hover:from-accent/25 hover:to-accent/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-accent/20 active:scale-[0.98]"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-9 h-9 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
-                  <GIconPuzzle className="text-accent" size={20} />
-                </div>
-                <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-md bg-accent/20 text-accent border border-accent/30">
-                  Drag & Drop
-                </span>
-              </div>
-              <div className="text-sm font-bold text-white group-hover:text-accent transition-colors">Block Blast</div>
-              <div className="text-[11px] text-white/60 mt-1 line-clamp-2 leading-snug min-h-[2.4rem]">
-                Drag blocks onto the 8×8 board to clear rows and columns with combos.
-              </div>
-            </div>
-            <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
-              <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                Play Now
-              </span>
-              <span className="text-white/40 text-[10px]">Scores Enabled</span>
-            </div>
-          </button>
-
-          {/* 2048 Puzzle */}
-          <button
-            onClick={() => setOpen("2048")}
-            className="flex flex-col justify-between p-3 sm:p-3.5 rounded-2xl border border-amber-500/40 bg-gradient-to-b from-amber-500/15 to-amber-500/5 hover:from-amber-500/25 hover:to-amber-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-amber-500/20 active:scale-[0.98]"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
-                  <GIconTrophy className="text-amber-400" size={18} />
-                </div>
-                <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  Undo + Merge
-                </span>
-              </div>
-              <div className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">2048 Puzzle</div>
-              <div className="text-[11px] text-white/60 mt-1 line-clamp-2 leading-snug min-h-[2.4rem]">
-                Slide and merge matching number tiles to build the legendary 2048 tile.
-              </div>
-            </div>
-            <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
-              <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                Play Now
-              </span>
-              <span className="text-white/40 text-[10px]">Scores Enabled</span>
-            </div>
-          </button>
-
-          {/* Snake Retro */}
-          <button
-            onClick={() => setOpen("snake")}
-            className="flex flex-col justify-between p-3 sm:p-3.5 rounded-2xl border border-emerald-500/40 bg-gradient-to-b from-emerald-500/15 to-emerald-500/5 hover:from-emerald-500/25 hover:to-emerald-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-emerald-500/20 active:scale-[0.98]"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
-                  <GIconPlay className="text-emerald-400" size={18} />
-                </div>
-                <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  Tuned Speed
-                </span>
-              </div>
-              <div className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">Snake Retro</div>
-              <div className="text-[11px] text-white/60 mt-1 line-clamp-2 leading-snug min-h-[2.4rem]">
-                Classic arcade snake with adjusted playable speed, golden apples, & touch D-pad.
-              </div>
-            </div>
-            <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
-              <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                Play Now
-              </span>
-              <span className="text-white/40 text-[10px]">Scores Enabled</span>
-            </div>
-          </button>
-
-          {/* Minesweeper */}
-          <button
-            onClick={() => setOpen("minesweeper")}
-            className="flex flex-col justify-between p-3 sm:p-3.5 rounded-2xl border border-rose-500/40 bg-gradient-to-b from-rose-500/15 to-rose-500/5 hover:from-rose-500/25 hover:to-rose-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-rose-500/20 active:scale-[0.98]"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-9 h-9 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm text-rose-400">
-                  <GIconFlag size={18} />
-                </div>
-                <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                  Chording + Flags
-                </span>
-              </div>
-              <div className="text-sm font-bold text-white group-hover:text-rose-400 transition-colors">Minesweeper Retro</div>
-              <div className="text-[11px] text-white/60 mt-1 line-clamp-2 leading-snug min-h-[2.4rem]">
-                Defuse minefields with responsive auto-scale, digital timers, & chording.
-              </div>
-            </div>
-            <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
-              <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                Play Now
-              </span>
-              <span className="text-white/40 text-[10px]">Scores Enabled</span>
-            </div>
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Enhanced Upcoming Games Section */}
-      <div className="pt-1">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-[11px] text-white/50 uppercase tracking-wider font-bold flex items-center gap-1.5">
-            <GIconSparkles size={12} className="text-amber-400" />
-            <span>Upcoming Arcade Releases</span>
+      {(arcadeTab === "all" || arcadeTab === "upcoming") && (
+        <div className="pt-2 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-white/60 uppercase tracking-wider font-bold flex items-center gap-1.5">
+              <GIconSparkles size={13} className="text-amber-400" />
+              <span>Upcoming Arcade Releases</span>
+            </div>
+            <span className="text-[11px] font-mono text-white/40">{UPCOMING_GAMES.length} In Pipeline</span>
           </div>
-          <span className="text-[10px] text-white/40">In active development</span>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
-          {UPCOMING_GAMES.map((g) => {
-            const isNotified = notifiedGames.has(g.id);
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {UPCOMING_GAMES.map((g) => {
+              const isNotified = notifiedGames.has(g.id);
 
-            return (
-              <div
-                key={g.id}
-                onClick={() => setPreviewGame(g)}
-                className="group relative flex flex-col justify-between p-3 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] hover:border-white/20 transition-all text-left cursor-pointer shadow-sm"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-md border ${g.badgeColor}`}>
-                      {g.genre}
-                    </span>
-                    <span className="text-[9.5px] font-mono text-white/40">
-                      {isNotified ? <span className="text-emerald-400 font-semibold">★ Wishlisted</span> : g.version}
-                    </span>
+              return (
+                <div
+                  key={g.id}
+                  onClick={() => setPreviewGame(g)}
+                  className="group relative flex flex-col justify-between min-h-[160px] p-4 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] hover:border-white/20 transition-all text-left cursor-pointer shadow-sm overflow-hidden"
+                >
+                  <div className="flex-1 min-w-0 overflow-hidden flex flex-col">
+                    <div className="flex items-center justify-between mb-2 shrink-0">
+                      <span className={`text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-md border ${g.badgeColor}`}>
+                        {g.genre}
+                      </span>
+                      <span className="text-[10px] font-mono text-white/45">
+                        {isNotified ? <span className="text-emerald-400 font-semibold">★ Wishlisted</span> : g.version}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 mb-1 shrink-0">
+                      <GIconLock size={12} className="text-white/40 group-hover:text-white/70 transition-colors shrink-0" />
+                      <h4 className="text-sm font-bold text-white group-hover:text-accent transition-colors truncate">
+                        {g.name}
+                      </h4>
+                    </div>
+
+                    <p className="text-xs text-white/55 line-clamp-2 leading-relaxed overflow-hidden">
+                      {g.desc}
+                    </p>
                   </div>
 
-                  <div className="flex items-center gap-2 mb-1">
-                    <GIconLock size={12} className="text-white/40 group-hover:text-white/70 transition-colors shrink-0" />
-                    <h4 className="text-[13px] font-bold text-white group-hover:text-accent transition-colors">
-                      {g.name}
-                    </h4>
+                  <div className="mt-3 shrink-0 pt-2.5 border-t border-white/5 flex items-center justify-between text-xs w-full">
+                    <span className="text-[10.5px] font-semibold text-amber-300/85">
+                      {g.status}
+                    </span>
+                    <span className="text-[11px] text-white/50 group-hover:text-accent font-medium transition-colors">
+                      Preview Details →
+                    </span>
                   </div>
-
-                  <p className="text-[11px] text-white/50 line-clamp-2 leading-snug min-h-[2.2rem]">
-                    {g.desc}
-                  </p>
                 </div>
-
-                <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-xs">
-                  <span className="text-[10px] font-semibold text-amber-300/80">
-                    {g.status}
-                  </span>
-                  <span className="text-[10px] text-white/40 group-hover:text-accent font-medium transition-colors">
-                    Preview Details →
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Upcoming Game Preview Modal */}
       {previewGame && (
@@ -431,7 +493,7 @@ export default function Games() {
               </div>
               {previewGame.features.map((feat, i) => (
                 <div key={i} className="flex items-center gap-1.5 text-xs text-white/75">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+                  <GIconCheck size={12} className="text-accent shrink-0" />
                   <span>{feat}</span>
                 </div>
               ))}

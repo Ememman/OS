@@ -195,13 +195,13 @@ liveUpdates.forEach((u) => {
   };
 });
 
-// Real-time GitHub synchronizer for Ememman/OS Pull Requests
+// Real-time GitHub synchronizer for EmanExe/OS Pull Requests
 let lastGithubSync = 0;
 async function syncGithubUpdates() {
   if (Date.now() - lastGithubSync < 45000) return; // 45s rate-limit guard
   lastGithubSync = Date.now();
   try {
-    const res = await fetch("https://api.github.com/repos/Ememman/OS/pulls?state=all&per_page=30", {
+    const res = await fetch("https://api.github.com/repos/EmanExe/OS/pulls?state=all&per_page=30", {
       headers: { "User-Agent": "PortfolioOS-Server", Accept: "application/vnd.github.v3+json" }
     });
     if (!res.ok) return;
@@ -216,12 +216,12 @@ async function syncGithubUpdates() {
       const title = pr.title || `Pull Request #${prNumber}`;
       const rawBody = (pr.body || "").trim();
       const branch = pr.head?.ref || "main";
-      const author = pr.user?.login || "Ememman";
+      const author = pr.user?.login || "EmanExe";
       const authorAvatar = pr.user?.avatar_url || "";
       const status = pr.merged_at ? "merged" : pr.state === "closed" ? "closed" : "open";
       const date = pr.created_at ? pr.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10);
-      const url = pr.html_url || `https://github.com/Ememman/OS/pull/${prNumber}`;
-      const body = rawBody || `Pull Request #${prNumber} on Ememman/OS: ${title}. Branch: ${branch}`;
+      const url = pr.html_url || `https://github.com/EmanExe/OS/pull/${prNumber}`;
+      const body = rawBody || `Pull Request #${prNumber} on EmanExe/OS: ${title}. Branch: ${branch}`;
 
       // Category detection: feature | fix | bug
       const labelNames = Array.isArray(pr.labels)

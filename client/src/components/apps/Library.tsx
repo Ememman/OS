@@ -420,7 +420,6 @@ export default function Library() {
                         <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:12px_12px]" />
                         <div className="relative z-10 flex flex-col items-center text-center space-y-1">
                           <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-medium">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
                             <span>Currently in Development</span>
                           </div>
                           <span className="text-[10px] text-white/40 font-mono tracking-tight">
@@ -573,7 +572,6 @@ export default function Library() {
                     <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:16px_16px]" />
                     <div className="relative z-10 flex flex-col items-center text-center space-y-2">
                       <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/35 text-amber-300 text-xs font-semibold">
-                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
                         <span>Currently in Development</span>
                       </div>
                       <p className="text-xs text-white/50 max-w-sm">
