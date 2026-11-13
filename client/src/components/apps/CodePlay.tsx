@@ -396,22 +396,46 @@ export default function CodePlay() {
   return (
     <div className="flex flex-col h-full bg-[#0a0a0f] text-white select-none w-full max-w-full overflow-hidden">
       {/* 1. TOP HEADER & CONTROLS (Sticky Header) */}
-      <div className="px-2.5 sm:px-3.5 py-2 border-b border-white/10 flex items-center justify-between gap-1.5 sm:gap-2 bg-[#0a0a0f]/95 backdrop-blur-md shrink-0 sticky top-0 z-20 shadow-sm w-full max-w-full overflow-hidden">
-        {/* Title & Info */}
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center text-accent shrink-0">
+      <div className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 border-b border-white/10 flex items-center justify-between gap-1.5 sm:gap-2 bg-[#0a0a0f]/95 backdrop-blur-md shrink-0 sticky top-0 z-20 shadow-sm w-full max-w-full overflow-hidden">
+        {/* On Mobile (< md): Interactive Template Dropdown directly in header */}
+        <div className="md:hidden flex items-center gap-1.5 min-w-0 flex-1 mr-1">
+          <div className="w-7 h-7 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center text-accent shrink-0">
+            <GIconCode size={14} />
+          </div>
+          {availableTemplates.length > 0 && (
+            <div className="flex-1 min-w-0 max-w-[190px] xs:max-w-[220px]">
+              <CustomDropdown
+                value={activeTemplateId}
+                onChange={(newId) => {
+                  const found = availableTemplates.find((t) => t.id === newId);
+                  if (found) handleSelectTemplate(found);
+                }}
+                options={availableTemplates.map((t) => ({
+                  value: t.id,
+                  label: t.title,
+                }))}
+                size="xs"
+                className="w-full text-xs font-medium"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* On Desktop (md+): App Icon, Title, and Badge */}
+        <div className="hidden md:flex items-center gap-2 min-w-0 flex-1">
+          <div className="w-8 h-8 rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center text-accent shrink-0">
             <GIconCode size={15} />
           </div>
-          <div className="min-w-0 max-w-[120px] xs:max-w-[170px] sm:max-w-xs md:max-w-none">
+          <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <h2 className="text-xs font-semibold text-white truncate">
                 {activeTemplate?.title || "Code Playground"}
               </h2>
-              <span className="hidden xs:inline-block text-[10px] px-1.5 py-0.5 rounded-md bg-white/10 text-white/70 font-mono shrink-0">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/10 text-white/70 font-mono shrink-0">
                 {LANGUAGE_OPTIONS.find((l) => l.id === selectedLang)?.badge}
               </span>
             </div>
-            <p className="text-[10px] text-white/45 truncate hidden md:block">
+            <p className="text-[10px] text-white/45 truncate">
               {activeTemplate?.description}
             </p>
           </div>
@@ -464,7 +488,7 @@ export default function CodePlay() {
           {/* Reset Template */}
           <button
             onClick={handleReset}
-            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition"
+            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition active:scale-95"
             title="Reset to Template"
           >
             <GIconRotateRight size={13} />
@@ -473,7 +497,7 @@ export default function CodePlay() {
           {/* Copy Code */}
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-white/80 transition"
+            className="flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-white/80 transition active:scale-95"
             title="Copy Code"
           >
             {copied ? (
@@ -487,7 +511,7 @@ export default function CodePlay() {
           {/* Export / Download */}
           <button
             onClick={handleDownload}
-            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition"
+            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition active:scale-95"
             title="Export / Download File"
           >
             <GIconDownload size={13} />
@@ -497,7 +521,7 @@ export default function CodePlay() {
           <button
             onClick={runActiveCode}
             disabled={isRunning}
-            className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-lg sm:rounded-xl bg-accent hover:brightness-110 active:scale-95 text-xs font-semibold text-white shadow-md shadow-accent/25 transition ml-0.5 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-lg sm:rounded-xl bg-accent hover:brightness-110 active:scale-95 text-xs font-semibold text-white shadow-md shadow-accent/25 transition ml-0.5 cursor-pointer disabled:opacity-50"
             title="Run Code"
           >
             <GIconPlay size={13} />
@@ -518,7 +542,7 @@ export default function CodePlay() {
               <button
                 key={lang.id}
                 onClick={() => handleSelectLanguage(lang.id)}
-                className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] font-medium transition shrink-0 ${
+                className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] font-medium transition shrink-0 active:scale-95 ${
                   isActive
                     ? "bg-accent text-white shadow-sm font-semibold"
                     : "bg-white/5 text-white/60 hover:text-white hover:bg-white/10"
@@ -536,7 +560,7 @@ export default function CodePlay() {
           <button
             type="button"
             onClick={() => setAutoRunWeb(!autoRunWeb)}
-            className={`flex items-center gap-2 px-2.5 py-1 rounded-full text-[11px] font-medium transition cursor-pointer ml-auto border select-none ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1 rounded-full text-[11px] font-medium transition cursor-pointer ml-auto border select-none shrink-0 ${
               autoRunWeb
                 ? "bg-emerald-500/15 border-emerald-500/35 text-emerald-300 shadow-xs shadow-emerald-500/20"
                 : "bg-white/5 border-white/10 text-white/40 hover:text-white/70 hover:bg-white/10"
@@ -547,23 +571,22 @@ export default function CodePlay() {
                 : "Live Auto-Update Paused (Click Run to execute)"
             }
           >
-            {/* Animated toggle track & knob */}
             <div
-              className={`w-6 h-3.5 rounded-full p-0.5 transition-colors duration-200 flex items-center ${
+              className={`w-5 sm:w-6 h-3 sm:h-3.5 rounded-full p-0.5 transition-colors duration-200 flex items-center ${
                 autoRunWeb ? "bg-emerald-500 justify-end" : "bg-white/20 justify-start"
               }`}
             >
-              <div className="w-2.5 h-2.5 rounded-full bg-white shadow-xs" />
+              <div className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-white shadow-xs" />
             </div>
 
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1">
               <span
                 className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                   autoRunWeb ? "bg-emerald-400 animate-pulse" : "bg-white/30"
                 }`}
               />
-              <span className="hidden xs:inline">Live Auto-Update</span>
-              <span className="xs:hidden">Live</span>
+              <span className="hidden sm:inline">Live Auto-Update</span>
+              <span className="sm:hidden">Live</span>
             </span>
           </button>
         )}
@@ -595,36 +618,90 @@ export default function CodePlay() {
         </div>
       )}
 
-      {/* 3B. MOBILE TOOLBAR: TEMPLATE DROPDOWN + VIEW SWITCHER (< md) */}
-      <div className="md:hidden px-2.5 py-1.5 bg-black/30 border-b border-white/10 flex items-center justify-between gap-2">
-        {/* Template Select Dropdown */}
-        {availableTemplates.length > 0 && (
-          <div className="flex-1 min-w-0 max-w-[200px]">
-            <CustomDropdown
-              value={activeTemplateId}
-              onChange={(newId) => {
-                const found = availableTemplates.find((t) => t.id === newId);
-                if (found) handleSelectTemplate(found);
-              }}
-              options={availableTemplates.map((t) => ({
-                value: t.id,
-                label: t.title,
-              }))}
-              size="xs"
-              className="w-full text-[11px]"
-            />
+      {/* 3B. MOBILE UNIFIED TOOLBAR: FILE TABS / VIEW STATE & SWITCHER (< md) */}
+      <div className="md:hidden px-2.5 py-1.5 bg-[#0b0c12] border-b border-white/10 flex items-center justify-between gap-1.5 shrink-0">
+        {/* Left: Web File Sub-tabs (html / css / js) if in web mode & in code editor view */}
+        {selectedLang === "web" && mobileTab === "editor" ? (
+          <div className="flex items-center gap-1 font-mono text-xs">
+            <button
+              type="button"
+              onClick={() => setActiveWebTab("html")}
+              className={`px-2 py-0.5 rounded transition flex items-center gap-1.5 ${
+                activeWebTab === "html"
+                  ? "bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/40"
+                  : "text-white/50 hover:text-white bg-white/5"
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+              <span>html</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveWebTab("css")}
+              className={`px-2 py-0.5 rounded transition flex items-center gap-1.5 ${
+                activeWebTab === "css"
+                  ? "bg-sky-500/20 text-sky-300 font-semibold border border-sky-500/40"
+                  : "text-white/50 hover:text-white bg-white/5"
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
+              <span>css</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveWebTab("js")}
+              className={`px-2 py-0.5 rounded transition flex items-center gap-1.5 ${
+                activeWebTab === "js"
+                  ? "bg-yellow-500/20 text-yellow-300 font-semibold border border-yellow-500/40"
+                  : "text-white/50 hover:text-white bg-white/5"
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0" />
+              <span>js</span>
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 text-xs text-white/70 min-w-0 truncate">
+            {mobileTab === "preview" ? (
+              <span className="flex items-center gap-1.5 text-accent font-semibold text-xs">
+                <GIconEye size={13} className="text-accent" />
+                <span>Live Preview</span>
+                {execTime !== null && (
+                  <span className="text-[10px] text-accent/70 font-mono">({execTime}ms)</span>
+                )}
+              </span>
+            ) : mobileTab === "console" ? (
+              <span className="flex items-center gap-1.5 text-emerald-400 font-semibold text-xs">
+                <GIconTerminal size={13} className="text-emerald-400" />
+                <span>{selectedLang === "sql" ? "Table Results" : "Console Logs"}</span>
+                {outputLogs.length > 0 && (
+                  <button
+                    onClick={() => setOutputLogs([])}
+                    className="ml-1 text-white/40 hover:text-rose-400 p-0.5 transition"
+                    title="Clear Logs"
+                  >
+                    <GIconTrash size={11} />
+                  </button>
+                )}
+              </span>
+            ) : (
+              <span className="text-[11px] font-mono text-white/50 flex items-center gap-1">
+                <GIconCode size={12} className="text-white/40" />
+                <span>{LANGUAGE_OPTIONS.find((l) => l.id === selectedLang)?.label} Editor</span>
+              </span>
+            )}
           </div>
         )}
 
-        {/* Mobile View Switcher Segmented Control */}
-        <div className="flex items-center bg-black/60 border border-white/10 rounded-lg p-0.5 shrink-0">
+        {/* Right: View Switcher Segmented Control (Code | Preview | Logs) */}
+        <div className="flex items-center bg-black/60 border border-white/10 rounded-lg p-0.5 shrink-0 ml-auto">
           <button
             type="button"
             onClick={() => {
               setMobileTab("editor");
               setViewMode("editor");
             }}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition flex items-center gap-1 ${
+            className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition flex items-center gap-1 ${
               mobileTab === "editor"
                 ? "bg-accent text-white shadow-sm font-semibold"
                 : "text-white/60 hover:text-white"
@@ -641,15 +718,14 @@ export default function CodePlay() {
                 setMobileTab("preview");
                 setViewMode("preview");
               }}
-              className={`px-2 py-1 rounded-md text-[11px] font-medium transition flex items-center gap-1 shrink-0 ${
+              className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition flex items-center gap-1 ${
                 mobileTab === "preview"
                   ? "bg-accent text-white shadow-sm font-semibold"
                   : "text-white/60 hover:text-white"
               }`}
-              title="Preview"
             >
-              <GIconEye size={13} />
-              <span className="hidden xs:inline">Preview</span>
+              <GIconEye size={12} />
+              <span>Preview</span>
             </button>
           )}
 
@@ -660,80 +736,60 @@ export default function CodePlay() {
                 setMobileTab("console");
                 setViewMode("console");
               }}
-              className={`px-2 py-1 rounded-md text-[11px] font-medium transition flex items-center gap-1 shrink-0 ${
+              className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition flex items-center gap-1 ${
                 mobileTab === "console"
                   ? "bg-accent text-white shadow-sm font-semibold"
                   : "text-white/60 hover:text-white"
               }`}
             >
               <GIconTerminal size={12} />
-              <span className="hidden xs:inline">{selectedLang === "sql" ? "Table" : "Console"}</span>
-              <span className="xs:hidden">{selectedLang === "sql" ? "SQL" : "Logs"}</span>
+              <span>{selectedLang === "sql" ? "Table" : "Logs"}</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* 4. WEB SUB-TABS (When in Web Mode & In Editor View) */}
-      {selectedLang === "web" && (mobileTab === "editor" || viewMode !== "preview") && (
-        <div className={`px-2.5 sm:px-3 py-1 bg-[#0b0c12] border-b border-white/10 flex items-center justify-between text-xs font-mono w-full max-w-full overflow-hidden shrink-0 ${
-          mobileTab !== "editor" ? "hidden md:flex" : "flex"
-        }`}>
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+      {/* 4. DESKTOP WEB SUB-TABS (When in Web Mode on md+) */}
+      {selectedLang === "web" && viewMode !== "preview" && (
+        <div className="hidden md:flex px-3 py-1 bg-[#0b0c12] border-b border-white/10 items-center justify-between text-xs font-mono w-full max-w-full overflow-hidden shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={() => setActiveWebTab("html")}
-              className={`px-2 sm:px-3 py-1 rounded-t-lg transition flex items-center gap-1.5 ${
+              className={`px-3 py-1 rounded-t-lg transition flex items-center gap-1.5 ${
                 activeWebTab === "html"
                   ? "bg-[#0d0e15] text-amber-300 font-semibold border-b-2 border-amber-400"
                   : "text-white/50 hover:text-white hover:bg-white/5"
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>
-              <span className="xs:hidden">html</span>
-              <span className="hidden xs:inline">index.html</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+              <span>index.html</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveWebTab("css")}
-              className={`px-2 sm:px-3 py-1 rounded-t-lg transition flex items-center gap-1.5 ${
+              className={`px-3 py-1 rounded-t-lg transition flex items-center gap-1.5 ${
                 activeWebTab === "css"
                   ? "bg-[#0d0e15] text-sky-300 font-semibold border-b-2 border-sky-400"
                   : "text-white/50 hover:text-white hover:bg-white/5"
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0"></span>
-              <span className="xs:hidden">css</span>
-              <span className="hidden xs:inline">style.css</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
+              <span>style.css</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveWebTab("js")}
-              className={`px-2 sm:px-3 py-1 rounded-t-lg transition flex items-center gap-1.5 ${
+              className={`px-3 py-1 rounded-t-lg transition flex items-center gap-1.5 ${
                 activeWebTab === "js"
                   ? "bg-[#0d0e15] text-yellow-300 font-semibold border-b-2 border-yellow-400"
                   : "text-white/50 hover:text-white hover:bg-white/5"
               }`}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0"></span>
-              <span className="xs:hidden">js</span>
-              <span className="hidden xs:inline">script.js</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0" />
+              <span>script.js</span>
             </button>
           </div>
-
-          {/* Quick Preview shortcut on mobile: Gravity UI Eye icon button */}
-          <button
-            type="button"
-            onClick={() => {
-              setMobileTab("preview");
-              setViewMode("preview");
-            }}
-            className="md:hidden p-1.5 rounded-lg bg-accent/20 hover:bg-accent/30 text-accent transition flex items-center justify-center shrink-0 cursor-pointer active:scale-95 shadow-sm border border-accent/30"
-            title="Open Live Preview"
-            aria-label="Open Live Preview"
-          >
-            <GIconEye size={14} />
-          </button>
         </div>
       )}
 
@@ -745,7 +801,7 @@ export default function CodePlay() {
             mobileTab === "editor" ? "flex" : "hidden md:flex"
           } ${viewMode === "preview" ? "md:hidden" : ""}`}
         >
-          <div className="flex-1 relative flex overflow-hidden min-h-0 w-full max-w-full">
+          <div className="flex-1 relative flex overflow-hidden min-h-0 w-full max-w-full focus-within:ring-1 focus-within:ring-[#3b82f6] focus-within:border-[#3b82f6]/40 transition-all">
             {/* Line Numbers Gutter (Hidden on mobile when wrap is active to maximize width) */}
             <div
               ref={lineNumbersRef}
@@ -812,19 +868,7 @@ export default function CodePlay() {
 
               <span className="hidden sm:inline text-white/30">⌘ + Enter to execute</span>
 
-              <button
-                type="button"
-                onClick={() => {
-                  const next = selectedLang === "web" || selectedLang === "markdown" ? "preview" : "console";
-                  setMobileTab(next);
-                  setViewMode(next);
-                }}
-                className="md:hidden text-accent text-[10px] font-sans hover:underline flex items-center gap-1 ml-0.5 cursor-pointer py-0.5 px-1.5 rounded bg-accent/10 shrink-0"
-                title="View Output"
-              >
-                <GIconEye size={11} />
-                <span>Output</span>
-              </button>
+
             </div>
           </div>
         </div>
@@ -838,7 +882,7 @@ export default function CodePlay() {
           }`}
         >
           {/* Header Bar for Output Pane */}
-          <div className="px-3 py-2 border-b border-white/10 flex items-center justify-between bg-black/30 shrink-0">
+          <div className="px-3 py-2 border-b border-white/10 hidden md:flex items-center justify-between bg-black/30 shrink-0">
             <div className="flex items-center gap-2 text-xs text-white/80">
               <button
                 type="button"
