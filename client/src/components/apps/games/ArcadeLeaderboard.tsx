@@ -15,6 +15,7 @@ interface LeaderboardEntry {
   player: string;
   score: number;
   details?: string;
+  time?: string;
   ts: number;
   badge?: string;
 }
@@ -29,8 +30,15 @@ const GAME_FILTERS = [
 
 export default function ArcadeLeaderboard({ onClose }: { onClose?: () => void }) {
   const [selectedGame, setSelectedGame] = useState("all");
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [entries, setEntries] = useState<LeaderboardEntry[]>(() => {
+    try {
+      const cached = localStorage.getItem("os_arcade_leaderboard_cache");
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(entries.length === 0);
 
   const fetchScores = useCallback(async () => {
     setLoading(true);
@@ -39,10 +47,23 @@ export default function ArcadeLeaderboard({ onClose }: { onClose?: () => void })
       const res = await fetch(`${API_URL}/api/games/leaderboard${q}`);
       if (res.ok) {
         const data = await res.json();
-        setEntries(data.leaderboard || []);
+        const list = data.leaderboard || [];
+        setEntries(list);
+        try {
+          if (selectedGame === "all") {
+            localStorage.setItem("os_arcade_leaderboard_cache", JSON.stringify(list));
+          }
+        } catch {}
       }
     } catch {
       // offline fallback
+      try {
+        const cached = localStorage.getItem("os_arcade_leaderboard_cache");
+        if (cached) {
+          const list: LeaderboardEntry[] = JSON.parse(cached);
+          setEntries(selectedGame === "all" ? list : list.filter((e) => e.game === selectedGame));
+        }
+      } catch {}
     } finally {
       setLoading(false);
     }
@@ -215,12 +236,12 @@ export default function ArcadeLeaderboard({ onClose }: { onClose?: () => void })
                   </div>
                 </div>
 
-                <div className="text-right">
+                <div className="text-right shrink-0">
                   <div className="text-sm font-black font-mono text-accent">
                     {entry.game === "minesweeper" ? `${entry.score}s` : entry.score.toLocaleString()}
                   </div>
-                  <div className="text-[10px] text-white/30">
-                    {new Date(entry.ts).toLocaleDateString([], { month: "short", day: "numeric" })}
+                  <div className="text-[10px] text-white/40 font-mono">
+                    {new Date(entry.ts).toLocaleDateString([], { month: "short", day: "numeric" })} · {entry.time || new Date(entry.ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
                   </div>
                 </div>
               </div>

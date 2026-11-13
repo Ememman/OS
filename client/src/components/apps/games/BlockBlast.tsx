@@ -412,6 +412,8 @@ export default function BlockBlast() {
           player: cleanName,
           score: scoreToSync,
           details: `${scoreToSync} pts · Best ${Math.max(scoreToSync, best)}`,
+          time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+          ts: Date.now(),
         }),
       });
       if (res.ok) setScoreSubmitted(true);

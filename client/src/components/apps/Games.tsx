@@ -204,7 +204,7 @@ export default function Games() {
   }
 
   return (
-    <div className="p-3 sm:p-5 space-y-5 text-white select-none h-full overflow-y-auto thin-scroll">
+    <div className="p-3 sm:p-5 pb-14 sm:pb-20 space-y-5 text-white select-none h-full overflow-y-auto thin-scroll">
       {/* Arcade Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-white/10 pb-4">
         <div>

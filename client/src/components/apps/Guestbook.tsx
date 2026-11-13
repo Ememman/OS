@@ -3,6 +3,7 @@ import { API_URL } from "../../lib/config";
 import { getSocket } from "../../lib/socket";
 import { useOS } from "../../store/useOS";
 import { soundFx } from "../../lib/soundFx";
+import { GuestbookListSkeleton } from "../common/Skeletons";
 import {
   GIconPaperPlane,
   GIconHeart,
@@ -974,7 +975,9 @@ export default function Guestbook() {
 
           {/* Messages Feed */}
           <div className="flex-1 overflow-y-auto thin-scroll p-4 space-y-3">
-            {displayedEntries.length === 0 ? (
+            {loading && entries.length === 0 ? (
+              <GuestbookListSkeleton count={4} />
+            ) : displayedEntries.length === 0 ? (
               <div className="max-w-sm mx-auto my-12 p-8 rounded-2xl border border-white/[0.08] bg-white/[0.015] text-center space-y-3.5">
                 <div className="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/[0.08] mx-auto flex items-center justify-center text-white/50">
                   <GIconBookOpen size={20} />
