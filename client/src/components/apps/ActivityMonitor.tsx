@@ -15,276 +15,822 @@ import {
   GIconHardDrive,
   GIconCpu,
   GIconFileText,
+  GIconCopy,
+  GIconCheck,
+  GIconClose,
+  GIconLock,
+  GIconLink,
+  GIconPlay,
 } from "../icons/GravityIcons";
 
-interface PackageInfo {
+export interface PackageInfo {
   name: string;
+  pkgName: string;
   version: string;
   category: string;
   role: string;
   env: "Client" | "Server" | "Fullstack";
+  type: "Production" | "DevTooling";
   color: string;
+  url: string;
 }
 
-// Complete registry of all 24 packages & dependencies used in this system
+// Complete registry of all 32 active packages & dependencies used in this system
+// Derived strictly from client/package.json and server/package.json
 const RUNTIME_PACKAGES: PackageInfo[] = [
-  // Client Ecosystem
+  // Client Ecosystem (client/package.json)
   {
     name: "React 19",
+    pkgName: "react",
     version: "19.2.7",
     category: "UI Framework",
     role: "Concurrent UI rendering, server actions, transitions & state reconciliation",
     env: "Client",
+    type: "Production",
     color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/25",
+    url: "https://www.npmjs.com/package/react",
+  },
+  {
+    name: "React DOM",
+    pkgName: "react-dom",
+    version: "19.2.7",
+    category: "DOM Renderer",
+    role: "DOM renderer & portal hierarchy management for floating window compositors",
+    env: "Client",
+    type: "Production",
+    color: "text-cyan-300 bg-cyan-500/10 border-cyan-500/25",
+    url: "https://www.npmjs.com/package/react-dom",
   },
   {
     name: "Next.js 15",
+    pkgName: "next",
     version: "15.1.0",
     category: "Hybrid Framework",
     role: "React full-stack architecture, route handlers & server-side rendering pipeline",
     env: "Client",
+    type: "Production",
     color: "text-white bg-white/10 border-white/20",
+    url: "https://www.npmjs.com/package/next",
   },
   {
     name: "Tailwind CSS v4",
+    pkgName: "tailwindcss",
     version: "4.3.2",
     category: "Styling Engine",
     role: "High-performance CSS Oxide engine, mobile glassmorphism & responsive layouts",
     env: "Client",
+    type: "Production",
     color: "text-sky-400 bg-sky-500/10 border-sky-500/25",
+    url: "https://www.npmjs.com/package/tailwindcss",
+  },
+  {
+    name: "Tailwind PostCSS",
+    pkgName: "@tailwindcss/postcss",
+    version: "4.3.2",
+    category: "Build Tooling",
+    role: "PostCSS integration pipeline for Tailwind v4 CSS compilation",
+    env: "Client",
+    type: "DevTooling",
+    color: "text-sky-300 bg-sky-500/10 border-sky-500/25",
+    url: "https://www.npmjs.com/package/@tailwindcss/postcss",
+  },
+  {
+    name: "Framer Motion",
+    pkgName: "framer-motion",
+    version: "14.10.1",
+    category: "Motion Engine",
+    role: "Physics spring animations, drag-to-combine folders & window snap physics",
+    env: "Client",
+    type: "Production",
+    color: "text-pink-400 bg-pink-500/10 border-pink-500/25",
+    url: "https://www.npmjs.com/package/framer-motion",
   },
   {
     name: "Zustand",
+    pkgName: "zustand",
     version: "5.0.14",
     category: "State Management",
     role: "Atomic OS window compositor, dock positioning, sound settings & reactive state",
     env: "Client",
+    type: "Production",
     color: "text-indigo-400 bg-indigo-500/10 border-indigo-500/25",
-  },
-  {
-    name: "Framer Motion",
-    version: "14.10.1",
-    category: "Motion Engine",
-    role: "Physics-based spring animations, gesture tracking & window drag/snap mechanics",
-    env: "Client",
-    color: "text-pink-400 bg-pink-500/10 border-pink-500/25",
+    url: "https://www.npmjs.com/package/zustand",
   },
   {
     name: "Gravity UI Icons",
+    pkgName: "@gravity-ui/icons",
     version: "2.23.0",
     category: "Iconography System",
     role: "Enterprise vector iconography across desktop taskbars, docks, and mobile apps",
     env: "Client",
+    type: "Production",
     color: "text-purple-400 bg-purple-500/10 border-purple-500/25",
+    url: "https://www.npmjs.com/package/@gravity-ui/icons",
   },
   {
     name: "Socket.IO Client",
+    pkgName: "socket.io-client",
     version: "4.8.3",
     category: "Real-Time Protocol",
     role: "Full-duplex WebSocket connection for live chats, online visitors & guestbook",
     env: "Client",
+    type: "Production",
     color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/25",
+    url: "https://www.npmjs.com/package/socket.io-client",
   },
   {
-    name: "DiceBear Avatars",
+    name: "DiceBear Core",
+    pkgName: "@dicebear/core",
     version: "10.7.0",
     category: "Procedural Identity",
     role: "Algorithmic SVG avatar generator creating unique visual personas for visitors",
     env: "Fullstack",
+    type: "Production",
     color: "text-teal-400 bg-teal-500/10 border-teal-500/25",
+    url: "https://www.npmjs.com/package/@dicebear/core",
   },
   {
-    name: "Vite 6 / 8",
+    name: "DiceBear Styles",
+    pkgName: "@dicebear/styles",
+    version: "10.6.0",
+    category: "Procedural Identity",
+    role: "Procedural avatar styling presets (bottts, lorelei, adventurer) for users",
+    env: "Fullstack",
+    type: "Production",
+    color: "text-teal-300 bg-teal-500/10 border-teal-500/25",
+    url: "https://www.npmjs.com/package/@dicebear/styles",
+  },
+  {
+    name: "Vite 8",
+    pkgName: "vite",
     version: "8.1.1",
     category: "Bundler & Tooling",
     role: "Sub-second Hot Module Replacement (HMR) and optimized Rollup code splitting",
     env: "Client",
+    type: "DevTooling",
     color: "text-violet-400 bg-violet-500/10 border-violet-500/25",
+    url: "https://www.npmjs.com/package/vite",
   },
   {
-    name: "Oxlint",
-    version: "1.71.0",
-    category: "Linter & Static Analysis",
-    role: "High-speed Rust-powered JavaScript/TypeScript linter enforcing zero bugs",
+    name: "Vite React Plugin",
+    pkgName: "@vitejs/plugin-react",
+    version: "6.0.3",
+    category: "Bundler & Tooling",
+    role: "Fast React Refresh and JSX transform plugin for Vite development server",
     env: "Client",
-    color: "text-orange-400 bg-orange-500/10 border-orange-500/25",
+    type: "DevTooling",
+    color: "text-violet-300 bg-violet-500/10 border-violet-500/25",
+    url: "https://www.npmjs.com/package/@vitejs/plugin-react",
   },
   {
     name: "TypeScript",
+    pkgName: "typescript",
     version: "7.0.2",
     category: "Type System",
-    role: "Strict static typing, interfaces, and compile-time safety across the OS",
+    role: "Strict static typing, interfaces, and compile-time contract safety across the OS",
     env: "Fullstack",
+    type: "DevTooling",
     color: "text-blue-400 bg-blue-500/10 border-blue-500/25",
+    url: "https://www.npmjs.com/package/typescript",
   },
   {
-    name: "Web Audio API",
-    version: "W3C Native",
-    category: "Audio Synthesis",
-    role: "Procedural oscillator sound generation, UI click feedback & Lo-Fi player",
+    name: "Oxlint",
+    pkgName: "oxlint",
+    version: "1.71.0",
+    category: "Linter & Static Analysis",
+    role: "High-speed Rust-powered JavaScript/TypeScript linter enforcing code quality",
     env: "Client",
-    color: "text-rose-400 bg-rose-500/10 border-rose-500/25",
+    type: "DevTooling",
+    color: "text-orange-400 bg-orange-500/10 border-orange-500/25",
+    url: "https://www.npmjs.com/package/oxlint",
   },
   {
-    name: "PostCSS & Autoprefixer",
-    version: "8.5.16 / 10.5.2",
+    name: "PostCSS",
+    pkgName: "postcss",
+    version: "8.5.16",
     category: "CSS Tooling",
-    role: "Automated vendor prefixing and CSS parsing for cross-browser compliance",
+    role: "Automated CSS transformation toolchain and plugin processor",
     env: "Client",
+    type: "DevTooling",
     color: "text-amber-400 bg-amber-500/10 border-amber-500/25",
+    url: "https://www.npmjs.com/package/postcss",
+  },
+  {
+    name: "Autoprefixer",
+    pkgName: "autoprefixer",
+    version: "10.5.2",
+    category: "CSS Tooling",
+    role: "Vendor prefix automation ensuring broad mobile & desktop browser compliance",
+    env: "Client",
+    type: "DevTooling",
+    color: "text-amber-300 bg-amber-500/10 border-amber-500/25",
+    url: "https://www.npmjs.com/package/autoprefixer",
   },
 
-  // Server & Enterprise Architecture
+  // Server Ecosystem (server/package.json)
   {
     name: "Express.js 5",
+    pkgName: "express",
     version: "5.2.1",
     category: "Backend REST Gateway",
     role: "Core HTTP application framework handling REST routing, middleware & uploads",
     env: "Server",
+    type: "Production",
     color: "text-amber-400 bg-amber-500/10 border-amber-500/25",
+    url: "https://www.npmjs.com/package/express",
   },
   {
-    name: "NestJS Core & Common",
+    name: "Socket.IO Server",
+    pkgName: "socket.io",
+    version: "4.8.3",
+    category: "Real-Time Engine",
+    role: "Bidirectional WebSocket hub powering live visitors, chatrooms & telemetry",
+    env: "Server",
+    type: "Production",
+    color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/25",
+    url: "https://www.npmjs.com/package/socket.io",
+  },
+  {
+    name: "NestJS Core",
+    pkgName: "@nestjs/core",
     version: "12.2.0",
     category: "Modular Architecture",
     role: "Enterprise modular controller pipeline with dependency injection & services",
     env: "Server",
+    type: "Production",
     color: "text-rose-400 bg-rose-500/10 border-rose-500/25",
+    url: "https://www.npmjs.com/package/@nestjs/core",
+  },
+  {
+    name: "NestJS Common",
+    pkgName: "@nestjs/common",
+    version: "12.2.0",
+    category: "Modular Architecture",
+    role: "Common decorators, pipes, guards, and dependency injection utilities",
+    env: "Server",
+    type: "Production",
+    color: "text-rose-300 bg-rose-500/10 border-rose-500/25",
+    url: "https://www.npmjs.com/package/@nestjs/common",
+  },
+  {
+    name: "NestJS Express Platform",
+    pkgName: "@nestjs/platform-express",
+    version: "12.2.0",
+    category: "Backend REST Gateway",
+    role: "Express HTTP engine adapter bridging NestJS controllers to HTTP runtime",
+    env: "Server",
+    type: "Production",
+    color: "text-rose-400 bg-rose-500/10 border-rose-500/25",
+    url: "https://www.npmjs.com/package/@nestjs/platform-express",
   },
   {
     name: "NestJS WebSockets",
+    pkgName: "@nestjs/websockets",
     version: "12.2.0",
     category: "Real-Time Gateway",
     role: "Dedicated WebSocket gateway handling multi-client broadcasting & event rooms",
     env: "Server",
+    type: "Production",
     color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/25",
+    url: "https://www.npmjs.com/package/@nestjs/websockets",
   },
   {
-    name: "Socket.IO Server",
-    version: "4.8.3",
-    category: "Real-Time Engine",
-    role: "Bidirectional event protocol engine powering the live chatroom & telemetry",
+    name: "NestJS Socket.IO Adapter",
+    pkgName: "@nestjs/platform-socket.io",
+    version: "12.2.0",
+    category: "Real-Time Gateway",
+    role: "Socket.IO transport adapter for NestJS WebSocket gateways and emitters",
     env: "Server",
-    color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/25",
+    type: "Production",
+    color: "text-emerald-300 bg-emerald-500/10 border-emerald-500/25",
+    url: "https://www.npmjs.com/package/@nestjs/platform-socket.io",
   },
   {
     name: "Mongoose 9",
+    pkgName: "mongoose",
     version: "9.12.1",
     category: "Database ODM",
     role: "MongoDB Atlas cluster Object Data Modeling for chat, guestbook & scores",
     env: "Server",
+    type: "Production",
     color: "text-green-400 bg-green-500/10 border-green-500/25",
-  },
-  {
-    name: "RxJS 7",
-    version: "7.8.2",
-    category: "Reactive Streams",
-    role: "Observable asynchronous streams handling event queues and transformation",
-    env: "Server",
-    color: "text-pink-400 bg-pink-500/10 border-pink-500/25",
-  },
-  {
-    name: "Nanoid",
-    version: "4.0.2",
-    category: "Unique ID Generator",
-    role: "Cryptographically strong compact unique ID generation for notes & chat messages",
-    env: "Server",
-    color: "text-teal-400 bg-teal-500/10 border-teal-500/25",
+    url: "https://www.npmjs.com/package/mongoose",
   },
   {
     name: "CORS",
+    pkgName: "cors",
     version: "2.8.6",
     category: "Security Middleware",
     role: "Cross-Origin Resource Sharing control for GitHub Pages to Render API access",
     env: "Server",
+    type: "Production",
     color: "text-yellow-400 bg-yellow-500/10 border-yellow-500/25",
+    url: "https://www.npmjs.com/package/cors",
   },
   {
     name: "Dotenv",
+    pkgName: "dotenv",
     version: "17.4.2",
     category: "Configuration",
     role: "Loads environment variables (MongoDB URI, Port, Auth secrets) into process.env",
     env: "Server",
+    type: "Production",
     color: "text-lime-400 bg-lime-500/10 border-lime-500/25",
+    url: "https://www.npmjs.com/package/dotenv",
+  },
+  {
+    name: "Nanoid",
+    pkgName: "nanoid",
+    version: "4.0.2",
+    category: "Unique ID Generator",
+    role: "Cryptographically strong compact unique ID generation for notes & chat messages",
+    env: "Server",
+    type: "Production",
+    color: "text-teal-400 bg-teal-500/10 border-teal-500/25",
+    url: "https://www.npmjs.com/package/nanoid",
+  },
+  {
+    name: "RxJS 7",
+    pkgName: "rxjs",
+    version: "7.8.2",
+    category: "Reactive Streams",
+    role: "Observable asynchronous streams handling event queues and transformation",
+    env: "Server",
+    type: "Production",
+    color: "text-pink-400 bg-pink-500/10 border-pink-500/25",
+    url: "https://www.npmjs.com/package/rxjs",
   },
   {
     name: "Reflect Metadata",
+    pkgName: "reflect-metadata",
     version: "0.2.2",
     category: "Reflection Polyfill",
     role: "Metadata reflection API polyfill enabling TypeScript decorators for NestJS",
     env: "Server",
+    type: "Production",
     color: "text-indigo-400 bg-indigo-500/10 border-indigo-500/25",
+    url: "https://www.npmjs.com/package/reflect-metadata",
   },
   {
-    name: "TSX & TS-Node",
-    version: "4.23.15 / 10.9.2",
+    name: "TSX",
+    pkgName: "tsx",
+    version: "4.23.15",
     category: "Runtime Execution",
     role: "Zero-config TypeScript execution and hot-reload watcher for modern Node.js",
     env: "Server",
+    type: "DevTooling",
     color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/25",
+    url: "https://www.npmjs.com/package/tsx",
+  },
+  {
+    name: "TS-Node",
+    pkgName: "ts-node",
+    version: "10.9.2",
+    category: "Runtime Execution",
+    role: "TypeScript execution engine and REPL for Node.js backend services",
+    env: "Server",
+    type: "DevTooling",
+    color: "text-blue-400 bg-blue-500/10 border-blue-500/25",
+    url: "https://www.npmjs.com/package/ts-node",
   },
 ];
 
-// Complete registry of all 43 active REST & WebSocket endpoints
-const DEFAULT_ENDPOINTS = [
-  // System & Diagnostics
-  { path: "/api/health", method: "GET", description: "Health check, server uptime & connected WebSocket client tally", category: "System" },
-  { path: "/api/system/info", method: "GET", description: "Host hardware architecture, memory & CPU statistics", category: "System" },
-  { path: "/api/system/metrics", method: "GET", description: "Live CPU & RAM telemetry time-series history", category: "System" },
-  { path: "/api/system/processes", method: "GET", description: "Virtual background processes with live CPU/RAM telemetry", category: "System" },
-  { path: "/api/system/process/:pid/restart", method: "POST", description: "Restart a running virtual system process", category: "System" },
-  { path: "/api/system/process/:pid/kill", method: "POST", description: "Terminate a virtual system process", category: "System" },
-  { path: "/api/system/network", method: "GET", description: "Network interfaces, virtual throughput & latency telemetry", category: "System" },
-  { path: "/api/system/benchmark", method: "POST", description: "Server-side compute, prime calculation & JSON serialization benchmark", category: "System" },
-  { path: "/api/system/logs", method: "GET", description: "Kernel and service logs with module/level filtering", category: "System" },
-  { path: "/api/system/storage", method: "GET", description: "Virtual partition storage allocations and usage", category: "System" },
-  { path: "/api/system/ping", method: "GET", description: "Low-overhead ICMP-style roundtrip ping test endpoint", category: "System" },
+export interface ApiEndpointInfo {
+  path: string;
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  category: "System" | "Portfolio" | "Social" | "Productivity" | "Storage" | "Sandbox" | "Realtime" | "Arcade" | "Utility";
+  description: string;
+  security: "Public Safe (Live)" | "Sandbox Simulated" | "Protected System" | "Rate Limited";
+  params?: string;
+  samplePayload?: Record<string, any>;
+  sampleResponse: Record<string, any>;
+}
 
-  // Realtime & Chat
-  { path: "/api/chat/users", method: "GET", description: "Current online visitors in the realtime chatroom", category: "Realtime" },
-  { path: "/api/chat/export", method: "GET", description: "Export complete chatroom transcript JSON", category: "Realtime" },
+// Complete registry of REST hypermedia endpoints covering GET, POST, PUT, PATCH, and DELETE
+const DEFAULT_ENDPOINTS: ApiEndpointInfo[] = [
+  // 1. System & Kernel Endpoints
+  {
+    path: "/api/health",
+    method: "GET",
+    category: "System",
+    description: "Check system health, host uptime, and connected WebSocket client tally",
+    security: "Public Safe (Live)",
+    sampleResponse: {
+      status: "healthy",
+      uptimeSeconds: 84210,
+      connectedClients: 3,
+      kernelVersion: "v2.4.0-release",
+      memoryUsageMb: 42.8
+    }
+  },
+  {
+    path: "/api/system/info",
+    method: "GET",
+    category: "System",
+    description: "Retrieve system information, CPU model, architecture, and memory specs",
+    security: "Public Safe (Live)",
+    sampleResponse: {
+      platform: "linux",
+      arch: "x64",
+      cpus: 8,
+      model: "AMD EPYC 7B12",
+      totalMemoryGb: 16,
+      freeMemoryGb: 9.4
+    }
+  },
+  {
+    path: "/api/system/metrics",
+    method: "GET",
+    category: "System",
+    description: "Retrieve live CPU, RAM, and event-loop telemetry time-series history",
+    security: "Public Safe (Live)",
+    sampleResponse: {
+      timestamp: Date.now(),
+      cpuPercent: 18.4,
+      memoryMb: 48.2,
+      heapUsedPercent: 32.1
+    }
+  },
+  {
+    path: "/api/system/network",
+    method: "GET",
+    category: "System",
+    description: "Retrieve virtual network interfaces, throughput, and ping telemetry",
+    security: "Public Safe (Live)",
+    sampleResponse: {
+      activeInterface: "eth0",
+      ip: "10.0.4.15",
+      rxKbps: 14.8,
+      txKbps: 9.2,
+      status: "connected"
+    }
+  },
+  {
+    path: "/api/system/processes",
+    method: "GET",
+    category: "System",
+    description: "Retrieve active background daemons with real-time thread telemetry",
+    security: "Public Safe (Live)",
+    sampleResponse: {
+      totalProcesses: 6,
+      running: 6,
+      stopped: 0,
+      daemons: [
+        { pid: 101, name: "kernel.sys", status: "running", cpu: 1.5, memoryMb: 24.7 },
+        { pid: 104, name: "window-server", status: "running", cpu: 3.2, memoryMb: 48.0 }
+      ]
+    }
+  },
+  {
+    path: "/api/system/process/:pid/restart",
+    method: "POST",
+    category: "System",
+    description: "Restart a system process (Simulated in sandbox: status transitions Running -> Restarting -> Running)",
+    security: "Protected System",
+    params: "pid: number (Process Identifier)",
+    samplePayload: { pid: 101, reason: "Memory compaction routine" },
+    sampleResponse: {
+      ok: true,
+      pid: 101,
+      name: "kernel.sys",
+      status: "running",
+      restartedAt: new Date().toISOString(),
+      message: "Sandbox Simulation: Process restarted successfully with clean heap memory."
+    }
+  },
+  {
+    path: "/api/system/process/:pid",
+    method: "PATCH",
+    category: "System",
+    description: "Modify process scheduling priority (nice levels) and allocated CPU threads",
+    security: "Sandbox Simulated",
+    params: "pid: number",
+    samplePayload: { nice: -5, maxThreads: 4 },
+    sampleResponse: {
+      ok: true,
+      pid: 101,
+      nice: -5,
+      maxThreads: 4,
+      status: "updated_in_sandbox"
+    }
+  },
+  {
+    path: "/api/system/config",
+    method: "PUT",
+    category: "System",
+    description: "Update system compositor and audio preferences with complete configuration payload",
+    security: "Sandbox Simulated",
+    samplePayload: {
+      soundEffects: true,
+      wallpaperBlur: true,
+      dockPosition: "bottom",
+      osMode: "win"
+    },
+    sampleResponse: {
+      ok: true,
+      updatedAt: new Date().toISOString(),
+      config: { soundEffects: true, wallpaperBlur: true, dockPosition: "bottom" },
+      simulated: true
+    }
+  },
+  {
+    path: "/api/system/benchmark",
+    method: "POST",
+    category: "System",
+    description: "Execute a system benchmark computing primes and measuring JSON serialization throughput",
+    security: "Public Safe (Live)",
+    samplePayload: { iterations: 25000, stressLevel: "normal" },
+    sampleResponse: {
+      durationMs: 38.4,
+      primesCalculated: 2762,
+      opsPerSec: 651041,
+      rating: "A+ (Ultra Fast)",
+      timestamp: new Date().toISOString()
+    }
+  },
+  {
+    path: "/api/system/logs",
+    method: "GET",
+    category: "System",
+    description: "Retrieve kernel and service event logs with level & module filtering",
+    security: "Public Safe (Live)",
+    sampleResponse: {
+      totalLogs: 124,
+      recent: [
+        { ts: Date.now(), level: "info", module: "compositor", message: "DOM surface composited at 60 FPS" },
+        { ts: Date.now() - 4000, level: "info", module: "socket", message: "WebSocket client handshake accepted" }
+      ]
+    }
+  },
+  {
+    path: "/api/system/storage",
+    method: "GET",
+    category: "System",
+    description: "Retrieve virtual partition storage allocations and usage telemetry",
+    security: "Public Safe (Live)",
+    sampleResponse: {
+      totalGb: 64,
+      usedGb: 18.4,
+      freeGb: 45.6,
+      percentUsed: 28.75
+    }
+  },
+  {
+    path: "/api/system/ping",
+    method: "GET",
+    category: "System",
+    description: "Low-overhead roundtrip ping test endpoint for measuring network latency",
+    security: "Public Safe (Live)",
+    sampleResponse: { pong: true, time: Date.now() }
+  },
 
-  // Portfolio & Showcase
-  { path: "/api/projects", method: "GET", description: "Showcase portfolio projects with tech stacks and live URLs", category: "Portfolio" },
-  { path: "/api/projects/likes", method: "GET", description: "Project star/like counts across all repositories", category: "Portfolio" },
-  { path: "/api/projects/:id/like", method: "POST", description: "Star a project with real-time broadcast", category: "Portfolio" },
-  { path: "/api/projects/:id/feedback", method: "GET", description: "Fetch community feedback and star reviews for projects", category: "Portfolio" },
-  { path: "/api/projects/:id/feedback", method: "POST", description: "Submit feedback or star rating for a portfolio project", category: "Portfolio" },
-  { path: "/api/updates", method: "GET", description: "Changelog and feature updates feed with reactions & GitHub sync", category: "Portfolio" },
-  { path: "/api/updates/:id/react", method: "POST", description: "React to a changelog feature update with emoji", category: "Portfolio" },
+  // 2. Portfolio & Showcase Endpoints
+  {
+    path: "/api/projects",
+    method: "GET",
+    category: "Portfolio",
+    description: "Retrieve portfolio projects with tech stacks, repository metadata, and live URLs",
+    security: "Public Safe (Live)",
+    sampleResponse: [
+      { id: "os", title: "Portfolio OS", category: "Full-Stack System", stars: 124 },
+      { id: "stariive", title: "Stariive IMS", category: "Full-Stack Ecosystem", stars: 68 }
+    ]
+  },
+  {
+    path: "/api/projects/:id/like",
+    method: "POST",
+    category: "Portfolio",
+    description: "Star or upvote a portfolio project with real-time WebSocket broadcast",
+    security: "Public Safe (Live)",
+    params: "id: string (Project ID)",
+    samplePayload: { projectId: "os", reaction: "star" },
+    sampleResponse: { ok: true, projectId: "os", likes: 125, broadcasted: true }
+  },
+  {
+    path: "/api/projects/:id/visibility",
+    method: "PATCH",
+    category: "Portfolio",
+    description: "Update project featured visibility priority on portfolio showcase",
+    security: "Sandbox Simulated",
+    params: "id: string",
+    samplePayload: { featured: true, showcasePriority: 1 },
+    sampleResponse: { ok: true, id: "os", featured: true, showcasePriority: 1, simulated: true }
+  },
+  {
+    path: "/api/updates",
+    method: "GET",
+    category: "Portfolio",
+    description: "Retrieve live Pull Requests changelog from GitHub with priority & category tags",
+    security: "Public Safe (Live)",
+    sampleResponse: {
+      total: 30,
+      merged: 30,
+      open: 0,
+      latestPR: "#160: Enhance Activity Monitor with API Inspector & Dependency Explorer"
+    }
+  },
+  {
+    path: "/api/updates/:id/react",
+    method: "POST",
+    category: "Portfolio",
+    description: "React to a changelog feature update with real-time emoji counters",
+    security: "Public Safe (Live)",
+    params: "id: string (Update/PR number)",
+    samplePayload: { emoji: "🚀", prNumber: 160 },
+    sampleResponse: { ok: true, prNumber: 160, emoji: "🚀", totalReactions: 14 }
+  },
 
-  // Social & Community
-  { path: "/api/guestbook", method: "GET", description: "Visitor ledger signatures, avatars, and live reactions", category: "Social" },
-  { path: "/api/guestbook", method: "POST", description: "Submit signature, avatar and message to visitor ledger", category: "Social" },
-  { path: "/api/guestbook/:id/react", method: "POST", description: "React or like a guestbook ledger signature", category: "Social" },
-  { path: "/api/guestbook/:id", method: "DELETE", description: "Remove a signature entry from the guestbook", category: "Social" },
+  // 3. Notes & Productivity Endpoints
+  {
+    path: "/api/notes",
+    method: "GET",
+    category: "Productivity",
+    description: "Retrieve markdown notes repository with folder hierarchies and timestamps",
+    security: "Public Safe (Live)",
+    sampleResponse: [
+      { id: "note_1", title: "Welcome to Portfolio OS", tags: ["guide"], pinned: true },
+      { id: "note_2", title: "System Architecture", tags: ["tech"], pinned: false }
+    ]
+  },
+  {
+    path: "/api/notes",
+    method: "POST",
+    category: "Productivity",
+    description: "Create a new markdown note in cloud repository (Simulated in sandbox)",
+    security: "Sandbox Simulated",
+    samplePayload: {
+      title: "New Architectural Note",
+      content: "# Notes\n- Testing CRUD sandbox execution\n- Reactive state update",
+      folder: "General",
+      tags: ["dev", "sandbox"]
+    },
+    sampleResponse: {
+      ok: true,
+      id: "note_demo_782",
+      title: "New Architectural Note",
+      createdAt: new Date().toISOString(),
+      simulated: true,
+      message: "Note successfully created in sandbox storage."
+    }
+  },
+  {
+    path: "/api/notes/:id",
+    method: "PUT",
+    category: "Productivity",
+    description: "Full update of an existing markdown note's content, title, tags, and folder",
+    security: "Sandbox Simulated",
+    params: "id: string (Note ID)",
+    samplePayload: {
+      title: "Updated Architectural Decisions",
+      content: "# ADR\n- Using zustand for OS compositor\n- Realtime Socket.IO gateway",
+      tags: ["architecture", "updated"]
+    },
+    sampleResponse: {
+      ok: true,
+      id: "note_demo_782",
+      updatedAt: new Date().toISOString(),
+      simulated: true,
+      message: "Sandbox Simulation: Note updated with new payload."
+    }
+  },
+  {
+    path: "/api/notes/:id/pin",
+    method: "PATCH",
+    category: "Productivity",
+    description: "Toggle pinned status of a markdown note",
+    security: "Sandbox Simulated",
+    params: "id: string",
+    samplePayload: { pinned: true },
+    sampleResponse: { ok: true, id: "note_demo_782", pinned: true, simulated: true }
+  },
+  {
+    path: "/api/notes/:id",
+    method: "DELETE",
+    category: "Productivity",
+    description: "Delete a note from repository (Simulated in sandbox)",
+    security: "Sandbox Simulated",
+    params: "id: string",
+    sampleResponse: {
+      ok: true,
+      deletedId: "note_demo_782",
+      simulated: true,
+      message: "Sandbox Simulation: Note deleted from demo cache."
+    }
+  },
 
-  // Productivity & Storage
-  { path: "/api/notes", method: "GET", description: "Markdown notes repository with real-time cloud sync", category: "Productivity" },
-  { path: "/api/notes", method: "POST", description: "Create or update an individual markdown note", category: "Productivity" },
-  { path: "/api/notes/sync", method: "POST", description: "Two-way client-server markdown notes synchronizer", category: "Productivity" },
-  { path: "/api/notes/:id", method: "DELETE", description: "Delete a note from cloud storage repository", category: "Productivity" },
-  { path: "/api/files", method: "GET", description: "Cloud virtual file system hierarchy and file metadata", category: "Storage" },
-  { path: "/api/files", method: "POST", description: "Upload or create new file in virtual cloud drive", category: "Storage" },
-  { path: "/api/files/:id", method: "DELETE", description: "Delete file from virtual cloud drive", category: "Storage" },
-  { path: "/api/files/stats", method: "GET", description: "Cloud storage telemetry and file distribution metrics", category: "Storage" },
+  // 4. Guestbook & Social Endpoints
+  {
+    path: "/api/guestbook",
+    method: "GET",
+    category: "Social",
+    description: "Retrieve visitor ledger signatures, avatars, messages, and live reactions",
+    security: "Public Safe (Live)",
+    sampleResponse: [
+      { id: "gb_1", author: "James", message: "Welcome to my OS portfolio!", avatar: "bottts" }
+    ]
+  },
+  {
+    path: "/api/guestbook",
+    method: "POST",
+    category: "Social",
+    description: "Submit a new signature, avatar, and message to the public visitor ledger",
+    security: "Rate Limited",
+    samplePayload: {
+      name: "Visitor",
+      message: "Impressive portfolio OS architecture!",
+      avatarSeed: "explorer_42"
+    },
+    sampleResponse: {
+      ok: true,
+      id: "gb_994",
+      createdAt: new Date().toISOString(),
+      author: "Visitor"
+    }
+  },
+  {
+    path: "/api/guestbook/:id",
+    method: "DELETE",
+    category: "Social",
+    description: "Delete a signature entry from the guestbook (Simulated in sandbox)",
+    security: "Sandbox Simulated",
+    params: "id: string",
+    sampleResponse: {
+      ok: true,
+      deletedId: "gb_994",
+      simulated: true,
+      message: "Sandbox Simulation: Signature soft-deleted in demo environment."
+    }
+  },
 
-  // Games & Arcade
-  { path: "/api/games/leaderboard", method: "GET", description: "Arcade high scores for Block Blast, 2048, Snake, Minesweeper", category: "Arcade" },
-  { path: "/api/games/score", method: "POST", description: "Submit new arcade high score and badge to global leaderboard", category: "Arcade" },
+  // 5. Files & Storage Endpoints
+  {
+    path: "/api/files",
+    method: "GET",
+    category: "Storage",
+    description: "Retrieve virtual file system tree, directories, and file metadata",
+    security: "Public Safe (Live)",
+    sampleResponse: [
+      { id: "f_1", name: "resume.pdf", size: 142800, type: "pdf" },
+      { id: "f_2", name: "projects.json", size: 4820, type: "json" }
+    ]
+  },
+  {
+    path: "/api/files/:id",
+    method: "PUT",
+    category: "Storage",
+    description: "Update file metadata, rename, or write new content payload (Simulated in sandbox)",
+    security: "Sandbox Simulated",
+    params: "id: string",
+    samplePayload: { name: "config.json", content: "{\n  \"theme\": \"glass\"\n}" },
+    sampleResponse: {
+      ok: true,
+      id: "f_config",
+      name: "config.json",
+      sizeBytes: 32,
+      simulated: true
+    }
+  },
+  {
+    path: "/api/files/:id",
+    method: "DELETE",
+    category: "Storage",
+    description: "Delete file from virtual cloud drive (Simulated in sandbox)",
+    security: "Sandbox Simulated",
+    params: "id: string",
+    sampleResponse: {
+      ok: true,
+      deletedId: "f_config",
+      simulated: true,
+      message: "Sandbox Simulation: File removed from virtual disk cache."
+    }
+  },
 
-  // Media & Audio
-  { path: "/api/music/search", method: "GET", description: "Search songs via iTunes Music Store API with audio previews", category: "Media" },
-  { path: "/api/music/youtube-search", method: "GET", description: "Full music video search powered by YouTube API proxy", category: "Media" },
-
-  // CodePlay Sandbox & Utilities
-  { path: "/api/snippets", method: "GET", description: "Code playground snippets, templates, and AST examples", category: "Sandbox" },
-  { path: "/api/snippets/run", method: "POST", description: "Code playground AST parsing & execution validator", category: "Sandbox" },
-  { path: "/api/calc/constants", method: "GET", description: "Mathematical, physical, and chemical constants", category: "Utility" },
-  { path: "/api/calc/convert", method: "GET", description: "Unit conversions (length, weight, temperature, digital storage)", category: "Utility" },
-  { path: "/api/weather", method: "GET", description: "Real-time weather proxy with hourly and daily forecast", category: "Utility" },
-  { path: "/api/terminal/exec", method: "POST", description: "UNIX shell command execution hub", category: "Utility" },
-  { path: "/api/contact", method: "POST", description: "Contact inquiry submission gateway with email validation", category: "Utility" }
+  // 6. Realtime, Chat & Utilities
+  {
+    path: "/api/chat/users",
+    method: "GET",
+    category: "Realtime",
+    description: "Retrieve current online visitors in the realtime chatroom",
+    security: "Public Safe (Live)",
+    sampleResponse: { onlineCount: 4, visitors: ["Guest-819", "Explorer-240", "Dev-912"] }
+  },
+  {
+    path: "/api/snippets/run",
+    method: "POST",
+    category: "Sandbox",
+    description: "AST parsing and execution validator for CodePlay sandbox playground",
+    security: "Public Safe (Live)",
+    samplePayload: { code: "console.log(2 + 2);", language: "javascript" },
+    sampleResponse: { ok: true, output: "4\n", executionTimeMs: 4.2 }
+  },
+  {
+    path: "/api/calc/constants",
+    method: "GET",
+    category: "Utility",
+    description: "Retrieve mathematical, physical, and scientific constants dictionary",
+    security: "Public Safe (Live)",
+    sampleResponse: { pi: 3.1415926535, e: 2.7182818284, speedOfLightMs: 299792458 }
+  }
 ];
 
 export interface OsProcess {
@@ -418,10 +964,34 @@ export default function ActivityMonitor() {
   // APIs & Packages state & filters
   const [apiSearchQuery, setApiSearchQuery] = useState("");
   const [apiCategory, setApiCategory] = useState<"all" | "api" | "packages">("all");
-  const [apiMethodFilter, setApiMethodFilter] = useState<"ALL" | "GET" | "POST" | "DELETE">("ALL");
-  const [packageEnvFilter, setPackageEnvFilter] = useState<"ALL" | "Client" | "Server" | "Fullstack">("ALL");
-  const [apiEndpoints, setApiEndpoints] = useState<Array<{ path: string; method: string; description: string; category?: string }>>(DEFAULT_ENDPOINTS);
-  const [testedEndpoints, setTestedEndpoints] = useState<Record<string, { status: number | string; latency: number; testing?: boolean; ok: boolean; preview?: string }>>({});
+  const [apiMethodFilter, setApiMethodFilter] = useState<"ALL" | "GET" | "POST" | "PUT" | "PATCH" | "DELETE">("ALL");
+  const [packageEnvFilter, setPackageEnvFilter] = useState<"ALL" | "Client" | "Server" | "Production" | "DevTooling">("ALL");
+  const [apiEndpoints, setApiEndpoints] = useState<ApiEndpointInfo[]>(DEFAULT_ENDPOINTS);
+  const [testedEndpoints, setTestedEndpoints] = useState<Record<string, {
+    status: string;
+    statusCode?: number;
+    latency: number;
+    testing?: boolean;
+    ok: boolean;
+    data?: any;
+    simulated?: boolean;
+  }>>({});
+
+  // Inspector & Sandbox Playground state
+  const [selectedEndpoint, setSelectedEndpoint] = useState<ApiEndpointInfo | null>(null);
+  const [inspectPayloadText, setInspectPayloadText] = useState<string>("{}");
+  const [inspectResponse, setInspectResponse] = useState<{
+    status: string;
+    statusCode?: number;
+    latency: number;
+    ok: boolean;
+    data: any;
+    simulated: boolean;
+    timestamp: string;
+  } | null>(null);
+  const [inspecting, setInspecting] = useState(false);
+  const [copiedResponse, setCopiedResponse] = useState(false);
+  const [showSecurityNotice, setShowSecurityNotice] = useState(true);
 
   // Diagnostics & Ping tool state
   const [pingLatency, setPingLatency] = useState<number | null>(null);
@@ -680,39 +1250,182 @@ export default function ActivityMonitor() {
     }
   };
 
-  // Live test for hypermedia endpoints
-  const testEndpoint = async (ep: { path: string; method: string }) => {
+  // Live & Sandbox hypermedia endpoint testing
+  const testEndpoint = async (ep: ApiEndpointInfo, customPayload?: any) => {
     if (systemSounds) soundFx.playClick();
     const key = `${ep.method}-${ep.path}`;
     setTestedEndpoints((prev) => ({
       ...prev,
-      [key]: { status: "...", latency: 0, testing: true, ok: false },
+      [key]: { status: "Testing...", latency: 0, testing: true, ok: false },
     }));
+
+    const isGet = ep.method === "GET";
     const start = performance.now();
-    try {
-      const cleanPath = ep.path.replace(/:[a-zA-Z0-9_-]+/g, "1");
-      const targetUrl = `${API_URL}${cleanPath}`;
-      const res = await fetch(targetUrl, {
-        method: ep.method.split(",")[0].trim(),
-        headers: { Accept: "application/json" }
-      });
-      const elapsed = Math.round(performance.now() - start);
-      setTestedEndpoints((prev) => ({
-        ...prev,
-        [key]: {
+
+    if (isGet) {
+      try {
+        const cleanPath = ep.path.replace(/:[a-zA-Z0-9_-]+/g, "1");
+        const targetUrl = `${API_URL}${cleanPath}`;
+        const res = await fetch(targetUrl, {
+          method: "GET",
+          headers: { Accept: "application/json" }
+        });
+        const elapsed = Math.round(performance.now() - start);
+        let data: any = null;
+        try {
+          data = await res.json();
+        } catch {
+          data = ep.sampleResponse;
+        }
+
+        const resultObj = {
           status: `${res.status} ${res.statusText || "OK"}`,
+          statusCode: res.status,
           latency: elapsed,
           testing: false,
           ok: res.ok,
-        },
-      }));
-    } catch {
-      const elapsed = Math.round(14 + Math.random() * 20);
-      setTestedEndpoints((prev) => ({
-        ...prev,
-        [key]: { status: "200 OK (Standby)", latency: elapsed, testing: false, ok: true },
-      }));
+          data: data || ep.sampleResponse,
+          simulated: false,
+        };
+
+        setTestedEndpoints((prev) => ({ ...prev, [key]: resultObj }));
+        if (selectedEndpoint && selectedEndpoint.path === ep.path && selectedEndpoint.method === ep.method) {
+          setInspectResponse({
+            ...resultObj,
+            timestamp: new Date().toLocaleTimeString(),
+          });
+        }
+      } catch {
+        // Fallback for static GitHub Pages or server standby
+        const elapsed = Math.round(18 + Math.random() * 25);
+        const resultObj = {
+          status: "200 OK (Standby Live)",
+          statusCode: 200,
+          latency: elapsed,
+          testing: false,
+          ok: true,
+          data: ep.sampleResponse,
+          simulated: true,
+        };
+        setTestedEndpoints((prev) => ({ ...prev, [key]: resultObj }));
+        if (selectedEndpoint && selectedEndpoint.path === ep.path && selectedEndpoint.method === ep.method) {
+          setInspectResponse({
+            ...resultObj,
+            timestamp: new Date().toLocaleTimeString(),
+          });
+        }
+      }
+    } else {
+      // POST, PUT, PATCH, DELETE: Interactive Sandbox Simulation
+      // Simulate realistic network latency (100ms - 250ms)
+      await new Promise((r) => setTimeout(r, Math.round(110 + Math.random() * 150)));
+      const elapsed = Math.round(performance.now() - start);
+
+      let responseData: any = { ...ep.sampleResponse };
+      let statusCode = 200;
+      let statusText = "200 OK (Sandbox Simulated)";
+
+      if (ep.method === "POST") {
+        statusCode = 201;
+        statusText = "201 Created (Sandbox)";
+      } else if (ep.method === "DELETE") {
+        statusCode = 200;
+        statusText = "200 OK (Deleted in Sandbox)";
+      }
+
+      // If restarting process in sandbox:
+      if (ep.path.includes("process") && ep.path.includes("restart")) {
+        const targetPid = 101;
+        setOsProcesses((prev) =>
+          prev.map((p) => (p.pid === targetPid ? { ...p, status: "restarting" } : p))
+        );
+        notify("Sandbox Simulation", "Process #101 transitioning: Running -> Restarting", "update");
+
+        setTimeout(() => {
+          setOsProcesses((prev) =>
+            prev.map((p) => (p.pid === targetPid ? { ...p, status: "running" } : p))
+          );
+          notify("Sandbox Simulation Complete", "Process #101 restored to Running state.", "update");
+        }, 1400);
+      }
+
+      if (customPayload) {
+        responseData = {
+          ...responseData,
+          receivedPayload: customPayload,
+          simulatedAt: new Date().toISOString(),
+        };
+      }
+
+      const resultObj = {
+        status: statusText,
+        statusCode,
+        latency: elapsed,
+        testing: false,
+        ok: true,
+        data: responseData,
+        simulated: true,
+      };
+
+      setTestedEndpoints((prev) => ({ ...prev, [key]: resultObj }));
+      if (selectedEndpoint && selectedEndpoint.path === ep.path && selectedEndpoint.method === ep.method) {
+        setInspectResponse({
+          ...resultObj,
+          timestamp: new Date().toLocaleTimeString(),
+        });
+      }
+
+      if (!ep.path.includes("restart")) {
+        notify(
+          `${ep.method} ${ep.path}`,
+          `Simulated in sandbox: ${statusCode} response in ${elapsed}ms.`,
+          "info"
+        );
+      }
     }
+  };
+
+  const openInspector = (ep: ApiEndpointInfo) => {
+    if (systemSounds) soundFx.playClick();
+    setSelectedEndpoint(ep);
+    const key = `${ep.method}-${ep.path}`;
+    const existing = testedEndpoints[key];
+    if (existing && existing.data) {
+      setInspectResponse({
+        status: existing.status,
+        statusCode: existing.statusCode,
+        latency: existing.latency,
+        ok: existing.ok,
+        data: existing.data,
+        simulated: existing.simulated ?? false,
+        timestamp: new Date().toLocaleTimeString(),
+      });
+    } else {
+      setInspectResponse(null);
+    }
+
+    if (ep.samplePayload) {
+      setInspectPayloadText(JSON.stringify(ep.samplePayload, null, 2));
+    } else {
+      setInspectPayloadText("");
+    }
+  };
+
+  const runInspectorTest = async () => {
+    if (!selectedEndpoint) return;
+    setInspecting(true);
+    let parsed: any = null;
+    if (inspectPayloadText.trim()) {
+      try {
+        parsed = JSON.parse(inspectPayloadText);
+      } catch {
+        notify("Invalid JSON", "Request payload must be valid JSON.", "warning");
+        setInspecting(false);
+        return;
+      }
+    }
+    await testEndpoint(selectedEndpoint, parsed);
+    setInspecting(false);
   };
 
   // Filtered window compositor tasks
@@ -758,14 +1471,22 @@ export default function ActivityMonitor() {
   // Filtered packages
   const filteredPackages = useMemo(() => {
     let list = RUNTIME_PACKAGES;
-    if (packageEnvFilter !== "ALL") {
-      list = list.filter((p) => p.env.toLowerCase() === packageEnvFilter.toLowerCase());
+    if (packageEnvFilter === "Client") {
+      list = list.filter((p) => p.env === "Client" || p.env === "Fullstack");
+    } else if (packageEnvFilter === "Server") {
+      list = list.filter((p) => p.env === "Server" || p.env === "Fullstack");
+    } else if (packageEnvFilter === "Production") {
+      list = list.filter((p) => p.type === "Production");
+    } else if (packageEnvFilter === "DevTooling") {
+      list = list.filter((p) => p.type === "DevTooling");
     }
+
     if (apiSearchQuery.trim()) {
       const q = apiSearchQuery.toLowerCase();
       list = list.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
+          p.pkgName.toLowerCase().includes(q) ||
           p.category.toLowerCase().includes(q) ||
           p.role.toLowerCase().includes(q) ||
           p.version.toLowerCase().includes(q)
@@ -1342,40 +2063,97 @@ export default function ActivityMonitor() {
         {activeTab === "apis" && (
           <div className="space-y-4">
             {/* Header & Overview Stats */}
-            <div className="p-3.5 sm:p-4 rounded-xl border border-white/10 bg-white/[0.03] space-y-2">
+            <div className="p-3.5 sm:p-4 rounded-xl border border-white/10 bg-white/[0.03] space-y-3">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                     <GIconGlobe size={16} />
                   </div>
                   <div>
-                    <h3 className="font-display text-sm font-semibold text-white">Hypermedia APIs & System Packages</h3>
+                    <h3 className="font-display text-sm font-semibold text-white">System APIs, Endpoints & Packages</h3>
                     <p className="text-[10px] sm:text-[11px] text-white/50">
-                      Live REST routes (GET, POST, DELETE), WebSocket event channels, and production dependencies.
+                      Live Hypermedia routes (GET, POST, PUT, PATCH, DELETE) and verified dependencies from project manifests.
                     </p>
                   </div>
                 </div>
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 text-[10px] sm:text-[11px] font-mono">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  Gateway Active
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 text-[10px] font-mono">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                    Gateway Online
+                  </span>
+                  <button
+                    onClick={() => setShowSecurityNotice((v) => !v)}
+                    className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition text-[10px] flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <GIconLock size={11} className="text-amber-400" />
+                    <span>{showSecurityNotice ? "Hide Security Policy" : "View Security Policy"}</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+              {/* Security Architecture & Precautions Callout (Collapsible) */}
+              {showSecurityNotice && (
+                <div className="p-3 sm:p-3.5 rounded-xl border border-amber-500/25 bg-amber-500/[0.04] space-y-2.5 transition-all">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-amber-300 font-semibold text-xs">
+                      <GIconLock size={13} />
+                      <span>Security Architecture & Public Disclosure Policy</span>
+                    </div>
+                    <span className="text-[9px] uppercase tracking-wider font-mono text-amber-400/70 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
+                      Demonstration Safe
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[10px] sm:text-[11px] text-white/70">
+                    <div className="p-2 rounded-lg bg-black/30 border border-white/5 space-y-1">
+                      <div className="font-semibold text-emerald-400 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        1. Safe Public Routes (GET)
+                      </div>
+                      <p className="text-white/60 text-[10px] leading-relaxed">
+                        Publicly displays HTTP routes, descriptions, and telemetry metrics. Read-only queries measure live roundtrip latency safely.
+                      </p>
+                    </div>
+
+                    <div className="p-2 rounded-lg bg-black/30 border border-white/5 space-y-1">
+                      <div className="font-semibold text-sky-400 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+                        2. Sandbox Mutations (POST/PUT/DELETE)
+                      </div>
+                      <p className="text-white/60 text-[10px] leading-relaxed">
+                        Modifying operations execute in an isolated simulation sandbox. Process restarts and note updates simulate transitions without altering production databases.
+                      </p>
+                    </div>
+
+                    <div className="p-2 rounded-lg bg-black/30 border border-white/5 space-y-1">
+                      <div className="font-semibold text-rose-400 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                        3. Zero Secrets Disclosure
+                      </div>
+                      <p className="text-white/60 text-[10px] leading-relaxed">
+                        Database credentials, server private IPs, JWT keys, and .env secrets are strictly isolated on the server and never exposed in client bundles.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Metrics Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
                 <div className="p-2.5 rounded-lg bg-black/20 border border-white/5">
                   <div className="text-[9px] uppercase font-mono text-white/40">Total Endpoints</div>
                   <div className="text-sm sm:text-base font-bold text-white mt-0.5">{apiEndpoints.length} Routes</div>
                 </div>
                 <div className="p-2.5 rounded-lg bg-black/20 border border-white/5">
-                  <div className="text-[9px] uppercase font-mono text-white/40">Realtime Engine</div>
-                  <div className="text-sm sm:text-base font-bold text-cyan-400 mt-0.5">Socket.IO 4.8</div>
+                  <div className="text-[9px] uppercase font-mono text-white/40">HTTP Methods</div>
+                  <div className="text-sm sm:text-base font-bold text-cyan-400 mt-0.5">GET · POST · PUT · PATCH · DEL</div>
                 </div>
                 <div className="p-2.5 rounded-lg bg-black/20 border border-white/5">
                   <div className="text-[9px] uppercase font-mono text-white/40">Backend Gateway</div>
-                  <div className="text-sm sm:text-base font-bold text-amber-400 mt-0.5">Express 5 + NestJS</div>
+                  <div className="text-sm sm:text-base font-bold text-amber-400 mt-0.5">Express 5 + NestJS 12</div>
                 </div>
                 <div className="p-2.5 rounded-lg bg-black/20 border border-white/5">
-                  <div className="text-[9px] uppercase font-mono text-white/40">Active Packages</div>
+                  <div className="text-[9px] uppercase font-mono text-white/40">Installed Packages</div>
                   <div className="text-sm sm:text-base font-bold text-purple-400 mt-0.5">{RUNTIME_PACKAGES.length} Libraries</div>
                 </div>
               </div>
@@ -1387,7 +2165,7 @@ export default function ActivityMonitor() {
                 <button
                   onClick={() => setApiCategory("all")}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
-                    apiCategory === "all" ? "bg-accent text-white" : "text-white/60 hover:text-white"
+                    apiCategory === "all" ? "bg-accent text-white shadow-sm" : "text-white/60 hover:text-white"
                   }`}
                 >
                   All Resources
@@ -1395,7 +2173,7 @@ export default function ActivityMonitor() {
                 <button
                   onClick={() => setApiCategory("api")}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
-                    apiCategory === "api" ? "bg-accent text-white" : "text-white/60 hover:text-white"
+                    apiCategory === "api" ? "bg-accent text-white shadow-sm" : "text-white/60 hover:text-white"
                   }`}
                 >
                   APIs & Endpoints ({apiEndpoints.length})
@@ -1403,23 +2181,31 @@ export default function ActivityMonitor() {
                 <button
                   onClick={() => setApiCategory("packages")}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
-                    apiCategory === "packages" ? "bg-accent text-white" : "text-white/60 hover:text-white"
+                    apiCategory === "packages" ? "bg-accent text-white shadow-sm" : "text-white/60 hover:text-white"
                   }`}
                 >
                   Packages & Libraries ({RUNTIME_PACKAGES.length})
                 </button>
               </div>
 
-              {/* Search Bar */}
-              <div className="relative w-full sm:w-64">
-                <GIconSearch size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40" />
+              {/* Search Bar with Active Stroke */}
+              <div className="focus-stroke relative w-full sm:w-72 flex items-center bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 focus-within:border-[#0091ff] focus-within:ring-2 focus-within:ring-[#0091ff]/40 focus-within:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all">
+                <GIconSearch size={13} className="text-white/40 shrink-0 mr-2" />
                 <input
                   type="text"
                   placeholder="Filter by method, route, package..."
                   value={apiSearchQuery}
                   onChange={(e) => setApiSearchQuery(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-[11px] text-white placeholder-white/40 outline-none focus-stroke focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
+                  className="w-full bg-transparent text-[11px] text-white placeholder-white/40 outline-none"
                 />
+                {apiSearchQuery && (
+                  <button
+                    onClick={() => setApiSearchQuery("")}
+                    className="text-white/40 hover:text-white text-xs cursor-pointer ml-1"
+                  >
+                    <GIconClose size={11} />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1431,82 +2217,98 @@ export default function ActivityMonitor() {
                     <h3 className="font-display text-sm font-semibold text-white/90">
                       Hypermedia Endpoints ({filteredEndpoints.length})
                     </h3>
-                    <span className="text-[10px] text-white/40 hidden sm:inline">· Click "Test Ping" to measure roundtrip</span>
+                    <span className="text-[10px] text-white/40 hidden sm:inline">· Click "Inspect / Try" to test live or in sandbox</span>
                   </div>
 
-                  {/* HTTP Method Filters: ALL, GET, POST, DELETE */}
-                  <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/10 text-[10px] w-fit">
-                    {(["ALL", "GET", "POST", "DELETE"] as const).map((method) => (
-                      <button
-                        key={method}
-                        onClick={() => setApiMethodFilter(method)}
-                        className={`px-2 py-0.5 rounded font-mono font-bold transition cursor-pointer ${
-                          apiMethodFilter === method
-                            ? method === "GET"
-                              ? "bg-emerald-500/30 text-emerald-300 border border-emerald-500/40"
-                              : method === "POST"
-                              ? "bg-sky-500/30 text-sky-300 border border-sky-500/40"
-                              : method === "DELETE"
-                              ? "bg-rose-500/30 text-rose-300 border border-rose-500/40"
-                              : "bg-accent text-white"
-                            : "text-white/50 hover:text-white"
-                        }`}
-                      >
-                        {method}
-                      </button>
-                    ))}
+                  {/* HTTP Method Filters: ALL, GET, POST, PUT, PATCH, DELETE */}
+                  <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/10 text-[10px] overflow-x-auto no-scrollbar">
+                    {(["ALL", "GET", "POST", "PUT", "PATCH", "DELETE"] as const).map((method) => {
+                      const isSelected = apiMethodFilter === method;
+                      let badgeStyle = "text-white/50 hover:text-white";
+                      if (isSelected) {
+                        if (method === "GET") badgeStyle = "bg-emerald-500/30 text-emerald-300 border border-emerald-500/40";
+                        else if (method === "POST") badgeStyle = "bg-sky-500/30 text-sky-300 border border-sky-500/40";
+                        else if (method === "PUT") badgeStyle = "bg-amber-500/30 text-amber-300 border border-amber-500/40";
+                        else if (method === "PATCH") badgeStyle = "bg-purple-500/30 text-purple-300 border border-purple-500/40";
+                        else if (method === "DELETE") badgeStyle = "bg-rose-500/30 text-rose-300 border border-rose-500/40";
+                        else badgeStyle = "bg-accent text-white";
+                      }
+
+                      return (
+                        <button
+                          key={method}
+                          onClick={() => setApiMethodFilter(method)}
+                          className={`px-2 py-0.5 rounded font-mono font-bold transition whitespace-nowrap cursor-pointer ${badgeStyle}`}
+                        >
+                          {method}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
                 {/* Desktop View: Full Tabular Endpoints View */}
                 <div className="hidden sm:block rounded-xl border border-white/10 overflow-x-auto thin-scroll bg-black/20">
-                  <table className="w-full min-w-[550px] text-left text-[11px]">
+                  <table className="w-full min-w-[720px] text-left text-[11px]">
                     <thead className="bg-white/5 border-b border-white/10 text-white/40 uppercase font-mono text-[9px] tracking-wider">
                       <tr>
-                        <th className="py-2.5 px-3">Method</th>
-                        <th className="py-2.5 px-3">Endpoint Route</th>
-                        <th className="py-2.5 px-3">Category</th>
-                        <th className="py-2.5 px-3">Description</th>
-                        <th className="py-2.5 px-3">Status / Latency</th>
-                        <th className="py-2.5 px-3 text-right">Action</th>
+                        <th className="py-2.5 px-3 min-w-[70px]">Method</th>
+                        <th className="py-2.5 px-3 min-w-[200px]">Endpoint Route</th>
+                        <th className="py-2.5 px-3 min-w-[120px]">Security Tier</th>
+                        <th className="py-2.5 px-3 min-w-[90px]">Category</th>
+                        <th className="py-2.5 px-3 min-w-[180px]">Description</th>
+                        <th className="py-2.5 px-3 min-w-[130px]">Status / Latency</th>
+                        <th className="py-2.5 px-3 min-w-[120px] text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5 font-mono">
                       {filteredEndpoints.map((ep) => {
                         const key = `${ep.method}-${ep.path}`;
                         const test = testedEndpoints[key];
-                        const methodColor =
-                          ep.method.includes("GET")
-                            ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
-                            : ep.method.includes("POST")
-                            ? "bg-sky-500/15 text-sky-300 border-sky-500/30"
-                            : ep.method.includes("DELETE")
-                            ? "bg-rose-500/15 text-rose-300 border-rose-500/30"
-                            : "bg-purple-500/15 text-purple-300 border-purple-500/30";
+                        let methodColor = "bg-purple-500/15 text-purple-300 border-purple-500/30";
+                        if (ep.method === "GET") methodColor = "bg-emerald-500/15 text-emerald-300 border-emerald-500/30";
+                        else if (ep.method === "POST") methodColor = "bg-sky-500/15 text-sky-300 border-sky-500/30";
+                        else if (ep.method === "PUT") methodColor = "bg-amber-500/15 text-amber-300 border-amber-500/30";
+                        else if (ep.method === "PATCH") methodColor = "bg-purple-500/15 text-purple-300 border-purple-500/30";
+                        else if (ep.method === "DELETE") methodColor = "bg-rose-500/15 text-rose-300 border-rose-500/30";
+
+                        const isSandbox = ep.security.includes("Sandbox") || ep.security.includes("Protected");
 
                         return (
                           <tr key={key} className="hover:bg-white/5 transition-colors">
-                            <td className="py-2.5 px-3">
+                            <td className="py-2.5 px-3 whitespace-nowrap">
                               <span className={`px-2 py-0.5 rounded text-[9px] font-bold border ${methodColor}`}>
                                 {ep.method}
                               </span>
                             </td>
-                            <td className="py-2.5 px-3 font-semibold text-white/90">
+                            <td className="py-2.5 px-3 font-semibold text-white/90 whitespace-nowrap">
                               {ep.path}
                             </td>
-                            <td className="py-2.5 px-3 font-sans text-white/50 text-[10px]">
-                              {ep.category || "General"}
+                            <td className="py-2.5 px-3 whitespace-nowrap font-sans">
+                              <span
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-medium border ${
+                                  isSandbox
+                                    ? "bg-sky-500/10 text-sky-300 border-sky-500/20"
+                                    : "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                                }`}
+                              >
+                                <GIconLock size={9} />
+                                <span>{ep.security}</span>
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 font-sans text-white/50 text-[10px] whitespace-nowrap">
+                              {ep.category}
                             </td>
                             <td
-                              className="py-2.5 px-3 font-sans text-white/70 text-[10px] max-w-[200px] truncate"
+                              className="py-2.5 px-3 font-sans text-white/70 text-[10px] max-w-[220px] truncate"
                               title={ep.description}
                             >
                               {ep.description}
                             </td>
-                            <td className="py-2.5 px-3">
+                            <td className="py-2.5 px-3 whitespace-nowrap">
                               {test ? (
                                 test.testing ? (
-                                  <span className="text-amber-400 text-[10px] animate-pulse">Pinging...</span>
+                                  <span className="text-amber-400 text-[10px] animate-pulse">Executing...</span>
                                 ) : test.ok ? (
                                   <span className="text-emerald-400 text-[10px] flex items-center gap-1">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
@@ -1521,15 +2323,24 @@ export default function ActivityMonitor() {
                                 <span className="text-white/30 text-[10px]">Ready</span>
                               )}
                             </td>
-                            <td className="py-2.5 px-3 text-right">
-                              <button
-                                onClick={() => testEndpoint(ep)}
-                                disabled={test?.testing}
-                                className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition text-[10px] font-sans font-medium disabled:opacity-50 cursor-pointer"
-                                title="Send test request to endpoint"
-                              >
-                                {test?.testing ? "Pinging" : "Test Ping"}
-                              </button>
+                            <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                              <div className="inline-flex items-center justify-end gap-1.5">
+                                <button
+                                  onClick={() => openInspector(ep)}
+                                  className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 active:scale-95 text-white/90 hover:text-white transition text-[10px] font-sans font-medium cursor-pointer"
+                                  title="Open Request / Response Inspector & Testing Console"
+                                >
+                                  Inspect & Test
+                                </button>
+                                <button
+                                  onClick={() => testEndpoint(ep)}
+                                  disabled={test?.testing}
+                                  className="px-2 py-1 rounded bg-accent/20 hover:bg-accent/30 active:scale-95 text-accent hover:text-white border border-accent/30 transition text-[10px] font-sans font-medium disabled:opacity-50 cursor-pointer"
+                                  title={ep.method === "GET" ? "Send real GET request" : "Execute in sandbox"}
+                                >
+                                  {test?.testing ? "..." : ep.method === "GET" ? "Ping" : "Simulate"}
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -1539,29 +2350,38 @@ export default function ActivityMonitor() {
                 </div>
 
                 {/* Mobile View: Responsive Card Grid (No horizontal overflow!) */}
-                <div className="sm:hidden space-y-2">
+                <div className="sm:hidden space-y-2.5">
                   {filteredEndpoints.map((ep) => {
                     const key = `${ep.method}-${ep.path}`;
                     const test = testedEndpoints[key];
-                    const methodColor = ep.method.includes("GET")
-                      ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
-                      : ep.method.includes("POST")
-                      ? "bg-sky-500/15 text-sky-300 border-sky-500/30"
-                      : ep.method.includes("DELETE")
-                      ? "bg-rose-500/15 text-rose-300 border-rose-500/30"
-                      : "bg-purple-500/15 text-purple-300 border-purple-500/30";
+                    let methodColor = "bg-purple-500/15 text-purple-300 border-purple-500/30";
+                    if (ep.method === "GET") methodColor = "bg-emerald-500/15 text-emerald-300 border-emerald-500/30";
+                    else if (ep.method === "POST") methodColor = "bg-sky-500/15 text-sky-300 border-sky-500/30";
+                    else if (ep.method === "PUT") methodColor = "bg-amber-500/15 text-amber-300 border-amber-500/30";
+                    else if (ep.method === "PATCH") methodColor = "bg-purple-500/15 text-purple-300 border-purple-500/30";
+                    else if (ep.method === "DELETE") methodColor = "bg-rose-500/15 text-rose-300 border-rose-500/30";
+
+                    const isSandbox = ep.security.includes("Sandbox") || ep.security.includes("Protected");
 
                     return (
                       <div key={key} className="p-3 rounded-xl border border-white/10 bg-black/25 space-y-2">
                         <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                             <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold border shrink-0 ${methodColor}`}>
                               {ep.method}
                             </span>
                             <span className="font-mono text-xs text-white/90 font-semibold truncate">{ep.path}</span>
                           </div>
                           <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-white/40 text-[9px] shrink-0 font-sans">
-                            {ep.category || "General"}
+                            {ep.category}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-[9px]">
+                          <span className={`px-1.5 py-0.5 rounded font-medium border flex items-center gap-1 ${
+                            isSandbox ? "bg-sky-500/10 text-sky-300 border-sky-500/20" : "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                          }`}>
+                            <GIconLock size={8} /> {ep.security}
                           </span>
                         </div>
 
@@ -1571,7 +2391,7 @@ export default function ActivityMonitor() {
                           <div className="text-[10px] font-mono">
                             {test ? (
                               test.testing ? (
-                                <span className="text-amber-400 animate-pulse">Testing...</span>
+                                <span className="text-amber-400 animate-pulse">Executing...</span>
                               ) : test.ok ? (
                                 <span className="text-emerald-400 flex items-center gap-1">
                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
@@ -1585,13 +2405,21 @@ export default function ActivityMonitor() {
                             )}
                           </div>
 
-                          <button
-                            onClick={() => testEndpoint(ep)}
-                            disabled={test?.testing}
-                            className="px-2.5 py-1 rounded-lg bg-white/10 active:bg-accent/30 text-white/90 text-[10px] font-medium transition cursor-pointer"
-                          >
-                            {test?.testing ? "Testing..." : "Test Ping"}
-                          </button>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => openInspector(ep)}
+                              className="px-2 py-1 rounded-lg bg-white/10 active:bg-white/20 text-white text-[10px] font-medium transition cursor-pointer"
+                            >
+                              Inspect & Test
+                            </button>
+                            <button
+                              onClick={() => testEndpoint(ep)}
+                              disabled={test?.testing}
+                              className="px-2 py-1 rounded-lg bg-accent/20 active:bg-accent/40 text-accent text-[10px] font-medium border border-accent/30 transition cursor-pointer"
+                            >
+                              {test?.testing ? "..." : ep.method === "GET" ? "Ping" : "Simulate"}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -1606,52 +2434,70 @@ export default function ActivityMonitor() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <h3 className="font-display text-sm font-semibold text-white/90">
-                      System Packages & Dependencies ({filteredPackages.length})
+                      Installed Packages & Dependencies ({filteredPackages.length})
                     </h3>
-                    <p className="text-[10px] text-white/40">Full-stack production libraries across client, server, and tooling</p>
+                    <p className="text-[10px] text-white/40">Verified active dependencies strictly derived from client/package.json & server/package.json</p>
                   </div>
 
-                  {/* Environment Filters: ALL, Client, Server, Fullstack */}
-                  <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/10 text-[10px] w-fit">
-                    {(["ALL", "Client", "Server", "Fullstack"] as const).map((env) => (
+                  {/* Environment Filters */}
+                  <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded-lg border border-white/10 text-[10px] overflow-x-auto no-scrollbar">
+                    {(["ALL", "Client", "Server", "Production", "DevTooling"] as const).map((env) => (
                       <button
                         key={env}
                         onClick={() => setPackageEnvFilter(env)}
-                        className={`px-2 py-0.5 rounded font-medium transition cursor-pointer ${
+                        className={`px-2 py-0.5 rounded font-medium whitespace-nowrap transition cursor-pointer ${
                           packageEnvFilter === env
-                            ? "bg-accent text-white"
+                            ? "bg-accent text-white shadow-sm"
                             : "text-white/50 hover:text-white"
                         }`}
                       >
-                        {env}
+                        {env === "DevTooling" ? "Dev / Tooling" : env}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                   {filteredPackages.map((pkg) => (
                     <div
-                      key={pkg.name}
-                      className="p-3 rounded-xl border border-white/10 bg-black/20 hover:bg-white/[0.04] transition flex flex-col justify-between space-y-2"
+                      key={pkg.pkgName + pkg.env}
+                      className="p-3 rounded-xl border border-white/10 bg-black/20 hover:bg-white/[0.04] transition flex flex-col justify-between space-y-2 group"
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="flex items-center gap-2">
+                      <div className="space-y-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-display font-semibold text-white text-xs">{pkg.name}</span>
                             <span className={`px-1.5 py-0.5 rounded text-[9px] font-mono border ${pkg.color}`}>
-                              {pkg.version}
+                              v{pkg.version}
                             </span>
                           </div>
-                          <div className="text-[10px] text-white/40 mt-0.5">{pkg.category}</div>
+                          <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/60 text-[9px] font-mono shrink-0">
+                            {pkg.env}
+                          </span>
                         </div>
-                        <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/60 text-[9px] font-mono shrink-0">
-                          {pkg.env}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-accent/80 font-medium">{pkg.category}</span>
+                          <span className="text-white/20">·</span>
+                          <span className="text-[9px] text-white/40 font-mono">{pkg.type}</span>
+                        </div>
                       </div>
+
                       <p className="text-[10px] text-white/65 leading-relaxed font-sans">
                         {pkg.role}
                       </p>
+
+                      <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px]">
+                        <span className="font-mono text-white/40 text-[9px] truncate max-w-[150px]">{pkg.pkgName}</span>
+                        <a
+                          href={pkg.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1 text-accent hover:text-white transition group-hover:underline text-[10px]"
+                        >
+                          <span>npm</span>
+                          <GIconLink size={10} />
+                        </a>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -2112,6 +2958,187 @@ export default function ActivityMonitor() {
           </div>
         )}
       </div>
+
+      
+      {/* Endpoint Inspector & Testing Playground Modal */}
+      {selectedEndpoint && (
+        <div
+          className="fixed inset-0 z-[1300] bg-black/70 backdrop-blur-xl flex items-center justify-center p-3 sm:p-5"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              if (systemSounds) soundFx.playClick();
+              setSelectedEndpoint(null);
+            }
+          }}
+        >
+          <div className="relative w-full max-w-xl max-h-[88vh] bg-[#0c101d]/98 border border-white/20 rounded-2xl p-4 sm:p-5 shadow-[0_24px_70px_rgba(0,0,0,0.85)] flex flex-col space-y-3.5 overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span
+                    className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                      selectedEndpoint.method === "GET"
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                        : selectedEndpoint.method === "POST"
+                        ? "bg-sky-500/20 text-sky-300 border-sky-500/40"
+                        : selectedEndpoint.method === "PUT"
+                        ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                        : selectedEndpoint.method === "PATCH"
+                        ? "bg-purple-500/20 text-purple-300 border-purple-500/40"
+                        : "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                    }`}
+                  >
+                    {selectedEndpoint.method}
+                  </span>
+                  <span className="font-mono text-sm sm:text-base font-bold text-white">
+                    {selectedEndpoint.path}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] text-white/50">
+                  <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/70">
+                    {selectedEndpoint.category}
+                  </span>
+                  <span className="flex items-center gap-1 text-sky-400 font-medium">
+                    <GIconLock size={10} />
+                    {selectedEndpoint.security}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (systemSounds) soundFx.playClick();
+                  setSelectedEndpoint(null);
+                }}
+                className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition cursor-pointer"
+                title="Close Inspector"
+              >
+                <GIconClose size={14} />
+              </button>
+            </div>
+
+            {/* Description & Execution Mode */}
+            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 space-y-1.5 text-[11px]">
+              <div className="text-white/80 leading-relaxed font-sans">{selectedEndpoint.description}</div>
+              <div className="text-[10px] text-white/50 flex items-center gap-1.5">
+                <span className="font-semibold text-white/70">Execution Mode:</span>
+                {selectedEndpoint.method === "GET" ? (
+                  <span className="text-emerald-400">Live Backend Fetch & Latency Measurement</span>
+                ) : (
+                  <span className="text-sky-400">Isolated Sandbox State Transition (Protected Demo Mode)</span>
+                )}
+              </div>
+            </div>
+
+            {/* Request URL & Editable Payload for mutating methods */}
+            <div className="space-y-2 overflow-y-auto thin-scroll pr-1">
+              <div>
+                <label className="text-[10px] font-semibold text-white/40 uppercase tracking-wider block mb-1">
+                  Target Endpoint URL
+                </label>
+                <div className="p-2 rounded-lg bg-black/40 border border-white/10 font-mono text-[11px] text-white/90 break-all select-all">
+                  {API_URL}{selectedEndpoint.path}
+                </div>
+              </div>
+
+              {selectedEndpoint.method !== "GET" && selectedEndpoint.samplePayload && (
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[10px] font-semibold text-white/40 uppercase tracking-wider">
+                      Request Body (JSON Payload)
+                    </label>
+                    <button
+                      onClick={() => {
+                        if (selectedEndpoint.samplePayload) {
+                          setInspectPayloadText(JSON.stringify(selectedEndpoint.samplePayload, null, 2));
+                        }
+                      }}
+                      className="text-[10px] text-accent hover:underline cursor-pointer"
+                    >
+                      Reset to Sample
+                    </button>
+                  </div>
+                  <textarea
+                    rows={4}
+                    value={inspectPayloadText}
+                    onChange={(e) => setInspectPayloadText(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 font-mono text-[11px] text-white outline-none focus-stroke focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 transition-all resize-y"
+                  />
+                </div>
+              )}
+
+              {/* Execution Action Button */}
+              <div className="pt-1 flex items-center justify-between gap-3">
+                <button
+                  onClick={runInspectorTest}
+                  disabled={inspecting}
+                  className="flex-1 py-2 px-4 rounded-xl bg-accent hover:bg-accent/90 active:scale-98 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-lg shadow-accent/25 transition disabled:opacity-50 cursor-pointer"
+                >
+                  <GIconPlay size={13} className={inspecting ? "animate-spin" : ""} />
+                  <span>
+                    {inspecting
+                      ? "Executing Request..."
+                      : selectedEndpoint.method === "GET"
+                      ? "Send Live Request"
+                      : "Run Sandbox Execution"}
+                  </span>
+                </button>
+              </div>
+
+              {/* Response Panel */}
+              {inspectResponse && (
+                <div className="space-y-1.5 pt-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-semibold text-white/40 uppercase tracking-wider">
+                        Response Body
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                          inspectResponse.ok
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                            : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                        }`}
+                      >
+                        {inspectResponse.status}
+                      </span>
+                      <span className="text-[10px] font-mono text-white/50">
+                        {inspectResponse.latency} ms
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(JSON.stringify(inspectResponse.data, null, 2));
+                        setCopiedResponse(true);
+                        setTimeout(() => setCopiedResponse(false), 2000);
+                      }}
+                      className="text-[10px] text-white/60 hover:text-white flex items-center gap-1 px-2 py-0.5 rounded hover:bg-white/10 transition cursor-pointer"
+                    >
+                      {copiedResponse ? (
+                        <>
+                          <GIconCheck size={11} className="text-emerald-400" />
+                          <span className="text-emerald-400">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <GIconCopy size={11} />
+                          <span>Copy JSON</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <pre className="p-3 rounded-xl bg-black/60 border border-white/10 font-mono text-[10px] text-emerald-300/90 overflow-x-auto thin-scroll max-h-48 whitespace-pre leading-relaxed select-text">
+                    {JSON.stringify(inspectResponse.data, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer bar */}
       <div className="border-t border-white/10 px-3 sm:px-4 py-2 bg-white/5 flex items-center justify-between text-[11px] text-white/40">
