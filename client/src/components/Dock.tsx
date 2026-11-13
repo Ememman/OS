@@ -48,12 +48,14 @@ const POSITION_CLASSES = {
 };
 
 export default function Dock() {
-  const { openApp, windows, closeWindow, compact, dockPosition, toggleMissionControl, missionControlOpen, systemSounds, unreadChatCount } = useOS();
+  const { toggleApp, windows, closeWindow, compact, dockPosition, toggleMissionControl, missionControlOpen, systemSounds, unreadChatCount } = useOS();
   const isMobile = useIsMobile();
   const position = isMobile ? "bottom" : dockPosition;
   const vertical = position === "left" || position === "right";
   const effectiveCompact = compact && !isMobile;
   const openApps = new Set(windows.map((w) => w.app));
+  const unminimized = windows.filter((w) => !w.minimized);
+  const maxZ = unminimized.length > 0 ? Math.max(...unminimized.map((w) => w.z)) : 0;
   const size = isMobile ? "w-11 h-11" : effectiveCompact ? "w-10 h-10" : "w-12 h-12";
   const iconSize = isMobile ? 22 : effectiveCompact ? 16 : 22;
   const [hoveredApp, setHoveredApp] = useState<string | null>(null);
@@ -70,8 +72,7 @@ export default function Dock() {
   };
 
   const handleLaunch = (app: string) => {
-    if (systemSounds) soundFx.playOpen();
-    openApp(app);
+    toggleApp(app);
   };
 
   const hoverMotion = isMobile ? undefined : {
@@ -127,7 +128,11 @@ export default function Dock() {
         <div className={vertical ? "h-px w-8 bg-white/10 my-1 shrink-0" : "w-px h-8 bg-white/10 mx-1 self-center shrink-0"} />
 
         {/* Dock Items */}
-        {DOCK_ITEMS.map(({ app, label, icon: Icon, color }) => (
+        {DOCK_ITEMS.map(({ app, label, icon: Icon, color }) => {
+          const appWin = windows.find((w) => w.app === app);
+          const isAppActive = appWin && !appWin.minimized && appWin.z >= maxZ;
+          const isAppMinimized = appWin?.minimized ?? false;
+          return (
           <div key={app} className="relative">
             <motion.button
               onClick={() => handleLaunch(app)}
@@ -143,7 +148,13 @@ export default function Dock() {
               {openApps.has(app) && (
                 <motion.span
                   layoutId={`active-dot-${app}`}
-                  className={`absolute rounded-full aspect-square shrink-0 bg-white/90 shadow-[0_0_6px_rgba(255,255,255,0.8)] ${
+                  className={`absolute rounded-full aspect-square shrink-0 ${
+                    isAppActive
+                      ? "bg-white shadow-[0_0_8px_rgba(255,255,255,0.95)]"
+                      : isAppMinimized
+                        ? "bg-white/45 shadow-none"
+                        : "bg-white/80 shadow-[0_0_4px_rgba(255,255,255,0.5)]"
+                  } ${
                     vertical ? "w-1 h-1 left-0.5 top-1/2 -translate-y-1/2" : isMobile ? "w-1.5 h-1.5 -bottom-0.5" : "w-1 h-1 -bottom-1"
                   }`}
                 />
@@ -175,7 +186,8 @@ export default function Dock() {
               )}
             </AnimatePresence>
           </div>
-        ))}
+        );
+      })}
 
         <div className={vertical ? "h-px w-8 bg-white/10 my-1 shrink-0" : "w-px h-8 bg-white/10 mx-1 self-center shrink-0"} />
 

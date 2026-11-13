@@ -97,7 +97,7 @@ function StartMenu({ onClose }: { onClose: () => void }) {
   return (
     <div
       ref={ref}
-      className="absolute bottom-16 left-1/2 -translate-x-1/2 w-[calc(100vw-24px)] max-w-[400px] max-h-[82vh] flex flex-col bg-[#0c101d]/98 sm:bg-[#0c101d]/95 backdrop-blur-3xl rounded-2xl border border-white/20 shadow-[0_24px_70px_rgba(0,0,0,0.88)] ring-1 ring-white/10 p-4 sm:p-5 z-[1200] origin-bottom select-none overflow-hidden"
+      className="absolute bottom-14 sm:bottom-16 left-1/2 -translate-x-1/2 w-[calc(100vw-16px)] sm:w-[440px] max-w-[460px] max-h-[82vh] flex flex-col bg-[#0c101d]/98 sm:bg-[#0c101d]/95 backdrop-blur-3xl rounded-2xl border border-white/20 shadow-[0_24px_70px_rgba(0,0,0,0.88)] ring-1 ring-white/10 p-3.5 sm:p-5 z-[1200] origin-bottom select-none overflow-hidden"
       style={POP_ANIM}
     >
       <div className="flex items-center justify-between mb-3 shrink-0">
@@ -109,6 +109,9 @@ function StartMenu({ onClose }: { onClose: () => void }) {
             <span className="bg-sky-400 rounded-[1.5px]" />
           </div>
           <span className="text-xs font-semibold text-white/90 uppercase tracking-wide">Pinned Apps</span>
+          <span className="text-[10px] text-white/40 font-mono bg-white/5 px-1.5 py-0.5 rounded-md">
+            {TASKBAR_ITEMS.length}
+          </span>
         </div>
         <button
           onClick={() => {
@@ -139,7 +142,7 @@ function StartMenu({ onClose }: { onClose: () => void }) {
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search pinned apps"
+            placeholder="Search pinned apps, tools, games..."
             className="bg-transparent outline-none text-xs w-full placeholder:text-white/40 text-white"
           />
           {query && (
@@ -154,11 +157,11 @@ function StartMenu({ onClose }: { onClose: () => void }) {
         </div>
       </form>
 
-      <div className="overflow-y-auto thin-scroll flex-1 -mr-1 pr-1">
+      <div className="overflow-y-auto thin-scroll flex-1 -mr-1 pr-1 overscroll-contain">
         {results.length === 0 ? (
           <p className="text-xs text-white/40 text-center py-6">No apps match "{query}"</p>
         ) : (
-          <div className="grid grid-cols-3 xs:grid-cols-4 gap-2 sm:gap-3 py-1">
+          <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-2.5 py-1">
             {results.map(({ app, label, icon: Icon, color }) => (
               <button
                 key={app}
@@ -182,9 +185,44 @@ function StartMenu({ onClose }: { onClose: () => void }) {
             ))}
           </div>
         )}
+
+        {!query && (
+          <div className="mt-3 pt-3 border-t border-white/10">
+            <div className="text-[10px] font-semibold text-white/40 uppercase tracking-wider mb-2 px-1">
+              Quick Shortcuts
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {[
+                { app: "terminal", label: "Terminal", desc: "Command Line", color: "#22c55e" },
+                { app: "activity", label: "Task Manager", desc: "System Status", color: "#10b981" },
+                { app: "codeplay", label: "CodePlay", desc: "JS / Web Sandbox", color: "#38bdf8" },
+                { app: "settings", label: "Settings", desc: "Theme & Display", color: "#8892A6" },
+              ].map((s) => (
+                <button
+                  key={s.app}
+                  onClick={() => {
+                    if (systemSounds) soundFx.playClick();
+                    openApp(s.app);
+                    onClose();
+                  }}
+                  className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white/10 active:bg-white/15 text-left transition cursor-pointer"
+                >
+                  <div
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: s.color }}
+                  />
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-medium text-white/90 truncate">{s.label}</div>
+                    <div className="text-[9px] text-white/40 truncate">{s.desc}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="border-t border-white/10 mt-3 pt-3 flex items-center justify-between shrink-0 bg-black/25 -mx-4 -mb-4 px-4 py-3 sm:-mx-5 sm:-mb-5 sm:px-5 sm:py-3.5 rounded-b-2xl">
+      <div className="border-t border-white/10 mt-3 pt-3 flex items-center justify-between shrink-0 bg-black/25 -mx-3.5 -mb-3.5 px-3.5 py-3 sm:-mx-5 sm:-mb-5 sm:px-5 sm:py-3.5 rounded-b-2xl">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 aspect-square shrink-0 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-sm">
             J
@@ -230,7 +268,7 @@ function TrayFlyout({ onClose }: { onClose: () => void }) {
   return (
     <div
       ref={ref}
-      className="absolute bottom-16 right-3 w-56 bg-[#0c101d]/96 sm:bg-[#0c101d]/94 backdrop-blur-3xl rounded-2xl border border-white/15 shadow-[0_24px_70px_rgba(0,0,0,0.85)] ring-1 ring-white/10 p-3 z-[1200] origin-bottom-right"
+      className="absolute bottom-14 sm:bottom-16 right-2 sm:right-3 w-60 max-w-[calc(100vw-20px)] bg-[#0c101d]/96 sm:bg-[#0c101d]/94 backdrop-blur-3xl rounded-2xl border border-white/15 shadow-[0_24px_70px_rgba(0,0,0,0.85)] ring-1 ring-white/10 p-3 z-[1200] origin-bottom-right"
       style={POP_ANIM}
     >
       <div className="text-[10px] uppercase font-semibold text-white/40 tracking-wider px-1 pb-1">Quick Actions</div>
@@ -334,7 +372,7 @@ function WeatherFlyout({ onClose }: { onClose: () => void }) {
   return (
     <div
       ref={ref}
-      className="absolute bottom-16 left-3 w-72 max-w-[calc(100vw-24px)] bg-[#0c101d]/96 sm:bg-[#0c101d]/94 backdrop-blur-3xl rounded-2xl border border-white/15 shadow-[0_24px_70px_rgba(0,0,0,0.85)] ring-1 ring-white/10 p-2.5 z-[1200] origin-bottom-left"
+      className="absolute bottom-14 sm:bottom-16 left-2 sm:left-3 w-72 max-w-[calc(100vw-20px)] bg-[#0c101d]/96 sm:bg-[#0c101d]/94 backdrop-blur-3xl rounded-2xl border border-white/15 shadow-[0_24px_70px_rgba(0,0,0,0.85)] ring-1 ring-white/10 p-2.5 z-[1200] origin-bottom-left"
       style={POP_ANIM}
     >
       <WeatherWidget />
@@ -348,7 +386,7 @@ function DateFlyout({ onClose }: { onClose: () => void }) {
   return (
     <div
       ref={ref}
-      className="absolute bottom-16 right-3 w-72 max-w-[calc(100vw-24px)] bg-[#0c101d]/96 sm:bg-[#0c101d]/94 backdrop-blur-3xl rounded-2xl border border-white/15 shadow-[0_24px_70px_rgba(0,0,0,0.85)] ring-1 ring-white/10 p-2.5 z-[1200] origin-bottom-right"
+      className="absolute bottom-14 sm:bottom-16 right-2 sm:right-3 w-72 max-w-[calc(100vw-20px)] bg-[#0c101d]/96 sm:bg-[#0c101d]/94 backdrop-blur-3xl rounded-2xl border border-white/15 shadow-[0_24px_70px_rgba(0,0,0,0.85)] ring-1 ring-white/10 p-2.5 z-[1200] origin-bottom-right"
       style={POP_ANIM}
     >
       <CalendarWidget />
@@ -359,8 +397,9 @@ function DateFlyout({ onClose }: { onClose: () => void }) {
 export default function WinTaskbar() {
   const {
     openApp,
+    toggleApp,
     windows,
-    focusWindow,
+    toggleShowDesktop,
     toggleSpotlight,
     toggleControlCenter,
     controlCenterOpen,
@@ -391,6 +430,8 @@ export default function WinTaskbar() {
   };
 
   const openAppIds = new Set(windows.map((w) => w.app));
+  const unminimized = windows.filter((w) => !w.minimized);
+  const maxZ = unminimized.length > 0 ? Math.max(...unminimized.map((w) => w.z)) : 0;
 
   // On mobile screens, prioritize active running windows first so the user can easily switch apps
   const taskbarApps = isMobile
@@ -400,24 +441,24 @@ export default function WinTaskbar() {
       ]
     : TASKBAR_ITEMS;
 
-  const btnSize = isMobile ? "w-10 h-10" : "w-10 h-10";
-  const iconSize = isMobile ? 20 : 18;
+  const btnSize = isMobile ? "w-9 h-9" : "w-10 h-10";
+  const iconSize = isMobile ? 18 : 19;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-12 bg-[#0a0e1a]/92 backdrop-blur-2xl border-t border-white/10 flex items-center justify-between px-1.5 sm:px-3 z-[900] select-none">
+    <div className="fixed bottom-0 left-0 right-0 h-12 bg-[#0a0f1d]/94 backdrop-blur-3xl border-t border-white/12 flex items-center justify-between px-1 sm:px-2 z-[900] select-none shadow-[0_-4px_30px_rgba(0,0,0,0.5)]">
       {/* 1. Left Section: Weather chip on desktop */}
       <div className="hidden md:flex items-center flex-1 min-w-0 basis-0">
         <button
           data-weather-trigger="true"
           onClick={() => toggle("weather")}
-          className="hover:bg-white/10 active:bg-white/15 px-2 py-1 rounded-xl transition-colors shrink-0 cursor-pointer"
+          className="hover:bg-white/10 active:bg-white/15 px-2.5 py-1 rounded-xl transition-colors shrink-0 cursor-pointer"
         >
           <WeatherChip />
         </button>
       </div>
 
       {/* 2. Center/Navigation Section: Start + Search + TaskView + App Icons */}
-      <div className="flex items-center gap-1 sm:gap-1.5 flex-1 md:flex-initial min-w-0 md:max-w-[calc(100vw-340px)]">
+      <div className="flex items-center gap-1 sm:gap-1.5 flex-1 md:flex-initial min-w-0 md:max-w-[calc(100vw-360px)] justify-center">
         {/* Core Windows navigation controls */}
         <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           <button
@@ -429,10 +470,10 @@ export default function WinTaskbar() {
             }`}
           >
             <div className="grid grid-cols-2 gap-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4">
-              <span className="bg-sky-400 rounded-[2px]" />
-              <span className="bg-sky-400 rounded-[2px]" />
-              <span className="bg-sky-400 rounded-[2px]" />
-              <span className="bg-sky-400 rounded-[2px]" />
+              <span className="bg-sky-400 rounded-[1.5px]" />
+              <span className="bg-sky-400 rounded-[1.5px]" />
+              <span className="bg-sky-400 rounded-[1.5px]" />
+              <span className="bg-sky-400 rounded-[1.5px]" />
             </div>
           </button>
 
@@ -462,32 +503,44 @@ export default function WinTaskbar() {
         </div>
 
         {/* Separator between system navigation and app icons */}
-        <div className="w-px h-5 bg-white/15 shrink-0 mx-0.5" />
+        <div className="w-px h-5 bg-white/15 shrink-0 mx-0.5 sm:mx-1" />
 
         {/* Scrollable app icons track - strictly bounded by flex-1 min-w-0 */}
         <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar touch-pan-x flex-1 min-w-0 py-0.5 px-0.5">
           {taskbarApps.map(({ app, label, icon: Icon, color }) => {
-            const isOpen = openAppIds.has(app);
-            const activeWin = windows.find((w) => w.app === app);
+            const existing = windows.find((w) => w.app === app);
+            const isOpen = !!existing;
+            const isMinimized = existing?.minimized ?? false;
+            const isActive = isOpen && !isMinimized && existing.z >= maxZ;
+
             return (
               <button
                 key={app}
                 onClick={() => {
-                  if (systemSounds) soundFx.playClick();
-                  if (isOpen && activeWin) {
-                    focusWindow(activeWin.id);
-                  } else {
-                    openApp(app);
-                  }
+                  toggleApp(app);
                 }}
-                title={label}
-                className={`relative ${btnSize} rounded-xl flex items-center justify-center transition-all shrink-0 hover:bg-white/10 active:scale-95 cursor-pointer ${
-                  isOpen ? "bg-white/12" : ""
+                title={`${label}${isActive ? " · Active" : isMinimized ? " · Minimized" : isOpen ? " · Running" : ""}`}
+                className={`relative ${btnSize} rounded-xl flex items-center justify-center transition-all shrink-0 active:scale-95 cursor-pointer ${
+                  isActive
+                    ? "bg-white/16 border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
+                    : isMinimized
+                      ? "bg-white/5 hover:bg-white/10"
+                      : isOpen
+                        ? "bg-white/10 hover:bg-white/15"
+                        : "hover:bg-white/10"
                 }`}
               >
                 <Icon size={iconSize} color={color} />
                 {isOpen && (
-                  <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-3.5 h-0.5 rounded-full bg-accent" />
+                  <span
+                    className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? "w-4 h-0.75 bg-accent shadow-[0_0_8px_var(--color-accent,#38bdf8)]"
+                        : isMinimized
+                          ? "w-1.5 h-0.75 bg-white/40"
+                          : "w-3 h-0.75 bg-white/70"
+                    }`}
+                  />
                 )}
                 {app === "chats" && unreadChatCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center shadow-md shadow-rose-500/60 border border-white/20 z-20 pointer-events-none select-none">
@@ -500,7 +553,7 @@ export default function WinTaskbar() {
         </div>
       </div>
 
-      {/* 3. Right Section: System Tray & Clock */}
+      {/* 3. Right Section: System Tray & Clock & Show Desktop */}
       <div className="flex items-center justify-end shrink-0 gap-1 sm:gap-1.5 pl-1.5 sm:pl-2 ml-1 border-l border-white/15 md:flex-1 md:basis-0 relative">
         <div className="hidden sm:block">
           <button
@@ -547,6 +600,17 @@ export default function WinTaskbar() {
           <div className="text-[11px] sm:text-xs font-semibold text-white/90 leading-none">{time}</div>
           <div className="text-[9px] text-white/45 leading-none mt-0.5 hidden sm:block">{date}</div>
         </button>
+
+        {/* 4. Far Right: Show Desktop Peek Bar */}
+        <button
+          onClick={() => {
+            if (systemSounds) soundFx.playClick();
+            toggleShowDesktop();
+          }}
+          title="Show Desktop (Minimize/Restore all)"
+          className="w-1.5 sm:w-2 h-7 sm:h-8 hover:bg-white/20 active:bg-white/30 rounded-[2px] transition-colors shrink-0 ml-0.5 sm:ml-1 border-l border-white/20 cursor-pointer"
+          aria-label="Show Desktop"
+        />
 
         {panel === "tray" && <TrayFlyout onClose={() => setPanel(null)} />}
         {panel === "date" && <DateFlyout onClose={() => setPanel(null)} />}
