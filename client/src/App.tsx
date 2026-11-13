@@ -10,6 +10,7 @@ import DesktopAppsGrid from "./components/DesktopAppsGrid";
 import DesktopFolderModal from "./components/DesktopFolderModal";
 import DesktopNameModal from "./components/DesktopNameModal";
 import Window from "./components/Window";
+import ErrorBoundary from "./components/ui/ErrorBoundary";
 import GlobalAudioPlayer from "./components/GlobalAudioPlayer";
 import MiniPlayer from "./components/MiniPlayer";
 import BootScreen from "./components/BootScreen";
@@ -68,6 +69,7 @@ const APP_COMPONENTS: Record<string, any> = {
 export default function App() {
   const {
     windows,
+    closeWindow,
     harmonizedPalette,
     reduceMotion,
     booted,
@@ -170,7 +172,7 @@ export default function App() {
 
           {/* Widget stack below icons — macOS style only */}
           {!isWin && widgetsVisible && (
-            <div className="w-full flex flex-col items-center gap-4">
+            <div data-widget-area="true" className="w-full flex flex-col items-center gap-4">
               <div className="reveal w-full flex justify-center" style={{ animationDelay: "120ms" }}><PhotoWidget /></div>
               <div className="reveal w-full flex justify-center" style={{ animationDelay: "150ms" }}><WeatherWidget /></div>
               <div className="reveal w-full flex justify-center" style={{ animationDelay: "180ms" }}><ClockWidget /></div>
@@ -186,11 +188,9 @@ export default function App() {
       ) : (
         /* Desktop: Spacious multi-column layout with scrollable widget columns so lower widgets are never cut off */
         <>
-          {/* Desktop application icons — draggable and combinable into folders */}
+          {/* Desktop application icons — draggable to any position on desktop, avoiding widgets, and combinable into folders */}
           <div
-            className={`absolute ${isWin ? "top-3" : "top-10 sm:top-12"} ${
-              macDockLeft ? "left-20 sm:left-24" : "left-3 sm:left-6"
-            } z-10 pointer-events-auto reveal`}
+            className="absolute inset-0 z-10 pointer-events-none reveal overflow-hidden"
             style={{ animationDelay: "50ms" }}
           >
             <DesktopAppsGrid isMobile={false} />
@@ -200,14 +200,22 @@ export default function App() {
           {!isWin && widgetsVisible && (
             <>
               {/* Left column: photo, shortcuts below it, then note */}
-              <div className={`absolute top-36 ${macDockLeft ? "left-24" : "left-6"} flex flex-col gap-4 max-h-[calc(100vh-160px)] overflow-y-auto overscroll-contain thin-scroll pr-1 pb-20 pointer-events-auto`}>
+              <div
+                data-widget-area="true"
+                data-widget-column="left"
+                className={`absolute top-36 ${macDockLeft ? "left-24" : "left-6"} flex flex-col gap-4 max-h-[calc(100vh-160px)] overflow-y-auto overscroll-contain thin-scroll pr-1 pb-20 pointer-events-auto z-20`}
+              >
                 <div className="reveal" style={{ animationDelay: "140ms" }}><PhotoWidget /></div>
                 <div className="reveal" style={{ animationDelay: "190ms" }}><ShortcutTiles /></div>
                 <div className="reveal" style={{ animationDelay: "240ms" }}><NoteWidget /></div>
               </div>
 
               {/* Right column: weather, clock, calendar */}
-              <div className={`absolute top-12 ${macDockRight ? "right-24" : "right-6"} flex flex-col gap-4 items-end max-h-[calc(100vh-100px)] overflow-y-auto overscroll-contain thin-scroll pl-1 pb-20 pointer-events-auto`}>
+              <div
+                data-widget-area="true"
+                data-widget-column="right"
+                className={`absolute top-12 ${macDockRight ? "right-24" : "right-6"} flex flex-col gap-4 items-end max-h-[calc(100vh-100px)] overflow-y-auto overscroll-contain thin-scroll pl-1 pb-20 pointer-events-auto z-20`}
+              >
                 <div className="reveal" style={{ animationDelay: "170ms" }}><WeatherWidget /></div>
                 <div className="reveal" style={{ animationDelay: "220ms" }}><ClockWidget /></div>
                 <div className="reveal" style={{ animationDelay: "270ms" }}><AgendaWidget /></div>
@@ -223,16 +231,18 @@ export default function App() {
         if (!Comp) return null;
         return (
           <Window key={win.id} win={win}>
-            <Suspense
-              fallback={
-                <div className="flex-1 flex flex-col items-center justify-center p-8 gap-2.5 text-white/50 select-none">
-                  <div className="w-5 h-5 border-2 border-white/20 border-t-accent rounded-full animate-spin" />
-                  <span className="text-[11px] font-mono">Loading {win.title}...</span>
-                </div>
-              }
-            >
-              <Comp />
-            </Suspense>
+            <ErrorBoundary fallbackTitle={win.title} onClose={() => closeWindow(win.id)}>
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 gap-2.5 text-white/50 select-none">
+                    <div className="w-5 h-5 border-2 border-white/20 border-t-accent rounded-full animate-spin" />
+                    <span className="text-[11px] font-mono">Loading {win.title}...</span>
+                  </div>
+                }
+              >
+                <Comp />
+              </Suspense>
+            </ErrorBoundary>
           </Window>
         );
       })}

@@ -398,7 +398,7 @@ const RUNTIME_PACKAGES: PackageInfo[] = [
 export interface ApiEndpointInfo {
   path: string;
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-  category: "System" | "Portfolio" | "Social" | "Productivity" | "Storage" | "Sandbox" | "Realtime" | "Arcade" | "Utility";
+  category: "System" | "Portfolio" | "Social" | "Productivity" | "Storage" | "Sandbox" | "Realtime" | "Arcade" | "Utility" | "Media";
   description: string;
   security: "Public Safe (Live)" | "Sandbox Simulated" | "Protected System" | "Rate Limited";
   params?: string;
@@ -1051,18 +1051,38 @@ export default function ActivityMonitor() {
       if (apiRes && apiRes.ok) {
         const apiData = await apiRes.json();
         if (apiData.endpoints && Array.isArray(apiData.endpoints) && apiData.endpoints.length > 0) {
-          setApiEndpoints(apiData.endpoints.map((ep: any) => ({
-            ...ep,
-            category: ep.path.includes("/system") || ep.path.includes("/health") ? "System"
-              : ep.path.includes("/chat") ? "Realtime"
-              : ep.path.includes("/project") || ep.path.includes("/update") ? "Portfolio"
-              : ep.path.includes("/guestbook") ? "Social"
-              : ep.path.includes("/note") ? "Productivity"
-              : ep.path.includes("/file") ? "Storage"
-              : ep.path.includes("/music") ? "Media"
-              : ep.path.includes("/game") ? "Arcade"
-              : "Utility"
-          })));
+          setApiEndpoints((prev) => {
+            const list = prev.length > 0 ? [...prev] : [...DEFAULT_ENDPOINTS];
+            for (const sEp of apiData.endpoints) {
+              const method = (sEp.method || "GET").toUpperCase();
+              const existingIdx = list.findIndex((m) => m.path === sEp.path && m.method === method);
+              if (existingIdx !== -1) {
+                list[existingIdx] = {
+                  ...list[existingIdx],
+                  description: sEp.description || list[existingIdx].description,
+                  security: list[existingIdx].security || (method === "GET" ? "Public Safe (Live)" : "Sandbox Simulated"),
+                };
+              } else {
+                list.push({
+                  path: sEp.path,
+                  method: method as any,
+                  category: sEp.path.includes("/system") || sEp.path.includes("/health") ? "System"
+                    : sEp.path.includes("/chat") ? "Realtime"
+                    : sEp.path.includes("/project") || sEp.path.includes("/update") ? "Portfolio"
+                    : sEp.path.includes("/guestbook") ? "Social"
+                    : sEp.path.includes("/note") ? "Productivity"
+                    : sEp.path.includes("/file") ? "Storage"
+                    : sEp.path.includes("/music") ? "Media"
+                    : sEp.path.includes("/game") ? "Arcade"
+                    : "Utility",
+                  description: sEp.description || "System REST API Endpoint",
+                  security: method === "GET" ? "Public Safe (Live)" : "Sandbox Simulated",
+                  sampleResponse: { status: "ok", path: sEp.path, verified: true },
+                });
+              }
+            }
+            return list;
+          });
         }
       }
     } catch {
@@ -1275,7 +1295,7 @@ export default function ActivityMonitor() {
         try {
           data = await res.json();
         } catch {
-          data = ep.sampleResponse;
+          data = ep.sampleResponse || { ok: true, status: "live" };
         }
 
         const resultObj = {
@@ -1284,7 +1304,7 @@ export default function ActivityMonitor() {
           latency: elapsed,
           testing: false,
           ok: res.ok,
-          data: data || ep.sampleResponse,
+          data: data || ep.sampleResponse || { ok: true, status: "live" },
           simulated: false,
         };
 
@@ -1304,7 +1324,7 @@ export default function ActivityMonitor() {
           latency: elapsed,
           testing: false,
           ok: true,
-          data: ep.sampleResponse,
+          data: ep.sampleResponse || { ok: true, status: "standby" },
           simulated: true,
         };
         setTestedEndpoints((prev) => ({ ...prev, [key]: resultObj }));
@@ -1321,7 +1341,7 @@ export default function ActivityMonitor() {
       await new Promise((r) => setTimeout(r, Math.round(110 + Math.random() * 150)));
       const elapsed = Math.round(performance.now() - start);
 
-      let responseData: any = { ...ep.sampleResponse };
+      let responseData: any = ep.sampleResponse ? { ...ep.sampleResponse } : { ok: true, status: "simulated" };
       let statusCode = 200;
       let statusText = "200 OK (Sandbox Simulated)";
 
@@ -2272,7 +2292,7 @@ export default function ActivityMonitor() {
                         else if (ep.method === "PATCH") methodColor = "bg-purple-500/15 text-purple-300 border-purple-500/30";
                         else if (ep.method === "DELETE") methodColor = "bg-rose-500/15 text-rose-300 border-rose-500/30";
 
-                        const isSandbox = ep.security.includes("Sandbox") || ep.security.includes("Protected");
+                        const isSandbox = (ep.security || "").includes("Sandbox") || (ep.security || "").includes("Protected") || ep.method !== "GET";
 
                         return (
                           <tr key={key} className="hover:bg-white/5 transition-colors">
@@ -2293,7 +2313,7 @@ export default function ActivityMonitor() {
                                 }`}
                               >
                                 <GIconLock size={9} />
-                                <span>{ep.security}</span>
+                                <span>{ep.security || (ep.method === "GET" ? "Public Safe (Live)" : "Sandbox Simulated")}</span>
                               </span>
                             </td>
                             <td className="py-2.5 px-3 font-sans text-white/50 text-[10px] whitespace-nowrap">
@@ -2361,7 +2381,7 @@ export default function ActivityMonitor() {
                     else if (ep.method === "PATCH") methodColor = "bg-purple-500/15 text-purple-300 border-purple-500/30";
                     else if (ep.method === "DELETE") methodColor = "bg-rose-500/15 text-rose-300 border-rose-500/30";
 
-                    const isSandbox = ep.security.includes("Sandbox") || ep.security.includes("Protected");
+                    const isSandbox = (ep.security || "").includes("Sandbox") || (ep.security || "").includes("Protected") || ep.method !== "GET";
 
                     return (
                       <div key={key} className="p-3 rounded-xl border border-white/10 bg-black/25 space-y-2">
@@ -2381,7 +2401,7 @@ export default function ActivityMonitor() {
                           <span className={`px-1.5 py-0.5 rounded font-medium border flex items-center gap-1 ${
                             isSandbox ? "bg-sky-500/10 text-sky-300 border-sky-500/20" : "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
                           }`}>
-                            <GIconLock size={8} /> {ep.security}
+                            <GIconLock size={8} /> {ep.security || (ep.method === "GET" ? "Public Safe (Live)" : "Sandbox Simulated")}
                           </span>
                         </div>
 
@@ -3001,7 +3021,7 @@ export default function ActivityMonitor() {
                   </span>
                   <span className="flex items-center gap-1 text-sky-400 font-medium">
                     <GIconLock size={10} />
-                    {selectedEndpoint.security}
+                    {selectedEndpoint.security || (selectedEndpoint.method === "GET" ? "Public Safe (Live)" : "Sandbox Simulated")}
                   </span>
                 </div>
               </div>
