@@ -23,6 +23,8 @@ export interface DesktopAppItem {
   app: string; // registered app id e.g. "resume"
   label: string; // display name e.g. "Resume"
   color: string; // accent tint e.g. "#4B5A73"
+  x?: number; // custom desktop X position in px
+  y?: number; // custom desktop Y position in px
 }
 
 export interface DesktopFolderItem {
@@ -31,6 +33,8 @@ export interface DesktopFolderItem {
   name: string; // e.g. "Featured"
   badge?: number; // optional badge count
   apps: DesktopAppItem[]; // nested apps
+  x?: number; // custom desktop X position in px
+  y?: number; // custom desktop Y position in px
 }
 
 export type DesktopItem = DesktopAppItem | DesktopFolderItem;

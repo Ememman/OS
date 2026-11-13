@@ -16,6 +16,7 @@ interface DesktopStoreState {
   namingModal: { isOpen: boolean; folderId: string; initialName: string } | null;
 
   // Actions
+  moveItem: (id: string, x: number, y: number) => void;
   combineItems: (draggedId: string, targetId: string) => void;
   renameFolder: (folderId: string, newName: string) => void;
   removeAppFromFolder: (folderId: string, appId: string) => void;
@@ -25,6 +26,7 @@ interface DesktopStoreState {
   closeFolder: () => void;
   openNamingModal: (folderId: string, currentName: string) => void;
   closeNamingModal: () => void;
+  cleanUpDesktop: () => void;
   resetDesktop: () => void;
 }
 
@@ -78,6 +80,17 @@ export const useDesktopStore = create<DesktopStoreState>((set, get) => ({
   activeFolderId: null,
   namingModal: null,
 
+  moveItem: (id: string, x: number, y: number) => {
+    const updated = get().items.map((it) => {
+      if (it.id === id) {
+        return { ...it, x, y };
+      }
+      return it;
+    });
+    persistItems(updated);
+    set({ items: updated });
+  },
+
   combineItems: (draggedId: string, targetId: string) => {
     if (!draggedId || !targetId || draggedId === targetId) return;
 
@@ -108,6 +121,8 @@ export const useDesktopStore = create<DesktopStoreState>((set, get) => ({
         type: "folder",
         name: "Featured", // Matches user reference screenshot!
         apps: [target, dragged],
+        x: target.x,
+        y: target.y,
       };
 
       // Replace target with new folder, and remove dragged item
@@ -297,6 +312,18 @@ export const useDesktopStore = create<DesktopStoreState>((set, get) => ({
 
   closeNamingModal: () => {
     set({ namingModal: null });
+  },
+
+  cleanUpDesktop: () => {
+    soundFx.playClick();
+    const cleared = get().items.map((it) => {
+      const copy = { ...it };
+      delete copy.x;
+      delete copy.y;
+      return copy;
+    });
+    persistItems(cleared);
+    set({ items: cleared });
   },
 
   resetDesktop: () => {
