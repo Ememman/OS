@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { motion } from "framer-motion";
 import { useOS } from "../../store/useOS";
 import { useIsMobile } from "../../lib/useMediaQuery";
 import { soundFx } from "../../lib/soundFx";
@@ -50,6 +51,8 @@ const TASKBAR_ITEMS = [
   { app: "settings", label: "Settings", icon: GIconSettings, color: "#8892A6" },
   { app: "resume", label: "Resume", icon: GIconResume, color: "#4B5A73" },
 ];
+
+const TASKBAR_ITEMS_MAP = Object.fromEntries(TASKBAR_ITEMS.map((item) => [item.app, item]));
 
 const POP_ANIM = { animation: "menuOpen 150ms cubic-bezier(.16,1,.3,1) both" };
 
@@ -407,11 +410,16 @@ export default function WinTaskbar() {
     missionControlOpen,
     unreadChatCount,
     systemSounds,
+    dockApps,
+    reorderDockApps,
   } = useOS();
   const [panel, setPanel] = useState<"start" | "tray" | "weather" | "date" | null>(null);
   const isMobile = useIsMobile();
   const [time, setTime] = useState("");
   const [date, setDate] = useState("");
+  const [draggedApp, setDraggedApp] = useState<string | null>(null);
+  const [dropTargetApp, setDropTargetApp] = useState<string | null>(null);
+  const touchDragRef = useRef<{ app: string; timeout: any; isDragging: boolean } | null>(null);
 
   useEffect(() => {
     const update = () => {
@@ -429,17 +437,97 @@ export default function WinTaskbar() {
     setPanel((p) => (p === which ? null : which));
   };
 
+  const handleDragStart = (e: React.DragEvent, app: string) => {
+    e.dataTransfer.setData("text/plain", app);
+    e.dataTransfer.effectAllowed = "move";
+    setDraggedApp(app);
+  };
+
+  const handleDragOver = (e: React.DragEvent, app: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dropTargetApp !== app) {
+      setDropTargetApp(app);
+    }
+  };
+
+  const handleDragLeave = (_e: React.DragEvent, app: string) => {
+    if (dropTargetApp === app) {
+      setDropTargetApp(null);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, targetApp: string) => {
+    e.preventDefault();
+    const sourceApp = e.dataTransfer.getData("text/plain") || draggedApp;
+    if (sourceApp && sourceApp !== targetApp) {
+      reorderDockApps(sourceApp, targetApp);
+      if (systemSounds) soundFx.playPop();
+    }
+    setDraggedApp(null);
+    setDropTargetApp(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedApp(null);
+    setDropTargetApp(null);
+  };
+
+  const handleTouchStart = (app: string) => {
+    touchDragRef.current = {
+      app,
+      isDragging: false,
+      timeout: setTimeout(() => {
+        if (touchDragRef.current) {
+          touchDragRef.current.isDragging = true;
+          setDraggedApp(app);
+          if (systemSounds) soundFx.playPop();
+        }
+      }, 250),
+    };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchDragRef.current?.isDragging) return;
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const target = el?.closest("[data-dock-app]");
+    if (target) {
+      const targetApp = target.getAttribute("data-dock-app");
+      if (targetApp && targetApp !== dropTargetApp) {
+        setDropTargetApp(targetApp);
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (touchDragRef.current) {
+      clearTimeout(touchDragRef.current.timeout);
+      if (touchDragRef.current.isDragging && dropTargetApp && touchDragRef.current.app !== dropTargetApp) {
+        reorderDockApps(touchDragRef.current.app, dropTargetApp);
+        if (systemSounds) soundFx.playPop();
+      }
+    }
+    touchDragRef.current = null;
+    setDraggedApp(null);
+    setDropTargetApp(null);
+  };
+
   const openAppIds = new Set(windows.map((w) => w.app));
   const unminimized = windows.filter((w) => !w.minimized);
   const maxZ = unminimized.length > 0 ? Math.max(...unminimized.map((w) => w.z)) : 0;
 
+  const orderedItems = (dockApps || [])
+    .map((id) => TASKBAR_ITEMS_MAP[id])
+    .filter(Boolean);
+
   // On mobile screens, prioritize active running windows first so the user can easily switch apps
   const taskbarApps = isMobile
     ? [
-        ...TASKBAR_ITEMS.filter((i) => openAppIds.has(i.app)),
-        ...TASKBAR_ITEMS.filter((i) => !openAppIds.has(i.app)),
+        ...orderedItems.filter((i) => openAppIds.has(i.app)),
+        ...orderedItems.filter((i) => !openAppIds.has(i.app)),
       ]
-    : TASKBAR_ITEMS;
+    : orderedItems;
 
   const btnSize = isMobile ? "w-9 h-9" : "w-10 h-10";
   const iconSize = isMobile ? 18 : 19;
@@ -512,42 +600,64 @@ export default function WinTaskbar() {
             const isOpen = !!existing;
             const isMinimized = existing?.minimized ?? false;
             const isActive = isOpen && !isMinimized && existing.z >= maxZ;
+            const isBeingDragged = draggedApp === app;
+            const isDropTarget = dropTargetApp === app && draggedApp !== app;
 
             return (
-              <button
+              <motion.div
                 key={app}
-                onClick={() => {
-                  toggleApp(app);
-                }}
-                title={`${label}${isActive ? " · Active" : isMinimized ? " · Minimized" : isOpen ? " · Running" : ""}`}
-                className={`relative ${btnSize} rounded-xl flex items-center justify-center transition-all shrink-0 active:scale-95 cursor-pointer ${
-                  isActive
-                    ? "bg-white/16 border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
-                    : isMinimized
-                      ? "bg-white/5 hover:bg-white/10"
-                      : isOpen
-                        ? "bg-white/10 hover:bg-white/15"
-                        : "hover:bg-white/10"
+                layout
+                transition={{ type: "spring", stiffness: 450, damping: 28 }}
+                className={`relative transition-all duration-150 rounded-xl ${
+                  isBeingDragged ? "opacity-35 scale-90" : ""
+                } ${
+                  isDropTarget ? "ring-2 ring-sky-400 bg-sky-500/25 scale-105 shadow-md shadow-sky-500/30" : ""
                 }`}
+                onDragOver={(e) => handleDragOver(e, app)}
+                onDragLeave={(e) => handleDragLeave(e, app)}
+                onDrop={(e) => handleDrop(e, app)}
               >
-                <Icon size={iconSize} color={color} />
-                {isOpen && (
-                  <span
-                    className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 rounded-full transition-all duration-200 ${
-                      isActive
-                        ? "w-4 h-0.75 bg-accent shadow-[0_0_8px_var(--color-accent,#38bdf8)]"
-                        : isMinimized
-                          ? "w-1.5 h-0.75 bg-white/40"
-                          : "w-3 h-0.75 bg-white/70"
-                    }`}
-                  />
-                )}
-                {app === "chats" && unreadChatCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center shadow-md shadow-rose-500/60 border border-white/20 z-20 pointer-events-none select-none">
-                    {unreadChatCount > 99 ? "99+" : unreadChatCount}
-                  </span>
-                )}
-              </button>
+                <button
+                  data-dock-app={app}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, app)}
+                  onDragEnd={handleDragEnd}
+                  onTouchStart={() => handleTouchStart(app)}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  onClick={() => {
+                    if (!draggedApp) toggleApp(app);
+                  }}
+                  title={`${label}${isActive ? " · Active" : isMinimized ? " · Minimized" : isOpen ? " · Running" : ""} (Drag to rearrange)`}
+                  className={`relative ${btnSize} rounded-xl flex items-center justify-center transition-all shrink-0 active:scale-95 cursor-pointer select-none ${
+                    isActive
+                      ? "bg-white/16 border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
+                      : isMinimized
+                        ? "bg-white/5 hover:bg-white/10"
+                        : isOpen
+                          ? "bg-white/10 hover:bg-white/15"
+                          : "hover:bg-white/10"
+                  }`}
+                >
+                  <Icon size={iconSize} color={color} />
+                  {isOpen && (
+                    <span
+                      className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 rounded-full transition-all duration-200 ${
+                        isActive
+                          ? "w-4 h-0.75 bg-accent shadow-[0_0_8px_var(--color-accent,#38bdf8)]"
+                          : isMinimized
+                            ? "w-1.5 h-0.75 bg-white/40"
+                            : "w-3 h-0.75 bg-white/70"
+                      }`}
+                    />
+                  )}
+                  {app === "chats" && unreadChatCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center shadow-md shadow-rose-500/60 border border-white/20 z-20 pointer-events-none select-none">
+                      {unreadChatCount > 99 ? "99+" : unreadChatCount}
+                    </span>
+                  )}
+                </button>
+              </motion.div>
             );
           })}
         </div>

@@ -44,7 +44,8 @@ const WIN_APP_ICONS: Record<string, { icon: React.ComponentType<any>; color: str
 export default function Window({ win, children }) {
   const {
     closeWindow,
-    minimizeWindow,
+    requestMinimize: storeRequestMinimize,
+    minimizingWindowId,
     toggleMaximize,
     snapWindow,
     moveWindow,
@@ -113,10 +114,19 @@ export default function Window({ win, children }) {
     wasMinimized.current = win.minimized;
   }, [win.minimized]);
 
+  useEffect(() => {
+    if (minimizingWindowId === win.id) {
+      setPhase("minimizing");
+    }
+  }, [minimizingWindowId, win.id]);
+
   const dockTarget = () => {
-    // Windows taskbar is always at the bottom. macOS Dock can be bottom,
-    // left, or right (Settings → Dock position) — and always collapses
-    // back to bottom on phones, where there's no room for a vertical dock.
+    // If the dock or taskbar icon for this app is present in DOM, animate directly towards it!
+    const targetEl = document.querySelector(`[data-dock-app="${win.app}"]`);
+    if (targetEl) {
+      const rect = targetEl.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }
     const macDockPos = isMobile ? "bottom" : dockPosition;
 
     if (isWin) return { x: window.innerWidth / 2, y: window.innerHeight - 28 };
@@ -134,7 +144,7 @@ export default function Window({ win, children }) {
   );
 
   const requestClose = () => runExit("closing", () => closeWindow(win.id));
-  const requestMinimize = () => runExit("minimizing", () => minimizeWindow(win.id));
+  const requestMinimize = () => storeRequestMinimize(win.id);
 
     const onDragStart = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {

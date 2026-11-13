@@ -204,9 +204,9 @@ export default function Games() {
   }
 
   return (
-    <div className="p-3 sm:p-5 pb-14 sm:pb-20 space-y-5 text-white select-none h-full overflow-y-auto thin-scroll">
+    <div className="p-3 sm:p-4.5 pb-6 sm:pb-8 space-y-3.5 sm:space-y-4 text-white select-none h-full overflow-y-auto thin-scroll">
       {/* Arcade Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-white/10 pb-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <h2 className="font-display text-lg sm:text-xl font-black text-white tracking-tight flex items-center gap-2">
@@ -232,34 +232,34 @@ export default function Games() {
 
       {/* Primary Playable Games Grid */}
       <div>
-        <div className="text-[11px] text-white/50 uppercase tracking-wider mb-2.5 font-bold flex items-center gap-1.5">
+        <div className="text-[11px] text-white/50 uppercase tracking-wider mb-2 font-bold flex items-center gap-1.5">
           <GIconPlay size={12} className="text-emerald-400" />
           <span>Instant Play Minigames</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           {/* Block Blast */}
           <button
             onClick={() => setOpen("blockblast")}
-            className="flex flex-col justify-between p-3.5 rounded-2xl border border-accent/40 bg-gradient-to-b from-accent/15 to-accent/5 hover:from-accent/25 hover:to-accent/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-accent/20 active:scale-[0.98]"
+            className="flex flex-col justify-between p-3 sm:p-3.5 rounded-2xl border border-accent/40 bg-gradient-to-b from-accent/15 to-accent/5 hover:from-accent/25 hover:to-accent/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-accent/20 active:scale-[0.98]"
           >
             <div>
-              <div className="flex items-center justify-between mb-2.5">
-                <div className="w-10 h-10 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
-                  <GIconPuzzle className="text-accent" size={22} />
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-9 h-9 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+                  <GIconPuzzle className="text-accent" size={20} />
                 </div>
                 <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-md bg-accent/20 text-accent border border-accent/30">
                   Drag & Drop
                 </span>
               </div>
               <div className="text-sm font-bold text-white group-hover:text-accent transition-colors">Block Blast</div>
-              <div className="text-[11px] text-white/60 mt-1 leading-snug">
+              <div className="text-[11px] text-white/60 mt-1 line-clamp-2 leading-snug min-h-[2.4rem]">
                 Drag blocks onto the 8×8 board to clear rows and columns with combos.
               </div>
             </div>
-            <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
+            <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
               <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block mr-0.5" /> Play Now
+                Play Now
               </span>
               <span className="text-white/40 text-[10px]">Scores Enabled</span>
             </div>
@@ -268,25 +268,25 @@ export default function Games() {
           {/* 2048 Puzzle */}
           <button
             onClick={() => setOpen("2048")}
-            className="flex flex-col justify-between p-3.5 rounded-2xl border border-amber-500/40 bg-gradient-to-b from-amber-500/15 to-amber-500/5 hover:from-amber-500/25 hover:to-amber-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-amber-500/20 active:scale-[0.98]"
+            className="flex flex-col justify-between p-3 sm:p-3.5 rounded-2xl border border-amber-500/40 bg-gradient-to-b from-amber-500/15 to-amber-500/5 hover:from-amber-500/25 hover:to-amber-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-amber-500/20 active:scale-[0.98]"
           >
             <div>
-              <div className="flex items-center justify-between mb-2.5">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
-                  <GIconTrophy className="text-amber-400" size={20} />
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+                  <GIconTrophy className="text-amber-400" size={18} />
                 </div>
                 <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   Undo + Merge
                 </span>
               </div>
               <div className="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">2048 Puzzle</div>
-              <div className="text-[11px] text-white/60 mt-1 leading-snug">
+              <div className="text-[11px] text-white/60 mt-1 line-clamp-2 leading-snug min-h-[2.4rem]">
                 Slide and merge matching number tiles to build the legendary 2048 tile.
               </div>
             </div>
-            <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
+            <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
               <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block mr-0.5" /> Play Now
+                Play Now
               </span>
               <span className="text-white/40 text-[10px]">Scores Enabled</span>
             </div>
@@ -295,25 +295,25 @@ export default function Games() {
           {/* Snake Retro */}
           <button
             onClick={() => setOpen("snake")}
-            className="flex flex-col justify-between p-3.5 rounded-2xl border border-emerald-500/40 bg-gradient-to-b from-emerald-500/15 to-emerald-500/5 hover:from-emerald-500/25 hover:to-emerald-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-emerald-500/20 active:scale-[0.98]"
+            className="flex flex-col justify-between p-3 sm:p-3.5 rounded-2xl border border-emerald-500/40 bg-gradient-to-b from-emerald-500/15 to-emerald-500/5 hover:from-emerald-500/25 hover:to-emerald-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-emerald-500/20 active:scale-[0.98]"
           >
             <div>
-              <div className="flex items-center justify-between mb-2.5">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
-                  <GIconPlay className="text-emerald-400" size={20} />
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+                  <GIconPlay className="text-emerald-400" size={18} />
                 </div>
                 <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   Tuned Speed
                 </span>
               </div>
               <div className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">Snake Retro</div>
-              <div className="text-[11px] text-white/60 mt-1 leading-snug">
+              <div className="text-[11px] text-white/60 mt-1 line-clamp-2 leading-snug min-h-[2.4rem]">
                 Classic arcade snake with adjusted playable speed, golden apples, & touch D-pad.
               </div>
             </div>
-            <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
+            <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
               <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block mr-0.5" /> Play Now
+                Play Now
               </span>
               <span className="text-white/40 text-[10px]">Scores Enabled</span>
             </div>
@@ -322,25 +322,25 @@ export default function Games() {
           {/* Minesweeper */}
           <button
             onClick={() => setOpen("minesweeper")}
-            className="flex flex-col justify-between p-3.5 rounded-2xl border border-rose-500/40 bg-gradient-to-b from-rose-500/15 to-rose-500/5 hover:from-rose-500/25 hover:to-rose-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-rose-500/20 active:scale-[0.98]"
+            className="flex flex-col justify-between p-3 sm:p-3.5 rounded-2xl border border-rose-500/40 bg-gradient-to-b from-rose-500/15 to-rose-500/5 hover:from-rose-500/25 hover:to-rose-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-rose-500/20 active:scale-[0.98]"
           >
             <div>
-              <div className="flex items-center justify-between mb-2.5">
-                <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm text-rose-400">
-                  <GIconFlag size={20} />
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-9 h-9 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm text-rose-400">
+                  <GIconFlag size={18} />
                 </div>
                 <span className="text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30">
                   Chording + Flags
                 </span>
               </div>
               <div className="text-sm font-bold text-white group-hover:text-rose-400 transition-colors">Minesweeper Retro</div>
-              <div className="text-[11px] text-white/60 mt-1 leading-snug">
+              <div className="text-[11px] text-white/60 mt-1 line-clamp-2 leading-snug min-h-[2.4rem]">
                 Defuse minefields with responsive auto-scale, digital timers, & chording.
               </div>
             </div>
-            <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
+            <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
               <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block mr-0.5" /> Play Now
+                Play Now
               </span>
               <span className="text-white/40 text-[10px]">Scores Enabled</span>
             </div>
@@ -349,8 +349,8 @@ export default function Games() {
       </div>
 
       {/* Enhanced Upcoming Games Section */}
-      <div className="pt-2">
-        <div className="flex items-center justify-between mb-2.5">
+      <div className="pt-1">
+        <div className="flex items-center justify-between mb-2">
           <div className="text-[11px] text-white/50 uppercase tracking-wider font-bold flex items-center gap-1.5">
             <GIconSparkles size={12} className="text-amber-400" />
             <span>Upcoming Arcade Releases</span>
@@ -358,7 +358,7 @@ export default function Games() {
           <span className="text-[10px] text-white/40">In active development</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
           {UPCOMING_GAMES.map((g) => {
             const isNotified = notifiedGames.has(g.id);
 
@@ -366,10 +366,10 @@ export default function Games() {
               <div
                 key={g.id}
                 onClick={() => setPreviewGame(g)}
-                className="group relative flex flex-col justify-between p-3.5 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] hover:border-white/20 transition-all text-left cursor-pointer shadow-sm"
+                className="group relative flex flex-col justify-between p-3 rounded-xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.07] hover:border-white/20 transition-all text-left cursor-pointer shadow-sm"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-1.5">
                     <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-md border ${g.badgeColor}`}>
                       {g.genre}
                     </span>
@@ -379,20 +379,20 @@ export default function Games() {
                   </div>
 
                   <div className="flex items-center gap-2 mb-1">
-                    <GIconLock size={13} className="text-white/40 group-hover:text-white/70 transition-colors shrink-0" />
-                    <h4 className="text-sm font-bold text-white group-hover:text-accent transition-colors">
+                    <GIconLock size={12} className="text-white/40 group-hover:text-white/70 transition-colors shrink-0" />
+                    <h4 className="text-[13px] font-bold text-white group-hover:text-accent transition-colors">
                       {g.name}
                     </h4>
                   </div>
 
-                  <p className="text-[11px] text-white/50 line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] text-white/50 line-clamp-2 leading-snug min-h-[2.2rem]">
                     {g.desc}
                   </p>
                 </div>
 
-                <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-xs">
+                <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-xs">
                   <span className="text-[10px] font-semibold text-amber-300/80">
-                    ● {g.status}
+                    {g.status}
                   </span>
                   <span className="text-[10px] text-white/40 group-hover:text-accent font-medium transition-colors">
                     Preview Details →
