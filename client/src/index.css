@@ -666,38 +666,3 @@ select option:checked {
   animation-iteration-count: infinite;
 }
 
-/* 6. Sonner Glass Toast Polish */
-[data-sonner-toaster] {
-  font-family: inherit !important;
-  z-index: 99999 !important;
-}
-
-[data-sonner-toaster] [data-sonner-toast] {
-  background: rgba(12, 18, 32, 0.94) !important;
-  backdrop-filter: blur(24px) !important;
-  -webkit-backdrop-filter: blur(24px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(255, 255, 255, 0.1) !important;
-  border-radius: 18px !important;
-  color: #ffffff !important;
-  padding: 14px 16px !important;
-}
-
-[data-sonner-toaster] [data-sonner-toast] [data-title] {
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  font-size: 13px !important;
-}
-
-[data-sonner-toaster] [data-sonner-toast] [data-description] {
-  color: rgba(255, 255, 255, 0.75) !important;
-  font-size: 11.5px !important;
-  line-height: 1.4 !important;
-}
-
-[data-sonner-toaster] [data-close-button] {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-}
-

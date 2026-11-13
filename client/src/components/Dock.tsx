@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useOS } from "./../store/useOS";
 import { useIsMobile } from "../lib/useMediaQuery";
@@ -41,6 +41,8 @@ const DOCK_ITEMS = [
   { app: "resume", label: "Resume", icon: GIconResume, color: "#4B5A73" },
 ];
 
+const DOCK_ITEMS_MAP = Object.fromEntries(DOCK_ITEMS.map((item) => [item.app, item]));
+
 const POSITION_CLASSES = {
   bottom: "bottom-1.5 sm:bottom-2 left-1/2 -translate-x-1/2 max-w-[calc(100vw-12px)] sm:max-w-[calc(100vw-16px)]",
   left: "left-1 sm:left-2 top-1/2 -translate-y-1/2 max-h-[calc(100vh-56px)]",
@@ -48,7 +50,19 @@ const POSITION_CLASSES = {
 };
 
 export default function Dock() {
-  const { toggleApp, windows, closeWindow, compact, dockPosition, toggleMissionControl, missionControlOpen, systemSounds, unreadChatCount } = useOS();
+  const {
+    toggleApp,
+    windows,
+    closeWindow,
+    compact,
+    dockPosition,
+    toggleMissionControl,
+    missionControlOpen,
+    systemSounds,
+    unreadChatCount,
+    dockApps,
+    reorderDockApps,
+  } = useOS();
   const isMobile = useIsMobile();
   const position = isMobile ? "bottom" : dockPosition;
   const vertical = position === "left" || position === "right";
@@ -59,6 +73,13 @@ export default function Dock() {
   const size = isMobile ? "w-11 h-11" : effectiveCompact ? "w-10 h-10" : "w-12 h-12";
   const iconSize = isMobile ? 22 : effectiveCompact ? 16 : 22;
   const [hoveredApp, setHoveredApp] = useState<string | null>(null);
+  const [draggedApp, setDraggedApp] = useState<string | null>(null);
+  const [dropTargetApp, setDropTargetApp] = useState<string | null>(null);
+  const touchDragRef = useRef<{ app: string; timeout: any; isDragging: boolean } | null>(null);
+
+  const orderedDockItems = (dockApps || [])
+    .map((id) => DOCK_ITEMS_MAP[id])
+    .filter(Boolean);
 
   const tooltipPos = position === "left"
     ? "left-full ml-2.5 top-1/2 -translate-y-1/2"
@@ -73,6 +94,83 @@ export default function Dock() {
 
   const handleLaunch = (app: string) => {
     toggleApp(app);
+  };
+
+  const handleDragStart = (e: React.DragEvent, app: string) => {
+    e.dataTransfer.setData("text/plain", app);
+    e.dataTransfer.effectAllowed = "move";
+    setDraggedApp(app);
+    setHoveredApp(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, app: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dropTargetApp !== app) {
+      setDropTargetApp(app);
+    }
+  };
+
+  const handleDragLeave = (_e: React.DragEvent, app: string) => {
+    if (dropTargetApp === app) {
+      setDropTargetApp(null);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, targetApp: string) => {
+    e.preventDefault();
+    const sourceApp = e.dataTransfer.getData("text/plain") || draggedApp;
+    if (sourceApp && sourceApp !== targetApp) {
+      reorderDockApps(sourceApp, targetApp);
+      if (systemSounds) soundFx.playPop();
+    }
+    setDraggedApp(null);
+    setDropTargetApp(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedApp(null);
+    setDropTargetApp(null);
+  };
+
+  const handleTouchStart = (app: string) => {
+    touchDragRef.current = {
+      app,
+      isDragging: false,
+      timeout: setTimeout(() => {
+        if (touchDragRef.current) {
+          touchDragRef.current.isDragging = true;
+          setDraggedApp(app);
+          if (systemSounds) soundFx.playPop();
+        }
+      }, 250),
+    };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchDragRef.current?.isDragging) return;
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const target = el?.closest("[data-dock-app]");
+    if (target) {
+      const targetApp = target.getAttribute("data-dock-app");
+      if (targetApp && targetApp !== dropTargetApp) {
+        setDropTargetApp(targetApp);
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (touchDragRef.current) {
+      clearTimeout(touchDragRef.current.timeout);
+      if (touchDragRef.current.isDragging && dropTargetApp && touchDragRef.current.app !== dropTargetApp) {
+        reorderDockApps(touchDragRef.current.app, dropTargetApp);
+        if (systemSounds) soundFx.playPop();
+      }
+    }
+    touchDragRef.current = null;
+    setDraggedApp(null);
+    setDropTargetApp(null);
   };
 
   const hoverMotion = isMobile ? undefined : {
@@ -127,67 +225,91 @@ export default function Dock() {
 
         <div className={vertical ? "h-px w-8 bg-white/10 my-1 shrink-0" : "w-px h-8 bg-white/10 mx-1 self-center shrink-0"} />
 
-        {/* Dock Items */}
-        {DOCK_ITEMS.map(({ app, label, icon: Icon, color }) => {
+        {/* Reorderable Dock Items */}
+        {orderedDockItems.map(({ app, label, icon: Icon, color }) => {
           const appWin = windows.find((w) => w.app === app);
           const isAppActive = appWin && !appWin.minimized && appWin.z >= maxZ;
           const isAppMinimized = appWin?.minimized ?? false;
-          return (
-          <div key={app} className="relative">
-            <motion.button
-              onClick={() => handleLaunch(app)}
-              onMouseEnter={() => setHoveredApp(app)}
-              onMouseLeave={() => setHoveredApp(null)}
-              whileHover={hoverMotion}
-              whileTap={{ scale: 0.92 }}
-              title={label}
-              className={`relative flex flex-col items-center justify-center shrink-0 ${size} rounded-2xl transition-colors cursor-pointer`}
-              style={{ background: `linear-gradient(160deg, ${color}33, ${color}18)`, border: `1px solid ${color}30` }}
-            >
-              <Icon size={iconSize} color={color} />
-              {openApps.has(app) && (
-                <motion.span
-                  layoutId={`active-dot-${app}`}
-                  className={`absolute rounded-full aspect-square shrink-0 ${
-                    isAppActive
-                      ? "bg-white shadow-[0_0_8px_rgba(255,255,255,0.95)]"
-                      : isAppMinimized
-                        ? "bg-white/45 shadow-none"
-                        : "bg-white/80 shadow-[0_0_4px_rgba(255,255,255,0.5)]"
-                  } ${
-                    vertical ? "w-1 h-1 left-0.5 top-1/2 -translate-y-1/2" : isMobile ? "w-1.5 h-1.5 -bottom-0.5" : "w-1 h-1 -bottom-1"
-                  }`}
-                />
-              )}
-              {app === "chats" && unreadChatCount > 0 && (
-                <motion.span
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                  className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow-lg shadow-rose-500/60 border border-white/30 z-20 pointer-events-none select-none"
-                >
-                  {unreadChatCount > 99 ? "99+" : unreadChatCount}
-                </motion.span>
-              )}
-            </motion.button>
+          const isBeingDragged = draggedApp === app;
+          const isDropTarget = dropTargetApp === app && draggedApp !== app;
 
-            <AnimatePresence>
-              {hoveredApp === app && !isMobile && (
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.85, y: 4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.85, y: 4 }}
-                  transition={{ duration: 0.15 }}
-                  className={`pointer-events-none absolute ${tooltipPos} text-[10px] font-medium bg-black/85 backdrop-blur-md text-white px-2.5 py-1 rounded-lg border border-white/15 shadow-xl whitespace-nowrap z-50`}
-                >
-                  {label}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </div>
-        );
-      })}
+          return (
+            <motion.div
+              key={app}
+              layout
+              transition={{ type: "spring", stiffness: 450, damping: 28 }}
+              className={`relative transition-all duration-150 rounded-2xl ${
+                isBeingDragged ? "opacity-35 scale-90" : ""
+              } ${
+                isDropTarget ? "ring-2 ring-accent scale-105 shadow-lg shadow-accent/40" : ""
+              }`}
+              onDragOver={(e) => handleDragOver(e, app)}
+              onDragLeave={(e) => handleDragLeave(e, app)}
+              onDrop={(e) => handleDrop(e, app)}
+            >
+              <motion.button
+                data-dock-app={app}
+                draggable
+                onDragStart={(e) => handleDragStart(e, app)}
+                onDragEnd={handleDragEnd}
+                onTouchStart={() => handleTouchStart(app)}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onClick={() => {
+                  if (!draggedApp) handleLaunch(app);
+                }}
+                onMouseEnter={() => !draggedApp && setHoveredApp(app)}
+                onMouseLeave={() => setHoveredApp(null)}
+                whileHover={draggedApp ? undefined : hoverMotion}
+                whileTap={{ scale: 0.92 }}
+                title={`${label} (Drag to rearrange)`}
+                className={`relative flex flex-col items-center justify-center shrink-0 ${size} rounded-2xl transition-colors cursor-pointer select-none`}
+                style={{ background: `linear-gradient(160deg, ${color}33, ${color}18)`, border: `1px solid ${color}30` }}
+              >
+                <Icon size={iconSize} color={color} />
+                {openApps.has(app) && (
+                  <motion.span
+                    layoutId={`active-dot-${app}`}
+                    className={`absolute rounded-full aspect-square shrink-0 ${
+                      isAppActive
+                        ? "bg-white shadow-[0_0_8px_rgba(255,255,255,0.95)]"
+                        : isAppMinimized
+                          ? "bg-white/45 shadow-none"
+                          : "bg-white/80 shadow-[0_0_4px_rgba(255,255,255,0.5)]"
+                    } ${
+                      vertical ? "w-1 h-1 left-0.5 top-1/2 -translate-y-1/2" : isMobile ? "w-1.5 h-1.5 -bottom-0.5" : "w-1 h-1 -bottom-1"
+                    }`}
+                  />
+                )}
+                {app === "chats" && unreadChatCount > 0 && (
+                  <motion.span
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                    className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow-lg shadow-rose-500/60 border border-white/30 z-20 pointer-events-none select-none"
+                  >
+                    {unreadChatCount > 99 ? "99+" : unreadChatCount}
+                  </motion.span>
+                )}
+              </motion.button>
+
+              <AnimatePresence>
+                {hoveredApp === app && !isMobile && !draggedApp && (
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.85, y: 4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.85, y: 4 }}
+                    transition={{ duration: 0.15 }}
+                    className={`pointer-events-none absolute ${tooltipPos} text-[10px] font-medium bg-black/85 backdrop-blur-md text-white px-2.5 py-1 rounded-lg border border-white/15 shadow-xl whitespace-nowrap z-50`}
+                  >
+                    {label}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
 
         <div className={vertical ? "h-px w-8 bg-white/10 my-1 shrink-0" : "w-px h-8 bg-white/10 mx-1 self-center shrink-0"} />
 
