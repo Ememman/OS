@@ -146,6 +146,58 @@ function findSafePositionNearby(
   return null;
 }
 
+/**
+ * Checks if target position overlaps with any other existing desktop item.
+ * If overlapping, searches nearby open coordinates to guarantee zero overlapping.
+ */
+function resolveDesktopOverlap(
+  targetX: number,
+  targetY: number,
+  movingItemId: string,
+  allItems: DesktopItem[],
+  getDefPos: (idx: number) => { x: number; y: number },
+  bounds: { minX: number; maxX: number; minY: number; maxY: number },
+  isBlockedByWidgets: (x: number, y: number) => boolean,
+  isNarrow: boolean
+): { x: number; y: number } {
+  const thresholdX = isNarrow ? 66 : 74;
+  const thresholdY = isNarrow ? 74 : 82;
+  const slotW = isNarrow ? 76 : 92;
+  const slotH = isNarrow ? 84 : 96;
+
+  const others = allItems
+    .filter((it) => it.id !== movingItemId)
+    .map((it, idx) => ({
+      x: typeof it.x === "number" ? it.x : getDefPos(idx).x,
+      y: typeof it.y === "number" ? it.y : getDefPos(idx).y,
+    }));
+
+  const isOccupied = (x: number, y: number) => {
+    if (isBlockedByWidgets(x, y)) return true;
+    return others.some((o) => Math.abs(o.x - x) < thresholdX && Math.abs(o.y - y) < thresholdY);
+  };
+
+  if (!isOccupied(targetX, targetY)) {
+    return { x: targetX, y: targetY };
+  }
+
+  // Spiral outwards for nearest available non-overlapping slot
+  for (let radius = 1; radius <= 6; radius++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
+        const testX = Math.max(bounds.minX, Math.min(bounds.maxX, targetX + dx * slotW));
+        const testY = Math.max(bounds.minY, Math.min(bounds.maxY, targetY + dy * slotH));
+        if (!isOccupied(testX, testY)) {
+          return { x: testX, y: testY };
+        }
+      }
+    }
+  }
+
+  return { x: targetX, y: targetY };
+}
+
 export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsGridProps) {
   const { items, combineItems, openFolder, moveItem } = useDesktopStore();
   const { openApp, isWin, dockPosition, widgetsVisible, notify } = useOS();
@@ -433,6 +485,31 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
         const { minX, maxX, minY, maxY } = getBounds();
         let finalX = Math.round(currentDrag.targetX / 8) * 8;
         let finalY = Math.round(currentDrag.targetY / 8) * 8;
+
+        // Ensure final position never overlaps with any other desktop item
+        const nonOverlapping = resolveDesktopOverlap(
+          finalX,
+          finalY,
+          item.id,
+          items,
+          getDefaultPosition,
+          { minX, maxX, minY, maxY },
+          (x, y) =>
+            widgetsVisible &&
+            checkWidgetZoneCollision(
+              x,
+              y,
+              76,
+              84,
+              macDockLeft,
+              macDockRight,
+              isWin,
+              isMobileDevice
+            ),
+          isMobileDevice
+        );
+        finalX = nonOverlapping.x;
+        finalY = nonOverlapping.y;
 
         if (widgetsVisible) {
           // Widgets ARE visible: cannot place over active widgets
