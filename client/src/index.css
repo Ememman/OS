@@ -666,3 +666,44 @@ select option:checked {
   animation-iteration-count: infinite;
 }
 
+/* Responsive Container Queries for Games App Window Layout */
+.games-hub-container {
+  container-type: inline-size;
+}
+
+.games-minigames-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.875rem;
+}
+
+@container (min-width: 480px) {
+  .games-minigames-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (min-width: 960px) {
+  .games-minigames-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.games-upcoming-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.875rem;
+}
+
+@container (min-width: 480px) {
+  .games-upcoming-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (min-width: 820px) {
+  .games-upcoming-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+

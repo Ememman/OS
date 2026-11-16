@@ -115,6 +115,7 @@ interface OSState {
   toggleShowDesktop: () => void;
   moveWindow: (id: string, x: number, y: number) => void;
   resizeWindow: (id: string, w: number, h: number) => void;
+  updateWindowBounds: (id: string, bounds: { x?: number; y?: number; w?: number; h?: number }) => void;
 }
 
 export const DEFAULT_DOCK_APPS = [
@@ -767,6 +768,13 @@ export const useOS = create<OSState>((set, get) => ({
     set({
       windows: get().windows.map((win) =>
         win.id === id ? { ...win, w, h } : win,
+      ),
+    }),
+
+  updateWindowBounds: (id, bounds) =>
+    set({
+      windows: get().windows.map((win) =>
+        win.id === id ? { ...win, ...bounds } : win,
       ),
     }),
 }));

@@ -358,7 +358,7 @@ export default function SnakeRetro() {
   return (
     <div className="flex flex-col items-center justify-start p-3 sm:p-4 pb-12 sm:pb-16 text-white select-none max-w-md mx-auto min-h-full overflow-y-auto thin-scroll space-y-2.5">
       {/* Top Header & Stats */}
-      <div className="w-full max-w-[min(84vw,275px)] flex items-center justify-between pb-2 mb-1 border-b border-white/10 shrink-0">
+      <div className="w-full max-w-[min(88vw,340px,44vh)] flex items-center justify-between pb-2 mb-1 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-2">
           <div className="px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-xs">
             <span className="text-white/50 mr-1.5 font-semibold">Score</span>
@@ -406,7 +406,7 @@ export default function SnakeRetro() {
       <div
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        className="relative aspect-square w-full max-w-[min(84vw,275px)] bg-[#070b14]/90 rounded-2xl border-2 border-white/15 shadow-2xl overflow-hidden p-1 backdrop-blur-md touch-none select-none shrink-0"
+        className="relative aspect-square w-full max-w-[min(88vw,340px,44vh)] bg-[#070b14]/90 rounded-2xl border-2 border-white/15 shadow-2xl overflow-hidden p-1 backdrop-blur-md touch-none select-none shrink-0"
         style={{
           touchAction: "none",
           backgroundImage: "radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px)",

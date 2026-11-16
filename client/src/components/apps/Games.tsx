@@ -215,7 +215,7 @@ export default function Games() {
   }
 
   return (
-    <div className="p-3.5 sm:p-5 pb-8 sm:pb-10 space-y-4 text-white select-none h-full overflow-y-auto thin-scroll">
+    <div className="games-hub-container p-3.5 sm:p-5 pb-8 sm:pb-10 space-y-4 text-white select-none h-full overflow-y-auto thin-scroll">
       {/* Arcade Header Banner with Category Filter Pills */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3.5">
         <div>
@@ -284,34 +284,34 @@ export default function Games() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
+          <div className="games-minigames-grid">
             {/* Block Blast */}
             <button
               onClick={() => setOpen("blockblast")}
               className="flex flex-col justify-between min-h-[180px] p-4 rounded-2xl border border-accent/40 bg-gradient-to-b from-accent/15 to-accent/5 hover:from-accent/25 hover:to-accent/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-accent/20 active:scale-[0.98] overflow-hidden"
             >
               <div className="flex-1 min-w-0 overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between mb-2 shrink-0">
+                <div className="flex items-center justify-between gap-2 mb-2 shrink-0">
                   <div className="w-10 h-10 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
                     <GIconPuzzle className="text-accent" size={20} />
                   </div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-accent/20 text-accent border border-accent/30">
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-accent/20 text-accent border border-accent/30 shrink-0">
                     Drag & Drop
                   </span>
                 </div>
                 <div className="text-base font-bold text-white group-hover:text-accent transition-colors shrink-0">
                   Block Blast
                 </div>
-                <div className="text-xs text-white/65 mt-1.5 line-clamp-2 leading-relaxed overflow-hidden">
+                <div className="text-xs text-white/70 mt-1.5 leading-relaxed">
                   Drag blocks onto the 8×8 board to clear rows and columns with combos.
                 </div>
               </div>
-              <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full">
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition">
+              <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full gap-2">
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition shrink-0">
                   <GIconPlay size={10} />
                   <span>Play Now</span>
                 </span>
-                <span className="text-white/40 text-[10.5px] font-mono">Scores Enabled</span>
+                <span className="text-white/40 text-[10.5px] font-mono shrink-0">Scores Enabled</span>
               </div>
             </button>
 
@@ -321,27 +321,27 @@ export default function Games() {
               className="flex flex-col justify-between min-h-[180px] p-4 rounded-2xl border border-amber-500/40 bg-gradient-to-b from-amber-500/15 to-amber-500/5 hover:from-amber-500/25 hover:to-amber-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-amber-500/20 active:scale-[0.98] overflow-hidden"
             >
               <div className="flex-1 min-w-0 overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between mb-2 shrink-0">
+                <div className="flex items-center justify-between gap-2 mb-2 shrink-0">
                   <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
                     <GIconTrophy className="text-amber-400" size={19} />
                   </div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
                     Undo + Merge
                   </span>
                 </div>
                 <div className="text-base font-bold text-white group-hover:text-amber-300 transition-colors shrink-0">
                   2048 Puzzle
                 </div>
-                <div className="text-xs text-white/65 mt-1.5 line-clamp-2 leading-relaxed overflow-hidden">
+                <div className="text-xs text-white/70 mt-1.5 leading-relaxed">
                   Slide and merge matching number tiles to build the legendary 2048 tile.
                 </div>
               </div>
-              <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full">
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition">
+              <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full gap-2">
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition shrink-0">
                   <GIconPlay size={10} />
                   <span>Play Now</span>
                 </span>
-                <span className="text-white/40 text-[10.5px] font-mono">Scores Enabled</span>
+                <span className="text-white/40 text-[10.5px] font-mono shrink-0">Scores Enabled</span>
               </div>
             </button>
 
@@ -351,27 +351,27 @@ export default function Games() {
               className="flex flex-col justify-between min-h-[180px] p-4 rounded-2xl border border-emerald-500/40 bg-gradient-to-b from-emerald-500/15 to-emerald-500/5 hover:from-emerald-500/25 hover:to-emerald-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-emerald-500/20 active:scale-[0.98] overflow-hidden"
             >
               <div className="flex-1 min-w-0 overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between mb-2 shrink-0">
+                <div className="flex items-center justify-between gap-2 mb-2 shrink-0">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
                     <GIconPlay className="text-emerald-400" size={19} />
                   </div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
                     Tuned Speed
                   </span>
                 </div>
                 <div className="text-base font-bold text-white group-hover:text-emerald-300 transition-colors shrink-0">
                   Snake Retro
                 </div>
-                <div className="text-xs text-white/65 mt-1.5 line-clamp-2 leading-relaxed overflow-hidden">
+                <div className="text-xs text-white/70 mt-1.5 leading-relaxed">
                   Classic arcade snake with tuned playable speed, golden apples, & touch D-pad.
                 </div>
               </div>
-              <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full">
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition">
+              <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full gap-2">
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition shrink-0">
                   <GIconPlay size={10} />
                   <span>Play Now</span>
                 </span>
-                <span className="text-white/40 text-[10.5px] font-mono">Scores Enabled</span>
+                <span className="text-white/40 text-[10.5px] font-mono shrink-0">Scores Enabled</span>
               </div>
             </button>
 
@@ -381,27 +381,27 @@ export default function Games() {
               className="flex flex-col justify-between min-h-[180px] p-4 rounded-2xl border border-rose-500/40 bg-gradient-to-b from-rose-500/15 to-rose-500/5 hover:from-rose-500/25 hover:to-rose-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-rose-500/20 active:scale-[0.98] overflow-hidden"
             >
               <div className="flex-1 min-w-0 overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between mb-2 shrink-0">
+                <div className="flex items-center justify-between gap-2 mb-2 shrink-0">
                   <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm text-rose-400">
                     <GIconFlag size={19} />
                   </div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0">
                     Chording + Flags
                   </span>
                 </div>
                 <div className="text-base font-bold text-white group-hover:text-rose-400 transition-colors shrink-0">
                   Minesweeper Retro
                 </div>
-                <div className="text-xs text-white/65 mt-1.5 line-clamp-2 leading-relaxed overflow-hidden">
+                <div className="text-xs text-white/70 mt-1.5 leading-relaxed">
                   Defuse minefields with responsive auto-scale, digital timers, & chording.
                 </div>
               </div>
-              <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full">
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition">
+              <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full gap-2">
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition shrink-0">
                   <GIconPlay size={10} />
                   <span>Play Now</span>
                 </span>
-                <span className="text-white/40 text-[10.5px] font-mono">Scores Enabled</span>
+                <span className="text-white/40 text-[10.5px] font-mono shrink-0">Scores Enabled</span>
               </div>
             </button>
           </div>
@@ -419,7 +419,7 @@ export default function Games() {
             <span className="text-[11px] font-mono text-white/40">{UPCOMING_GAMES.length} In Pipeline</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          <div className="games-upcoming-grid">
             {UPCOMING_GAMES.map((g) => {
               const isNotified = notifiedGames.has(g.id);
 
