@@ -583,7 +583,7 @@ export default function BlockBlast() {
   return (
     <div className="p-3 sm:p-4 flex flex-col items-center justify-between gap-2.5 sm:gap-3.5 select-none h-full overflow-y-auto thin-scroll relative touch-none">
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between w-full max-w-[min(90vw,350px)] text-sm shrink-0">
+      <div className="flex items-center justify-between w-full max-w-[min(92vw,360px,46vh)] text-sm shrink-0">
         <div className="flex items-center gap-3">
           <div>
             <div className="text-[10px] text-white/50 uppercase tracking-wider font-semibold">Score</div>
@@ -629,7 +629,7 @@ export default function BlockBlast() {
       {/* 8x8 Board Container */}
       <div
         ref={boardRef}
-        className={`relative grid gap-[3px] p-2 sm:p-2.5 rounded-2xl bg-[#0b0f19] border-2 border-white/15 shadow-2xl transition-transform w-full max-w-[min(90vw,350px)] aspect-square shrink-0 select-none ${
+        className={`relative grid gap-[3px] p-2 sm:p-2.5 rounded-2xl bg-[#0b0f19] border-2 border-white/15 shadow-2xl transition-transform w-full max-w-[min(92vw,360px,46vh)] aspect-square shrink-0 select-none ${
           shake ? "bb-shake" : ""
         }`}
         style={{
@@ -708,7 +708,7 @@ export default function BlockBlast() {
       </div>
 
       {/* Piece Tray with Drag & Drop Handles */}
-      <div className="w-full max-w-[min(90vw,350px)] flex flex-col items-center gap-1.5 shrink-0">
+      <div className="w-full max-w-[min(92vw,360px,46vh)] flex flex-col items-center gap-1.5 shrink-0">
         <div className="flex justify-center items-center gap-2.5 sm:gap-3.5 w-full">
           {tray.map((p, i) => {
             const isDraggingThis = activeDragPiece?.index === i;

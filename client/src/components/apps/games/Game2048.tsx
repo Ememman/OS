@@ -436,7 +436,7 @@ export default function Game2048() {
       onTouchEnd={handleTouchEnd}
     >
       {/* Top Header & Scoreboard */}
-      <div className="w-full max-w-[min(84vw,285px)] flex items-center justify-between shrink-0">
+      <div className="w-full max-w-[min(88vw,340px,44vh)] flex items-center justify-between shrink-0">
         <div>
           <h3 className="font-display text-2xl font-black tracking-tight text-white flex items-center gap-1.5">
             2048
@@ -496,7 +496,7 @@ export default function Game2048() {
 
       {/* 4x4 Responsive Grid Board */}
       <div
-        className="relative w-full max-w-[min(84vw,285px)] aspect-square bg-[#0d1220]/90 p-2 sm:p-2.5 rounded-2xl border-2 border-white/15 shadow-2xl flex flex-col justify-between shrink-0 touch-none"
+        className="relative w-full max-w-[min(88vw,340px,44vh)] aspect-square bg-[#0d1220]/90 p-2 sm:p-2.5 rounded-2xl border-2 border-white/15 shadow-2xl flex flex-col justify-between shrink-0 touch-none"
         style={{ touchAction: "none" }}
       >
         {board.map((row, r) => (
