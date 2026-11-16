@@ -623,7 +623,7 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
                   onTouchStart={() => handleTouchStart(r, c)}
                   onTouchEnd={handleTouchEnd}
                   disabled={status === "won" || (status === "lost" && !cell.isMine)}
-                  className={`${getCellSizeClass()} flex items-center justify-center font-mono font-bold transition-all rounded-[4px] cursor-pointer select-none ${
+                  className={`${getCellSizeClass()} flex items-center justify-center font-mono font-bold transition-colors duration-100 rounded-[4px] cursor-pointer select-none ${
                     isRevealed
                       ? isMine
                         ? isExploded

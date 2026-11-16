@@ -407,70 +407,86 @@ export default function SnakeRetro() {
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         className="relative aspect-square w-full max-w-[min(84vw,275px)] bg-[#070b14]/90 rounded-2xl border-2 border-white/15 shadow-2xl overflow-hidden p-1 backdrop-blur-md touch-none select-none shrink-0"
-        style={{ touchAction: "none" }}
+        style={{
+          touchAction: "none",
+          backgroundImage: "radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px)",
+          backgroundSize: `${100 / GRID_SIZE}% ${100 / GRID_SIZE}%`,
+        }}
       >
-        <div
-          className="w-full h-full grid"
-          style={{
-            gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))`,
-            gridTemplateRows: `repeat(${GRID_SIZE}, minmax(0, 1fr))`,
-          }}
-        >
-          {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, i) => {
-            const x = i % GRID_SIZE;
-            const y = Math.floor(i / GRID_SIZE);
+        <div className="relative w-full h-full">
+          {/* Normal Apple Food */}
+          <div
+            className="absolute p-[1px] flex items-center justify-center animate-pulse pointer-events-none"
+            style={{
+              left: `${(food.x / GRID_SIZE) * 100}%`,
+              top: `${(food.y / GRID_SIZE) * 100}%`,
+              width: `${100 / GRID_SIZE}%`,
+              height: `${100 / GRID_SIZE}%`,
+            }}
+          >
+            <div className="w-4/5 h-4/5 rounded-full bg-rose-500 shadow-md shadow-rose-500/70 border border-rose-300" />
+          </div>
 
-            const isHead = snake[0]?.x === x && snake[0]?.y === y;
-            const isBody = snake.slice(1).some((s) => s.x === x && s.y === y);
-            const isFood = food.x === x && food.y === y;
-            const isGolden = goldenFood?.x === x && goldenFood?.y === y;
+          {/* Golden Bonus Food */}
+          {goldenFood && (
+            <div
+              className="absolute p-[1px] flex items-center justify-center animate-bounce pointer-events-none"
+              style={{
+                left: `${(goldenFood.x / GRID_SIZE) * 100}%`,
+                top: `${(goldenFood.y / GRID_SIZE) * 100}%`,
+                width: `${100 / GRID_SIZE}%`,
+                height: `${100 / GRID_SIZE}%`,
+              }}
+            >
+              <div className="w-4/5 h-4/5 rounded-full bg-amber-400 shadow-lg shadow-amber-400/90 border border-yellow-200" />
+            </div>
+          )}
 
-            if (isHead) {
-              return (
-                <div key={i} className="p-[0.5px] relative">
-                  <div className="w-full h-full rounded-md bg-accent shadow-md shadow-accent/60 scale-105 flex items-center justify-center relative overflow-hidden">
-                    {/* Cute Snake Eyes looking towards direction of travel */}
-                    <div
-                      className={`absolute flex gap-1 ${
-                        dir === "UP"
-                          ? "top-0.5 inset-x-0 justify-center"
-                          : dir === "DOWN"
-                          ? "bottom-0.5 inset-x-0 justify-center"
-                          : dir === "LEFT"
-                          ? "left-0.5 inset-y-0 flex-col justify-center"
-                          : "right-0.5 inset-y-0 flex-col justify-center"
-                      }`}
-                    >
-                      <div className="w-1 h-1 rounded-full bg-slate-950" />
-                      <div className="w-1 h-1 rounded-full bg-slate-950" />
-                    </div>
-                  </div>
+          {/* Snake Body Segments */}
+          {snake.slice(1).map((s, idx) => (
+            <div
+              key={idx}
+              className="absolute p-[0.5px] pointer-events-none"
+              style={{
+                left: `${(s.x / GRID_SIZE) * 100}%`,
+                top: `${(s.y / GRID_SIZE) * 100}%`,
+                width: `${100 / GRID_SIZE}%`,
+                height: `${100 / GRID_SIZE}%`,
+              }}
+            >
+              <div className="w-full h-full rounded-sm bg-gradient-to-br from-accent/80 to-sky-400/70 shadow-xs" />
+            </div>
+          ))}
+
+          {/* Snake Head with Directional Eyes */}
+          {snake[0] && (
+            <div
+              className="absolute p-[0.5px] z-10 pointer-events-none"
+              style={{
+                left: `${(snake[0].x / GRID_SIZE) * 100}%`,
+                top: `${(snake[0].y / GRID_SIZE) * 100}%`,
+                width: `${100 / GRID_SIZE}%`,
+                height: `${100 / GRID_SIZE}%`,
+              }}
+            >
+              <div className="w-full h-full rounded-md bg-accent shadow-md shadow-accent/60 scale-105 flex items-center justify-center relative overflow-hidden">
+                <div
+                  className={`absolute flex gap-1 ${
+                    dir === "UP"
+                      ? "top-0.5 inset-x-0 justify-center"
+                      : dir === "DOWN"
+                      ? "bottom-0.5 inset-x-0 justify-center"
+                      : dir === "LEFT"
+                      ? "left-0.5 inset-y-0 flex-col justify-center"
+                      : "right-0.5 inset-y-0 flex-col justify-center"
+                  }`}
+                >
+                  <div className="w-1 h-1 rounded-full bg-slate-950" />
+                  <div className="w-1 h-1 rounded-full bg-slate-950" />
                 </div>
-              );
-            }
-            if (isBody) {
-              return (
-                <div key={i} className="p-[0.5px]">
-                  <div className="w-full h-full rounded-sm bg-gradient-to-br from-accent/80 to-sky-400/70 shadow-xs" />
-                </div>
-              );
-            }
-            if (isFood) {
-              return (
-                <div key={i} className="p-[1px] flex items-center justify-center animate-pulse">
-                  <div className="w-4/5 h-4/5 rounded-full bg-rose-500 shadow-md shadow-rose-500/70 border border-rose-300" />
-                </div>
-              );
-            }
-            if (isGolden) {
-              return (
-                <div key={i} className="p-[1px] flex items-center justify-center animate-bounce">
-                  <div className="w-4/5 h-4/5 rounded-full bg-amber-400 shadow-lg shadow-amber-400/90 border border-yellow-200" />
-                </div>
-              );
-            }
-            return <div key={i} className="w-full h-full border border-white/[0.02]" />;
-          })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Start Overlay */}
