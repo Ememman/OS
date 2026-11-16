@@ -23,9 +23,9 @@ export default function DesktopFolderIcon({
   // Subtle placeholders for remaining slots up to 9 to preserve neat 3x3 grid symmetry
   const emptySlots = Math.max(0, 9 - displayApps.length);
 
-  // Compute aggregate badges from nested apps or folder count
+  // Compute aggregate badges solely from nested apps with real notifications, or explicit positive folder badge
   const subAppBadges = folder.apps.reduce((sum, a) => sum + (getAppBadge(a.app)?.count || 0), 0);
-  const totalBadge = subAppBadges > 0 ? subAppBadges : (folder.badge ?? folder.apps.length);
+  const totalBadge = subAppBadges > 0 ? subAppBadges : (typeof folder.badge === "number" && folder.badge > 0 ? folder.badge : 0);
 
   return (
     <div
@@ -83,14 +83,16 @@ export default function DesktopFolderIcon({
           </div>
         </motion.div>
 
-        {/* Vibrant Red Notification Badge with floating up/down motion: positioned on outer wrapper so it's never clipped */}
-        <motion.div
-          animate={{ y: [0, -3.5, 0] }}
-          transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-          className="absolute -top-1.5 -right-1.5 z-10 bg-rose-500 text-white font-bold text-[9px] sm:text-[10px] min-w-[18px] h-[18px] sm:min-w-5 sm:h-5 rounded-full flex items-center justify-center px-1 border-2 border-[#070a12] shadow-md shadow-rose-500/40 select-none pointer-events-none"
-        >
-          {totalBadge}
-        </motion.div>
+        {/* Vibrant Red Notification Badge with floating up/down motion: only displayed when there are real unread notifications */}
+        {totalBadge > 0 && (
+          <motion.div
+            animate={{ y: [0, -3.5, 0] }}
+            transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+            className="absolute -top-1.5 -right-1.5 z-10 bg-rose-500 text-white font-bold text-[9px] sm:text-[10px] min-w-[18px] h-[18px] sm:min-w-5 sm:h-5 rounded-full flex items-center justify-center px-1 border-2 border-[#070a12] shadow-md shadow-rose-500/40 select-none pointer-events-none"
+          >
+            {totalBadge > 99 ? "99+" : totalBadge}
+          </motion.div>
+        )}
       </div>
 
       {/* Folder Name Label */}

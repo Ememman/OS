@@ -397,11 +397,16 @@ function parseGithubPR(pr: any): UpdateItem {
 
 export default function Updates() {
   const { systemSounds, notify, clearAppUpdate } = useOS();
+  const [updates, setUpdates] = useState<UpdateItem[]>(FALLBACK_UPDATES);
 
   useEffect(() => {
     clearAppUpdate("updates");
-  }, [clearAppUpdate]);
-  const [updates, setUpdates] = useState<UpdateItem[]>(FALLBACK_UPDATES);
+    if (updates.length > 0) {
+      try {
+        localStorage.setItem("os_last_viewed_update_id", updates[0].id);
+      } catch {}
+    }
+  }, [clearAppUpdate, updates]);
   const [reactions, setReactions] = useState<Record<string, DetailedReaction>>({});
   const [loading, setLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);

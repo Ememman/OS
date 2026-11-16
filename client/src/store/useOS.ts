@@ -93,6 +93,8 @@ interface OSState {
   setUnreadChatCount: (count: number) => void;
   clearUnreadChat: () => void;
   appUpdates: Record<string, number>;
+  setAppBadge: (app: string, count: number) => void;
+  incrementAppBadge: (app: string) => void;
   clearAppUpdate: (app: string) => void;
   getAppBadge: (app: string) => { count: number; type: "chat" | "update" } | null;
   setAccent: (value: string) => void;
@@ -192,26 +194,32 @@ if (typeof document !== "undefined") {
 
 let z = 10;
 
-const INITIAL_APP_UPDATES: Record<string, number> = {
-  updates: 5,
-  games: 1,
-  library: 1,
-  notes: 1,
-  calculator: 1,
-  activity: 1,
-  terminal: 1,
-};
+const INITIAL_APP_UPDATES: Record<string, number> = {};
 
 const loadInitialAppUpdates = (): Record<string, number> => {
   if (typeof window === "undefined") return INITIAL_APP_UPDATES;
   try {
-    const raw = localStorage.getItem("os_viewed_app_updates");
-    const viewed: string[] = raw ? JSON.parse(raw) : [];
-    const result: Record<string, number> = { ...INITIAL_APP_UPDATES };
-    for (const v of viewed) {
-      delete result[v];
+    // Purge legacy artificial update keys so offline apps never show fake badges
+    localStorage.removeItem("os_viewed_app_updates");
+    const raw = localStorage.getItem("os_app_updates");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        const clean: Record<string, number> = {};
+        for (const [k, v] of Object.entries(parsed)) {
+          // Only permit genuine dynamic real-time apps to hold badges
+          if (
+            typeof v === "number" &&
+            v > 0 &&
+            !["calculator", "notes", "terminal", "activity", "games", "library", "resume", "codeplay", "music", "gallery", "files", "settings"].includes(k)
+          ) {
+            clean[k] = v;
+          }
+        }
+        return clean;
+      }
     }
-    return result;
+    return INITIAL_APP_UPDATES;
   } catch {
     return INITIAL_APP_UPDATES;
   }
@@ -504,16 +512,39 @@ export const useOS = create<OSState>((set, get) => ({
   clearUnreadChat: () => set({ unreadChatCount: 0 }),
 
   appUpdates: loadInitialAppUpdates(),
+  setAppBadge: (app: string, count: number) => {
+    // Only real apps that support notifications can set badges
+    if (["calculator", "notes", "terminal", "activity", "games", "library", "resume", "codeplay", "music", "gallery", "files", "settings"].includes(app)) {
+      return;
+    }
+    const cur = { ...get().appUpdates };
+    if (count > 0) {
+      cur[app] = count;
+    } else {
+      delete cur[app];
+    }
+    try {
+      localStorage.setItem("os_app_updates", JSON.stringify(cur));
+    } catch {}
+    set({ appUpdates: cur });
+  },
+  incrementAppBadge: (app: string) => {
+    if (["calculator", "notes", "terminal", "activity", "games", "library", "resume", "codeplay", "music", "gallery", "files", "settings"].includes(app)) {
+      return;
+    }
+    const cur = { ...get().appUpdates };
+    cur[app] = (cur[app] || 0) + 1;
+    try {
+      localStorage.setItem("os_app_updates", JSON.stringify(cur));
+    } catch {}
+    set({ appUpdates: cur });
+  },
   clearAppUpdate: (app: string) => {
     const cur = { ...get().appUpdates };
     if (cur[app]) {
       delete cur[app];
       try {
-        const viewed: string[] = JSON.parse(localStorage.getItem("os_viewed_app_updates") || "[]");
-        if (!viewed.includes(app)) {
-          viewed.push(app);
-          localStorage.setItem("os_viewed_app_updates", JSON.stringify(viewed));
-        }
+        localStorage.setItem("os_app_updates", JSON.stringify(cur));
       } catch {}
       set({ appUpdates: cur });
     }
@@ -602,6 +633,9 @@ export const useOS = create<OSState>((set, get) => ({
     if (targetWin?.app === "chats") {
       get().clearUnreadChat();
     }
+    if (targetWin?.app) {
+      get().clearAppUpdate(targetWin.app);
+    }
     set({
       windows: get().windows.map((w) => (w.id === id ? { ...w, z: zz, minimized: false } : w)),
     });
@@ -614,6 +648,9 @@ export const useOS = create<OSState>((set, get) => ({
     const targetWin = get().windows.find((w) => w.id === id);
     if (targetWin?.app === "chats") {
       get().clearUnreadChat();
+    }
+    if (targetWin?.app) {
+      get().clearAppUpdate(targetWin.app);
     }
     set({
       windows: get().windows.map((w) => (w.id === id ? { ...w, z: zz, minimized: false } : w)),
