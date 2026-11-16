@@ -396,7 +396,11 @@ function parseGithubPR(pr: any): UpdateItem {
 }
 
 export default function Updates() {
-  const { systemSounds, notify } = useOS();
+  const { systemSounds, notify, clearAppUpdate } = useOS();
+
+  useEffect(() => {
+    clearAppUpdate("updates");
+  }, [clearAppUpdate]);
   const [updates, setUpdates] = useState<UpdateItem[]>(FALLBACK_UPDATES);
   const [reactions, setReactions] = useState<Record<string, DetailedReaction>>({});
   const [loading, setLoading] = useState(false);

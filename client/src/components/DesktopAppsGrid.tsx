@@ -200,7 +200,7 @@ function resolveDesktopOverlap(
 
 export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsGridProps) {
   const { items, combineItems, openFolder, moveItem } = useDesktopStore();
-  const { openApp, isWin, dockPosition, widgetsVisible, notify } = useOS();
+  const { openApp, isWin, dockPosition, widgetsVisible, notify, getAppBadge } = useOS();
   const tabletQuery = useIsTablet();
   const mobileQuery = useIsMobile();
   const isMobileDevice = isMobileProp ?? (tabletQuery || mobileQuery);
@@ -708,6 +708,37 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
                       color={color}
                     />
                   )}
+
+                  {(() => {
+                    const badge = getAppBadge(item.app);
+                    if (!badge || badge.count <= 0) return null;
+                    return (
+                      <motion.span
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{
+                          scale: 1,
+                          opacity: 1,
+                          y: [0, -3.5, 0],
+                        }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        transition={{
+                          y: {
+                            repeat: Infinity,
+                            duration: 1.5,
+                            ease: "easeInOut",
+                          },
+                          scale: { type: "spring", stiffness: 500, damping: 25 },
+                        }}
+                        className={`absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] sm:min-w-5 sm:h-5 px-1 rounded-full text-white text-[9px] sm:text-[10px] font-bold flex items-center justify-center border-2 border-[#070a12] z-20 pointer-events-none select-none ${
+                          badge.type === "chat"
+                            ? "bg-rose-500 shadow-md shadow-rose-500/50"
+                            : "bg-[#0091ff] shadow-md shadow-[#0091ff]/50"
+                        }`}
+                      >
+                        {badge.count > 99 ? "99+" : badge.count}
+                      </motion.span>
+                    );
+                  })()}
                 </div>
                 <span
                   className="text-[10px] sm:text-[11px] font-semibold text-white/95 group-hover:text-white text-center leading-tight px-1 sm:px-1.5 py-0.5 rounded-md truncate max-w-full tracking-wide transition-colors"

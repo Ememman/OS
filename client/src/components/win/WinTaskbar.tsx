@@ -408,7 +408,7 @@ export default function WinTaskbar() {
     controlCenterOpen,
     toggleMissionControl,
     missionControlOpen,
-    unreadChatCount,
+    getAppBadge,
     systemSounds,
     dockApps,
     reorderDockApps,
@@ -651,11 +651,36 @@ export default function WinTaskbar() {
                       }`}
                     />
                   )}
-                  {app === "chats" && unreadChatCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center shadow-md shadow-rose-500/60 border border-white/20 z-20 pointer-events-none select-none">
-                      {unreadChatCount > 99 ? "99+" : unreadChatCount}
-                    </span>
-                  )}
+                  {(() => {
+                    const badge = getAppBadge(app);
+                    if (!badge || badge.count <= 0) return null;
+                    return (
+                      <motion.span
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{
+                          scale: 1,
+                          opacity: 1,
+                          y: [0, -3, 0],
+                        }}
+                        transition={{
+                          y: {
+                            repeat: Infinity,
+                            duration: 1.5,
+                            ease: "easeInOut",
+                          },
+                          scale: { type: "spring", stiffness: 500, damping: 25 },
+                        }}
+                        className={`absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full text-white text-[9px] font-bold flex items-center justify-center border border-white/25 z-20 pointer-events-none select-none ${
+                          badge.type === "chat"
+                            ? "bg-rose-500 shadow-md shadow-rose-500/60"
+                            : "bg-[#0091ff] shadow-md shadow-[#0091ff]/60"
+                        }`}
+                        title={badge.type === "chat" ? `${badge.count} unread message(s)` : `${badge.count} update(s) available`}
+                      >
+                        {badge.count > 99 ? "99+" : badge.count}
+                      </motion.span>
+                    );
+                  })()}
                 </button>
               </motion.div>
             );
