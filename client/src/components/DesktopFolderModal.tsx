@@ -34,7 +34,7 @@ export default function DesktopFolderModal() {
     ungroupFolder,
     addAppToFolder,
   } = useDesktopStore();
-  const { openApp, notify } = useOS();
+  const { openApp, notify, getAppBadge } = useOS();
 
   const folder = items.find(
     (it) => it.id === activeFolderId && it.type === "folder"
@@ -326,6 +326,24 @@ export default function DesktopFolderModal() {
                     title={`Drag out to desktop or click to open ${a.label}`}
                   >
                     {Icon && <Icon size={26} color={appColor} />}
+
+                    {(() => {
+                      const badge = getAppBadge(a.app);
+                      if (!badge || badge.count <= 0) return null;
+                      return (
+                        <motion.span
+                          animate={{ y: [0, -3, 0] }}
+                          transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                          className={`absolute -top-1.5 -left-1.5 min-w-[18px] h-[18px] px-1 rounded-full text-white text-[9px] font-bold flex items-center justify-center border-2 border-[#070a12] z-20 pointer-events-none select-none ${
+                            badge.type === "chat"
+                              ? "bg-rose-500 shadow-md shadow-rose-500/50"
+                              : "bg-[#0091ff] shadow-md shadow-[#0091ff]/50"
+                          }`}
+                        >
+                          {badge.count > 99 ? "99+" : badge.count}
+                        </motion.span>
+                      );
+                    })()}
                   </motion.button>
 
                   {/* Extract / Move out button */}

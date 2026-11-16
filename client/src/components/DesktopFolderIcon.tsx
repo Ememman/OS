@@ -2,6 +2,7 @@ import { type CSSProperties } from "react";
 import { motion } from "framer-motion";
 import type { DesktopFolderItem } from "../types/desktop";
 import { APP_REGISTRY } from "../types/desktop";
+import { useOS } from "../store/useOS";
 
 interface DesktopFolderIconProps {
   folder: DesktopFolderItem;
@@ -16,10 +17,15 @@ export default function DesktopFolderIcon({
   style,
   isCombineTarget,
 }: DesktopFolderIconProps) {
+  const { getAppBadge } = useOS();
   // Mini-grid displays up to 9 apps (3x3)
   const displayApps = folder.apps.slice(0, 9);
   // Subtle placeholders for remaining slots up to 9 to preserve neat 3x3 grid symmetry
   const emptySlots = Math.max(0, 9 - displayApps.length);
+
+  // Compute aggregate badges from nested apps or folder count
+  const subAppBadges = folder.apps.reduce((sum, a) => sum + (getAppBadge(a.app)?.count || 0), 0);
+  const totalBadge = subAppBadges > 0 ? subAppBadges : (folder.badge ?? folder.apps.length);
 
   return (
     <div
@@ -77,10 +83,14 @@ export default function DesktopFolderIcon({
           </div>
         </motion.div>
 
-        {/* Vibrant Red Notification Badge: positioned on outer wrapper so it's never clipped */}
-        <div className="absolute -top-1.5 -right-1.5 z-10 bg-rose-500 text-white font-bold text-[9px] sm:text-[10px] min-w-[18px] h-[18px] sm:min-w-5 sm:h-5 rounded-full flex items-center justify-center px-1 border-2 border-[#070a12] shadow-md shadow-rose-500/40 select-none pointer-events-none">
-          {folder.badge ?? folder.apps.length}
-        </div>
+        {/* Vibrant Red Notification Badge with floating up/down motion: positioned on outer wrapper so it's never clipped */}
+        <motion.div
+          animate={{ y: [0, -3.5, 0] }}
+          transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+          className="absolute -top-1.5 -right-1.5 z-10 bg-rose-500 text-white font-bold text-[9px] sm:text-[10px] min-w-[18px] h-[18px] sm:min-w-5 sm:h-5 rounded-full flex items-center justify-center px-1 border-2 border-[#070a12] shadow-md shadow-rose-500/40 select-none pointer-events-none"
+        >
+          {totalBadge}
+        </motion.div>
       </div>
 
       {/* Folder Name Label */}
