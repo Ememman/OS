@@ -49,7 +49,7 @@ export default function Window({ win, children }) {
     toggleMaximize,
     snapWindow,
     moveWindow,
-    resizeWindow,
+    updateWindowBounds,
     focusWindow,
     osMode,
     windows,
@@ -61,7 +61,6 @@ export default function Window({ win, children }) {
   const isFocused = win.z === Math.max(...windows.map((w) => w.z));
   const windowRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
-  const resizeStart = useRef<{ startX: number; startY: number; w: number; h: number } | null>(null);
   const rafId = useRef<number | null>(null);
   const [isInteracting, setIsInteracting] = useState(false);
 
@@ -217,42 +216,74 @@ export default function Window({ win, children }) {
     [win.id, win.x, win.y, win.maximized, isMobile, focusWindow, moveWindow]
   );
 
-  const onResizeStart = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
+  type ResizeDirection = "e" | "w" | "s" | "n" | "se" | "sw" | "ne" | "nw";
+
+  const createResizeHandler = useCallback(
+    (dir: ResizeDirection) => (e: React.PointerEvent<HTMLDivElement>) => {
       e.stopPropagation();
+      e.preventDefault();
       if (win.maximized || isMobile) return;
       focusWindow(win.id);
 
       const el = windowRef.current;
       if (!el) return;
 
-      const startX = e.clientX;
-      const startY = e.clientY;
-      const startW = win.w;
-      const startH = win.h;
-      resizeStart.current = { startX, startY, w: startW, h: startH };
+      const startPointerX = e.clientX;
+      const startPointerY = e.clientY;
+      const startW = el.offsetWidth || win.w;
+      const startH = el.offsetHeight || win.h;
+      const startX = el.offsetLeft || win.x;
+      const startY = el.offsetTop || win.y;
 
       let latestW = startW;
       let latestH = startH;
+      let latestX = startX;
+      let latestY = startY;
 
       el.style.transition = "none";
-      el.style.willChange = "width, height";
+      el.style.willChange = "width, height, top, left";
       document.body.style.userSelect = "none";
-      document.body.style.cursor = "se-resize";
+      document.body.style.cursor = `${dir}-resize`;
       setIsInteracting(true);
 
+      const minW = 280;
+      const minH = 200;
+      const maxW = Math.max(300, window.innerWidth - 16);
+      const maxH = Math.max(220, window.innerHeight - (isWin ? 64 : 76));
+
       const onMove = (ev: PointerEvent) => {
-        if (!resizeStart.current) return;
-        const dx = ev.clientX - resizeStart.current.startX;
-        const dy = ev.clientY - resizeStart.current.startY;
-        latestW = Math.max(320, Math.min(window.innerWidth - 20, resizeStart.current.w + dx));
-        latestH = Math.max(260, Math.min(window.innerHeight - 60, resizeStart.current.h + dy));
+        const dx = ev.clientX - startPointerX;
+        const dy = ev.clientY - startPointerY;
+
+        if (dir.includes("e")) {
+          latestW = Math.max(minW, Math.min(maxW - latestX, startW + dx));
+        }
+        if (dir.includes("s")) {
+          latestH = Math.max(minH, Math.min(maxH - latestY, startH + dy));
+        }
+        if (dir.includes("w")) {
+          const possibleW = startW - dx;
+          if (possibleW >= minW && startX + dx >= 8) {
+            latestW = possibleW;
+            latestX = startX + dx;
+          }
+        }
+        if (dir.includes("n")) {
+          const minTop = isWin ? 8 : 32;
+          const possibleH = startH - dy;
+          if (possibleH >= minH && startY + dy >= minTop) {
+            latestH = possibleH;
+            latestY = startY + dy;
+          }
+        }
 
         if (!rafId.current) {
           rafId.current = requestAnimationFrame(() => {
             if (windowRef.current) {
               windowRef.current.style.width = `${latestW}px`;
               windowRef.current.style.height = `${latestH}px`;
+              windowRef.current.style.left = `${latestX}px`;
+              windowRef.current.style.top = `${latestY}px`;
             }
             rafId.current = null;
           });
@@ -276,16 +307,15 @@ export default function Window({ win, children }) {
         document.body.style.userSelect = "";
         document.body.style.cursor = "";
         setIsInteracting(false);
-        resizeStart.current = null;
 
-        resizeWindow(win.id, latestW, latestH);
+        updateWindowBounds(win.id, { x: latestX, y: latestY, w: latestW, h: latestH });
       };
 
       window.addEventListener("pointermove", onMove, { passive: true });
       window.addEventListener("pointerup", onUp);
       window.addEventListener("pointercancel", onUp);
     },
-    [win.id, win.w, win.h, win.maximized, isMobile, focusWindow, resizeWindow]
+    [win.id, win.w, win.h, win.x, win.y, win.maximized, isMobile, isWin, focusWindow, updateWindowBounds]
   );
 
   if (win.minimized) return null;
@@ -633,16 +663,63 @@ export default function Window({ win, children }) {
       </div>
       {renderSnapFlyout()}
       <div className={`flex-1 min-h-0 thin-scroll overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom,0px)] allow-select ${isInteracting ? "pointer-events-none select-none" : ""}`}>{children}</div>
+      {/* 8-Direction Universal Window Resizing Frame */}
       {!win.maximized && !isMobile && (
-        <div
-          onPointerDown={onResizeStart}
-          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
-          style={{ touchAction: "none" }}
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" className="opacity-40">
-            <path d="M12 2 L2 12 M12 7 L7 12 M12 12 L12 12" stroke="white" strokeWidth="1.2" />
-          </svg>
-        </div>
+        <>
+          {/* Edge Handles */}
+          <div
+            onPointerDown={createResizeHandler("n")}
+            className="absolute -top-1.5 inset-x-3 h-3 cursor-n-resize z-30 touch-none"
+            title="Resize Height"
+          />
+          <div
+            onPointerDown={createResizeHandler("s")}
+            className="absolute -bottom-1.5 inset-x-3 h-3 cursor-s-resize z-30 touch-none"
+            title="Resize Height"
+          />
+          <div
+            onPointerDown={createResizeHandler("w")}
+            className="absolute -left-1.5 inset-y-3 w-3 cursor-w-resize z-30 touch-none"
+            title="Resize Width"
+          />
+          <div
+            onPointerDown={createResizeHandler("e")}
+            className="absolute -right-1.5 inset-y-3 w-3 cursor-e-resize z-30 touch-none"
+            title="Resize Width"
+          />
+
+          {/* Corner Handles */}
+          <div
+            onPointerDown={createResizeHandler("nw")}
+            className="absolute -top-1.5 -left-1.5 w-4 h-4 cursor-nw-resize z-35 touch-none"
+            title="Resize"
+          />
+          <div
+            onPointerDown={createResizeHandler("ne")}
+            className="absolute -top-1.5 -right-1.5 w-4 h-4 cursor-ne-resize z-35 touch-none"
+            title="Resize"
+          />
+          <div
+            onPointerDown={createResizeHandler("sw")}
+            className="absolute -bottom-1.5 -left-1.5 w-4 h-4 cursor-sw-resize z-35 touch-none"
+            title="Resize"
+          />
+          <div
+            onPointerDown={createResizeHandler("se")}
+            className="absolute -bottom-1.5 -right-1.5 w-6 h-6 cursor-se-resize z-35 touch-none"
+            title="Resize"
+          />
+
+          {/* Tactile Bottom-Right Visual Grip Indicator */}
+          <div
+            onPointerDown={createResizeHandler("se")}
+            className="absolute bottom-1 right-1 w-4 h-4 cursor-se-resize flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity z-30 select-none pointer-events-none"
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10" className="opacity-80">
+              <path d="M9 1 L1 9 M9 5 L5 9 M9 9 L9 9" stroke="white" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+          </div>
+        </>
       )}
     </div>
   );

@@ -85,14 +85,16 @@ export default function SleepScreen() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/70 pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_20%,_rgba(0,0,0,0.7)_100%)] pointer-events-none" />
 
-      {/* Top Header & Lock Status */}
-      <div className="relative z-10 pt-4 sm:pt-8 flex items-center gap-2 text-white/50 text-xs tracking-wider uppercase font-medium bg-black/30 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 shadow-lg">
-        <GIconMoon size={13} className="text-amber-300" />
-        <span>Sleep Mode · Locked</span>
+      {/* Top Header & Lock Status Pill: Perfectly centered top, bottom, left, and right */}
+      <div className="relative z-10 mt-3 sm:mt-6 w-full flex items-center justify-center">
+        <div className="inline-flex items-center justify-center gap-2 text-white/80 text-xs tracking-wider uppercase font-medium bg-black/45 backdrop-blur-xl px-4 py-2 rounded-full border border-white/15 shadow-2xl">
+          <GIconMoon size={14} className="text-amber-300 shrink-0" />
+          <span className="leading-none text-center">Sleep Mode · Locked</span>
+        </div>
       </div>
 
       {/* Center Clock & Date */}
-      <div className="relative z-10 text-center space-y-2.5 my-auto">
+      <div className="relative z-10 text-center space-y-2.5 my-auto flex flex-col items-center justify-center">
         <h1 className="font-display text-5xl sm:text-7xl md:text-8xl font-extralight tracking-tight text-white drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
           {time}
         </h1>
