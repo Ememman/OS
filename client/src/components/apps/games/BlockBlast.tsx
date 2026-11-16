@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { GIconRotateLeft, GIconTrophy, GIconVolume, GIconVolumeMute, GIconCheck, GIconSparkles } from "../../icons/GravityIcons";
+import {
+  GIconRotateLeft,
+  GIconTrophy,
+  GIconVolume,
+  GIconVolumeMute,
+  GIconCheck,
+  GIconSparkles,
+} from "../../icons/GravityIcons";
 import { API_URL } from "../../../lib/config";
 import { getEffectiveChatName, saveChatName } from "../../../lib/chatSession";
 import { useOS } from "../../../store/useOS";
@@ -59,15 +66,17 @@ function canPlace(grid: (string | null)[][], shape: number[][], r: number, c: nu
 }
 
 function pieceFitsSomewhere(grid: (string | null)[][], shape: number[][]): boolean {
-  for (let r = 0; r < SIZE; r++) {
-    for (let c = 0; c < SIZE; c++) {
+  const maxR = Math.max(...shape.map((s) => s[0]));
+  const maxC = Math.max(...shape.map((s) => s[1]));
+  for (let r = 0; r <= SIZE - 1 - maxR; r++) {
+    for (let c = 0; c <= SIZE - 1 - maxC; c++) {
       if (canPlace(grid, shape, r, c)) return true;
     }
   }
   return false;
 }
 
-// Synthetic Web Audio API Sound Effects Engine
+// Procedural Synthetic Web Audio API Sound Engine
 function useGameAudio(enabled: boolean) {
   const ctxRef = useRef<AudioContext | null>(null);
 
@@ -75,7 +84,7 @@ function useGameAudio(enabled: boolean) {
     if (!enabled || typeof window === "undefined") return null;
     if (!ctxRef.current) {
       try {
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
         ctxRef.current = new AudioContextClass();
       } catch {
         return null;
@@ -100,37 +109,38 @@ function useGameAudio(enabled: boolean) {
       gain.connect(ctx.destination);
       osc.start(t0);
       osc.stop(t0 + dur);
+      setTimeout(() => {
+        try {
+          osc.disconnect();
+          gain.disconnect();
+        } catch {}
+      }, (delay + dur) * 1000 + 50);
     } catch {}
   };
 
   return {
     pick: () => {
-      tone(440, 0.06, "sine", 0.04);
-      tone(554.37, 0.08, "sine", 0.05, 0.02);
+      tone(440, 0.05, "sine", 0.04);
+      tone(554.37, 0.07, "sine", 0.05, 0.015);
     },
     place: () => {
-      tone(340, 0.09, "triangle", 0.09);
-      tone(180, 0.12, "sine", 0.07, 0.02);
+      tone(360, 0.08, "triangle", 0.08);
+      tone(190, 0.1, "sine", 0.06, 0.02);
     },
     clear: (combo = 0) => {
-      const base = 520 + Math.min(combo * 60, 300);
+      const base = 520 + Math.min(combo * 60, 320);
       const notes = [base, base * 1.25, base * 1.5, base * 2];
       notes.forEach((freq, i) => {
-        tone(freq, 0.22, "sine", 0.09, i * 0.05);
+        tone(freq, 0.2, "sine", 0.08, i * 0.045);
       });
     },
-    combo: () => {
-      tone(659.25, 0.15, "triangle", 0.1);
-      tone(880, 0.2, "sine", 0.12, 0.06);
-      tone(1046.5, 0.3, "sine", 0.14, 0.12);
-    },
     snapBack: () => {
-      tone(260, 0.08, "sine", 0.03);
+      tone(280, 0.06, "sine", 0.03);
     },
     gameOver: () => {
-      tone(320, 0.25, "sawtooth", 0.08);
-      tone(240, 0.3, "sawtooth", 0.08, 0.12);
-      tone(180, 0.45, "sawtooth", 0.08, 0.24);
+      tone(320, 0.22, "sawtooth", 0.07);
+      tone(240, 0.26, "sawtooth", 0.07, 0.1);
+      tone(180, 0.4, "sawtooth", 0.08, 0.2);
     },
   };
 }
@@ -142,7 +152,6 @@ export default function BlockBlast() {
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [best, setBest] = useState<number>(() => Number(localStorage.getItem("blockblast_best") || 0));
-  const [hover, setHover] = useState<{ r: number; c: number } | null>(null);
   const [comboCount, setComboCount] = useState(0);
   const [comboBanner, setComboBanner] = useState<string | null>(null);
   const [gameOver, setGameOver] = useState(false);
@@ -151,6 +160,18 @@ export default function BlockBlast() {
   const [clearingCells, setClearingCells] = useState<Set<string>>(new Set());
   const [popups, setPopups] = useState<{ id: number; text: string; r: number; c: number; big: boolean }[]>([]);
   const [shake, setShake] = useState(false);
+
+  // Dragging State
+  // Active dragging piece info
+  interface DragInfo {
+    index: number;
+    piece: Piece;
+    isTouch: boolean;
+    cellSize: number;
+  }
+  const [activeDragPiece, setActiveDragPiece] = useState<DragInfo | null>(null);
+  // Grid hover target { r, c, isValid } updated ONLY when changing cells (zero React overhead)
+  const [hoverTarget, setHoverTarget] = useState<{ r: number; c: number; isValid: boolean } | null>(null);
 
   // Leaderboard states
   const [playerName, setPlayerName] = useState(() => getEffectiveChatName());
@@ -161,23 +182,12 @@ export default function BlockBlast() {
   const popupId = useRef(0);
   const sfx = useGameAudio(soundOn);
   const boardRef = useRef<HTMLDivElement | null>(null);
+  const ghostRef = useRef<HTMLDivElement | null>(null);
 
-  // ----------------------------------------------------
-  // DRAG & DROP INTERACTION SYSTEM
-  // ----------------------------------------------------
-  interface ActiveDrag {
-    index: number;
-    piece: Piece;
-    pointerX: number;
-    pointerY: number;
-    targetR: number | null;
-    targetC: number | null;
-    isValid: boolean;
-    isTouch: boolean;
-  }
-  const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
-  const activeDragRef = useRef<ActiveDrag | null>(null);
-  activeDragRef.current = activeDrag;
+  // Refs for drag tracking without triggering re-renders on every pixel
+  const dragInfoRef = useRef<DragInfo | null>(null);
+  const hoverTargetRef = useRef<{ r: number; c: number; isValid: boolean } | null>(null);
+  const isClearingRef = useRef(false);
 
   useEffect(() => {
     localStorage.setItem("blockblast_sound", soundOn ? "on" : "off");
@@ -194,23 +204,18 @@ export default function BlockBlast() {
     return newTray;
   }, []);
 
-  // Check Game Over condition
-  useEffect(() => {
-    if (gameOver) return;
-    const anyFits = tray.some((p) => p && pieceFitsSomewhere(grid, p.shape));
-    if (tray.some((p) => p) && !anyFits) {
-      setGameOver(true);
-      sfx.gameOver();
-      if (typeof navigator !== "undefined" && navigator.vibrate) {
-        navigator.vibrate([40, 60, 80]);
-      }
-    }
-  }, [grid, tray, gameOver, sfx]);
+  // Safe game-over checker: verifies against current tray and grid
+  const checkGameOverCondition = useCallback((currentGrid: (string | null)[][], currentTray: (Piece | null)[]) => {
+    if (isClearingRef.current) return false;
+    const remainingPieces = currentTray.filter((p): p is Piece => p !== null);
+    if (remainingPieces.length === 0) return false;
+    return !remainingPieces.some((p) => pieceFitsSomewhere(currentGrid, p.shape));
+  }, []);
 
   // Execute placement of a piece at grid coordinate (r, c)
   const placePieceAt = useCallback((pieceIndex: number, r: number, c: number) => {
     const piece = tray[pieceIndex];
-    if (!piece || gameOver) return false;
+    if (!piece || gameOver || isClearingRef.current) return false;
     if (!canPlace(grid, piece.shape, r, c)) return false;
 
     const next = grid.map((row) => [...row]);
@@ -222,10 +227,10 @@ export default function BlockBlast() {
 
     sfx.place();
     if (typeof navigator !== "undefined" && navigator.vibrate) {
-      navigator.vibrate(15);
+      navigator.vibrate(12);
     }
     setDropCells(justDropped);
-    setTimeout(() => setDropCells(new Set()), 220);
+    setTimeout(() => setDropCells(new Set()), 200);
 
     // Check full rows and full columns
     const fullRows: number[] = [];
@@ -241,9 +246,11 @@ export default function BlockBlast() {
     newTray = refillIfNeeded(newTray);
     setTray(newTray);
     setSelected(null);
-    setHover(null);
+    setHoverTarget(null);
+    hoverTargetRef.current = null;
 
     if (cleared > 0) {
+      isClearingRef.current = true;
       const newCombo = comboCount + 1;
       setComboCount(newCombo);
 
@@ -258,22 +265,33 @@ export default function BlockBlast() {
       setClearingCells(clearSet);
       sfx.clear(newCombo);
       setShake(true);
-      setTimeout(() => setShake(false), 240);
+      setTimeout(() => setShake(false), 200);
 
       // Trigger combo banner
       if (newCombo >= 2) {
         const text = newCombo >= 4 ? `MEGA BLAST x${newCombo}!` : newCombo === 3 ? "SUPER COMBO x3!" : "COMBO x2!";
         setComboBanner(text);
-        setTimeout(() => setComboBanner(null), 1200);
+        setTimeout(() => setComboBanner(null), 1100);
       }
 
+      // Finalize clearing lines smoothly
       setTimeout(() => {
         const finalGrid = next.map((row) => [...row]);
         fullRows.forEach((r2) => { for (let c2 = 0; c2 < SIZE; c2++) finalGrid[r2][c2] = null; });
         fullCols.forEach((c2) => { for (let r2 = 0; r2 < SIZE; r2++) finalGrid[r2][c2] = null; });
         setGrid(finalGrid);
         setClearingCells(new Set());
-      }, 240);
+        isClearingRef.current = false;
+
+        // Check game over ONLY on the final cleared board
+        if (checkGameOverCondition(finalGrid, newTray)) {
+          setGameOver(true);
+          sfx.gameOver();
+          if (typeof navigator !== "undefined" && navigator.vibrate) {
+            navigator.vibrate([40, 60, 80]);
+          }
+        }
+      }, 220);
 
       const newScore = score + gained;
       setScore(newScore);
@@ -284,7 +302,7 @@ export default function BlockBlast() {
 
       const id = popupId.current++;
       setPopups((p) => [...p, { id, text: `+${gained}`, r, c, big: true }]);
-      setTimeout(() => setPopups((p) => p.filter((x) => x.id !== id)), 700);
+      setTimeout(() => setPopups((p) => p.filter((x) => x.id !== id)), 650);
     } else {
       setGrid(next);
       setComboCount(0);
@@ -298,96 +316,164 @@ export default function BlockBlast() {
 
       const id = popupId.current++;
       setPopups((p) => [...p, { id, text: `+${gained}`, r, c, big: false }]);
-      setTimeout(() => setPopups((p) => p.filter((x) => x.id !== id)), 700);
+      setTimeout(() => setPopups((p) => p.filter((x) => x.id !== id)), 650);
+
+      // Check game over on next grid
+      if (checkGameOverCondition(next, newTray)) {
+        setGameOver(true);
+        sfx.gameOver();
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          navigator.vibrate([40, 60, 80]);
+        }
+      }
     }
 
     return true;
-  }, [tray, grid, gameOver, comboCount, score, best, refillIfNeeded, sfx]);
+  }, [tray, grid, gameOver, comboCount, score, best, refillIfNeeded, sfx, checkGameOverCondition]);
 
-  // Compute grid cell from client coordinates
+  // Precise Target Calculation
+  // Computes the grid origin (r, c) directly centered under pointer
   const calculateGridTarget = useCallback((clientX: number, clientY: number, shape: number[][], isTouch: boolean) => {
     if (!boardRef.current) return { r: null, c: null, isValid: false };
     const rect = boardRef.current.getBoundingClientRect();
     const cellSize = rect.width / SIZE;
 
-    // Offset on touch so piece floats above finger, easily visible
-    const touchOffsetY = isTouch ? -54 : -18;
-    const adjustedY = clientY + touchOffsetY;
-
-    // Calculate piece dimensions to center it under pointer
     const maxR = Math.max(...shape.map((s) => s[0]));
     const maxC = Math.max(...shape.map((s) => s[1]));
-    const pieceCenterOffsetX = (maxC * cellSize) / 2;
-    const pieceCenterOffsetY = (maxR * cellSize) / 2;
+    const shapeRows = maxR + 1;
+    const shapeCols = maxC + 1;
 
-    const rawCol = Math.round((clientX - rect.left - pieceCenterOffsetX) / cellSize);
-    const rawRow = Math.round((adjustedY - rect.top - pieceCenterOffsetY) / cellSize);
+    // Mobile touch offset: floats above fingertip so finger does not obstruct the piece or target cells
+    // Desktop mouse: 0 offset (placed exactly where mouse pointer is)
+    const touchOffsetY = isTouch ? -64 : 0;
+    const pieceCenterX = clientX;
+    const pieceCenterY = clientY + touchOffsetY;
 
-    const r = Math.max(0, Math.min(SIZE - 1, rawRow));
-    const c = Math.max(0, Math.min(SIZE - 1, rawCol));
+    // Board relative coordinate
+    const xOnBoard = pieceCenterX - rect.left;
+    const yOnBoard = pieceCenterY - rect.top;
 
-    const isValid = canPlace(grid, shape, r, c);
-    return { r, c, isValid };
+    // Generous boundary margin to allow snapping to edges smoothly
+    const margin = cellSize * 0.75;
+    if (
+      xOnBoard < -margin ||
+      xOnBoard > rect.width + margin ||
+      yOnBoard < -margin ||
+      yOnBoard > rect.height + margin
+    ) {
+      // Outside board area completely (e.g. in tray or off screen)
+      return { r: null, c: null, isValid: false };
+    }
+
+    // Grid origin so that piece center corresponds to (xOnBoard, yOnBoard)
+    const cellX = xOnBoard / cellSize;
+    const cellY = yOnBoard / cellSize;
+    const targetC = Math.round(cellX - (shapeCols - 1) / 2);
+    const targetR = Math.round(cellY - (shapeRows - 1) / 2);
+
+    // If completely outside playable grid bounds
+    if (targetR < 0 || targetR + shapeRows > SIZE || targetC < 0 || targetC + shapeCols > SIZE) {
+      return { r: targetR, c: targetC, isValid: false };
+    }
+
+    const isValid = canPlace(grid, shape, targetR, targetC);
+    return { r: targetR, c: targetC, isValid };
   }, [grid]);
 
-  // Handle pointer down on tray piece to start dragging
+  // Pointer Down on Piece Tray Item
   const handlePiecePointerDown = (e: React.PointerEvent, pieceIndex: number) => {
     const piece = tray[pieceIndex];
-    if (!piece || gameOver) return;
+    if (!piece || gameOver || isClearingRef.current) return;
 
     e.preventDefault();
     const isTouch = e.pointerType === "touch";
-    sfx.pick();
-    setSelected(pieceIndex);
+    const startX = e.clientX;
+    const startY = e.clientY;
+    let hasMoved = false;
 
-    const target = calculateGridTarget(e.clientX, e.clientY, piece.shape, isTouch);
+    // Determine current board cell size for perfectly scaled drag ghost
+    let cellSize = 38;
+    if (boardRef.current) {
+      cellSize = boardRef.current.getBoundingClientRect().width / SIZE;
+    }
 
-    setActiveDrag({
+    const dragInfo: DragInfo = {
       index: pieceIndex,
       piece,
-      pointerX: e.clientX,
-      pointerY: e.clientY,
-      targetR: target.r,
-      targetC: target.c,
-      isValid: target.isValid,
       isTouch,
-    });
+      cellSize,
+    };
+    dragInfoRef.current = dragInfo;
 
-    const handlePointerMove = (moveEvent: PointerEvent) => {
-      moveEvent.preventDefault();
-      const current = activeDragRef.current;
-      if (!current) return;
-
-      const newTarget = calculateGridTarget(moveEvent.clientX, moveEvent.clientY, current.piece.shape, current.isTouch);
-      setActiveDrag({
-        ...current,
-        pointerX: moveEvent.clientX,
-        pointerY: moveEvent.clientY,
-        targetR: newTarget.r,
-        targetC: newTarget.c,
-        isValid: newTarget.isValid,
-      });
-      if (newTarget.r !== null && newTarget.c !== null) {
-        setHover({ r: newTarget.r, c: newTarget.c });
-      } else {
-        setHover(null);
+    const updateGhostPosition = (cx: number, cy: number) => {
+      if (ghostRef.current) {
+        const offsetY = isTouch ? -64 : 0;
+        ghostRef.current.style.transform = `translate3d(${cx}px, ${cy + offsetY}px, 0)`;
       }
     };
 
-    const handlePointerUp = () => {
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      moveEvent.preventDefault();
+      const current = dragInfoRef.current;
+      if (!current) return;
+
+      const dist = Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY);
+      if (!hasMoved && dist > 5) {
+        hasMoved = true;
+        sfx.pick();
+        setActiveDragPiece(current);
+        setSelected(pieceIndex);
+      }
+
+      if (hasMoved) {
+        updateGhostPosition(moveEvent.clientX, moveEvent.clientY);
+
+        const target = calculateGridTarget(moveEvent.clientX, moveEvent.clientY, current.piece.shape, current.isTouch);
+        const prev = hoverTargetRef.current;
+
+        // ONLY update React state when target coordinate or validity actually changes!
+        // This keeps dragging at locked 120 FPS without re-rendering the whole board on every pixel.
+        if (
+          !prev ||
+          prev.r !== target.r ||
+          prev.c !== target.c ||
+          prev.isValid !== target.isValid
+        ) {
+          hoverTargetRef.current = target;
+          setHoverTarget(target.r !== null && target.c !== null ? target : null);
+        }
+      }
+    };
+
+    const handlePointerUp = (upEvent: PointerEvent) => {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerUp);
 
-      const current = activeDragRef.current;
-      if (current && current.targetR !== null && current.targetC !== null && current.isValid) {
-        placePieceAt(current.index, current.targetR, current.targetC);
+      const current = dragInfoRef.current;
+      dragInfoRef.current = null;
+
+      if (!hasMoved) {
+        // Simple click/tap without drag: toggle selection
+        sfx.pick();
+        setSelected((prev) => (prev === pieceIndex ? null : pieceIndex));
+        setActiveDragPiece(null);
+        setHoverTarget(null);
+        hoverTargetRef.current = null;
+        return;
+      }
+
+      const finalTarget = calculateGridTarget(upEvent.clientX, upEvent.clientY, current?.piece.shape || [], isTouch);
+
+      if (current && finalTarget.r !== null && finalTarget.c !== null && finalTarget.isValid) {
+        placePieceAt(current.index, finalTarget.r, finalTarget.c);
       } else {
         sfx.snapBack();
       }
 
-      setActiveDrag(null);
-      setHover(null);
+      setActiveDragPiece(null);
+      setHoverTarget(null);
+      hoverTargetRef.current = null;
     };
 
     window.addEventListener("pointermove", handlePointerMove, { passive: false });
@@ -395,8 +481,14 @@ export default function BlockBlast() {
     window.addEventListener("pointercancel", handlePointerUp);
   };
 
-  // Sync score to backend
-  const syncTimerRef = useRef<any>(null);
+  // Click on a grid cell when a piece is selected via tap
+  const handleCellClick = (r: number, c: number) => {
+    if (selected === null || gameOver || isClearingRef.current) return;
+    placePieceAt(selected, r, c);
+  };
+
+  // Sync score to backend leaderboard
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const syncScoreToBackend = useCallback(async (scoreToSync: number) => {
     if (scoreToSync <= 0) return;
     const cleanName = playerName.trim() || getEffectiveChatName();
@@ -443,8 +535,11 @@ export default function BlockBlast() {
     setGrid(emptyGrid());
     setTray([randomPiece(nextId.current++), randomPiece(nextId.current++), randomPiece(nextId.current++)]);
     setSelected(null);
-    setHover(null);
-    setActiveDrag(null);
+    setHoverTarget(null);
+    hoverTargetRef.current = null;
+    setActiveDragPiece(null);
+    dragInfoRef.current = null;
+    isClearingRef.current = false;
     setScore(0);
     setComboCount(0);
     setComboBanner(null);
@@ -470,20 +565,15 @@ export default function BlockBlast() {
     notify("Score Posted!", `Your Block Blast score of ${score} is live on the leaderboard!`, "success");
   };
 
-  // Compute preview cells when dragging or hovering
-  const activePiece = activeDrag ? activeDrag.piece : (selected !== null ? tray[selected] : null);
-  const activeAnchor = activeDrag && activeDrag.targetR !== null && activeDrag.targetC !== null
-    ? { r: activeDrag.targetR, c: activeDrag.targetC }
-    : hover;
-
+  // Preview cell calculation
+  const activePiece = activeDragPiece ? activeDragPiece.piece : (selected !== null ? tray[selected] : null);
   const previewCells = new Set<string>();
-  let validPlacement = false;
+  const isTargetValid = hoverTarget?.isValid ?? false;
 
-  if (activePiece && activeAnchor) {
-    validPlacement = canPlace(grid, activePiece.shape, activeAnchor.r, activeAnchor.c);
+  if (activePiece && hoverTarget && hoverTarget.r !== null && hoverTarget.c !== null) {
     activePiece.shape.forEach(([dr, dc]) => {
-      const rr = activeAnchor.r + dr;
-      const cc = activeAnchor.c + dc;
+      const rr = hoverTarget.r + dr;
+      const cc = hoverTarget.c + dc;
       if (rr >= 0 && rr < SIZE && cc >= 0 && cc < SIZE) {
         previewCells.add(`${rr}-${cc}`);
       }
@@ -491,17 +581,17 @@ export default function BlockBlast() {
   }
 
   return (
-    <div className="p-3 sm:p-4 flex flex-col items-center justify-between gap-2 sm:gap-3 select-none h-full overflow-y-auto thin-scroll relative">
+    <div className="p-3 sm:p-4 flex flex-col items-center justify-between gap-2.5 sm:gap-3.5 select-none h-full overflow-y-auto thin-scroll relative touch-none">
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between w-full max-w-[min(90vw,340px)] text-sm shrink-0">
+      <div className="flex items-center justify-between w-full max-w-[min(90vw,350px)] text-sm shrink-0">
         <div className="flex items-center gap-3">
           <div>
             <div className="text-[10px] text-white/50 uppercase tracking-wider font-semibold">Score</div>
             <div className="font-display font-bold text-xl tabular-nums text-white">{score}</div>
           </div>
           {comboCount > 1 && (
-            <div className="px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 font-mono text-xs font-bold animate-pulse">
-              x{comboCount}
+            <div className="px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 font-mono text-xs font-bold">
+              x{comboCount} Combo
             </div>
           )}
         </div>
@@ -531,7 +621,7 @@ export default function BlockBlast() {
 
       {/* Combo Banner Animation */}
       {comboBanner && (
-        <div className="absolute top-12 z-30 px-4 py-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-500 text-white font-display font-black text-xs shadow-xl shadow-amber-500/40 animate-bounce tracking-wider uppercase">
+        <div className="absolute top-12 z-30 px-4 py-1 rounded-full bg-gradient-to-r from-amber-500 to-rose-500 text-white font-display font-black text-xs shadow-xl shadow-amber-500/40 animate-bounce tracking-wider uppercase pointer-events-none">
           {comboBanner}
         </div>
       )}
@@ -539,7 +629,7 @@ export default function BlockBlast() {
       {/* 8x8 Board Container */}
       <div
         ref={boardRef}
-        className={`relative grid gap-[3.5px] p-2.5 rounded-2xl bg-[#0c101c]/90 border-2 border-white/15 shadow-2xl transition-transform w-full max-w-[min(90vw,340px)] aspect-square shrink-0 ${
+        className={`relative grid gap-[3px] p-2 sm:p-2.5 rounded-2xl bg-[#0b0f19] border-2 border-white/15 shadow-2xl transition-transform w-full max-w-[min(90vw,350px)] aspect-square shrink-0 select-none ${
           shake ? "bb-shake" : ""
         }`}
         style={{
@@ -554,12 +644,12 @@ export default function BlockBlast() {
             const isDropping = dropCells.has(key);
             const isClearing = clearingCells.has(key);
 
-            let bg = "rgba(255,255,255,0.04)";
+            let bg = "rgba(255,255,255,0.035)";
             if (cell) {
               bg = cell;
             } else if (isPreview) {
-              bg = validPlacement
-                ? `${activePiece?.color || "#38bdf8"}cc`
+              bg = isTargetValid
+                ? `${activePiece?.color || "#38bdf8"}d9`
                 : "rgba(239, 68, 68, 0.4)";
             }
 
@@ -567,27 +657,29 @@ export default function BlockBlast() {
               <div
                 key={key}
                 onMouseEnter={() => {
-                  if (!activeDrag) setHover({ r, c });
-                }}
-                onClick={() => {
-                  if (selected !== null) {
-                    placePieceAt(selected, r, c);
+                  if (selected !== null && !activeDragPiece) {
+                    const piece = tray[selected];
+                    if (piece) {
+                      const valid = canPlace(grid, piece.shape, r, c);
+                      setHoverTarget({ r, c, isValid: valid });
+                    }
                   }
                 }}
-                className={`rounded-[5px] transition-all duration-150 relative overflow-hidden ${
+                onClick={() => handleCellClick(r, c)}
+                className={`rounded-[5px] relative overflow-hidden select-none ${
                   isDropping ? "bb-drop scale-105" : ""
                 } ${isClearing ? "bb-clear scale-90 opacity-60" : ""}`}
                 style={{
                   background: bg,
                   boxShadow:
                     cell && !isClearing
-                      ? "inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -3px 0 rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.4)"
-                      : isPreview && validPlacement
-                      ? `0 0 12px ${activePiece?.color || "#38bdf8"}aa`
+                      ? "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -3px 0 rgba(0,0,0,0.35), 0 2px 5px rgba(0,0,0,0.35)"
+                      : isPreview && isTargetValid
+                      ? `0 0 10px ${activePiece?.color || "#38bdf8"}99`
                       : "inset 0 0 0 1px rgba(255,255,255,0.03)",
                 }}
               >
-                {/* Subtle glass reflection highlight on filled tiles */}
+                {/* 3D Glass Highlight on placed blocks */}
                 {cell && !isClearing && (
                   <div className="absolute inset-x-0 top-0 h-1/3 bg-white/20 rounded-t-[4px] pointer-events-none" />
                 )}
@@ -616,10 +708,10 @@ export default function BlockBlast() {
       </div>
 
       {/* Piece Tray with Drag & Drop Handles */}
-      <div className="w-full max-w-[min(90vw,340px)] flex flex-col items-center gap-1.5 shrink-0">
-        <div className="flex justify-center items-center gap-2 sm:gap-3 w-full">
+      <div className="w-full max-w-[min(90vw,350px)] flex flex-col items-center gap-1.5 shrink-0">
+        <div className="flex justify-center items-center gap-2.5 sm:gap-3.5 w-full">
           {tray.map((p, i) => {
-            const isDraggingThis = activeDrag?.index === i;
+            const isDraggingThis = activeDragPiece?.index === i;
             const isSelectedThis = selected === i;
 
             if (!p) {
@@ -635,15 +727,14 @@ export default function BlockBlast() {
               <div
                 key={p.id}
                 onPointerDown={(e) => handlePiecePointerDown(e, i)}
-                onClick={() => setSelected(selected === i ? null : i)}
                 className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 flex items-center justify-center transition-all duration-150 cursor-grab active:cursor-grabbing touch-none select-none shrink-0 ${
                   isDraggingThis
-                    ? "opacity-20 scale-90 border-accent/40 bg-accent/5"
+                    ? "opacity-25 scale-90 border-accent/40 bg-accent/5"
                     : isSelectedThis
                     ? "border-accent bg-accent/20 ring-2 ring-accent/60 scale-105 shadow-lg shadow-accent/25"
                     : "border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/[0.08] active:scale-95"
                 }`}
-                title="Drag onto the board or click to place"
+                title="Drag onto board or click to select"
               >
                 <MiniShape shape={p.shape} color={p.color} cellSize={14} />
               </div>
@@ -651,44 +742,45 @@ export default function BlockBlast() {
           })}
         </div>
 
-        {/* Hint text */}
+        {/* Guidance tip */}
         <p className="text-[10px] sm:text-[11px] text-white/40 text-center font-medium">
-          Drag any block directly onto the board and release to place.
+          Drag any block onto the grid and release to place.
         </p>
       </div>
 
-      {/* Floating Drag Clone that follows pointer / touch */}
-      {activeDrag && (
+      {/* Hardware-Accelerated Floating Drag Ghost */}
+      {activeDragPiece && (
         <div
+          ref={ghostRef}
           style={{
             position: "fixed",
-            left: `${activeDrag.pointerX}px`,
-            top: `${activeDrag.pointerY + (activeDrag.isTouch ? -54 : -18)}px`,
-            transform: "translate(-50%, -50%)",
+            left: 0,
+            top: 0,
             pointerEvents: "none",
             zIndex: 99999,
+            willChange: "transform",
           }}
         >
           <div
-            className={`p-2 rounded-2xl bg-slate-950/85 backdrop-blur-md border shadow-2xl transition-transform ${
-              activeDrag.isValid
-                ? "border-emerald-400 ring-2 ring-emerald-400/50 scale-110 shadow-emerald-500/30"
-                : "border-rose-500/70 ring-2 ring-rose-500/40 scale-100 shadow-rose-500/20"
-            }`}
+            style={{
+              transform: "translate(-50%, -50%)",
+            }}
+            className="filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)]"
           >
-            <MiniShape shape={activeDrag.piece.shape} color={activeDrag.piece.color} cellSize={18} />
+            <MiniShape
+              shape={activeDragPiece.piece.shape}
+              color={activeDragPiece.piece.color}
+              cellSize={Math.max(24, Math.round(activeDragPiece.cellSize * 0.95))}
+              glow={isTargetValid}
+            />
           </div>
         </div>
       )}
 
       {/* Game Over Dialog */}
       {gameOver && (
-        <div
-          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
-        >
-          <div
-            className="glass rounded-2xl p-5 sm:p-6 text-center max-w-xs w-full shadow-2xl border border-white/15"
-          >
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="glass rounded-2xl p-5 sm:p-6 text-center max-w-xs w-full shadow-2xl border border-white/15">
             <div className="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center mx-auto mb-3 text-amber-300">
               <GIconSparkles size={24} />
             </div>
@@ -741,27 +833,51 @@ export default function BlockBlast() {
   );
 }
 
-function MiniShape({ shape, color, cellSize = 12 }: { shape: number[][]; color: string; cellSize?: number }) {
+function MiniShape({
+  shape,
+  color,
+  cellSize = 14,
+  glow = false,
+}: {
+  shape: number[][];
+  color: string;
+  cellSize?: number;
+  glow?: boolean;
+}) {
   const maxR = Math.max(...shape.map((s) => s[0])) + 1;
   const maxC = Math.max(...shape.map((s) => s[1])) + 1;
-  const pad = 2;
+  const pad = 3;
   const width = maxC * cellSize + pad * 2;
   const height = maxR * cellSize + pad * 2;
 
   return (
-    <svg width={width} height={height} className="overflow-visible drop-shadow-sm">
+    <svg
+      width={width}
+      height={height}
+      className={`overflow-visible ${glow ? "filter drop-shadow-[0_0_8px_rgba(56,189,248,0.7)]" : ""}`}
+    >
       {shape.map(([r, c], i) => (
-        <rect
-          key={i}
-          x={c * cellSize + pad}
-          y={r * cellSize + pad}
-          width={cellSize - 2}
-          height={cellSize - 2}
-          rx={3}
-          fill={color}
-          stroke="rgba(255,255,255,0.3)"
-          strokeWidth="1"
-        />
+        <g key={i}>
+          <rect
+            x={c * cellSize + pad}
+            y={r * cellSize + pad}
+            width={cellSize - 2.5}
+            height={cellSize - 2.5}
+            rx={3}
+            fill={color}
+            stroke="rgba(255,255,255,0.4)"
+            strokeWidth="1"
+          />
+          {/* Glass highlight on mini block */}
+          <rect
+            x={c * cellSize + pad + 1}
+            y={r * cellSize + pad + 1}
+            width={cellSize - 4.5}
+            height={Math.max(2, (cellSize - 2.5) * 0.35)}
+            rx={2}
+            fill="rgba(255,255,255,0.25)"
+          />
+        </g>
       ))}
     </svg>
   );

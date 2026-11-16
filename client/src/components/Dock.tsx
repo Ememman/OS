@@ -59,7 +59,7 @@ export default function Dock() {
     toggleMissionControl,
     missionControlOpen,
     systemSounds,
-    unreadChatCount,
+    getAppBadge,
     dockApps,
     reorderDockApps,
   } = useOS();
@@ -281,17 +281,37 @@ export default function Dock() {
                     }`}
                   />
                 )}
-                {app === "chats" && unreadChatCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                    className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow-lg shadow-rose-500/60 border border-white/30 z-20 pointer-events-none select-none"
-                  >
-                    {unreadChatCount > 99 ? "99+" : unreadChatCount}
-                  </motion.span>
-                )}
+                {(() => {
+                  const badge = getAppBadge(app);
+                  if (!badge || badge.count <= 0) return null;
+                  return (
+                    <motion.span
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{
+                        scale: 1,
+                        opacity: 1,
+                        y: [0, -3.5, 0],
+                      }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{
+                        y: {
+                          repeat: Infinity,
+                          duration: 1.5,
+                          ease: "easeInOut",
+                        },
+                        scale: { type: "spring", stiffness: 500, damping: 25 },
+                      }}
+                      className={`absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full text-white text-[10px] font-bold flex items-center justify-center border border-white/30 z-20 pointer-events-none select-none ${
+                        badge.type === "chat"
+                          ? "bg-rose-500 shadow-lg shadow-rose-500/60"
+                          : "bg-[#0091ff] shadow-lg shadow-[#0091ff]/60"
+                      }`}
+                      title={badge.type === "chat" ? `${badge.count} unread message(s)` : `${badge.count} update(s) available`}
+                    >
+                      {badge.count > 99 ? "99+" : badge.count}
+                    </motion.span>
+                  );
+                })()}
               </motion.button>
 
               <AnimatePresence>

@@ -1,8 +1,8 @@
-import { useRef, useState, type CSSProperties } from "react";
+import { type CSSProperties } from "react";
 import { motion } from "framer-motion";
 import type { DesktopFolderItem } from "../types/desktop";
 import { APP_REGISTRY } from "../types/desktop";
-import { useIsMobile } from "../lib/useMediaQuery";
+import { useOS } from "../store/useOS";
 
 interface DesktopFolderIconProps {
   folder: DesktopFolderItem;
@@ -17,99 +17,85 @@ export default function DesktopFolderIcon({
   style,
   isCombineTarget,
 }: DesktopFolderIconProps) {
-  const [selected, setSelected] = useState(false);
-  const isMobile = useIsMobile();
-  const lastTap = useRef(0);
-
-  const handleClick = () => {
-    if (isMobile) {
-      onOpen();
-      return;
-    }
-    setSelected(true);
-    const now = Date.now();
-    if (now - lastTap.current < 350) {
-      onOpen();
-    }
-    lastTap.current = now;
-  };
-
-  // Mini-grid displays up to 9 apps (3x3), matching the user screenshot!
+  const { getAppBadge } = useOS();
+  // Mini-grid displays up to 9 apps (3x3)
   const displayApps = folder.apps.slice(0, 9);
-  // Fill remaining slots up to 9 if desired, or keep neat
+  // Subtle placeholders for remaining slots up to 9 to preserve neat 3x3 grid symmetry
   const emptySlots = Math.max(0, 9 - displayApps.length);
 
+  // Compute aggregate badges from nested apps or folder count
+  const subAppBadges = folder.apps.reduce((sum, a) => sum + (getAppBadge(a.app)?.count || 0), 0);
+  const totalBadge = subAppBadges > 0 ? subAppBadges : (folder.badge ?? folder.apps.length);
+
   return (
-    <motion.div
-      data-desktop-item-id={folder.id}
-      onClick={handleClick}
+    <div
+      onClick={onOpen}
       onDoubleClick={onOpen}
-      onBlur={() => setSelected(false)}
-      tabIndex={0}
-      style={{ touchAction: "pan-y", ...style }}
-      whileHover={isMobile ? undefined : { scale: 1.07, y: -2 }}
-      whileTap={{ scale: 0.94 }}
-      transition={{ type: "spring", stiffness: 450, damping: 22 }}
-      className={`group relative flex flex-col items-center gap-1 sm:gap-1.5 w-full max-w-[84px] sm:w-20 py-1.5 sm:py-2 rounded-xl outline-none cursor-pointer select-none touch-pan-y ${
-        selected ? "bg-white/10 ring-1 ring-white/20" : "hover:bg-white/5"
-      }`}
+      style={{ touchAction: "none", ...style }}
+      className="group relative flex flex-col items-center gap-1 sm:gap-1.5 w-full max-w-[84px] sm:w-20 py-1.5 sm:py-2 rounded-xl outline-none select-none cursor-pointer"
     >
-      {/* Folder Container: Frosted Glass Squircle matching user screenshot */}
-      <div
-        className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl sm:rounded-[20px] flex items-center justify-center p-1.5 sm:p-2 transition-all duration-200 border ${
-          isCombineTarget
-            ? "ring-2 ring-[#0091ff] border-[#0091ff] shadow-[0_0_22px_rgba(0,145,255,0.7)] scale-110 bg-[#0091ff]/20"
-            : selected
-            ? "bg-white/20 border-accent shadow-lg shadow-accent/25"
-            : "bg-[#0b101c]/85 sm:bg-[#0b101c]/70 backdrop-blur-xl border-white/20 group-hover:border-white/35 group-hover:bg-[#0b101c]/90 shadow-xl shadow-black/50"
-        }`}
-      >
-        {/* 3x3 Mini App Grid */}
-        <div className="grid grid-cols-3 gap-1 sm:gap-1.5 w-full h-full items-center justify-items-center">
-          {displayApps.map((a) => {
-            const reg = APP_REGISTRY[a.app];
-            const Icon = reg?.icon;
-            const tileBg = a.color || reg?.color || "#38bdf8";
+      {/* Folder Container: Frosted Glass Squircle with floating notification badge */}
+      <div className="relative w-12 h-12 sm:w-14 sm:h-14 shrink-0">
+        {/* Inner Glass Squircle with strict overflow-hidden so children NEVER overlap or stick out */}
+        <motion.div
+          whileHover={{ scale: 1.06, y: -1 }}
+          whileTap={{ scale: 0.94 }}
+          transition={{ type: "spring", stiffness: 450, damping: 22 }}
+          className={`w-full h-full rounded-2xl sm:rounded-[20px] overflow-hidden flex items-center justify-center p-2 sm:p-2.5 transition-all duration-200 border ${
+            isCombineTarget
+              ? "ring-2 ring-[#0091ff] border-[#0091ff] shadow-[0_0_22px_rgba(0,145,255,0.7)] scale-110 bg-[#0091ff]/20"
+              : "bg-[#0b101c]/90 sm:bg-[#0b101c]/80 backdrop-blur-xl border-white/20 group-hover:border-white/40 group-hover:bg-[#0b101c]/95 shadow-xl shadow-black/60"
+          }`}
+        >
+          {/* 3x3 Mini App Grid cleanly scaled to fit 100% inside container boundaries */}
+          <div className="grid grid-cols-3 gap-1 sm:gap-1.5 w-full h-full max-w-[34px] max-h-[34px] sm:max-w-[38px] sm:max-h-[38px] items-center justify-items-center">
+            {displayApps.map((a) => {
+              const reg = APP_REGISTRY[a.app];
+              const Icon = reg?.icon;
+              const tileBg = a.color || reg?.color || "#38bdf8";
 
-            return (
-              <div
-                key={a.id || a.app}
-                className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-[3px] sm:rounded-[4px] flex items-center justify-center shadow-xs overflow-hidden shrink-0"
-                style={{ backgroundColor: tileBg }}
-                title={a.label}
-              >
-                {Icon && (
-                  <Icon
-                    size={8}
-                    className="text-white scale-75 sm:scale-90"
-                    color="#ffffff"
-                  />
-                )}
-              </div>
-            );
-          })}
+              return (
+                <div
+                  key={a.id || a.app}
+                  className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-[2px] sm:rounded-[2.5px] flex items-center justify-center shadow-xs overflow-hidden shrink-0"
+                  style={{ backgroundColor: tileBg }}
+                  title={a.label}
+                >
+                  {Icon && (
+                    <Icon
+                      size={6}
+                      className="text-white scale-75 sm:scale-85"
+                      color="#ffffff"
+                    />
+                  )}
+                </div>
+              );
+            })}
 
-          {/* Faint subtle placeholder dots for empty slots in 3x3 grid */}
-          {emptySlots > 0 &&
-            Array.from({ length: emptySlots }).map((_, idx) => (
-              <div
-                key={`empty-${idx}`}
-                className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-[3px] sm:rounded-[4px] bg-white/5 border border-white/5 shrink-0"
-              />
-            ))}
-        </div>
+            {/* Faint subtle placeholder dots for empty slots - perfectly sized to never overflow */}
+            {emptySlots > 0 &&
+              Array.from({ length: emptySlots }).map((_, idx) => (
+                <div
+                  key={`empty-${idx}`}
+                  className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-[2px] bg-white/10 shrink-0"
+                />
+              ))}
+          </div>
+        </motion.div>
 
-        {/* Vibrant Red Notification Badge matching the reference screenshot! */}
-        <div className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white font-bold text-[9px] sm:text-[10px] min-w-[18px] h-[18px] sm:min-w-5 sm:h-5 rounded-full flex items-center justify-center px-1 border-2 border-[#070a12] shadow-md shadow-rose-500/40 select-none">
-          {folder.badge ?? folder.apps.length}
-        </div>
+        {/* Vibrant Red Notification Badge with floating up/down motion: positioned on outer wrapper so it's never clipped */}
+        <motion.div
+          animate={{ y: [0, -3.5, 0] }}
+          transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+          className="absolute -top-1.5 -right-1.5 z-10 bg-rose-500 text-white font-bold text-[9px] sm:text-[10px] min-w-[18px] h-[18px] sm:min-w-5 sm:h-5 rounded-full flex items-center justify-center px-1 border-2 border-[#070a12] shadow-md shadow-rose-500/40 select-none pointer-events-none"
+        >
+          {totalBadge}
+        </motion.div>
       </div>
 
       {/* Folder Name Label */}
       <span
-        className={`text-[10px] sm:text-[11px] font-semibold text-white text-center leading-tight px-1.5 py-0.5 rounded-md truncate max-w-full tracking-wide transition-colors ${
-          selected ? "bg-accent text-white shadow-md shadow-accent/30" : "group-hover:text-white text-white/95"
-        }`}
+        className="text-[10px] sm:text-[11px] font-semibold text-white text-center leading-tight px-1.5 py-0.5 rounded-md truncate max-w-full tracking-wide transition-colors group-hover:text-white text-white/95"
         style={{
           textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 2px 8px rgba(0,0,0,0.85)",
         }}
@@ -117,6 +103,6 @@ export default function DesktopFolderIcon({
       >
         {folder.name}
       </span>
-    </motion.div>
+    </div>
   );
 }

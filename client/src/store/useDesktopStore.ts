@@ -30,6 +30,11 @@ interface DesktopStoreState {
   combineItems: (draggedId: string, targetId: string) => void;
   renameFolder: (folderId: string, newName: string) => void;
   removeAppFromFolder: (folderId: string, appId: string) => void;
+  extractAppFromFolder: (
+    folderId: string,
+    appId: string,
+    targetPos?: { x: number; y: number }
+  ) => void;
   ungroupFolder: (folderId: string) => void;
   addAppToFolder: (folderId: string, appKey: string) => void;
   openFolder: (folderId: string) => void;
@@ -48,7 +53,7 @@ const loadStoredItems = (): DesktopItem[] => {
     const parsed = JSON.parse(raw) as DesktopItem[];
     if (Array.isArray(parsed) && parsed.length > 0) {
       // Validate structure
-      return parsed.map((item) => {
+      const validated = parsed.map((item) => {
         if (item.type === "folder") {
           return {
             ...item,
@@ -68,6 +73,25 @@ const loadStoredItems = (): DesktopItem[] => {
           label: reg?.label || item.label,
           color: reg?.color || item.color,
         };
+      });
+
+      // Auto-heal overlapping items if stored coordinates collide
+      const occupied: { x: number; y: number }[] = [];
+      return validated.map((item) => {
+        if (typeof item.x !== "number" || typeof item.y !== "number") {
+          return item;
+        }
+        let curX = item.x;
+        let curY = item.y;
+        while (occupied.some((p) => Math.abs(p.x - curX) < 64 && Math.abs(p.y - curY) < 70)) {
+          curX += 92;
+          if (typeof window !== "undefined" && curX > window.innerWidth - 100) {
+            curX = 28;
+            curY += 96;
+          }
+        }
+        occupied.push({ x: curX, y: curY });
+        return { ...item, x: curX, y: curY };
       });
     }
   } catch (err) {
@@ -237,9 +261,15 @@ export const useDesktopStore = create<DesktopStoreState>((set, get) => ({
     set({ items: updated, namingModal: null });
   },
 
-  removeAppFromFolder: (folderId: string, appId: string) => {
+  extractAppFromFolder: (
+    folderId: string,
+    appId: string,
+    targetPos?: { x: number; y: number }
+  ) => {
     const current = get().items;
-    const folderIdx = current.findIndex((it) => it.id === folderId && it.type === "folder");
+    const folderIdx = current.findIndex(
+      (it) => it.id === folderId && it.type === "folder"
+    );
     if (folderIdx === -1) return;
 
     const folder = current[folderIdx] as DesktopFolderItem;
@@ -248,24 +278,91 @@ export const useDesktopStore = create<DesktopStoreState>((set, get) => ({
 
     const remainingApps = folder.apps.filter((a) => a.id !== appId);
 
+    // Determine target coordinates for the standalone app
+    let finalX: number;
+    let finalY: number;
+
+    if (
+      typeof targetPos?.x === "number" &&
+      typeof targetPos?.y === "number"
+    ) {
+      finalX = targetPos.x;
+      finalY = targetPos.y;
+    } else {
+      // Offset safely from folder position
+      const folderX = typeof folder.x === "number" ? folder.x : 28;
+      const folderY = typeof folder.y === "number" ? folder.y : 54;
+      finalX = folderX + 92;
+      finalY = folderY;
+    }
+
+    // Resolve any collision with other desktop items so it never overlaps
+    const otherPositions = current
+      .filter((it) => it.id !== folderId)
+      .map((it) => ({
+        x: typeof it.x === "number" ? it.x : 28,
+        y: typeof it.y === "number" ? it.y : 54,
+      }));
+    if (
+      remainingApps.length > 0 &&
+      typeof folder.x === "number" &&
+      typeof folder.y === "number"
+    ) {
+      otherPositions.push({ x: folder.x, y: folder.y });
+    }
+
+    while (
+      otherPositions.some(
+        (p) =>
+          Math.abs(p.x - finalX) < 68 && Math.abs(p.y - finalY) < 76
+      )
+    ) {
+      finalX += 92;
+      if (
+        typeof window !== "undefined" &&
+        finalX > window.innerWidth - 100
+      ) {
+        finalX = 28;
+        finalY += 96;
+      }
+    }
+
+    const standaloneApp: DesktopAppItem = {
+      ...appToExtract,
+      x: finalX,
+      y: finalY,
+      lastSafeX: finalX,
+      lastSafeY: finalY,
+    };
+
     let updated: DesktopItem[];
     if (remainingApps.length === 0) {
-      // If folder is now empty, delete folder and put app on desktop
-      updated = current
-        .map((it) => (it.id === folderId ? appToExtract : it));
+      // If folder is now empty, delete folder and put app in its place
+      updated = current.map((it) =>
+        it.id === folderId ? standaloneApp : it
+      );
     } else {
-      // Keep folder with remaining apps and add extracted app right after folder
-      const updatedFolder: DesktopFolderItem = { ...folder, apps: remainingApps };
+      // Keep folder with remaining apps and add standalone app to desktop
+      const updatedFolder: DesktopFolderItem = {
+        ...folder,
+        apps: remainingApps,
+      };
       updated = [...current];
       updated[folderIdx] = updatedFolder;
-      updated.splice(folderIdx + 1, 0, appToExtract);
+      updated.push(standaloneApp);
     }
 
     persistItems(updated);
     set({
       items: updated,
-      activeFolderId: remainingApps.length === 0 ? null : get().activeFolderId,
+      activeFolderId:
+        remainingApps.length === 0 ? null : get().activeFolderId,
     });
+    soundFx.playClick();
+  },
+
+  removeAppFromFolder: (folderId: string, appId: string) => {
+    get().extractAppFromFolder(folderId, appId);
   },
 
   ungroupFolder: (folderId: string) => {

@@ -92,6 +92,9 @@ interface OSState {
   incrementUnreadChat: () => void;
   setUnreadChatCount: (count: number) => void;
   clearUnreadChat: () => void;
+  appUpdates: Record<string, number>;
+  clearAppUpdate: (app: string) => void;
+  getAppBadge: (app: string) => { count: number; type: "chat" | "update" } | null;
   setAccent: (value: string) => void;
   setWallpaper: (id: string) => void;
   toggleMotion: () => void;
@@ -188,6 +191,31 @@ if (typeof document !== "undefined") {
 }
 
 let z = 10;
+
+const INITIAL_APP_UPDATES: Record<string, number> = {
+  updates: 5,
+  games: 1,
+  library: 1,
+  notes: 1,
+  calculator: 1,
+  activity: 1,
+  terminal: 1,
+};
+
+const loadInitialAppUpdates = (): Record<string, number> => {
+  if (typeof window === "undefined") return INITIAL_APP_UPDATES;
+  try {
+    const raw = localStorage.getItem("os_viewed_app_updates");
+    const viewed: string[] = raw ? JSON.parse(raw) : [];
+    const result: Record<string, number> = { ...INITIAL_APP_UPDATES };
+    for (const v of viewed) {
+      delete result[v];
+    }
+    return result;
+  } catch {
+    return INITIAL_APP_UPDATES;
+  }
+};
 
 export const useOS = create<OSState>((set, get) => ({
   windows: [],
@@ -475,6 +503,32 @@ export const useOS = create<OSState>((set, get) => ({
   setUnreadChatCount: (count: number) => set({ unreadChatCount: Math.max(0, count) }),
   clearUnreadChat: () => set({ unreadChatCount: 0 }),
 
+  appUpdates: loadInitialAppUpdates(),
+  clearAppUpdate: (app: string) => {
+    const cur = { ...get().appUpdates };
+    if (cur[app]) {
+      delete cur[app];
+      try {
+        const viewed: string[] = JSON.parse(localStorage.getItem("os_viewed_app_updates") || "[]");
+        if (!viewed.includes(app)) {
+          viewed.push(app);
+          localStorage.setItem("os_viewed_app_updates", JSON.stringify(viewed));
+        }
+      } catch {}
+      set({ appUpdates: cur });
+    }
+  },
+  getAppBadge: (app: string) => {
+    if (app === "chats" && get().unreadChatCount > 0) {
+      return { count: get().unreadChatCount, type: "chat" };
+    }
+    const updateCount = get().appUpdates[app];
+    if (typeof updateCount === "number" && updateCount > 0) {
+      return { count: updateCount, type: "update" };
+    }
+    return null;
+  },
+
   setThemeMode: () => {
     const palette = harmonizeAccentColor(DEFAULT_ACCENT, true);
     applyHarmonizedPaletteToDoc(palette, true);
@@ -503,6 +557,7 @@ export const useOS = create<OSState>((set, get) => ({
     if (app === "chats") {
       get().clearUnreadChat();
     }
+    get().clearAppUpdate(app);
     const existing = get().windows.find((w) => w.app === app);
     if (existing) {
       z += 1;

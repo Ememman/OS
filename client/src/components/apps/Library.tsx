@@ -342,7 +342,7 @@ export default function Library() {
             />
           </div>
 
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5 max-w-full pr-4 sm:pr-0">
             {categories.map((c) => {
               const isSelected = filter === c;
               return (
@@ -354,7 +354,7 @@ export default function Library() {
                     setFilter(c);
                     if (systemSounds) soundFx.playClick();
                   }}
-                  className={`relative text-xs px-3.5 py-1.5 rounded-xl border transition-colors shrink-0 cursor-pointer ${
+                  className={`relative text-xs px-3 sm:px-3.5 py-1.5 rounded-xl border transition-colors shrink-0 cursor-pointer ${
                     isSelected
                       ? "border-accent text-white shadow-md shadow-accent/25"
                       : "border-white/15 text-white/60 hover:text-white hover:border-white/30 hover:bg-white/5"
@@ -376,7 +376,7 @@ export default function Library() {
       </div>
 
       {/* Projects Grid */}
-      <div className="flex-1 overflow-auto thin-scroll p-4 sm:p-5">
+      <div className="flex-1 overflow-auto thin-scroll p-3.5 sm:p-5">
         {loading && projects.length === 0 ? (
           <ProjectCardsSkeleton count={6} />
         ) : shown.length === 0 ? (
@@ -385,7 +385,7 @@ export default function Library() {
             <p className="text-xs text-white/30 mt-1">Try searching for "React Native", "Expo", or "MongoDB".</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
             {shown.map((p) => {
               const projectLikeCount = likes[p.id] || 0;
               const coverSrc = getProjectCover(p);
@@ -478,12 +478,12 @@ export default function Library() {
                     </div>
                   </div>
 
-                  <div className="p-3.5 flex flex-col justify-between flex-1 space-y-3">
+                  <div className="p-3.5 flex flex-col justify-between flex-1 space-y-2.5">
                     <p className="text-xs text-white/70 line-clamp-2 leading-relaxed">
                       {p.summary}
                     </p>
 
-                    <div className="flex flex-wrap gap-1.5 pt-1">
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
                       {p.stack.slice(0, 4).map((s) => (
                         <span
                           key={s}
@@ -497,6 +497,13 @@ export default function Library() {
                           +{p.stack.length - 4} more
                         </span>
                       )}
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-white/5 pt-2 mt-auto text-[11px] text-white/45">
+                      <span className="group-hover:text-accent font-medium transition-colors">
+                        Inspect Project →
+                      </span>
+                      <span className="font-mono text-[10px] text-white/35">Interactive Overview</span>
                     </div>
                   </div>
                 </motion.div>
@@ -514,27 +521,27 @@ export default function Library() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 sm:p-6"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-2.5 sm:p-6"
             onClick={() => setActive(null)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.93, y: 14 }}
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.93, y: 14 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
               transition={{ type: "spring", stiffness: 420, damping: 28 }}
-              className="glass rounded-3xl max-w-xl w-full p-5 sm:p-6 border border-white/15 shadow-2xl overflow-hidden flex flex-col max-h-[88vh]"
+              className="bg-[#0b0f19] border border-white/20 rounded-2xl sm:rounded-3xl max-w-xl w-full p-3.5 sm:p-6 shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+              <div className="flex items-start justify-between gap-2.5 mb-2.5 shrink-0">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5 mb-1">
                     {activeCats.map((cat) => {
                       const isFullStack = cat.toLowerCase().includes("full-stack");
                       return (
                         <span
                           key={cat}
-                          className={`inline-block text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border ${
+                          className={`inline-block text-[9.5px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border ${
                             isFullStack
                               ? "bg-accent/30 text-accent-light border-accent/50"
                               : "bg-white/10 text-white/90 border-white/20"
@@ -546,18 +553,21 @@ export default function Library() {
                     })}
                     <span className="text-[10px] text-white/40 font-mono">· {active.year}</span>
                   </div>
-                  <h3 className="font-display text-lg sm:text-xl font-bold leading-tight">{active.title}</h3>
+                  <h3 className="font-display text-base sm:text-xl font-bold leading-snug text-white pr-1">
+                    {active.title}
+                  </h3>
                 </div>
                 <button
                   onClick={() => setActive(null)}
-                  className="p-1.5 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition shrink-0 cursor-pointer"
+                  className="p-1.5 sm:p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition shrink-0 cursor-pointer active:scale-95 shadow-sm"
+                  title="Close modal"
                 >
-                  <GIconClose size={16} />
+                  <GIconClose size={15} />
                 </button>
               </div>
 
               {/* Modal Image */}
-              <div className="relative h-44 rounded-2xl overflow-hidden mb-3 border border-white/10 shrink-0 bg-gradient-to-br from-slate-900 to-indigo-950">
+              <div className="relative h-32 sm:h-44 rounded-xl sm:rounded-2xl overflow-hidden mb-2.5 sm:mb-3 border border-white/10 shrink-0 bg-gradient-to-br from-slate-900 to-indigo-950">
                 {activeCoverSrc ? (
                   <img
                     src={activeCoverSrc}
@@ -583,47 +593,49 @@ export default function Library() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
               </div>
 
-              {/* Modal Tabs */}
-              <div className="flex border-b border-white/10 mb-3 text-xs gap-1 shrink-0 overflow-x-auto no-scrollbar">
+              {/* Modal Segmented Tabs */}
+              <div className="flex p-1 bg-white/[0.04] rounded-xl border border-white/10 mb-3 text-xs gap-1 shrink-0 overflow-x-auto no-scrollbar">
                 <button
                   onClick={() => setModalTab("overview")}
-                  className={`px-3 py-1.5 font-medium border-b-2 transition whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap cursor-pointer text-center text-xs ${
                     modalTab === "overview"
-                      ? "border-accent text-white"
-                      : "border-transparent text-white/50 hover:text-white"
+                      ? "bg-accent text-white shadow-sm font-semibold"
+                      : "text-white/60 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   Overview
                 </button>
                 <button
                   onClick={() => setModalTab("highlights")}
-                  className={`px-3 py-1.5 font-medium border-b-2 transition whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap cursor-pointer text-center text-xs ${
                     modalTab === "highlights"
-                      ? "border-accent text-white"
-                      : "border-transparent text-white/50 hover:text-white"
+                      ? "bg-accent text-white shadow-sm font-semibold"
+                      : "text-white/60 hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  Technical Highlights ({active.highlights.length})
+                  <span className="sm:inline hidden">Technical Highlights</span>
+                  <span className="sm:hidden">Highlights</span> ({active.highlights.length})
                 </button>
                 <button
                   onClick={() => setModalTab("stack")}
-                  className={`px-3 py-1.5 font-medium border-b-2 transition whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap cursor-pointer text-center text-xs ${
                     modalTab === "stack"
-                      ? "border-accent text-white"
-                      : "border-transparent text-white/50 hover:text-white"
+                      ? "bg-accent text-white shadow-sm font-semibold"
+                      : "text-white/60 hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  Tech Architecture
+                  <span className="sm:inline hidden">Tech Architecture</span>
+                  <span className="sm:hidden">Stack</span>
                 </button>
                 <button
                   onClick={() => setModalTab("reviews")}
-                  className={`px-3 py-1.5 font-medium border-b-2 transition flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg font-medium transition flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer text-center text-xs ${
                     modalTab === "reviews"
-                      ? "border-accent text-white"
-                      : "border-transparent text-white/50 hover:text-white"
+                      ? "bg-accent text-white shadow-sm font-semibold"
+                      : "text-white/60 hover:text-white hover:bg-white/5"
                   }`}
                 >
-                  <GIconStar size={12} className={modalTab === "reviews" ? "text-accent" : "text-white/40"} />
+                  <GIconStar size={12} className={modalTab === "reviews" ? "text-white" : "text-amber-400/80"} />
                   <span>Reviews ({reviews.length})</span>
                 </button>
               </div>
@@ -635,11 +647,11 @@ export default function Library() {
                     <p className="text-white/80 leading-relaxed sm:text-sm">
                       {active.summary}
                     </p>
-                    <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                      <span className="text-[10px] text-white/40 uppercase tracking-wide block mb-1">
+                    <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 space-y-1">
+                      <span className="text-[10px] text-white/40 uppercase tracking-wide block font-semibold">
                         System Scale
                       </span>
-                      <span className="text-white/85 text-xs">
+                      <span className="text-white/85 text-xs block leading-relaxed">
                         Engineered for high concurrency, real-time synchronization, and multi-platform consistency.
                       </span>
                     </div>
@@ -651,7 +663,7 @@ export default function Library() {
                     {active.highlights.map((h, i) => (
                       <div
                         key={i}
-                        className="p-2.5 rounded-xl bg-white/5 border border-white/5 flex items-start gap-2 text-white/80"
+                        className="p-2.5 rounded-xl bg-white/5 border border-white/5 flex items-start gap-2.5 text-white/80 text-xs"
                       >
                         <span className="w-5 h-5 rounded-md bg-accent/20 text-accent flex items-center justify-center shrink-0 text-[10px] font-bold">
                           {i + 1}
@@ -664,14 +676,14 @@ export default function Library() {
 
                 {modalTab === "stack" && (
                   <div className="space-y-3">
-                    <p className="text-white/60">
+                    <p className="text-white/60 text-xs">
                       Technologies chosen for reliability, performance, and cross-platform flexibility:
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {active.stack.map((s) => (
                         <div
                           key={s}
-                          className="px-3 py-1.5 rounded-xl bg-white/8 border border-white/10 flex items-center gap-1.5 font-medium text-white/90"
+                          className="px-2.5 py-1.5 rounded-xl bg-white/8 border border-white/10 flex items-center gap-1.5 font-medium text-white/90 text-xs"
                         >
                           <GIconCode size={12} className="text-accent" />
                           <span>{s}</span>
@@ -702,7 +714,7 @@ export default function Library() {
                         </div>
                       </div>
                       <form onSubmit={handleReviewSubmit} className="space-y-2">
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <input
                             type="text"
                             placeholder="Your Name / Handle"
@@ -786,29 +798,18 @@ export default function Library() {
               </div>
 
               {/* Modal Action Footer */}
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between gap-2 shrink-0">
-                <button
-                  onClick={() => handleLike(active.id)}
-                  title={userLikes[active.id] ? "Click to remove heart reaction" : "Star this project"}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer ${
-                    userLikes[active.id]
-                      ? "bg-rose-500/35 text-rose-200 border-rose-400/60 shadow-md shadow-rose-500/20"
-                      : "bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border-rose-500/30"
-                  }`}
-                >
-                  <GIconHeart size={13} className={userLikes[active.id] ? "text-rose-300 fill-rose-300" : "text-rose-400"} />
-                  <span>{userLikes[active.id] ? "Liked" : "Star Project"} ({likes[active.id] || 0})</span>
-                </button>
-
-                <div className="flex items-center gap-2">
+              <div className="mt-3 sm:mt-4 pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 shrink-0">
+                {/* Action Links: Live Preview & Source (prominent on mobile) */}
+                <div className="flex items-center gap-2 order-1 sm:order-2 w-full sm:w-auto">
                   {active.links.live && (
                     <a
                       href={active.links.live}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent text-white font-medium hover:brightness-110 shadow-md shadow-accent/20 transition"
+                      className="flex-1 sm:flex-initial text-xs flex items-center justify-center gap-1.5 px-3.5 py-2 sm:py-1.5 rounded-xl bg-accent text-white font-semibold hover:brightness-110 shadow-md shadow-accent/25 transition active:scale-95"
                     >
-                      <GIconExternalLink size={12} /> Live Preview
+                      <GIconExternalLink size={12} />
+                      <span>Live Preview</span>
                     </a>
                   )}
                   {active.links.repo && (
@@ -816,14 +817,38 @@ export default function Library() {
                       href={active.links.repo}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/15 text-white hover:bg-white/10 transition"
+                      className="flex-1 sm:flex-initial text-xs flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-xl border border-white/15 text-white/90 hover:bg-white/10 transition active:scale-95"
                     >
-                      <GIconGithub size={12} /> Source
+                      <GIconGithub size={12} />
+                      <span>Source</span>
                     </a>
                   )}
                   <button
                     onClick={() => setActive(null)}
-                    className="text-xs px-3 py-1.5 rounded-xl border border-white/15 hover:bg-white/10 text-white transition cursor-pointer"
+                    className="hidden sm:flex text-xs items-center justify-center px-3 py-1.5 rounded-xl border border-white/15 hover:bg-white/10 text-white transition cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                {/* Secondary Row on mobile: Star Reaction + Mobile Close */}
+                <div className="flex items-center justify-between gap-2 order-2 sm:order-1 w-full sm:w-auto">
+                  <button
+                    onClick={() => handleLike(active.id)}
+                    title={userLikes[active.id] ? "Click to remove star reaction" : "Star this project"}
+                    className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer active:scale-95 ${
+                      userLikes[active.id]
+                        ? "bg-rose-500/35 text-rose-200 border-rose-400/60 shadow-md shadow-rose-500/20"
+                        : "bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border-rose-500/30"
+                    }`}
+                  >
+                    <GIconHeart size={13} className={userLikes[active.id] ? "text-rose-300 fill-rose-300" : "text-rose-400"} />
+                    <span>{userLikes[active.id] ? "Starred" : "Star Project"} ({likes[active.id] || 0})</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActive(null)}
+                    className="sm:hidden px-3.5 py-1.5 rounded-xl border border-white/15 hover:bg-white/10 text-white/70 hover:text-white text-xs font-medium transition cursor-pointer active:scale-95"
                   >
                     Close
                   </button>

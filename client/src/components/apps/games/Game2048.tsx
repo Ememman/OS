@@ -510,7 +510,7 @@ export default function Game2048() {
               return (
                 <div
                   key={c}
-                  className={`flex-1 rounded-xl flex items-center justify-center transition-all duration-150 font-display relative overflow-hidden select-none border ${
+                  className={`flex-1 rounded-xl flex items-center justify-center font-display relative overflow-hidden select-none border transition-transform duration-150 transform-gpu ${
                     val === 0
                       ? "bg-white/[0.03] border-white/5"
                       : `${style.bg} ${style.text} ${style.border || "border-white/10"} ${

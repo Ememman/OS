@@ -20,6 +20,7 @@ import {
   GIconSmile,
   GIconThunderbolt,
   GIconRotateLeft,
+  GIconTrash,
 } from "../icons/GravityIcons";
 import { getSocket, getCachedChatInit } from "../../lib/socket";
 import { getChatSession, touchChatActivity, saveChatName, getLastReadChatTs, setLastReadChatTs } from "../../lib/chatSession";
@@ -666,9 +667,26 @@ export default function Chats() {
       notify("Anti-Flood Notice", rateMsg || "Please wait a moment before sending more messages.", "warning", 3500);
     };
 
-    const onMessageDeleted = ({ id }: { id: string }) => {
-      setMessages((m) => m.filter((x) => x.id !== id));
+    const onMessageRemoved = ({ id }: { id: string }) => {
+      setMessages((m) =>
+        m.map((x) =>
+          x.id === id ? { ...x, removed: true, reactions: {}, userReactions: {} } : x
+        )
+      );
       setPinnedList((p) => p.filter((x) => x.id !== id));
+    };
+
+    const onMessageDeleted = ({ id, removed }: { id: string; removed?: boolean }) => {
+      if (removed) {
+        onMessageRemoved({ id });
+      } else {
+        setMessages((m) =>
+          m.map((x) =>
+            x.id === id ? { ...x, removed: true, reactions: {}, userReactions: {} } : x
+          )
+        );
+        setPinnedList((p) => p.filter((x) => x.id !== id));
+      }
     };
 
     socket.on("connect", onConnect);
@@ -683,6 +701,7 @@ export default function Chats() {
     socket.on("chat:typing", onTyping);
     socket.on("chat:rate_limited", onRateLimited);
     socket.on("chat:message_deleted", onMessageDeleted);
+    socket.on("chat:message_removed", onMessageRemoved);
 
     if (socket.connected) {
       onConnect();
@@ -703,6 +722,7 @@ export default function Chats() {
       socket.off("chat:typing", onTyping);
       socket.off("chat:rate_limited", onRateLimited);
       socket.off("chat:message_deleted", onMessageDeleted);
+      socket.off("chat:message_removed", onMessageRemoved);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatSound]);
@@ -857,6 +877,26 @@ export default function Chats() {
       }
     } catch {}
   };
+
+  const removeMessage = useCallback(
+    (id: string) => {
+      const socket = getSocket();
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === id
+            ? { ...msg, removed: true, reactions: {}, userReactions: {} }
+            : msg
+        )
+      );
+      setPinnedList((p) => p.filter((x) => x.id !== id));
+      setActiveReactionMenu(null);
+      socket.emit("chat:delete", { id });
+      fetch(`${API_URL}/api/chat/${id}`, { method: "DELETE" }).catch(() => {});
+      if (chatSound) soundFx.playPop();
+      notify("Message Removed", "You unsent a message.", "info", 2000);
+    },
+    [chatSound, notify]
+  );
 
   const sendText = (t: string) => {
     touchChatActivity();
@@ -1300,7 +1340,7 @@ export default function Chats() {
                 </div>
 
                 {/* Quoted Message in Reply with Click to Jump */}
-                {m.replyTo && (
+                {!m.removed && m.replyTo && (
                   <button
                     type="button"
                     onClick={() => scrollToMessage(m.replyTo.id)}
@@ -1316,42 +1356,64 @@ export default function Chats() {
                 )}
 
                 {/* Bubble Container & Messenger Action Bar */}
-                <div className="relative group/bubble flex items-center gap-1">
-                  {/* Action Bar for Own Message (left of bubble) */}
-                  {isSelf && (
-                    <div className="opacity-0 group-hover/bubble:opacity-100 focus-within:opacity-100 flex items-center gap-0.5 transition-opacity duration-150 order-first">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleReactionMenu(m.id);
-                        }}
-                        className="p-1 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition cursor-pointer"
-                        title="React"
-                        aria-label="React"
-                      >
-                        <GIconSmile size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setReplyTarget({ id: m.id, name: m.name, text: m.text })}
-                        className="p-1 rounded-full text-white/50 hover:text-accent hover:bg-white/10 transition cursor-pointer"
-                        title="Reply"
-                        aria-label="Reply"
-                      >
-                        <GIconRotateLeft size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => togglePinMessage(m.id)}
-                        className="p-1 rounded-full text-white/50 hover:text-amber-400 hover:bg-white/10 transition cursor-pointer"
-                        title={isPinned ? "Unpin message" : "Pin message"}
-                        aria-label="Pin"
-                      >
-                        <GIconPin size={12} className={isPinned ? "text-amber-400" : ""} />
-                      </button>
-                    </div>
-                  )}
+                {m.removed ? (
+                  <div
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl text-xs sm:text-[13px] border border-dashed select-none transition-all ${
+                      isSelf
+                        ? "bg-white/[0.04] text-white/40 border-white/20 self-end"
+                        : "bg-white/[0.02] text-white/40 border-white/15 self-start"
+                    }`}
+                  >
+                    <span className="italic">
+                      {isSelf ? "You unsent a message" : `${formatUsername(m.name)} unsent a message`}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="relative group/bubble flex items-center gap-1">
+                    {/* Action Bar for Own Message (left of bubble) */}
+                    {isSelf && (
+                      <div className="opacity-0 group-hover/bubble:opacity-100 focus-within:opacity-100 flex items-center gap-0.5 transition-opacity duration-150 order-first">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleReactionMenu(m.id);
+                          }}
+                          className="p-1 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                          title="React"
+                          aria-label="React"
+                        >
+                          <GIconSmile size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setReplyTarget({ id: m.id, name: m.name, text: m.text })}
+                          className="p-1 rounded-full text-white/50 hover:text-accent hover:bg-white/10 transition cursor-pointer"
+                          title="Reply"
+                          aria-label="Reply"
+                        >
+                          <GIconRotateLeft size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => togglePinMessage(m.id)}
+                          className="p-1 rounded-full text-white/50 hover:text-amber-400 hover:bg-white/10 transition cursor-pointer"
+                          title={isPinned ? "Unpin message" : "Pin message"}
+                          aria-label="Pin"
+                        >
+                          <GIconPin size={12} className={isPinned ? "text-amber-400" : ""} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeMessage(m.id)}
+                          className="p-1 rounded-full text-white/40 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                          title="Unsend / Remove message"
+                          aria-label="Remove message"
+                        >
+                          <GIconTrash size={12} />
+                        </button>
+                      </div>
+                    )}
 
                   {/* Floating Messenger Reaction Tray */}
                   <AnimatePresence>
@@ -1421,6 +1483,25 @@ export default function Chats() {
                             </motion.button>
                           );
                         })}
+
+                        {/* Messenger-style Remove/Unsend button on holding own message */}
+                        {isSelf && (
+                          <motion.button
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            whileHover={{ scale: 1.08 }}
+                            whileTap={{ scale: 0.92 }}
+                            onClick={() => {
+                              removeMessage(m.id);
+                              setActiveReactionMenu(null);
+                            }}
+                            className="ml-1 pl-2 border-l border-white/20 flex items-center gap-1 text-[11px] text-rose-400 hover:text-rose-300 font-semibold px-2 py-1 rounded-full hover:bg-rose-500/20 transition cursor-pointer shrink-0"
+                            title="Unsend / Remove message"
+                          >
+                            <GIconTrash size={12} />
+                            <span>Remove</span>
+                          </motion.button>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -1525,9 +1606,10 @@ export default function Chats() {
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* Reaction Badges under Bubble */}
-                {m.reactions && Object.keys(m.reactions).length > 0 && (
+                {!m.removed && m.reactions && Object.keys(m.reactions).length > 0 && (
                   <div className={`flex flex-wrap gap-1 mt-1 ${isSelf ? "justify-end" : "justify-start"}`}>
                     {Object.entries(m.reactions).map(([emo, count]: any) => {
                       const isMyBadge = myReactionOnMsg === emo;

@@ -2339,15 +2339,22 @@ app.post("/api/chat/:id/pin", (req, res) => {
 
 app.delete("/api/chat/:id", (req, res) => {
   const { id } = req.params;
-  const idx = chatHistory.findIndex((m) => m.id === id);
-  if (idx !== -1) {
-    chatHistory.splice(idx, 1);
+  const target = chatHistory.find((m) => m.id === id);
+  if (target) {
+    target.removed = true;
+    target.text = "You unsent a message";
+    target.reactions = {};
+    target.userReactions = {};
     pinnedChatMessages = pinnedChatMessages.filter((m) => m.id !== id);
-    io.emit("chat:message_deleted", { id });
+    io.emit("chat:message_removed", { id, removed: true });
+    io.emit("chat:message_deleted", { id, removed: true });
     if (isDbConnected) {
-      ChatModel.deleteOne({ id }).catch((err) => console.error("[DB] Failed to delete chat message:", err.message));
+      ChatModel.updateOne(
+        { id },
+        { removed: true, text: "You unsent a message", reactions: {}, userReactions: {}, isPinned: false }
+      ).catch((err) => console.error("[DB] Failed to update chat message removal:", err.message));
     }
-    return res.json({ ok: true, id });
+    return res.json({ ok: true, id, removed: true });
   }
   res.status(404).json({ ok: false, error: "Message not found" });
 });
@@ -2602,15 +2609,22 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Chat message deletion via socket
+  // Chat message unsend / removal via socket
   socket.on("chat:delete", ({ id }) => {
-    const idx = chatHistory.findIndex((m) => m.id === id);
-    if (idx !== -1) {
-      chatHistory.splice(idx, 1);
+    const target = chatHistory.find((m) => m.id === id);
+    if (target) {
+      target.removed = true;
+      target.text = "You unsent a message";
+      target.reactions = {};
+      target.userReactions = {};
       pinnedChatMessages = pinnedChatMessages.filter((m) => m.id !== id);
-      io.emit("chat:message_deleted", { id });
+      io.emit("chat:message_removed", { id, removed: true });
+      io.emit("chat:message_deleted", { id, removed: true });
       if (isDbConnected) {
-        ChatModel.deleteOne({ id }).catch((err) => console.error("[DB] Failed to delete chat message:", err.message));
+        ChatModel.updateOne(
+          { id },
+          { removed: true, text: "You unsent a message", reactions: {}, userReactions: {}, isPinned: false }
+        ).catch((err) => console.error("[DB] Failed to update chat message removal:", err.message));
       }
     }
   });
