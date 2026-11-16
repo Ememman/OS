@@ -90,6 +90,34 @@ export function getSocket(): Socket {
         setLastReadChatTs(msg.ts || Date.now());
       }
     });
+
+    socketInstance.on("update:new", (newUpdate: any) => {
+      const state = useOS.getState();
+      const updateWin = state.windows.find((w: any) => w.app === "updates");
+      const isVisible = updateWin && !updateWin.minimized;
+      if (!isVisible || (typeof document !== "undefined" && document.hidden)) {
+        state.incrementAppBadge("updates");
+        state.notify(
+          "System Update",
+          newUpdate?.title ? String(newUpdate.title) : "A new system update was published.",
+          "update"
+        );
+      }
+    });
+
+    socketInstance.on("guestbook:entry", (entry: any) => {
+      const state = useOS.getState();
+      const gbWin = state.windows.find((w: any) => w.app === "guestbook");
+      const isVisible = gbWin && !gbWin.minimized;
+      if (!isVisible || (typeof document !== "undefined" && document.hidden)) {
+        state.incrementAppBadge("guestbook");
+        state.notify(
+          "Guestbook",
+          `${entry?.name || "A visitor"} signed the guestbook`,
+          "info"
+        );
+      }
+    });
   }
   return socketInstance;
 }

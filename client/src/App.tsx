@@ -24,6 +24,8 @@ import ControlCenter from "./components/ControlCenter";
 import NotificationToast from "./components/NotificationToast";
 import DesktopContextMenu from "./components/DesktopContextMenu";
 import { touchChatActivity } from "./lib/chatSession";
+import { API_URL } from "./lib/config";
+import { getSocket } from "./lib/socket";
 import PhotoWidget from "./components/widgets/PhotoWidget";
 import WeatherWidget from "./components/widgets/WeatherWidget";
 import ClockWidget from "./components/widgets/ClockWidget";
@@ -141,6 +143,35 @@ export default function App() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleSpotlight, toggleMissionControl]);
+
+  // Connect global real-time socket and verify genuine system updates
+  useEffect(() => {
+    // Initiate socket connection for real-time notifications
+    getSocket();
+
+    // Check for genuinely unviewed system updates
+    const checkRealUpdates = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/updates`);
+        if (!res.ok) return;
+        const list = await res.json();
+        if (Array.isArray(list) && list.length > 0) {
+          const lastViewed = localStorage.getItem("os_last_viewed_update_id");
+          if (!lastViewed) {
+            // First boot on this browser: initialize baseline to latest update so we never spam artificial badges
+            localStorage.setItem("os_last_viewed_update_id", list[0].id);
+          } else {
+            const idx = list.findIndex((u: any) => u.id === lastViewed);
+            const unread = idx === -1 ? 0 : idx;
+            if (unread > 0) {
+              useOS.getState().setAppBadge("updates", unread);
+            }
+          }
+        }
+      } catch {}
+    };
+    checkRealUpdates();
+  }, []);
 
   if (isPoweredOff) return <PowerOffScreen />;
   if (!booted) return <BootScreen />;
