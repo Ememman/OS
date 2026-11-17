@@ -310,6 +310,7 @@ export default function Game2048() {
       let anyMerged = false;
       let maxMergedVal = 0;
       const nextBoard: Board = [];
+      let mergedGrid: boolean[][] = Array(SIZE).fill(0).map(() => Array(SIZE).fill(false));
 
       for (let r = 0; r < SIZE; r++) {
         const { newRow, scoreGained, mergedIndices } = slideRow(current[r]);
@@ -318,6 +319,7 @@ export default function Game2048() {
         if (mergedIndices.length > 0) {
           anyMerged = true;
           mergedIndices.forEach((c) => {
+            mergedGrid[r][c] = true;
             if (newRow[c] > maxMergedVal) maxMergedVal = newRow[c];
           });
         }
@@ -326,11 +328,31 @@ export default function Game2048() {
       current = nextBoard;
       for (let i = 0; i < (4 - rotations) % 4; i++) {
         current = rotateBoard(current);
+        const nextMerged: boolean[][] = Array(SIZE).fill(0).map(() => Array(SIZE).fill(false));
+        for (let r = 0; r < SIZE; r++) {
+          for (let c = 0; c < SIZE; c++) {
+            nextMerged[c][SIZE - 1 - r] = mergedGrid[r][c];
+          }
+        }
+        mergedGrid = nextMerged;
       }
 
       if (!boardsEqual(board, current)) {
         // Save history for Undo
         setHistory((prev) => [...prev.slice(-4), { board: board.map((r) => [...r]), score }]);
+
+        const newMergedCoords = new Set<string>();
+        for (let r = 0; r < SIZE; r++) {
+          for (let c = 0; c < SIZE; c++) {
+            if (mergedGrid[r][c]) {
+              newMergedCoords.add(`${r}-${c}`);
+            }
+          }
+        }
+        if (newMergedCoords.size > 0) {
+          setMergedCoords(newMergedCoords);
+          setTimeout(() => setMergedCoords(new Set()), 200);
+        }
 
         if (anyMerged) {
           sfx.merge(maxMergedVal);
@@ -516,7 +538,7 @@ export default function Game2048() {
                       : `${style.bg} ${style.text} ${style.border || "border-white/10"} ${
                           style.glow ? `shadow-lg ${style.glow}` : ""
                         } ${isSpawned ? "scale-105 animate-in zoom-in duration-200" : ""} ${
-                          isMerged ? "scale-110" : "scale-100"
+                          isMerged ? "tile-pop ring-2 ring-white/50" : "scale-100"
                         }`
                   }`}
                 >

@@ -29,7 +29,7 @@ export interface HarmonizedPalette {
   glow: string;
   gradient: string;
   wcagContrast: string; // e.g. "6.8:1"
-  mode: "night" | "light";
+  mode: "dark" | "night" | "light";
 }
 
 /**
@@ -180,8 +180,15 @@ export function getContrastRatio(l1: number, l2: number): number {
  */
 export function harmonizeAccentColor(
   rawInput: string,
-  isNight: boolean = true
+  modeOrNight: boolean | "dark" | "night" | "light" = "dark"
 ): HarmonizedPalette {
+  const mode: "dark" | "night" | "light" =
+    typeof modeOrNight === "boolean"
+      ? modeOrNight
+        ? "night"
+        : "dark"
+      : modeOrNight;
+
   const rawRgb = parseColor(rawInput);
   const hsl = rgbToHsl(rawRgb);
 
@@ -195,23 +202,23 @@ export function harmonizeAccentColor(
     targetS = 58; // Give subtle vibrancy to washed out muddy tones
   }
 
-  // 2. Calibrate Lightness based on Hue & Theme Mode (Night vs Light)
+  // 2. Calibrate Lightness based on Hue & Theme Mode (Dark vs Night vs Light)
   // Certain hues (Yellow/Lime, 50-95 deg) have naturally high luminance, while Blues (210-260 deg) have low luminance.
   let targetL = hsl.l;
   const isYellowOrLime = hsl.h >= 45 && hsl.h <= 95;
   const isBlueOrViolet = hsl.h >= 210 && hsl.h <= 275;
 
-  if (isNight) {
+  if (mode === "night") {
     // NIGHT MODE:
-    // Electric blue / accents need clean contrast against deep glass #0a0a0f
+    // Pure OLED pitch black background — gentle luminous tones with zero eye fatigue
     if (isYellowOrLime) {
-      targetL = Math.max(50, Math.min(62, targetL));
+      targetL = Math.max(52, Math.min(62, targetL));
     } else if (isBlueOrViolet) {
       targetL = Math.max(60, Math.min(68, targetL));
     } else {
       targetL = Math.max(54, Math.min(66, targetL));
     }
-  } else {
+  } else if (mode === "light") {
     // LIGHT MODE:
     // Deeper tone for clean contrast against light frosted surfaces
     if (isYellowOrLime) {
@@ -220,6 +227,16 @@ export function harmonizeAccentColor(
       targetL = Math.max(45, Math.min(52, targetL));
     } else {
       targetL = Math.max(38, Math.min(48, targetL));
+    }
+  } else {
+    // DARK MODE:
+    // Deep charcoal & slate glass (#080c16) — vibrant, punchy contrast
+    if (isYellowOrLime) {
+      targetL = Math.max(50, Math.min(60, targetL));
+    } else if (isBlueOrViolet) {
+      targetL = Math.max(58, Math.min(66, targetL));
+    } else {
+      targetL = Math.max(52, Math.min(64, targetL));
     }
   }
 
@@ -241,7 +258,7 @@ export function harmonizeAccentColor(
   const whiteContrast = getContrastRatio(whiteLum, lum);
   const darkContrast = getContrastRatio(lum, darkLum);
 
-  // If contrast against dark text is significantly better (e.g. bright cyan or amber), use dark text
+  // If contrast against dark text is significantly better (e.g. bright cyan, yellow, lime), use dark text
   const contrastText: "#ffffff" | "#0b0f19" =
     darkContrast >= 4.5 && darkContrast > whiteContrast ? "#0b0f19" : "#ffffff";
   const activeRatio = Math.max(whiteContrast, darkContrast);
@@ -251,9 +268,9 @@ export function harmonizeAccentColor(
   const hoverHsl: HSL = {
     h: harmonizedHsl.h,
     s: Math.min(95, harmonizedHsl.s + 4),
-    l: isNight
-      ? Math.min(78, harmonizedHsl.l + 8)
-      : Math.max(30, harmonizedHsl.l - 6),
+    l: mode === "light"
+      ? Math.max(30, harmonizedHsl.l - 6)
+      : Math.min(78, harmonizedHsl.l + 8),
   };
   const hoverRgbObj = hslToRgb(hoverHsl);
   const hoverRgb = `${hoverRgbObj.r} ${hoverRgbObj.g} ${hoverRgbObj.b}`;
@@ -262,9 +279,9 @@ export function harmonizeAccentColor(
   const activeHsl: HSL = {
     h: harmonizedHsl.h,
     s: Math.min(100, harmonizedHsl.s + 6),
-    l: isNight
-      ? Math.max(42, harmonizedHsl.l - 8)
-      : Math.min(65, harmonizedHsl.l + 8),
+    l: mode === "light"
+      ? Math.min(65, harmonizedHsl.l + 8)
+      : Math.max(42, harmonizedHsl.l - 8),
   };
   const activeRgbObj = hslToRgb(activeHsl);
   const activeRgb = `${activeRgbObj.r} ${activeRgbObj.g} ${activeRgbObj.b}`;
@@ -285,21 +302,30 @@ export function harmonizeAccentColor(
     contrastText,
     hoverRgb,
     activeRgb,
-    subtle: `rgba(${rgbString.split(" ").join(", ")}, 0.14)`,
-    border: `rgba(${rgbString.split(" ").join(", ")}, 0.32)`,
-    glow: `0 0 24px rgba(${rgbString.split(" ").join(", ")}, 0.38)`,
+    subtle: `rgba(${rgbString.split(" ").join(", ")}, 0.16)`,
+    border: `rgba(${rgbString.split(" ").join(", ")}, 0.36)`,
+    glow: `0 0 24px rgba(${rgbString.split(" ").join(", ")}, 0.42)`,
     gradient: `linear-gradient(135deg, rgb(${rgbString.split(" ").join(", ")}), rgb(${gradientRgbObj.r}, ${gradientRgbObj.g}, ${gradientRgbObj.b}))`,
     wcagContrast: `${activeRatio.toFixed(1)}:1`,
-    mode: isNight ? "night" : "light",
+    mode,
   };
 }
 
 /**
  * Apply the harmonized palette directly to the document root element
  */
-export function applyHarmonizedPaletteToDoc(palette: HarmonizedPalette, _isNight: boolean = true) {
+export function applyHarmonizedPaletteToDoc(
+  palette: HarmonizedPalette,
+  modeOrNight: boolean | "dark" | "night" | "light" = "dark"
+) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
+  const mode: "dark" | "night" | "light" =
+    typeof modeOrNight === "boolean"
+      ? modeOrNight
+        ? "night"
+        : "dark"
+      : modeOrNight;
 
   root.style.setProperty("--accent", palette.rgb);
   root.style.setProperty("--accent-hex", palette.hex);
@@ -311,8 +337,31 @@ export function applyHarmonizedPaletteToDoc(palette: HarmonizedPalette, _isNight
   root.style.setProperty("--accent-glow", palette.glow);
   root.style.setProperty("--accent-gradient", palette.gradient);
 
-  // Default to native dark-theme
-  root.removeAttribute("data-theme");
-  root.classList.remove("light-theme");
-  root.classList.add("dark-theme");
+  // Set theme attributes and classes
+  root.setAttribute("data-theme", mode);
+  root.classList.remove("dark-theme", "night-theme", "light-theme");
+  root.classList.add(`${mode}-theme`);
+
+  if (mode === "night") {
+    // Night Mode: OLED pitch black obsidian glass, ultra-soft glow, zero eye strain
+    root.style.setProperty("--glass", "5 7 12");
+    root.style.setProperty("--surface-border", "rgba(255, 255, 255, 0.08)");
+    root.style.setProperty("--surface-shadow", "0 24px 80px rgba(0, 0, 0, 0.85)");
+    root.style.setProperty("--theme-bg", "#020408");
+    root.style.setProperty("--theme-text", "#e2e8f0");
+  } else if (mode === "light") {
+    // Light Mode: Clean frosted glass
+    root.style.setProperty("--glass", "248 250 252");
+    root.style.setProperty("--surface-border", "rgba(0, 0, 0, 0.12)");
+    root.style.setProperty("--surface-shadow", "0 20px 50px rgba(0, 0, 0, 0.18)");
+    root.style.setProperty("--theme-bg", "#f1f5f9");
+    root.style.setProperty("--theme-text", "#0f172a");
+  } else {
+    // Dark Mode: Deep charcoal & modern slate glass
+    root.style.setProperty("--glass", "15 22 36");
+    root.style.setProperty("--surface-border", "rgba(255, 255, 255, 0.13)");
+    root.style.setProperty("--surface-shadow", "0 20px 60px rgba(0, 0, 0, 0.48)");
+    root.style.setProperty("--theme-bg", "#080c16");
+    root.style.setProperty("--theme-text", "#f0f4fc");
+  }
 }

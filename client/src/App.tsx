@@ -78,6 +78,7 @@ export default function App() {
     booted,
     osChosen,
     osMode,
+    themeMode,
     dockPosition,
     glassAlpha,
     widgetsVisible,
@@ -103,8 +104,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    applyHarmonizedPaletteToDoc(harmonizedPalette, true);
-  }, [harmonizedPalette]);
+    applyHarmonizedPaletteToDoc(harmonizedPalette, themeMode);
+  }, [harmonizedPalette, themeMode]);
 
   useEffect(() => {
     document.documentElement.style.setProperty("--glass-alpha", String(glassAlpha));

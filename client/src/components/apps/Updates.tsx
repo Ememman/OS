@@ -97,7 +97,7 @@ const PRIORITY_META: Record<
   },
   low: {
     label: "Low",
-    badgeClass: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+    badgeClass: "bg-white/10 text-white/70 border-white/20",
   },
 };
 
@@ -108,7 +108,7 @@ const STATUS_META: Record<UpdateStatus, { label: string; badgeClass: string }> =
   },
   open: {
     label: "Open",
-    badgeClass: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
+    badgeClass: "bg-accent/20 text-accent border-accent/40",
   },
   closed: {
     label: "Closed",
@@ -666,9 +666,6 @@ export default function Updates() {
                 <h2 className="font-display text-base sm:text-lg font-bold tracking-tight">
                   System Updates & Pull Requests
                 </h2>
-                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30 whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 shadow-sm shadow-emerald-500/10">
-                  Live PRs
-                </span>
               </div>
               <p className="text-xs text-white/50">
                 Direct changelog from GitHub pull requests on <code className="text-accent/80">EmanExe/OS</code>.
@@ -686,9 +683,9 @@ export default function Updates() {
               <span className="font-semibold">{mergedPRs}</span>
               <span className="text-purple-300/70">Merged</span>
             </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-[11px] text-emerald-300">
-              <span className="font-semibold">{openPRs}</span>
-              <span className="text-emerald-300/70">Open</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-[11px] text-white/70">
+              <span className="font-semibold text-white">{openPRs}</span>
+              <span className="text-white/40">Open</span>
             </div>
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-rose-500/15 border border-rose-500/30 text-[11px] text-rose-300">
               <GIconHeart size={11} className="text-rose-400 fill-rose-400" />
@@ -798,7 +795,7 @@ export default function Updates() {
                   options={[
                     { value: "all", label: "All Statuses" },
                     { value: "merged", label: "Merged", badge: "Merged", badgeColor: "bg-purple-500/20 text-purple-300 border-purple-500/30" },
-                    { value: "open", label: "Open", badge: "Open", badgeColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" },
+                    { value: "open", label: "Open", badge: "Open", badgeColor: "bg-accent/20 text-accent border-accent/30" },
                     { value: "closed", label: "Closed", badge: "Closed", badgeColor: "bg-rose-500/20 text-rose-300 border-rose-500/30" },
                   ]}
                   size="xs"

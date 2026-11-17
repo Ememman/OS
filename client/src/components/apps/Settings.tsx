@@ -14,6 +14,8 @@ import {
   GIconCalculator,
   GIconDownload,
   GIconHardDrive,
+  GIconMoon,
+  GIconSparkles,
 } from "../icons/GravityIcons";
 import { soundFx } from "../../lib/soundFx";
 import { getAssetUrl } from "../../lib/assets";
@@ -104,6 +106,12 @@ export default function Settings() {
     openApp,
     openSpotlight,
     notify,
+    themeMode,
+    setThemeMode,
+    accent,
+    setAccent,
+    accents,
+    harmonizedPalette,
   } = useOS();
 
   const isMobile = useIsMobile();
@@ -111,6 +119,7 @@ export default function Settings() {
   const [cityDraft, setCityDraft] = useState(weatherLoc.name);
   const [geoStatus, setGeoStatus] = useState("");
   const [imageErrors, setImageErrors] = useState({});
+  const [customHex, setCustomHex] = useState("");
 
   const lookupCity = async () => {
     const q = cityDraft.trim();
@@ -193,6 +202,256 @@ export default function Settings() {
               {osMode === o.id && <GIconCheck size={14} className="text-accent shrink-0" />}
             </button>
           ))}
+        </div>
+      </section>
+
+      {/* ============ THEME MODE: DARK & NIGHT ============ */}
+      <section className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Theme Mode</h3>
+          <span className="text-[10px] font-mono text-accent font-semibold capitalize bg-accent/15 px-2 py-0.5 rounded-full border border-accent/25">
+            {themeMode === "night" ? "Night Mode · OLED" : "Dark Mode · Slate"}
+          </span>
+        </div>
+        <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
+          Switch between balanced Slate dark mode for ambient daylight and Obsidian night mode for low-light eye comfort.
+        </p>
+
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5">
+          {/* Dark Mode Card */}
+          <button
+            type="button"
+            onClick={() => {
+              soundFx.playClick();
+              setThemeMode("dark");
+              notify("Dark Mode Activated", "Deep charcoal and luminous slate glass enabled.", "success", 2600);
+            }}
+            className={`group text-left p-3 sm:p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer relative overflow-hidden ${
+              themeMode === "dark"
+                ? "border-accent bg-accent/15 ring-2 ring-accent/30 shadow-lg shadow-accent/10"
+                : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/[0.08]"
+            }`}
+          >
+            {/* Visual Mini-Preview */}
+            <div className="h-14 sm:h-16 rounded-xl bg-[#0f172a] border border-white/15 p-2 mb-2.5 flex flex-col justify-between shadow-inner relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 rounded-full bg-red-400/80" />
+                  <div className="w-2 h-2 rounded-full bg-amber-400/80" />
+                  <div className="w-2 h-2 rounded-full bg-emerald-400/80" />
+                </div>
+                <div className="w-8 h-1.5 rounded-full bg-white/20" />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3.5 h-3.5 rounded bg-accent" />
+                <div className="flex-1 space-y-1">
+                  <div className="h-1.5 w-3/4 rounded bg-white/30" />
+                  <div className="h-1 w-1/2 rounded bg-white/15" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <GIconMoon size={14} className={themeMode === "dark" ? "text-accent" : "text-white/60"} />
+                <span className="text-xs sm:text-sm font-semibold text-white truncate">Dark Mode</span>
+              </div>
+              {themeMode === "dark" && (
+                <span className="w-4 h-4 rounded-full bg-accent flex items-center justify-center shrink-0">
+                  <GIconCheck size={10} className="text-white" />
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-white/45 mt-0.5 line-clamp-1">Deep Slate Glass · Day & Night</p>
+          </button>
+
+          {/* Night Mode Card */}
+          <button
+            type="button"
+            onClick={() => {
+              soundFx.playClick();
+              setThemeMode("night");
+              notify("Night Mode Activated", "Midnight OLED pitch black glass with zero glare.", "success", 2600);
+            }}
+            className={`group text-left p-3 sm:p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer relative overflow-hidden ${
+              themeMode === "night"
+                ? "border-accent bg-accent/15 ring-2 ring-accent/30 shadow-lg shadow-accent/10"
+                : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/[0.08]"
+            }`}
+          >
+            {/* Visual Mini-Preview */}
+            <div className="h-14 sm:h-16 rounded-xl bg-[#020408] border border-white/10 p-2 mb-2.5 flex flex-col justify-between shadow-inner relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 rounded-full bg-red-500/60" />
+                  <div className="w-2 h-2 rounded-full bg-amber-500/60" />
+                  <div className="w-2 h-2 rounded-full bg-emerald-500/60" />
+                </div>
+                <div className="w-8 h-1.5 rounded-full bg-white/10" />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3.5 h-3.5 rounded bg-accent shadow-[0_0_8px_rgba(var(--accent),0.5)]" />
+                <div className="flex-1 space-y-1">
+                  <div className="h-1.5 w-3/4 rounded bg-white/20" />
+                  <div className="h-1 w-1/2 rounded bg-white/10" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <GIconSparkles size={14} className={themeMode === "night" ? "text-accent" : "text-white/60"} />
+                <span className="text-xs sm:text-sm font-semibold text-white truncate">Night Mode</span>
+              </div>
+              {themeMode === "night" && (
+                <span className="w-4 h-4 rounded-full bg-accent flex items-center justify-center shrink-0">
+                  <GIconCheck size={10} className="text-white" />
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-white/45 mt-0.5 line-clamp-1">Pitch Black OLED · Zero Glare</p>
+          </button>
+        </div>
+      </section>
+
+      {/* ============ ACCENT COLOR SELECTOR ============ */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Accent Color</h3>
+            <span
+              className="w-2.5 h-2.5 rounded-full shadow-xs"
+              style={{ backgroundColor: `rgb(${accent})` }}
+            />
+          </div>
+          <span className="text-[10px] font-mono text-white/40">
+            {harmonizedPalette?.hex || "#3b82f6"}
+          </span>
+        </div>
+        <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
+          Set your system accent color. Adaptive UI harmonizes any hue for WCAG readability across all apps.
+        </p>
+
+        {/* Preset Swatches Grid */}
+        <div className="grid grid-cols-3 xs:grid-cols-5 sm:grid-cols-9 gap-2">
+          {accents.map((a) => {
+            const isSelected = accent === a.value;
+            return (
+              <button
+                key={a.value}
+                type="button"
+                onClick={() => {
+                  soundFx.playClick();
+                  setAccent(a.value);
+                  setCustomHex("");
+                }}
+                className={`group relative flex flex-col items-center gap-1 p-2 rounded-xl border transition-all cursor-pointer ${
+                  isSelected
+                    ? "border-accent bg-accent/20 ring-2 ring-accent/50 scale-105 shadow-md shadow-accent/25"
+                    : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10 hover:scale-105"
+                }`}
+                title={a.name}
+              >
+                <div
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full shadow-md flex items-center justify-center relative transition-transform"
+                  style={{
+                    backgroundColor: `rgb(${a.value})`,
+                    boxShadow: isSelected ? `0 0 12px rgba(${a.value.split(" ").join(", ")}, 0.6)` : undefined,
+                  }}
+                >
+                  {isSelected && (
+                    <GIconCheck
+                      size={14}
+                      style={{ color: harmonizedPalette?.contrastText || "#ffffff" }}
+                    />
+                  )}
+                </div>
+                <span className="text-[9px] text-white/70 truncate w-full text-center leading-tight">
+                  {a.name.split(" ")[0]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Custom Hex / Color Picker & Live Adaptive Readability Preview */}
+        <div className="p-3.5 sm:p-4 rounded-2xl border border-white/10 bg-white/5 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div>
+              <span className="text-xs font-semibold text-white/90">Custom Accent & Live Readability Preview</span>
+              <p className="text-[10px] text-white/45">Pick any shade — text contrast & UI borders adapt automatically</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Native Color Dropper Button */}
+              <label
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-white/15 bg-white/10 hover:bg-white/15 cursor-pointer text-xs transition active:scale-95 shrink-0"
+                title="Open system color picker"
+              >
+                <input
+                  type="color"
+                  value={harmonizedPalette?.hex || "#3b82f6"}
+                  onChange={(e) => {
+                    setCustomHex(e.target.value);
+                    setAccent(e.target.value);
+                  }}
+                  className="sr-only"
+                />
+                <span
+                  className="w-4 h-4 rounded-full border border-white/20 shadow-xs"
+                  style={{ backgroundColor: `rgb(${accent})` }}
+                />
+                <span className="text-[11px] font-medium text-white/80">Picker</span>
+              </label>
+
+              {/* Hex Input */}
+              <div className="relative">
+                <input
+                  type="text"
+                  maxLength={7}
+                  placeholder="#3B82F6"
+                  value={customHex || harmonizedPalette?.hex || ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCustomHex(val);
+                    if (/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(val)) {
+                      setAccent(val);
+                    }
+                  }}
+                  className="w-24 px-2 py-1.5 bg-black/40 border border-white/15 rounded-xl text-white text-xs font-mono outline-none focus:border-accent focus:ring-1 focus:ring-accent transition text-center uppercase"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive Live Component Proof: Shows how buttons and badges adapt */}
+          <div className="pt-2 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              {/* Live Primary Button Preview */}
+              <button
+                type="button"
+                className="px-3.5 py-1.5 rounded-xl bg-accent text-xs font-bold shadow-md shadow-accent/25 transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
+              >
+                <GIconCheck size={12} />
+                <span>Primary Action</span>
+              </button>
+
+              {/* Live Subtle Badge Preview */}
+              <span className="px-2.5 py-1 rounded-xl bg-accent-subtle border border-accent-subtle text-accent text-xs font-semibold">
+                Badge Tag
+              </span>
+            </div>
+
+            {/* WCAG Accessibility Metrics */}
+            <div className="flex items-center gap-2 text-[10px] text-white/50 font-mono">
+              <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 font-semibold">
+                WCAG {harmonizedPalette?.wcagContrast || "7.2:1"}
+              </span>
+              <span className="text-white/40">
+                Text: <span className="font-semibold text-white/80">{harmonizedPalette?.contrastText === "#0b0f19" ? "Dark (#0b0f19)" : "Light (#ffffff)"}</span>
+              </span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -597,6 +856,7 @@ export default function Settings() {
               customFiles: localStorage.getItem("os_custom_files"),
               calcHistory: localStorage.getItem("os_calc_history"),
               accent: localStorage.getItem("os_accent"),
+              themeMode: localStorage.getItem("os_theme_mode"),
               wallpaper: localStorage.getItem("os_wallpaper"),
               osMode: localStorage.getItem("os_mode"),
               exportedAt: new Date().toISOString()

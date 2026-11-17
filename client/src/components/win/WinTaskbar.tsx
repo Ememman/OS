@@ -533,7 +533,7 @@ export default function WinTaskbar() {
   const iconSize = isMobile ? 18 : 19;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-12 bg-[#0a0f1d]/94 backdrop-blur-3xl border-t border-white/12 flex items-center justify-between px-1 sm:px-2 z-[900] select-none shadow-[0_-4px_30px_rgba(0,0,0,0.5)]">
+    <div className="fixed bottom-0 left-0 right-0 h-12 bg-[rgba(var(--glass),0.95)] backdrop-blur-3xl border-t border-white/12 flex items-center justify-between px-1 sm:px-2 z-[900] select-none shadow-[0_-4px_30px_rgba(0,0,0,0.5)]">
       {/* 1. Left Section: Weather chip on desktop */}
       <div className="hidden md:flex items-center flex-1 min-w-0 basis-0">
         <button
