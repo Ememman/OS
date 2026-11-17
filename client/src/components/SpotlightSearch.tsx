@@ -286,30 +286,26 @@ export default function SpotlightSearch() {
                   key={item.id}
                   onClick={() => executeItem(item)}
                   onMouseEnter={() => setSelectedIdx(idx)}
-                  className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
+                  className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-left transition-all border ${
                     isSelected
-                      ? "bg-accent text-white shadow-lg shadow-accent/20"
-                      : "hover:bg-white/8 text-white/80"
+                      ? "bg-white/12 border-white/15 text-white shadow-sm"
+                      : "bg-transparent border-transparent hover:bg-white/6 text-white/85"
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border border-white/10"
                       style={{
-                        background: isSelected ? "rgba(255,255,255,0.2)" : `${item.color}25`,
+                        background: `${item.color}25`,
                       }}
                     >
-                      <Icon size={16} color={isSelected ? "#ffffff" : item.color} />
+                      <Icon size={16} color={item.color} />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-xs sm:text-sm font-semibold truncate leading-tight">
+                      <div className="text-xs sm:text-sm font-semibold truncate leading-tight text-white">
                         {item.title}
                       </div>
-                      <div
-                        className={`text-[11px] truncate leading-tight mt-0.5 ${
-                          isSelected ? "text-white/80" : "text-white/45"
-                        }`}
-                      >
+                      <div className="text-[11px] truncate leading-tight mt-0.5 text-white/65">
                         {item.desc}
                       </div>
                     </div>
@@ -318,8 +314,8 @@ export default function SpotlightSearch() {
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 font-medium ${
                       isSelected
-                        ? "bg-white/20 text-white"
-                        : "bg-white/5 text-white/40 border border-white/5"
+                        ? "bg-white/15 text-white/90 border border-white/15"
+                        : "bg-white/5 text-white/45 border border-white/5"
                     }`}
                   >
                     {item.category}

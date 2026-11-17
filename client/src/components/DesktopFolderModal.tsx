@@ -419,7 +419,7 @@ export default function DesktopFolderModal() {
 
               <button
                 onClick={closeFolder}
-                className="px-4 py-1.5 rounded-xl bg-accent hover:brightness-110 active:scale-95 text-white font-medium shadow-md shadow-accent/25 transition cursor-pointer text-[11px]"
+                className="px-4 py-1.5 rounded-xl bg-accent hover:brightness-110 active:scale-95 text-accent-contrast font-medium shadow-md shadow-accent/25 transition cursor-pointer text-[11px]"
               >
                 Done
               </button>
