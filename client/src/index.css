@@ -760,3 +760,48 @@ select option:checked {
   }
 }
 
+/* Professional Resume Print Stylesheet */
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 10mm 14mm;
+  }
+
+  html, body, #root {
+    background: #ffffff !important;
+    color: #000000 !important;
+    overflow: visible !important;
+    height: auto !important;
+    user-select: text !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide entire OS GUI when printing */
+  .screen-only,
+  header,
+  nav,
+  footer,
+  aside,
+  .dock-container,
+  .desktop-status-bar,
+  .os-dock,
+  .resume-screen-ui {
+    display: none !important;
+  }
+
+  .resume-print-sheet {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-family: "Times New Roman", Times, Georgia, serif !important;
+    line-height: 1.35 !important;
+  }
+}
+
+

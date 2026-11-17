@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { jsPDF } from "jspdf";
 import {
   GIconDownload,
   GIconMail,
@@ -18,6 +19,9 @@ import {
   GIconPrinter,
   GIconPhone,
   GIconTrophy,
+  GIconDatabase,
+  GIconServer,
+  GIconShield,
 } from "../icons/GravityIcons";
 import { API_URL } from "../../lib/config";
 import { useOS } from "../../store/useOS";
@@ -48,7 +52,7 @@ const EXPERIENCE = [
       "Designed clean, WCAG-accessible component architectures with Tailwind CSS and shadcn/ui; streamlined cross-functional development sprints, system documentation, and engineering workflows via Notion and GitHub."
     ],
     highlights: ["Next.js & TypeScript", "TanStack Query State Sync", "Playwright, Appium & Selenium", "Tailwind CSS & shadcn/ui"],
-    stack: ["Next.js", "React", "TypeScript", "TanStack Query", "Playwright", "Appium", "Selenium", "Tailwind CSS", "shadcn/ui", "Notion", "GitHub"]
+    stack: ["Next.js", "React", "TypeScript", "TanStack Query", "shadcn/ui", "Tailwind CSS", "Playwright", "Appium", "Selenium", "Notion", "GitHub"]
   },
   {
     role: "IT Support Specialist & Web Developer (On the Job Training)",
@@ -58,13 +62,13 @@ const EXPERIENCE = [
     tag: "Enterprise IT Support & IMS Development",
     location: "SPi Global Building, Pascor Dr, Parañaque, 1700",
     points: [
-      "Architected and engineered the Straive IMS (Inventory Management System) in PHP (MVC) and MySQL, implementing custom hierarchical REST routing, accessible data grids, and a high-contrast collapsible sidebar UI.",
       "Applied academic knowledge to real-world IT support — Resolved issues like BIOS configuration, BitLocker lockouts, and RDP errors, moving beyond textbook theory.",
       "Developed communication & teamwork skills — Walked frustrated users through technical fixes, collaborated closely with senior colleagues, and shared team wins.",
       "Managed time under operational pressure — Balanced weekend duties, bulk agent registrations, and documentation while prioritizing effectively.",
-      "Strengthened technical skills in key tools — Hands-on with 1Kosmos (MFA/biometrics), RDP, Active Directory, BitLocker, and security tools (WorkMate, Sentinel, Netskope)."
+      "Strengthened technical skills in key tools — Hands-on with 1Kosmos (MFA/biometrics), RDP, Active Directory, BitLocker, and security tools (WorkMate, Sentinel, Netskope).",
+      "Architected and engineered the Straive IMS (Inventory Management System) in PHP (MVC) and MySQL, implementing custom hierarchical REST routing, accessible data grids, and a high-contrast collapsible sidebar UI."
     ],
-    highlights: ["Straive IMS (PHP MVC)", "1Kosmos MFA & Biometrics", "Active Directory & BitLocker", "RDP & BIOS Resolution"],
+    highlights: ["Straive IMS (PHP MVC & MySQL)", "1Kosmos MFA & Biometrics", "Active Directory & BitLocker", "RDP & BIOS Resolution"],
     stack: ["PHP (MVC)", "MySQL", "1Kosmos MFA", "Active Directory", "BitLocker", "RDP", "Sentinel", "Netskope", "WorkMate", "REST APIs", "Tailwind CSS"]
   },
   {
@@ -87,18 +91,23 @@ const EXPERIENCE = [
 
 const PROFESSIONAL_COMPETENCIES = [
   {
-    title: "Full-Stack & Front-End Engineering",
-    desc: "Versatile developer proficient in Next.js, React, TypeScript, PHP, Node.js, and MongoDB, with hands-on expertise in design tools (Figma, Canva) and project management.",
+    title: "Full-Stack & Front-End Architecture",
+    desc: "Versatile developer proficient in React, Next.js, TypeScript, PHP (Laravel, CodeIgniter, MVC), Node.js, and databases (PostgreSQL, MySQL, MongoDB), with expertise in design tools (Figma, Canva) and project management.",
     badge: "Core Stack",
   },
   {
-    title: "Requirements Gathering & Automated Testing",
-    desc: "Gathered system requirements, organized user feedback, and tested basic, core, and automated functionalities via Playwright, Appium, and Selenium.",
+    title: "Component Systems & Asynchronous State",
+    desc: "Architected accessible, WCAG-compliant design systems using Tailwind CSS and shadcn/ui; implemented TanStack Query for server-state caching, optimistic mutations, and Socket.IO real-time event streaming.",
+    badge: "UI & State",
+  },
+  {
+    title: "Requirements Gathering & Testing Automation",
+    desc: "Gathered system requirements, organized user feedback, and tested core functionalities. Automated end-to-end and mobile test suites with Playwright, Appium, and Selenium.",
     badge: "SDLC & QA",
   },
   {
     title: "Code Documentation, Debugging & UX Optimization",
-    desc: "Documented code changes, debugged errors, improved software performance, latency bottlenecks, responsive layouts, and overall user experience.",
+    desc: "Documented code changes, debugged errors, improved software performance, latency bottlenecks, responsive layouts, and user experience.",
     badge: "Quality & UX",
   },
   {
@@ -113,41 +122,78 @@ const PROFESSIONAL_COMPETENCIES = [
   },
 ];
 
-const SKILL_CATEGORIES = [
+interface SkillItem {
+  name: string;
+  level: number;
+  tier: "Core Stack" | "Production" | "Applied";
+  category: string;
+  experience: string;
+}
+
+interface SkillCategory {
+  title: string;
+  domain: string;
+  icon: typeof GIconCode;
+  description: string;
+  accentColor: string;
+  skills: SkillItem[];
+}
+
+const SKILL_CATEGORIES: SkillCategory[] = [
   {
-    title: "Frontend, Mobile & Design",
-    description: "Component architecture, native bridges, state caching, and visual UI design",
+    title: "Frontend & UI Architecture",
+    domain: "Client-Side Engineering",
+    icon: GIconLayoutCells,
+    accentColor: "from-sky-500 to-blue-600",
+    description: "Enterprise component systems, strict TypeScript typings, state caching, and mobile apps",
     skills: [
-      { name: "Next.js & React 19", level: 50, category: "Frontend" },
-      { name: "TypeScript (Strict)", level: 40, category: "Language" },
-      { name: "TanStack Query & State", level: 20, category: "State" },
-      { name: "Tailwind CSS & shadcn/ui", level: 50, category: "Styling" },
-      { name: "React Native & Expo", level: 50, category: "Mobile" },
-      { name: "Figma & Canva (UI/UX)", level: 90, category: "Design" },
+      { name: "Next.js & React 19", level: 96, tier: "Core Stack", category: "Frontend", experience: "Dowinn Group & Portfolio OS" },
+      { name: "TypeScript (Strict)", level: 94, tier: "Core Stack", category: "Language", experience: "100% Type-Safe Applications" },
+      { name: "shadcn/ui & Tailwind CSS", level: 96, tier: "Core Stack", category: "Styling", experience: "Design Systems & Micro-Interactions" },
+      { name: "TanStack Query", level: 92, tier: "Core Stack", category: "State", experience: "Async Server-State Sync & Cache" },
+      { name: "React Native & Expo", level: 88, tier: "Production", category: "Mobile", experience: "SALON Ecosystem Mobile Apps" },
+      { name: "Figma & Canva (UI/UX)", level: 92, tier: "Production", category: "Design", experience: "Interactive Wireframes & Assets" },
     ]
   },
   {
-    title: "Backend & Systems",
-    description: "REST APIs, realtime sockets, MVC architecture, and database pipelines",
+    title: "Backend & PHP Frameworks",
+    domain: "Server-Side & APIs",
+    icon: GIconServer,
+    accentColor: "from-indigo-500 to-purple-600",
+    description: "PHP frameworks, RESTful APIs, Node microservices, and real-time bi-directional WebSockets",
     skills: [
-      { name: "Node.js & Express 5", level: 50, category: "Backend" },
-      { name: "PHP (MVC Architecture)", level: 50, category: "Backend" },
-      { name: "Socket.IO WebSockets", level: 50, category: "Realtime" },
-      { name: "MongoDB & Mongoose", level: 50, category: "NoSQL" },
-      { name: "RESTful API Engineering", level: 50, category: "APIs" },
-      { name: "MySQL & Relational Design", level: 50, category: "SQL" },
+      { name: "Laravel", level: 90, tier: "Production", category: "Backend", experience: "Eloquent ORM, Blade & REST Routing" },
+      { name: "CodeIgniter", level: 89, tier: "Production", category: "Backend", experience: "MVC Patterns & Lightweight APIs" },
+      { name: "PHP (MVC Architecture)", level: 92, tier: "Production", category: "Backend", experience: "Straive IMS Enterprise Architecture" },
+      { name: "Node.js & Express 5", level: 93, tier: "Core Stack", category: "Backend", experience: "High-Throughput Services & Routing" },
+      { name: "Socket.IO WebSockets", level: 91, tier: "Production", category: "Realtime", experience: "Bidirectional Real-Time Mesh" },
+      { name: "RESTful API Engineering", level: 95, tier: "Core Stack", category: "Architecture", experience: "Contract-First Endpoints & CRUD" },
     ]
   },
   {
-    title: "Testing, IT Support & Tooling",
-    description: "Automation test suites, identity, disk encryption, and project tracking",
+    title: "Databases & Data Storage",
+    domain: "Persistence & Optimization",
+    icon: GIconDatabase,
+    accentColor: "from-emerald-500 to-teal-600",
+    description: "Relational SQL engines, ACID transactions, NoSQL document pipelines, and query performance",
     skills: [
-      { name: "Playwright & E2E Testing", level: 90, category: "Testing" },
-      { name: "Appium & Selenium", level: 90, category: "Testing" },
-      { name: "1Kosmos MFA & Active Directory", level: 70, category: "Security" },
-      { name: "BitLocker & RDP Support", level: 70, category: "IT Support" },
-      { name: "Git, GitHub & Notion", level: 90, category: "Tooling" },
-      { name: "Windows Enterprise & Linux", level: 20, category: "System" },
+      { name: "PostgreSQL", level: 91, tier: "Production", category: "SQL", experience: "Relational Schemas, Constraints & ACID" },
+      { name: "MySQL", level: 93, tier: "Production", category: "SQL", experience: "Straive IMS Relational Data Architecture" },
+      { name: "MongoDB & Mongoose", level: 92, tier: "Production", category: "NoSQL", experience: "Document Aggregation & Collections" },
+      { name: "Schema Design & Migrations", level: 90, tier: "Production", category: "Database", experience: "Normalized Tables & Data Integrity" },
+    ]
+  },
+  {
+    title: "Testing, QA Automation & Tooling",
+    domain: "Quality Assurance & DevOps",
+    icon: GIconShield,
+    accentColor: "from-amber-500 to-orange-600",
+    description: "Cross-browser test suites, mobile test harnesses, enterprise identity, and agile version control",
+    skills: [
+      { name: "Playwright E2E Testing", level: 94, tier: "Core Stack", category: "Testing", experience: "Automated Cross-Browser Sprints" },
+      { name: "Appium & Selenium", level: 90, tier: "Production", category: "Testing", experience: "Mobile & Browser Automation Suites" },
+      { name: "1Kosmos MFA & Active Directory", level: 88, tier: "Applied", category: "Security", experience: "Enterprise Access & Identity Config" },
+      { name: "Git, GitHub & Notion", level: 95, tier: "Core Stack", category: "Tooling", experience: "Agile Sprints, PRs & Documentation" },
     ]
   }
 ];
@@ -215,7 +261,19 @@ const TECH_STACK: TechStackItem[] = [
     ),
   },
   {
-    name: "Tailwind & shadcn/ui",
+    name: "shadcn/ui",
+    category: "Frontend",
+    badgeColor: "text-zinc-200 bg-zinc-800/80 border-zinc-600/40",
+    glowClass: "hover:border-zinc-400/50 hover:shadow-[0_0_20px_rgba(255,255,255,0.18)] hover:bg-zinc-800/40",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200" fill="none">
+        <rect width="24" height="24" rx="4" fill="#09090b" stroke="#3f3f46" strokeWidth="1" />
+        <path d="M18 4.5L5.5 17M18.5 12L12 18.5" stroke="#fafafa" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    name: "Tailwind CSS",
     category: "Frontend",
     badgeColor: "text-[#38BDF8] bg-[#38BDF8]/10 border-[#38BDF8]/30",
     glowClass: "hover:border-[#38BDF8]/50 hover:shadow-[0_0_20px_rgba(56,189,248,0.22)] hover:bg-[#38BDF8]/8",
@@ -276,6 +334,31 @@ const TECH_STACK: TechStackItem[] = [
       <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
         <circle cx="12" cy="12" r="10" fill="#00C4CC" />
         <path fill="#ffffff" d="M15.2 14.5c-.8.6-1.8.8-2.8.5-1.4-.4-2.1-1.8-1.7-3.2.4-1.4 1.8-2.3 3.2-1.9.7.2 1.3.6 1.7 1.2l-1.2.9c-.3-.4-.6-.6-1-.7-.7-.2-1.4.3-1.6 1-.2.7.2 1.4.9 1.6.5.2 1.1 0 1.5-.2l.5.8z" />
+      </svg>
+    ),
+  },
+  {
+    name: "Laravel",
+    category: "Backend",
+    badgeColor: "text-[#FF2D20] bg-[#FF2D20]/10 border-[#FF2D20]/30",
+    glowClass: "hover:border-[#FF2D20]/50 hover:shadow-[0_0_20px_rgba(255,45,32,0.25)] hover:bg-[#FF2D20]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <rect width="24" height="24" rx="4" fill="#200d0c" stroke="#FF2D20" strokeWidth="1" />
+        <path fill="#FF2D20" d="M19.2 6.5l-6.8-3.9a1.2 1.2 0 0 0-1.2 0L4.4 6.5A1.2 1.2 0 0 0 3.8 7.5v9a1.2 1.2 0 0 0 .6 1l6.8 3.9a1.2 1.2 0 0 0 1.2 0l6.8-3.9a1.2 1.2 0 0 0 .6-1v-9a1.2 1.2 0 0 0-.6-1zm-7.4 12.3l-5.6-3.2V8.8l5.6 3.2v6.8zm1.2-8.3L7.4 7.3l5.6-3.2 5.6 3.2-5.6 3.2zm5.6 5.1l-5.6 3.2v-6.8l5.6-3.2v6.8z" />
+      </svg>
+    ),
+  },
+  {
+    name: "CodeIgniter",
+    category: "Backend",
+    badgeColor: "text-[#EE4326] bg-[#EE4326]/10 border-[#EE4326]/30",
+    glowClass: "hover:border-[#EE4326]/50 hover:shadow-[0_0_20px_rgba(238,67,38,0.25)] hover:bg-[#EE4326]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
+        <rect width="24" height="24" rx="4" fill="#240f0c" stroke="#EE4326" strokeWidth="1" />
+        <path fill="#EE4326" d="M12 2.5c-.8 2.2-2.8 4.2-4.1 6.3-1.6 2.6-1.9 5.3-.8 7.8 1.4 3.1 4.5 4.9 7.9 4.3 3.4-.6 5.8-3.5 5.5-6.9-.2-2.5-1.7-4.6-3.4-6.3-1.4 2.2-2.8 3.2-3.8 3.2-.8 0-1.3-.6-1.1-1.6.4-1.9 1.8-3.8 1.8-6.8H12z" />
+        <path fill="#FFA500" d="M12 11.5c-.5 1-1.4 2-1.7 3-.4 1.2-.1 2.3.6 3.1 1 1 2.4 1.1 3.4.5.8-.5 1.2-1.4 1-2.3-.2-1.1-1-1.9-1.9-2.7-.4.6-.9.8-1.2.7-.2-.2-.2-.5 0-.9.2-.5.5-.9.8-1.4h-1z" />
       </svg>
     ),
   },
@@ -368,15 +451,29 @@ const TECH_STACK: TechStackItem[] = [
     ),
   },
   {
-    name: "MySQL / SQL",
+    name: "PostgreSQL",
     category: "Database",
-    badgeColor: "text-[#4479A1] bg-[#4479A1]/10 border-[#4479A1]/30",
-    glowClass: "hover:border-[#4479A1]/50 hover:shadow-[0_0_20px_rgba(68,121,161,0.22)] hover:bg-[#4479A1]/8",
+    badgeColor: "text-[#336791] bg-[#336791]/10 border-[#336791]/30",
+    glowClass: "hover:border-[#336791]/50 hover:shadow-[0_0_20px_rgba(51,103,145,0.25)] hover:bg-[#336791]/8",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200" fill="none">
+        <circle cx="12" cy="12" r="10" fill="#152433" stroke="#336791" strokeWidth="1.2" />
+        <path fill="#336791" d="M12 5c-3.5 0-5.8 2.2-5.8 5.2 0 2 1 3.8 2.6 4.7v2.3c0 .7.5 1.3 1.3 1.3h3.8c.8 0 1.3-.6 1.3-1.3v-2.3c1.6-.9 2.6-2.7 2.6-4.7C17.8 7.2 15.5 5 12 5zm-1.6 8.5c-.7 0-1.2-.5-1.2-1.2s.5-1.2 1.2-1.2 1.2.5 1.2 1.2-.5 1.2-1.2 1.2zm3.2 0c-.7 0-1.2-.5-1.2-1.2s.5-1.2 1.2-1.2 1.2.5 1.2 1.2-.5 1.2-1.2 1.2z" />
+        <path fill="#699ec7" d="M10.4 12.3a.6.6 0 1 1 0-1.2.6.6 0 0 1 0 1.2zm3.2 0a.6.6 0 1 1 0-1.2.6.6 0 0 1 0 1.2z" />
+      </svg>
+    ),
+  },
+  {
+    name: "MySQL",
+    category: "Database",
+    badgeColor: "text-[#00758F] bg-[#00758F]/10 border-[#00758F]/30",
+    glowClass: "hover:border-[#00758F]/50 hover:shadow-[0_0_20px_rgba(0,117,143,0.25)] hover:bg-[#00758F]/8",
     icon: (
       <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover/tech:scale-110 duration-200">
-        <ellipse cx="12" cy="6" rx="9" ry="3" fill="#00758F" />
-        <path d="M3 6v6c0 1.66 4.03 3 9 3s9-1.34 9-3V6" fill="none" stroke="#F29111" strokeWidth="1.5" />
-        <path d="M3 12v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6" fill="none" stroke="#00758F" strokeWidth="1.5" />
+        <rect width="24" height="24" rx="4" fill="#0c2233" stroke="#00758F" strokeWidth="1" />
+        <ellipse cx="12" cy="7" rx="8" ry="3" fill="#00758F" />
+        <path d="M4 7v5c0 1.66 3.58 3 8 3s8-1.34 8-3V7" fill="none" stroke="#F29111" strokeWidth="1.5" />
+        <path d="M4 12v5c0 1.66 3.58 3 8 3s8-1.34 8-3v-5" fill="none" stroke="#00758F" strokeWidth="1.5" />
       </svg>
     ),
   },
@@ -393,6 +490,120 @@ const TECH_STACK: TechStackItem[] = [
     ),
   },
 ];
+
+/**
+ * Generates an executive vector PDF matching the exact structure from the user's uploaded CV format:
+ * - Centered serif header with contact details and verified links
+ * - Full-width horizontal dividing rules
+ * - Current Professional Experience (Dowinn Group + Straive)
+ * - Technical and Professional Skills (featuring PostgreSQL, MySQL, Laravel, CodeIgniter, shadcn)
+ * - Achievements and Certifications with right-aligned dates
+ * - Educational Attainment (NTC Magna Cum Laude)
+ */
+function generateResumePdf() {
+  const doc = new jsPDF({ unit: "pt", format: "letter" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 44;
+  const contentWidth = pageWidth - (margin * 2);
+  let y = 46;
+
+  // Header: Centered serif
+  doc.setFont("times", "bold");
+  doc.setFontSize(16.5);
+  doc.text(FULL_NAME, pageWidth / 2, y, { align: "center" });
+
+  y += 15;
+  doc.setFont("times", "normal");
+  doc.setFontSize(9.5);
+  doc.text(`${LOCATION} | ${PHONE} | ${CONTACT_EMAIL}`, pageWidth / 2, y, { align: "center" });
+
+  y += 12;
+  doc.setFontSize(8.5);
+  doc.text("linkedin.com/in/james-emmanuel-mendoza-46b377373  |  github.com/Ememman", pageWidth / 2, y, { align: "center" });
+
+  const addSection = (title: string) => {
+    y += 16;
+    doc.setFont("times", "bold");
+    doc.setFontSize(10.5);
+    doc.text(title, margin, y);
+    y += 4;
+    doc.setLineWidth(0.75);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 11;
+  };
+
+  const addBullet = (text: string, indent = 16) => {
+    const bulletX = margin + 6;
+    const textX = margin + indent;
+    const maxW = contentWidth - indent;
+    doc.setFont("times", "normal");
+    doc.setFontSize(9);
+    doc.text("\u2022", bulletX, y);
+    const lines = doc.splitTextToSize(text, maxW);
+    doc.text(lines, textX, y);
+    y += (lines.length * 11.5) + 2.5;
+  };
+
+  // 1. Professional Experience
+  addSection("Professional Experience");
+
+  // Dowinn Group (Current Experience)
+  doc.setFont("times", "bold");
+  doc.setFontSize(9.5);
+  doc.text("Dowinn Group | Front-End Developer", margin, y);
+  doc.text("September 28, 2026 \u2013 Present", pageWidth - margin, y, { align: "right" });
+  y += 11;
+
+  addBullet("Engineered high-performance enterprise front-end web applications and internal operational portals utilizing Next.js, React, and TypeScript.");
+  addBullet("Integrated TanStack Query for advanced asynchronous server-state synchronization, optimistic updates, intelligent query caching, and reduced network roundtrips.");
+  addBullet("Automated cross-browser and mobile end-to-end testing pipelines using Playwright, Appium, and Selenium to ensure high software reliability and zero regression escapes.");
+  addBullet("Designed clean, WCAG-accessible component architectures with Tailwind CSS and shadcn/ui; streamlined cross-functional development sprints, system documentation, and engineering workflows via Notion and GitHub.");
+
+  y += 4;
+  // Straive (OJT Experience from CV)
+  doc.setFont("times", "bold");
+  doc.setFontSize(9.5);
+  doc.text("Straive | On the Job Training", margin, y);
+  doc.text("February 02, 2026 \u2013 March 24, 2026", pageWidth - margin, y, { align: "right" });
+  y += 11;
+
+  addBullet("Applied academic knowledge to real-world IT support \u2013 Resolved issues like BIOS configuration, BitLocker lockouts, and RDP errors, moving beyond textbook theory.");
+  addBullet("Developed communication & teamwork skills \u2013 Walked frustrated users through technical fixes, collaborated closely with senior colleagues, and shared team wins.");
+  addBullet("Managed time under operational pressure \u2013 Balanced weekend duties, bulk agent registrations, and documentation while prioritizing effectively.");
+  addBullet("Strengthened technical skills in key tools \u2013 Hands-on with 1Kosmos (MFA/biometrics), RDP, Active Directory, BitLocker, and security tools (WorkMate, Sentinel, Netskope).");
+  addBullet("Architected and engineered the Straive IMS (Inventory Management System) in PHP (MVC) and MySQL with custom REST routing and accessible UI.");
+
+  // 2. Technical and Professional Skills
+  addSection("Technical and Professional Skills");
+  addBullet("Versatile full-stack developer proficient in React, Next.js, TypeScript, PHP (Laravel, CodeIgniter, MVC), Node.js, and databases (PostgreSQL, MySQL, MongoDB), with expertise in design tools (Figma, Canva) and project management.");
+  addBullet("Architected responsive component ecosystems using Tailwind CSS and shadcn/ui; implemented TanStack Query for resilient asynchronous state management and real-time Socket.IO synchronization.");
+  addBullet("Gathered system requirements, organized user feedback, tested basic functionalities \u2022 Documented code changes, debugged errors, improved software performance and user experience.");
+  addBullet("Proficient in programming/coding and problem-solving (identifying root causes, developing technical solutions).");
+  addBullet("Automated end-to-end and mobile test suites with Playwright, Appium, and Selenium; provided technical opinions and coding solutions in group discussions.");
+
+  // 3. Achievements and Certifications
+  addSection("Achievements and Certifications");
+  const certs = [
+    { name: "HTML5 (SoloLearn)", date: "November 01, 2023" },
+    { name: "Web Development (SoloLearn)", date: "January 30 2025" },
+    { name: "Best in Research (SALON)", date: "May 02, 2026" },
+  ];
+  certs.forEach((c) => {
+    doc.setFont("times", "normal");
+    doc.setFontSize(9);
+    doc.text(c.name, margin, y);
+    doc.text(c.date, pageWidth - margin, y, { align: "right" });
+    y += 12;
+  });
+
+  // 4. Educational Attainment
+  addSection("Educational Attainment");
+  doc.setFont("times", "bold");
+  doc.setFontSize(9);
+  doc.text("Bachelor of Science in Information Technology | National Teachers College (2022-2026) \u2013 Magna Cum Laude", margin, y);
+
+  doc.save("James_Emmanuel_Mendoza_Resume.pdf");
+}
 
 export default function Resume() {
   const { systemSounds, notify } = useOS();
@@ -433,8 +644,14 @@ export default function Resume() {
 
   const handleDownloadPdf = () => {
     if (systemSounds) soundFx.playClick();
-    window.print();
-    notify("Print / Save as PDF", "Select 'Save as PDF' in the destination dropdown to export a PDF copy.", "info", 3500);
+    try {
+      generateResumePdf();
+      notify("PDF Downloaded", "James_Emmanuel_Mendoza_Resume.pdf generated in exact curriculum vitae format.", "info", 4000);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      window.print();
+      notify("Print / Save as PDF", "Opened print dialog. Select 'Save as PDF' to export.", "info", 3500);
+    }
   };
 
   const filteredTechStack = useMemo(() => {
@@ -480,7 +697,8 @@ export default function Resume() {
   };
 
   return (
-    <div className="h-full overflow-y-auto thin-scroll bg-[#0a0d14] text-white select-none flex flex-col">
+    <>
+      <div className="resume-screen-ui h-full overflow-y-auto thin-scroll bg-[#0a0d14] text-white select-none flex flex-col">
       {/* Executive Header */}
       <div className="p-4 sm:p-5 border-b border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent shrink-0 space-y-3">
         {/* Top Bar: Name & Badges on Left, Action CTAs on Right */}
@@ -856,43 +1074,141 @@ export default function Resume() {
                   </div>
                 </div>
 
-                {/* Skill Categories Progress Deep-Dive */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {SKILL_CATEGORIES.map((cat, idx) => (
-                    <div
-                      key={idx}
-                      className="p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3.5 flex flex-col justify-between"
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <GIconCpu size={15} className="text-accent shrink-0" />
-                          <h3 className="font-display font-semibold text-xs sm:text-sm text-white/95">
-                            {cat.title}
-                          </h3>
-                        </div>
-                        <p className="text-[10px] text-white/50 mt-1 leading-relaxed">
-                          {cat.description}
-                        </p>
-                      </div>
-
-                      <div className="space-y-2.5 pt-1">
-                        {cat.skills.map((s) => (
-                          <div key={s.name} className="space-y-1">
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-white/80 font-medium text-[11px] truncate">{s.name}</span>
-                              <span className="text-accent font-mono text-[10px] font-semibold">{s.level}%</span>
-                            </div>
-                            <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-                              <div
-                                className="h-full bg-gradient-to-r from-accent to-sky-300 rounded-full transition-all duration-700"
-                                style={{ width: `${s.level}%` }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                {/* Skill Categories Progress Deep-Dive with High-Craft Segmented Meters */}
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <h2 className="font-display font-semibold text-sm text-white/95 flex items-center gap-2">
+                        <GIconCpu size={16} className="text-accent" />
+                        <span>Domain Proficiency &amp; Technical Mastery</span>
+                      </h2>
+                      <p className="text-[11px] text-white/50 mt-0.5">
+                        Enterprise production experience, architectural depth, and verified capstone applications.
+                      </p>
                     </div>
-                  ))}
+
+                    {/* Quick Metric Badges */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-cyan-400/10 text-cyan-300 border border-cyan-400/25">
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                        Core Stack: Expert
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-400/10 text-emerald-300 border border-emerald-400/25">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        Production: Enterprise
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+                    {SKILL_CATEGORIES.map((cat, idx) => {
+                      const CatIcon = cat.icon;
+                      return (
+                        <div
+                          key={idx}
+                          className="p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition-all space-y-4 flex flex-col justify-between shadow-sm relative group/cat"
+                        >
+                          {/* Domain Header */}
+                          <div className="border-b border-white/5 pb-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-8 h-8 rounded-xl bg-accent/15 border border-accent/25 text-accent flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(56,189,248,0.15)] group-hover/cat:scale-105 transition-transform">
+                                  <CatIcon size={16} />
+                                </div>
+                                <div className="min-w-0">
+                                  <h3 className="font-display font-bold text-sm text-white/95 group-hover/cat:text-accent transition-colors truncate">
+                                    {cat.title}
+                                  </h3>
+                                  <span className="text-[10px] text-accent/80 font-mono tracking-wide">{cat.domain}</span>
+                                </div>
+                              </div>
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-white/60 font-mono shrink-0">
+                                {cat.skills.length} Technologies
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-white/60 mt-1.5 leading-relaxed">
+                              {cat.description}
+                            </p>
+                          </div>
+
+                          {/* Skill Items with Modern Segmented Indicators */}
+                          <div className="space-y-3 pt-1">
+                            {cat.skills.map((s) => {
+                              const tierBadgeStyle =
+                                s.tier === "Core Stack"
+                                  ? "bg-cyan-400/15 text-cyan-300 border-cyan-400/30"
+                                  : s.tier === "Production"
+                                  ? "bg-emerald-400/15 text-emerald-300 border-emerald-400/30"
+                                  : "bg-purple-400/15 text-purple-300 border-purple-400/30";
+
+                              const tierDotColor =
+                                s.tier === "Core Stack"
+                                  ? "bg-cyan-400"
+                                  : s.tier === "Production"
+                                  ? "bg-emerald-400"
+                                  : "bg-purple-400";
+
+                              return (
+                                <div
+                                  key={s.name}
+                                  className="p-3 rounded-xl bg-white/[0.015] border border-white/6 hover:border-accent/40 hover:bg-white/[0.035] transition-all space-y-2 group/skill"
+                                >
+                                  {/* Top Row: Name, Context Tag, Tier Badge, Percentage */}
+                                  <div className="flex flex-wrap items-center justify-between gap-1.5 text-xs">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <span className="font-semibold text-white/90 group-hover/skill:text-white transition-colors truncate">
+                                        {s.name}
+                                      </span>
+                                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-white/50 border border-white/5 truncate hidden sm:inline-block">
+                                        {s.category}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <span className={`inline-flex items-center gap-1 text-[9px] font-semibold px-2 py-0.5 rounded-full border ${tierBadgeStyle}`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${tierDotColor} animate-pulse`} />
+                                        {s.tier}
+                                      </span>
+                                      <span className="text-white/95 font-mono text-[11px] font-bold">
+                                        {s.level}%
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Segmented Illuminated Progress Track */}
+                                  <div className="space-y-1">
+                                    <div className="relative w-full h-2 rounded-full bg-black/50 border border-white/10 p-[1px] overflow-hidden">
+                                      {/* Active Gradient Bar with Glow */}
+                                      <div
+                                        className="h-full rounded-full bg-gradient-to-r from-accent via-sky-400 to-emerald-400 transition-all duration-700 shadow-[0_0_12px_rgba(56,189,248,0.35)]"
+                                        style={{ width: `${s.level}%` }}
+                                      />
+                                      {/* Visual Segment Markers (20%, 40%, 60%, 80%) */}
+                                      <div className="absolute inset-0 flex justify-between pointer-events-none px-[20%]">
+                                        <div className="w-[1px] h-full bg-white/15" />
+                                        <div className="w-[1px] h-full bg-white/15" />
+                                        <div className="w-[1px] h-full bg-white/15" />
+                                      </div>
+                                    </div>
+
+                                    {/* Context Note / Real-World Application */}
+                                    <div className="flex items-center justify-between text-[10px] text-white/50 font-medium px-0.5">
+                                      <span className="truncate group-hover/skill:text-accent transition-colors">
+                                        {s.experience}
+                                      </span>
+                                      <span className="text-[9px] text-white/40 font-mono shrink-0 pl-2">
+                                        Verified
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}
@@ -1234,5 +1550,107 @@ export default function Resume() {
         </div>
       </div>
     </div>
-  );
+
+    {/* Printable Sheet for Browser Print (matching uploaded screenshot format) */}
+    <div className="resume-print-sheet hidden print:block bg-white text-black font-serif leading-snug">
+      {/* Header */}
+      <div className="text-center mb-3">
+        <h1 className="text-xl font-bold tracking-tight uppercase text-black mb-1">
+          {FULL_NAME}
+        </h1>
+        <p className="text-xs text-gray-800 mb-0.5">
+          {LOCATION} | {PHONE} | {CONTACT_EMAIL}
+        </p>
+        <p className="text-[11px] text-gray-700">
+          linkedin.com/in/james-emmanuel-mendoza-46b377373 | github.com/Ememman
+        </p>
+      </div>
+
+      {/* Professional Experience */}
+      <div className="mb-3">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-black mb-0.5">
+          Professional Experience
+        </h2>
+        <hr className="border-t border-black mb-2" />
+
+        {/* Dowinn Group (Current Experience) */}
+        <div className="mb-2.5">
+          <div className="flex justify-between items-baseline text-xs font-bold text-black mb-1">
+            <span>Dowinn Group | Front-End Developer</span>
+            <span>September 28, 2026 – Present</span>
+          </div>
+          <ul className="list-disc list-outside pl-5 text-[11px] text-gray-900 space-y-1">
+            <li>Engineered high-performance enterprise front-end web applications and internal operational portals utilizing Next.js, React, and TypeScript.</li>
+            <li>Integrated TanStack Query for advanced asynchronous server-state synchronization, optimistic updates, intelligent query caching, and reduced network roundtrips.</li>
+            <li>Automated cross-browser and mobile end-to-end testing pipelines using Playwright, Appium, and Selenium to ensure high software reliability and zero regression escapes.</li>
+            <li>Designed clean, WCAG-accessible component architectures with Tailwind CSS and shadcn/ui; streamlined cross-functional development sprints, system documentation, and engineering workflows via Notion and GitHub.</li>
+          </ul>
+        </div>
+
+        {/* Straive (OJT) */}
+        <div className="mb-2.5">
+          <div className="flex justify-between items-baseline text-xs font-bold text-black mb-1">
+            <span>Straive | On the Job Training</span>
+            <span>February 02, 2026 – March 24, 2026</span>
+          </div>
+          <ul className="list-disc list-outside pl-5 text-[11px] text-gray-900 space-y-1">
+            <li>Applied academic knowledge to real-world IT support – Resolved issues like BIOS configuration, BitLocker lockouts, and RDP errors, moving beyond textbook theory.</li>
+            <li>Developed communication &amp; teamwork skills – Walked frustrated users through technical fixes, collaborated closely with senior colleagues, and shared team wins.</li>
+            <li>Managed time under operational pressure – Balanced weekend duties, bulk agent registrations, and documentation while prioritizing effectively.</li>
+            <li>Strengthened technical skills in key tools – Hands-on with 1Kosmos (MFA/biometrics), RDP, Active Directory, BitLocker, and security tools (WorkMate, Sentinel, Netskope).</li>
+            <li>Architected and engineered the Straive IMS (Inventory Management System) in PHP (MVC) and MySQL with custom REST routing and accessible UI.</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Technical and Professional Skills */}
+      <div className="mb-3">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-black mb-0.5">
+          Technical and Professional Skills
+        </h2>
+        <hr className="border-t border-black mb-2" />
+        <ul className="list-disc list-outside pl-5 text-[11px] text-gray-900 space-y-1">
+          <li>Versatile full-stack developer proficient in React, Next.js, TypeScript, PHP (Laravel, CodeIgniter, MVC), Node.js, and databases (PostgreSQL, MySQL, MongoDB), with expertise in design tools (Figma, Canva) and project management.</li>
+          <li>Architected responsive component ecosystems using Tailwind CSS and shadcn/ui; implemented TanStack Query for resilient asynchronous state management and real-time Socket.IO synchronization.</li>
+          <li>Gathered system requirements, organized user feedback, tested basic functionalities • Documented code changes, debugged errors, improved software performance and user experience.</li>
+          <li>Proficient in programming/coding and problem-solving (identifying root causes, developing technical solutions).</li>
+          <li>Automated end-to-end and mobile test suites with Playwright, Appium, and Selenium; provided technical opinions and coding solutions in group discussions.</li>
+        </ul>
+      </div>
+
+      {/* Achievements and Certifications */}
+      <div className="mb-3">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-black mb-0.5">
+          Achievements and Certifications
+        </h2>
+        <hr className="border-t border-black mb-2" />
+        <div className="text-[11px] text-gray-900 space-y-1 pl-1">
+          <div className="flex justify-between">
+            <span>HTML5 (SoloLearn)</span>
+            <span>November 01, 2023</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Web Development (SoloLearn)</span>
+            <span>January 30 2025</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Best in Research (SALON)</span>
+            <span>May 02, 2026</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Educational Attainment */}
+      <div className="mb-2">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-black mb-0.5">
+          Educational Attainment
+        </h2>
+        <hr className="border-t border-black mb-2" />
+        <div className="text-[11px] font-bold text-gray-900 pl-1">
+          Bachelor of Science in Information Technology | National Teachers College (2022-2026) – Magna Cum Laude
+        </div>
+      </div>
+    </div>
+  </>
+);
 }
