@@ -176,7 +176,7 @@ export default function ArcadeLeaderboard({ onClose }: { onClose?: () => void })
             onClick={() => setSelectedGame(f.id)}
             className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition ${
               selectedGame === f.id
-                ? "bg-accent text-white shadow-sm"
+                ? "bg-accent text-accent-contrast shadow-sm"
                 : "bg-white/5 hover:bg-white/10 text-white/60 hover:text-white"
             }`}
           >

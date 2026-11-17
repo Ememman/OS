@@ -400,7 +400,7 @@ export default function SnakeRetro() {
                 }}
                 className={`px-2 py-0.5 rounded-lg font-medium transition cursor-pointer ${
                   speedIdx === idx
-                    ? "bg-accent text-white font-semibold shadow-xs"
+                    ? "bg-accent text-accent-contrast font-semibold shadow-xs"
                     : "text-white/50 hover:text-white"
                 }`}
               >
@@ -512,7 +512,7 @@ export default function SnakeRetro() {
                 sfx.eat();
                 setHasStarted(true);
               }}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-white font-bold text-xs shadow-lg shadow-accent/30 hover:brightness-110 active:scale-95 transition cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-accent-contrast font-bold text-xs shadow-lg shadow-accent/30 hover:brightness-110 active:scale-95 transition cursor-pointer"
             >
               <GIconPlay size={14} /> Start Game
             </button>
@@ -563,7 +563,7 @@ export default function SnakeRetro() {
 
             <button
               onClick={resetGame}
-              className="flex items-center justify-center gap-1.5 w-full max-w-[220px] px-4 py-2.5 mt-2 rounded-xl bg-accent text-white font-bold text-xs shadow-lg shadow-accent/25 hover:brightness-110 active:scale-95 transition cursor-pointer"
+              className="flex items-center justify-center gap-1.5 w-full max-w-[220px] px-4 py-2.5 mt-2 rounded-xl bg-accent text-accent-contrast font-bold text-xs shadow-lg shadow-accent/25 hover:brightness-110 active:scale-95 transition cursor-pointer"
             >
               <GIconRotateRight size={14} /> Play Again
             </button>
@@ -576,7 +576,7 @@ export default function SnakeRetro() {
             <span className="text-sm font-bold tracking-widest uppercase text-white/90">Paused</span>
             <button
               onClick={() => setIsPaused(false)}
-              className="mt-3 px-4 py-2 rounded-xl bg-accent text-white font-semibold text-xs shadow-md shadow-accent/25 hover:brightness-110 transition cursor-pointer"
+              className="mt-3 px-4 py-2 rounded-xl bg-accent text-accent-contrast font-semibold text-xs shadow-md shadow-accent/25 hover:brightness-110 transition cursor-pointer"
             >
               Resume
             </button>

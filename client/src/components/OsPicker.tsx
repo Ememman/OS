@@ -103,7 +103,7 @@ function OsCard({ option, isSelected, onSelect }: OsCardProps) {
           <div
             className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
               isSelected
-                ? "bg-accent text-white ring-2 ring-accent/30 shadow-sm"
+                ? "bg-accent text-accent-contrast ring-2 ring-accent/30 shadow-sm"
                 : "border border-white/30 bg-black/40 group-hover:border-white/50"
             }`}
           >
@@ -216,7 +216,7 @@ export default function OsPicker() {
               whileTap={{ scale: 0.98 }}
               transition={{ type: "spring", stiffness: 450, damping: 24 }}
               onClick={confirm}
-              className="group relative px-8 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl bg-accent hover:brightness-110 text-white text-sm sm:text-base font-semibold shadow-xl shadow-accent/25 hover:shadow-accent/40 flex items-center justify-center gap-2 mx-auto cursor-pointer overflow-hidden w-full sm:w-auto min-w-[280px]"
+              className="group relative px-8 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl bg-accent hover:brightness-110 text-accent-contrast text-sm sm:text-base font-semibold shadow-xl shadow-accent/25 hover:shadow-accent/40 flex items-center justify-center gap-2 mx-auto cursor-pointer overflow-hidden w-full sm:w-auto min-w-[280px]"
             >
               <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
               <span className="relative z-10 font-semibold tracking-wide">

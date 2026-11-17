@@ -258,7 +258,7 @@ export default function Settings() {
               </div>
               {themeMode === "dark" && (
                 <span className="w-4 h-4 rounded-full bg-accent flex items-center justify-center shrink-0">
-                  <GIconCheck size={10} className="text-white" />
+                  <GIconCheck size={10} className="text-accent-contrast" />
                 </span>
               )}
             </div>
@@ -305,7 +305,7 @@ export default function Settings() {
               </div>
               {themeMode === "night" && (
                 <span className="w-4 h-4 rounded-full bg-accent flex items-center justify-center shrink-0">
-                  <GIconCheck size={10} className="text-white" />
+                  <GIconCheck size={10} className="text-accent-contrast" />
                 </span>
               )}
             </div>
@@ -645,7 +645,7 @@ export default function Settings() {
                   />
                   {isSelected && (
                     <span className="absolute top-1.5 right-1.5 w-5 h-5 aspect-square shrink-0 rounded-full bg-accent flex items-center justify-center shadow-lg shadow-accent/40 z-10">
-                      <GIconCheck size={11} className="text-white" />
+                      <GIconCheck size={11} className="text-accent-contrast" />
                     </span>
                   )}
                 </div>
@@ -713,7 +713,7 @@ export default function Settings() {
             </div>
             <button
               onClick={openSpotlight}
-              className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-accent text-white font-medium transition-colors"
+              className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium transition-colors"
             >
               Open
             </button>

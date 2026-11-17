@@ -203,16 +203,17 @@ export function harmonizeAccentColor(
   }
 
   // 2. Calibrate Lightness based on Hue & Theme Mode (Dark vs Night vs Light)
-  // Certain hues (Yellow/Lime, 50-95 deg) have naturally high luminance, while Blues (210-260 deg) have low luminance.
+  // High-luminance hues (Yellow, Lime, Green, Mint, Cyan: 45-190 deg) have high inherent sRGB luminance (green = 71.5%).
+  // Blues and Violets (210-275 deg) have naturally low luminance.
   let targetL = hsl.l;
-  const isYellowOrLime = hsl.h >= 45 && hsl.h <= 95;
+  const isHighLuminanceHue = hsl.h >= 45 && hsl.h <= 190;
   const isBlueOrViolet = hsl.h >= 210 && hsl.h <= 275;
 
   if (mode === "night") {
     // NIGHT MODE:
     // Pure OLED pitch black background — gentle luminous tones with zero eye fatigue
-    if (isYellowOrLime) {
-      targetL = Math.max(52, Math.min(62, targetL));
+    if (isHighLuminanceHue) {
+      targetL = Math.max(50, Math.min(60, targetL));
     } else if (isBlueOrViolet) {
       targetL = Math.max(60, Math.min(68, targetL));
     } else {
@@ -221,8 +222,8 @@ export function harmonizeAccentColor(
   } else if (mode === "light") {
     // LIGHT MODE:
     // Deeper tone for clean contrast against light frosted surfaces
-    if (isYellowOrLime) {
-      targetL = Math.max(36, Math.min(46, targetL));
+    if (isHighLuminanceHue) {
+      targetL = Math.max(34, Math.min(44, targetL));
     } else if (isBlueOrViolet) {
       targetL = Math.max(45, Math.min(52, targetL));
     } else {
@@ -231,8 +232,8 @@ export function harmonizeAccentColor(
   } else {
     // DARK MODE:
     // Deep charcoal & slate glass (#080c16) — vibrant, punchy contrast
-    if (isYellowOrLime) {
-      targetL = Math.max(50, Math.min(60, targetL));
+    if (isHighLuminanceHue) {
+      targetL = Math.max(48, Math.min(58, targetL));
     } else if (isBlueOrViolet) {
       targetL = Math.max(58, Math.min(66, targetL));
     } else {
@@ -258,9 +259,9 @@ export function harmonizeAccentColor(
   const whiteContrast = getContrastRatio(whiteLum, lum);
   const darkContrast = getContrastRatio(lum, darkLum);
 
-  // If contrast against dark text is significantly better (e.g. bright cyan, yellow, lime), use dark text
+  // Pick the text color that yields the higher contrast ratio for maximum WCAG legibility
   const contrastText: "#ffffff" | "#0b0f19" =
-    darkContrast >= 4.5 && darkContrast > whiteContrast ? "#0b0f19" : "#ffffff";
+    darkContrast > whiteContrast ? "#0b0f19" : "#ffffff";
   const activeRatio = Math.max(whiteContrast, darkContrast);
 
   // 4. Hover & Active (Clicking) States
