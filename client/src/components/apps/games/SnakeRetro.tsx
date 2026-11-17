@@ -206,14 +206,23 @@ export default function SnakeRetro() {
 
   const changeDirection = useCallback(
     (newDir: Direction) => {
-      const current = dir;
-      if (newDir === "UP" && current !== "DOWN") { nextDirRef.current = "UP"; sfx.turn(); }
-      if (newDir === "DOWN" && current !== "UP") { nextDirRef.current = "DOWN"; sfx.turn(); }
-      if (newDir === "LEFT" && current !== "RIGHT") { nextDirRef.current = "LEFT"; sfx.turn(); }
-      if (newDir === "RIGHT" && current !== "LEFT") { nextDirRef.current = "RIGHT"; sfx.turn(); }
+      const current = nextDirRef.current;
+      if (newDir === "UP" && current !== "DOWN" && current !== "UP") {
+        nextDirRef.current = "UP";
+        sfx.turn();
+      } else if (newDir === "DOWN" && current !== "UP" && current !== "DOWN") {
+        nextDirRef.current = "DOWN";
+        sfx.turn();
+      } else if (newDir === "LEFT" && current !== "RIGHT" && current !== "LEFT") {
+        nextDirRef.current = "LEFT";
+        sfx.turn();
+      } else if (newDir === "RIGHT" && current !== "LEFT" && current !== "RIGHT") {
+        nextDirRef.current = "RIGHT";
+        sfx.turn();
+      }
       if (!hasStarted) setHasStarted(true);
     },
-    [dir, hasStarted, sfx]
+    [hasStarted, sfx]
   );
 
   // Keyboard controls
@@ -446,12 +455,13 @@ export default function SnakeRetro() {
           {snake.slice(1).map((s, idx) => (
             <div
               key={idx}
-              className="absolute p-[0.5px] pointer-events-none"
+              className="absolute p-[0.5px] pointer-events-none transform-gpu"
               style={{
                 left: `${(s.x / GRID_SIZE) * 100}%`,
                 top: `${(s.y / GRID_SIZE) * 100}%`,
                 width: `${100 / GRID_SIZE}%`,
                 height: `${100 / GRID_SIZE}%`,
+                willChange: "left, top",
               }}
             >
               <div className="w-full h-full rounded-sm bg-gradient-to-br from-accent/80 to-sky-400/70 shadow-xs" />
@@ -461,12 +471,13 @@ export default function SnakeRetro() {
           {/* Snake Head with Directional Eyes */}
           {snake[0] && (
             <div
-              className="absolute p-[0.5px] z-10 pointer-events-none"
+              className="absolute p-[0.5px] z-10 pointer-events-none transform-gpu"
               style={{
                 left: `${(snake[0].x / GRID_SIZE) * 100}%`,
                 top: `${(snake[0].y / GRID_SIZE) * 100}%`,
                 width: `${100 / GRID_SIZE}%`,
                 height: `${100 / GRID_SIZE}%`,
+                willChange: "left, top",
               }}
             >
               <div className="w-full h-full rounded-md bg-accent shadow-md shadow-accent/60 scale-105 flex items-center justify-center relative overflow-hidden">
