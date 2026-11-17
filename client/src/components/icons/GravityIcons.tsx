@@ -216,4 +216,8 @@ export const GIconPalette = (props: any) => (
   </svg>
 );
 
+export const GIconDatabase = (props: any) => <GravityIcon icon={(GIcons as any).Database} {...props} />;
+export const GIconServer = (props: any) => <GravityIcon icon={(GIcons as any).Server} {...props} />;
+export const GIconShield = (props: any) => <GravityIcon icon={(GIcons as any).Shield || (GIcons as any).ShieldCheck} {...props} />;
+
 export default GIcons;
