@@ -54,7 +54,7 @@ const UPCOMING_GAMES: UpcomingGame[] = [
     genre: "2-Player / Arcade",
     desc: "The timeless paddle rally. Play local 2-player or battle dynamic AI with CRT scanline optics.",
     status: "Design Phase",
-    badgeColor: "bg-emerald-500/15 border-emerald-500/30 text-emerald-400",
+    badgeColor: "bg-white/10 border-white/20 text-white/80",
     features: ["Local 2-player split screen", "Adaptive AI difficulty", "Vintage CRT filter", "Curve spin physics"],
     version: "v1.5",
   },
@@ -246,7 +246,7 @@ export default function Games() {
             <button
               onClick={() => setArcadeTab("playable")}
               className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer text-xs ${
-                arcadeTab === "playable" ? "bg-emerald-500/20 text-emerald-300 shadow-xs font-semibold" : "text-white/60 hover:text-white"
+                arcadeTab === "playable" ? "bg-white/15 text-white shadow-xs font-semibold" : "text-white/60 hover:text-white"
               }`}
             >
               Playable (4)
@@ -276,11 +276,11 @@ export default function Games() {
         <div className="space-y-3">
           <div className="text-xs text-white/60 uppercase tracking-wider font-bold flex items-center justify-between">
             <span className="flex items-center gap-1.5">
-              <GIconPlay size={13} className="text-emerald-400" />
+              <GIconPlay size={13} className="text-white/60" />
               <span>Instant Play Minigames</span>
             </span>
-            <span className="text-[11px] font-mono text-emerald-400/80 font-normal">
-              4 Fully Playable Titles
+            <span className="text-[11px] font-mono text-white/40 font-normal">
+              4 Playable Titles
             </span>
           </div>
 
@@ -307,8 +307,7 @@ export default function Games() {
                 </div>
               </div>
               <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full gap-2">
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition shrink-0">
-                  <GIconPlay size={10} />
+                <span className="px-2.5 py-1 rounded-lg bg-white/10 text-white font-medium text-xs flex items-center group-hover:bg-white/20 transition shrink-0">
                   <span>Play Now</span>
                 </span>
                 <span className="text-white/40 text-[10.5px] font-mono shrink-0">Scores Enabled</span>
@@ -337,8 +336,7 @@ export default function Games() {
                 </div>
               </div>
               <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full gap-2">
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition shrink-0">
-                  <GIconPlay size={10} />
+                <span className="px-2.5 py-1 rounded-lg bg-white/10 text-white font-medium text-xs flex items-center group-hover:bg-white/20 transition shrink-0">
                   <span>Play Now</span>
                 </span>
                 <span className="text-white/40 text-[10.5px] font-mono shrink-0">Scores Enabled</span>
@@ -348,18 +346,18 @@ export default function Games() {
             {/* Snake Retro */}
             <button
               onClick={() => setOpen("snake")}
-              className="flex flex-col justify-between min-h-[180px] p-4 rounded-2xl border border-emerald-500/40 bg-gradient-to-b from-emerald-500/15 to-emerald-500/5 hover:from-emerald-500/25 hover:to-emerald-500/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-emerald-500/20 active:scale-[0.98] overflow-hidden"
+              className="flex flex-col justify-between min-h-[180px] p-4 rounded-2xl border border-white/20 bg-gradient-to-b from-white/10 to-white/5 hover:from-white/15 hover:to-white/10 transition-all text-left group cursor-pointer shadow-lg hover:shadow-white/10 active:scale-[0.98] overflow-hidden"
             >
               <div className="flex-1 min-w-0 overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between gap-2 mb-2 shrink-0">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
-                    <GIconPlay className="text-emerald-400" size={19} />
+                  <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+                    <GIconPlay className="text-white/80" size={19} />
                   </div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-white/10 text-white/80 border border-white/20 shrink-0">
                     Tuned Speed
                   </span>
                 </div>
-                <div className="text-base font-bold text-white group-hover:text-emerald-300 transition-colors shrink-0">
+                <div className="text-base font-bold text-white group-hover:text-accent transition-colors shrink-0">
                   Snake Retro
                 </div>
                 <div className="text-xs text-white/70 mt-1.5 leading-relaxed">
@@ -367,8 +365,7 @@ export default function Games() {
                 </div>
               </div>
               <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full gap-2">
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition shrink-0">
-                  <GIconPlay size={10} />
+                <span className="px-2.5 py-1 rounded-lg bg-white/10 text-white font-medium text-xs flex items-center group-hover:bg-white/20 transition shrink-0">
                   <span>Play Now</span>
                 </span>
                 <span className="text-white/40 text-[10.5px] font-mono shrink-0">Scores Enabled</span>
@@ -397,8 +394,7 @@ export default function Games() {
                 </div>
               </div>
               <div className="mt-3 shrink-0 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs w-full gap-2">
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1 group-hover:bg-emerald-500/30 transition shrink-0">
-                  <GIconPlay size={10} />
+                <span className="px-2.5 py-1 rounded-lg bg-white/10 text-white font-medium text-xs flex items-center group-hover:bg-white/20 transition shrink-0">
                   <span>Play Now</span>
                 </span>
                 <span className="text-white/40 text-[10.5px] font-mono shrink-0">Scores Enabled</span>
@@ -435,7 +431,7 @@ export default function Games() {
                         {g.genre}
                       </span>
                       <span className="text-[10px] font-mono text-white/45">
-                        {isNotified ? <span className="text-emerald-400 font-semibold">★ Wishlisted</span> : g.version}
+                        {isNotified ? <span className="text-accent font-semibold">★ Wishlisted</span> : g.version}
                       </span>
                     </div>
 
@@ -504,7 +500,7 @@ export default function Games() {
                 onClick={() => toggleNotify(previewGame.id)}
                 className={`flex-1 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                   notifiedGames.has(previewGame.id)
-                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                    ? "bg-accent/20 text-accent border border-accent/30"
                     : "bg-white/10 hover:bg-white/15 text-white"
                 }`}
               >
