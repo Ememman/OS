@@ -1,6 +1,6 @@
 export type OSMode = "mac" | "win";
 
-export type ThemeMode = "night" | "light";
+export type ThemeMode = "dark" | "night" | "light";
 
 export type DockPosition = "bottom" | "left" | "right";
 

@@ -1083,7 +1083,7 @@ export default function Chats() {
               title="View active guests"
               aria-label="View active guests"
             >
-              <GIconPersons size={13} className={connected ? "text-emerald-400" : "text-amber-400"} aria-hidden="true" />
+              <GIconPersons size={13} className={connected ? "text-accent" : "text-amber-400"} aria-hidden="true" />
               <span className="font-semibold">{connected ? Math.max(1, online, activeUsers.length) : 1}</span>
             </button>
 

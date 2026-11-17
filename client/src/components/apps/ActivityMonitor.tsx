@@ -567,13 +567,15 @@ const DEFAULT_ENDPOINTS: ApiEndpointInfo[] = [
     path: "/api/system/storage",
     method: "GET",
     category: "System",
-    description: "Retrieve virtual partition storage allocations and usage telemetry",
+    description: "Retrieve primary host storage volume allocations and real filesystem sector telemetry",
     security: "Public Safe (Live)",
     sampleResponse: {
-      totalGb: 64,
-      usedGb: 18.4,
-      freeGb: 45.6,
-      percentUsed: 28.75
+      storageType: "Primary Host Disk (C:)",
+      mountPoint: "C:\\",
+      totalGb: 237.9,
+      usedGb: 113.1,
+      freeGb: 124.8,
+      percentUsed: 47.6
     }
   },
   {
@@ -846,12 +848,11 @@ export interface OsProcess {
 }
 
 const DEFAULT_DAEMONS: OsProcess[] = [
-  { pid: 101, name: "kernel.sys", user: "system", cpu: 1.5, memoryMb: 24.7, threads: 4, status: "running", description: "Portfolio OS Kernel & Task Scheduler" },
-  { pid: 104, name: "window-server", user: "system", cpu: 3.2, memoryMb: 48.0, threads: 6, status: "running", description: "Glass Compositor & Display Manager" },
-  { pid: 210, name: "socket-daemon", user: "system", cpu: 0.8, memoryMb: 16.2, threads: 2, status: "running", description: "Realtime WebSocket Hub & Event Broadcaster" },
-  { pid: 312, name: "audio-synth", user: "system", cpu: 0.4, memoryMb: 12.8, threads: 2, status: "running", description: "WebAudio Procedural Synthesizer Engine" },
-  { pid: 405, name: "vfs-manager", user: "system", cpu: 0.2, memoryMb: 14.5, threads: 2, status: "running", description: "Virtual File System & Cloud Cache" },
-  { pid: 512, name: "telemetry-poller", user: "system", cpu: 0.6, memoryMb: 18.1, threads: 2, status: "running", description: "System Activity & Hardware Telemetry Poller" },
+  { pid: 101, name: "node.exe", user: "system", cpu: 0.8, memoryMb: 42.5, threads: 8, status: "running", description: "Host Node.js Runtime & Application Server" },
+  { pid: 102, name: "socket.io-engine", user: "system", cpu: 0.2, memoryMb: 12.8, threads: 2, status: "running", description: "WebSocket Engine & Event Broadcaster" },
+  { pid: 103, name: "express-dispatcher", user: "system", cpu: 0.3, memoryMb: 16.4, threads: 2, status: "running", description: "HTTP REST API Dispatcher & Static File Server" },
+  { pid: 104, name: "event-loop-scheduler", user: "system", cpu: 0.1, memoryMb: 8.5, threads: 1, status: "running", description: "libuv Event Loop & Microtask Scheduler" },
+  { pid: 105, name: "v8-gc-manager", user: "system", cpu: 0.1, memoryMb: 10.2, threads: 4, status: "running", description: "V8 Heap Manager & Memory Compactor" },
 ];
 
 export interface SystemLogItem {
@@ -863,10 +864,16 @@ export interface SystemLogItem {
 }
 
 export interface StorageBreakdown {
+  storageType?: string;
+  mountPoint?: string;
+  fileSystemType?: string;
   totalGb: number;
   usedGb: number;
   freeGb: number;
   percentUsed: number;
+  blockSize?: number;
+  totalBlocks?: number;
+  freeBlocks?: number;
   partitions: {
     name: string;
     sizeGb: number;
@@ -1087,15 +1094,15 @@ export default function ActivityMonitor() {
         }
       }
     } catch {
-      // Fallback simulated metrics if server is offline or cold starting
+      // Fallback metrics preserving last known values if server is momentarily unreachable
       setMetrics((prev) => {
         const now = Date.now();
-        const nextVal = Math.min(100, Math.max(8, Math.round(18 + Math.random() * 15)));
+        const last = prev.length > 0 ? prev[prev.length - 1] : { cpuPercent: 0, memoryMb: 0, systemPercent: 0 };
         const point = {
           time: now,
-          cpuPercent: nextVal,
-          memoryMb: 42 + Math.round(Math.random() * 8),
-          systemPercent: 35
+          cpuPercent: last.cpuPercent,
+          memoryMb: last.memoryMb,
+          systemPercent: last.systemPercent
         };
         return [...prev.slice(-14), point];
       });
@@ -1318,9 +1325,9 @@ export default function ActivityMonitor() {
         }
       } catch {
         // Fallback for static GitHub Pages or server standby
-        const elapsed = Math.round(18 + Math.random() * 25);
+        const elapsed = Math.round(performance.now() - start);
         const resultObj = {
-          status: "200 OK (Standby Live)",
+          status: "200 OK (Standby)",
           statusCode: 200,
           latency: elapsed,
           testing: false,
@@ -1337,9 +1344,8 @@ export default function ActivityMonitor() {
         }
       }
     } else {
-      // POST, PUT, PATCH, DELETE: Interactive Sandbox Simulation
-      // Simulate realistic network latency (100ms - 250ms)
-      await new Promise((r) => setTimeout(r, Math.round(110 + Math.random() * 150)));
+      // POST, PUT, PATCH, DELETE: Sandbox testing execution
+      await new Promise((r) => setTimeout(r, 80));
       const elapsed = Math.round(performance.now() - start);
 
       let responseData: any = ep.sampleResponse ? { ...ep.sampleResponse } : { ok: true, status: "simulated" };
@@ -1561,7 +1567,7 @@ export default function ActivityMonitor() {
                 : "text-white/60 hover:text-white hover:bg-white/10"
             }`}
           >
-            <GIconGlobe size={12} className="shrink-0 text-emerald-400" />
+            <GIconGlobe size={12} className="shrink-0" />
             <span>APIs & Packages ({apiEndpoints.length + RUNTIME_PACKAGES.length})</span>
           </button>
 
@@ -1766,9 +1772,6 @@ export default function ActivityMonitor() {
                       {windows.length} window{windows.length === 1 ? "" : "s"} rendered and composited in the DOM.
                     </p>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-mono border border-emerald-500/20">
-                    Live Reactive
-                  </span>
                 </div>
 
                 {filteredWindows.length === 0 ? (
@@ -1790,13 +1793,12 @@ export default function ActivityMonitor() {
                             <th className="py-2.5 px-3 min-w-[120px] whitespace-nowrap">Thread ID</th>
                             <th className="py-2.5 px-3 min-w-[130px] whitespace-nowrap">Compositor State</th>
                             <th className="py-2.5 px-3 min-w-[90px] whitespace-nowrap">Z-Index Layer</th>
-                            <th className="py-2.5 px-3 min-w-[80px] whitespace-nowrap">Est. Memory</th>
+                            <th className="py-2.5 px-3 min-w-[80px] whitespace-nowrap">Dimensions</th>
                             <th className="py-2.5 px-3 min-w-[180px] text-right whitespace-nowrap">Window Controls</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
                           {filteredWindows.map((win) => {
-                            const memMb = (Math.abs(win.id.charCodeAt(0) * 3) % 24) + 14;
                             return (
                               <tr key={win.id} className="hover:bg-white/5 transition-colors">
                                 <td className="py-2.5 px-3 font-medium flex items-center gap-2 whitespace-nowrap">
@@ -1810,7 +1812,7 @@ export default function ActivityMonitor() {
                                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border whitespace-nowrap shrink-0 ${
                                       win.minimized
                                         ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
-                                        : "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                                        : "bg-white/10 text-white/80 border-white/20"
                                     }`}
                                   >
                                     {win.minimized ? "Minimized" : "Active / Visible"}
@@ -1820,7 +1822,7 @@ export default function ActivityMonitor() {
                                   Layer {win.z || 10}
                                 </td>
                                 <td className="py-2.5 px-3 font-mono text-white/70 whitespace-nowrap">
-                                  ~{memMb} MB
+                                  {win.w || 800} × {win.h || 520}
                                 </td>
                                 <td className="py-2.5 px-3 text-right whitespace-nowrap">
                                   <div className="inline-flex items-center justify-end gap-1.5">
@@ -1867,7 +1869,6 @@ export default function ActivityMonitor() {
                     {/* Mobile View: Responsive Card Grid (No horizontal clipping!) */}
                     <div className="sm:hidden space-y-2">
                       {filteredWindows.map((win) => {
-                        const memMb = (Math.abs(win.id.charCodeAt(0) * 3) % 24) + 14;
                         return (
                           <div key={win.id} className="p-3 rounded-xl border border-white/10 bg-white/[0.03] space-y-2.5">
                             <div className="flex items-start justify-between gap-2">
@@ -1877,7 +1878,7 @@ export default function ActivityMonitor() {
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border shrink-0 ${
                                 win.minimized
                                   ? "bg-amber-500/10 text-amber-300 border-amber-500/20"
-                                  : "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"
+                                  : "bg-white/10 text-white/80 border-white/20"
                               }`}>
                                 {win.minimized ? "Minimized" : "Active"}
                               </span>
@@ -1886,7 +1887,7 @@ export default function ActivityMonitor() {
                             <div className="flex items-center gap-1.5 text-[10px] font-mono text-white/50 flex-wrap">
                               <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-white/60">#win-{win.id}</span>
                               <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-white/60">Layer {win.z || 10}</span>
-                              <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-white/60">~{memMb} MB</span>
+                              <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-white/60">{win.w || 800}×{win.h || 520} px</span>
                             </div>
 
                             <div className="grid grid-cols-3 gap-1.5 pt-1.5 border-t border-white/5">
@@ -1985,7 +1986,7 @@ export default function ActivityMonitor() {
                                   isRestarting
                                     ? "bg-amber-500/20 text-amber-300 border-amber-500/30 animate-pulse"
                                     : p.status === "running"
-                                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                                    ? "bg-accent/20 text-accent border-accent/30"
                                     : p.status === "stopped"
                                     ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
                                     : "bg-white/10 text-white/50 border-white/10"
@@ -2043,7 +2044,7 @@ export default function ActivityMonitor() {
                             isRestarting
                               ? "bg-amber-500/20 text-amber-300 border-amber-500/30 animate-pulse"
                               : p.status === "running"
-                              ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                              ? "bg-accent/20 text-accent border-accent/30"
                               : p.status === "stopped"
                               ? "bg-rose-500/20 text-rose-300 border-rose-500/30"
                               : "bg-white/10 text-white/50 border-white/10"
@@ -2107,9 +2108,6 @@ export default function ActivityMonitor() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 text-[10px] font-mono">
-                    Gateway Online
-                  </span>
                   <button
                     onClick={() => setShowSecurityNotice((v) => !v)}
                     className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition text-[10px] flex items-center gap-1.5 cursor-pointer"
@@ -2629,53 +2627,82 @@ export default function ActivityMonitor() {
           <div className="space-y-4">
             <div>
               <h3 className="font-display text-sm font-semibold text-white/90">
-                Virtual Disk Storage & Allocation
+                {storageData?.storageType || "Primary System Host Storage"}
               </h3>
               <p className="text-[11px] text-white/40">
-                Telemetry for virtual SSD storage, persistent cache, and user notes.
+                Physical disk volume hosting the operating system, filesystem root ({storageData?.mountPoint || "C:\\"}), and active runtime workspace.
               </p>
             </div>
 
             {/* Storage Progress Meter */}
             <div className="p-4 rounded-xl border border-white/10 bg-white/5 space-y-3">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-white">Virtual SSD (256 GB)</span>
+                <span className="font-semibold text-white">
+                  {storageData?.mountPoint ? `Primary Volume (${storageData.mountPoint})` : "System Drive"}
+                </span>
                 <span className="text-white/60">
-                  {storageData?.usedGb || 68.4} GB used of {storageData?.totalGb || 256} GB (
-                  {storageData?.freeGb || 187.6} GB free)
+                  {storageData?.usedGb ?? 0} GB used of {storageData?.totalGb ?? 0} GB ({storageData?.freeGb ?? 0} GB free)
                 </span>
               </div>
 
               {/* Multi-segment capacity bar */}
               <div className="h-4 w-full bg-black/40 rounded-full overflow-hidden flex p-0.5 border border-white/10">
-                {(storageData?.partitions || []).map((part, idx) => (
-                  <div
-                    key={idx}
-                    title={`${part.name}: ${part.sizeGb} GB`}
-                    style={{
-                      width: `${(part.sizeGb / (storageData?.totalGb || 256)) * 100}%`,
-                      backgroundColor: part.color
-                    }}
-                    className="h-full rounded-sm first:rounded-l-full last:rounded-r-full transition-all duration-500"
-                  />
-                ))}
+                <div
+                  title={`Occupied Space: ${storageData?.usedGb ?? 0} GB (${storageData?.percentUsed ?? 0}%)`}
+                  style={{
+                    width: `${Math.min(100, Math.max(0, storageData?.percentUsed ?? 0))}%`,
+                    backgroundColor: "#38bdf8"
+                  }}
+                  className="h-full rounded-l-full rounded-r-sm transition-all duration-500"
+                />
+                <div
+                  title={`Available Space: ${storageData?.freeGb ?? 0} GB`}
+                  style={{
+                    width: `${Math.min(100, Math.max(0, 100 - (storageData?.percentUsed ?? 0)))}%`,
+                    backgroundColor: "rgba(255, 255, 255, 0.12)"
+                  }}
+                  className="h-full rounded-r-full rounded-l-sm transition-all duration-500"
+                />
               </div>
 
               {/* Legend & Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                {(storageData?.partitions || []).map((part, idx) => (
-                  <div key={idx} className="p-2.5 rounded-lg bg-black/25 border border-white/5 flex items-start gap-2.5">
-                    <span
-                      className="w-3 h-3 rounded-full mt-0.5 shrink-0"
-                      style={{ backgroundColor: part.color }}
-                    />
-                    <div>
-                      <div className="font-semibold text-white text-xs">{part.name}</div>
-                      <div className="text-[10px] text-white/40">{part.desc}</div>
-                      <div className="font-mono text-xs text-white/80 mt-1">{part.sizeGb} GB</div>
-                    </div>
+                <div className="p-2.5 rounded-lg bg-black/25 border border-white/5 flex items-start gap-2.5">
+                  <span className="w-3 h-3 rounded-full mt-0.5 shrink-0 bg-[#38bdf8]" />
+                  <div>
+                    <div className="font-semibold text-white text-xs">Occupied Volume Space</div>
+                    <div className="text-[10px] text-white/40">In-use sectors on {storageData?.mountPoint || "system disk"}</div>
+                    <div className="font-mono text-xs text-white/80 mt-1">{storageData?.usedGb ?? 0} GB ({storageData?.percentUsed ?? 0}%)</div>
                   </div>
-                ))}
+                </div>
+                <div className="p-2.5 rounded-lg bg-black/25 border border-white/5 flex items-start gap-2.5">
+                  <span className="w-3 h-3 rounded-full mt-0.5 shrink-0 bg-white/20" />
+                  <div>
+                    <div className="font-semibold text-white text-xs">Available Free Space</div>
+                    <div className="text-[10px] text-white/40">Unallocated sector space ready for writes</div>
+                    <div className="font-mono text-xs text-white/80 mt-1">{storageData?.freeGb ?? 0} GB ({Math.round((100 - (storageData?.percentUsed ?? 0)) * 10) / 10}%)</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sector & Filesystem Telemetry */}
+              <div className="p-3 rounded-lg bg-white/[0.03] border border-white/5 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div>
+                  <div className="text-[10px] text-white/40">Filesystem Type</div>
+                  <div className="font-mono text-white/80 mt-0.5">{storageData?.fileSystemType || "NTFS / ReFS"}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-white/40">Sector Block Size</div>
+                  <div className="font-mono text-white/80 mt-0.5">{storageData?.blockSize ? `${storageData.blockSize} bytes` : "4096 bytes"}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-white/40">Total Sectors</div>
+                  <div className="font-mono text-white/80 mt-0.5">{storageData?.totalBlocks ? storageData.totalBlocks.toLocaleString() : "N/A"}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-white/40">Free Sectors</div>
+                  <div className="font-mono text-white/80 mt-0.5">{storageData?.freeBlocks ? storageData.freeBlocks.toLocaleString() : "N/A"}</div>
+                </div>
               </div>
             </div>
           </div>
@@ -2704,11 +2731,11 @@ export default function ActivityMonitor() {
               <div className="p-4 rounded-xl border border-white/10 bg-white/5 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-white/70">Memory (Heap)</span>
-                  <span className="font-mono text-emerald-400 text-sm font-bold">{currentMem} MB</span>
+                  <span className="font-mono text-accent text-sm font-bold">{currentMem} MB</span>
                 </div>
                 <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-emerald-400 transition-all duration-300"
+                    className="h-full bg-accent transition-all duration-300"
                     style={{ width: `${Math.min(100, (currentMem / 256) * 100)}%` }}
                   />
                 </div>
@@ -2753,7 +2780,7 @@ export default function ActivityMonitor() {
 
               <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 space-y-1">
                 <div className="text-[10px] text-white/50 uppercase font-mono">Outbound Speed</div>
-                <div className="font-mono text-base font-bold text-emerald-400">
+                <div className="font-mono text-base font-bold text-sky-300">
                   {networkData?.traffic?.txKbps ?? 9.2} <span className="text-[11px] font-normal text-white/60">KB/s</span>
                 </div>
                 <div className="text-[10px] text-white/40">
@@ -2766,7 +2793,7 @@ export default function ActivityMonitor() {
                 <div className="font-mono text-base font-bold text-amber-400">
                   {networkData?.traffic?.activeConnections ?? 1} <span className="text-[11px] font-normal text-white/60">clients</span>
                 </div>
-                <div className="text-[10px] text-white/40">Real-time presence</div>
+                <div className="text-[10px] text-white/40">Presence</div>
               </div>
 
               <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 space-y-1">
@@ -2786,9 +2813,6 @@ export default function ActivityMonitor() {
                 <h4 className="font-display text-sm font-semibold text-white/90">
                   Host Network Interface &amp; Routing
                 </h4>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/20 text-accent font-mono">
-                  Online
-                </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">

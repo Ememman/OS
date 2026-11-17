@@ -265,24 +265,30 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
     setGrid(currentGrid);
   };
 
-  // Reveal cell cascade
-  const revealCell = (r: number, c: number) => {
+  // Batch Reveal cell cascade (single pass for instant responsiveness and chording)
+  const revealCells = (initialCoords: [number, number][]) => {
     if (status === "won" || status === "lost") return;
 
     let currentGrid = grid.map((row) => row.map((cell) => ({ ...cell })));
-    const target = currentGrid[r][c];
-
-    if (target.flagged || target.revealed) return;
 
     // First click: generate mines safely
-    if (status === "idle") {
-      placeMines(r, c, currentGrid);
+    if (status === "idle" && initialCoords.length > 0) {
+      placeMines(initialCoords[0][0], initialCoords[0][1], currentGrid);
       setStatus("playing");
     }
 
-    if (target.isMine) {
+    const validTargets = initialCoords.filter(([r, c]) => {
+      const cell = currentGrid[r]?.[c];
+      return cell && !cell.flagged && !cell.revealed;
+    });
+
+    if (validTargets.length === 0) return;
+
+    // Check if any target is a mine
+    const hitMine = validTargets.find(([r, c]) => currentGrid[r][c].isMine);
+    if (hitMine) {
       // Stepped on a mine!
-      target.exploded = true;
+      currentGrid[hitMine[0]][hitMine[1]].exploded = true;
       currentGrid.forEach((row) =>
         row.forEach((cell) => {
           if (cell.isMine) cell.revealed = true;
@@ -301,12 +307,16 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
 
     sfx.dig();
 
-    // Recursive flood fill reveal
-    const queue: [number, number][] = [[r, c]];
-    target.revealed = true;
+    // High performance $O(N)$ BFS flood fill
+    const queue: [number, number][] = [];
+    for (const [tr, tc] of validTargets) {
+      currentGrid[tr][tc].revealed = true;
+      queue.push([tr, tc]);
+    }
 
-    while (queue.length > 0) {
-      const [currR, currC] = queue.shift()!;
+    let head = 0;
+    while (head < queue.length) {
+      const [currR, currC] = queue[head++];
       const cell = currentGrid[currR][currC];
 
       if (cell.neighborMines === 0) {
@@ -379,6 +389,10 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
     }
   };
 
+  const revealCell = (r: number, c: number) => {
+    revealCells([[r, c]]);
+  };
+
   // Chording: clicking an already revealed cell whose neighbor flags match
   const handleChord = (r: number, c: number) => {
     const cell = grid[r][c];
@@ -397,16 +411,20 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
 
     if (flagCount === cell.neighborMines) {
       sfx.chord();
+      const neighborsToReveal: [number, number][] = [];
       for (let dr = -1; dr <= 1; dr++) {
         for (let dc = -1; dc <= 1; dc++) {
           const nr = r + dr;
           const nc = c + dc;
           if (nr >= 0 && nr < config.rows && nc >= 0 && nc < config.cols) {
             if (!grid[nr][nc].revealed && !grid[nr][nc].flagged) {
-              revealCell(nr, nc);
+              neighborsToReveal.push([nr, nc]);
             }
           }
         }
+      }
+      if (neighborsToReveal.length > 0) {
+        revealCells(neighborsToReveal);
       }
     }
   };

@@ -168,6 +168,8 @@ export default function BlockBlast() {
     piece: Piece;
     isTouch: boolean;
     cellSize: number;
+    startX: number;
+    startY: number;
   }
   const [activeDragPiece, setActiveDragPiece] = useState<DragInfo | null>(null);
   // Grid hover target { r, c, isValid } updated ONLY when changing cells (zero React overhead)
@@ -332,44 +334,59 @@ export default function BlockBlast() {
   }, [tray, grid, gameOver, comboCount, score, best, refillIfNeeded, sfx, checkGameOverCondition]);
 
   // Precise Target Calculation
-  // Computes the grid origin (r, c) directly centered under pointer
+  // Computes the grid origin (r, c) with exact inner-board measurement and symmetric cell centering
   const calculateGridTarget = useCallback((clientX: number, clientY: number, shape: number[][], isTouch: boolean) => {
     if (!boardRef.current) return { r: null, c: null, isValid: false };
     const rect = boardRef.current.getBoundingClientRect();
-    const cellSize = rect.width / SIZE;
+    const style = window.getComputedStyle(boardRef.current);
+    const padLeft = parseFloat(style.paddingLeft) || 0;
+    const padTop = parseFloat(style.paddingTop) || 0;
+    const padRight = parseFloat(style.paddingRight) || 0;
+    const padBottom = parseFloat(style.paddingBottom) || 0;
+    const borderLeft = parseFloat(style.borderLeftWidth) || 0;
+    const borderTop = parseFloat(style.borderTopWidth) || 0;
+    const borderRight = parseFloat(style.borderRightWidth) || 0;
+    const borderBottom = parseFloat(style.borderBottomWidth) || 0;
+
+    const innerLeft = rect.left + padLeft + borderLeft;
+    const innerTop = rect.top + padTop + borderTop;
+    const innerWidth = rect.width - (padLeft + padRight + borderLeft + borderRight);
+    const innerHeight = rect.height - (padTop + padBottom + borderTop + borderBottom);
+
+    const cellSizeX = innerWidth / SIZE;
+    const cellSizeY = innerHeight / SIZE;
 
     const maxR = Math.max(...shape.map((s) => s[0]));
     const maxC = Math.max(...shape.map((s) => s[1]));
     const shapeRows = maxR + 1;
     const shapeCols = maxC + 1;
 
-    // Mobile touch offset: floats above fingertip so finger does not obstruct the piece or target cells
-    // Desktop mouse: 0 offset (placed exactly where mouse pointer is)
-    const touchOffsetY = isTouch ? -64 : 0;
+    // Mobile touch offset: floats ~68px above fingertip so finger does not obstruct the piece or target cells
+    // Desktop mouse: 0 offset (placed directly at mouse pointer)
+    const touchOffsetY = isTouch ? -68 : 0;
     const pieceCenterX = clientX;
     const pieceCenterY = clientY + touchOffsetY;
 
-    // Board relative coordinate
-    const xOnBoard = pieceCenterX - rect.left;
-    const yOnBoard = pieceCenterY - rect.top;
+    // Board relative coordinate inside playable grid
+    const xOnBoard = pieceCenterX - innerLeft;
+    const yOnBoard = pieceCenterY - innerTop;
 
-    // Generous boundary margin to allow snapping to edges smoothly
-    const margin = cellSize * 0.75;
+    // Generous boundary margin to allow snapping to outer edges smoothly
+    const margin = cellSizeX * 0.85;
     if (
       xOnBoard < -margin ||
-      xOnBoard > rect.width + margin ||
+      xOnBoard > innerWidth + margin ||
       yOnBoard < -margin ||
-      yOnBoard > rect.height + margin
+      yOnBoard > innerHeight + margin
     ) {
-      // Outside board area completely (e.g. in tray or off screen)
       return { r: null, c: null, isValid: false };
     }
 
-    // Grid origin so that piece center corresponds to (xOnBoard, yOnBoard)
-    const cellX = xOnBoard / cellSize;
-    const cellY = yOnBoard / cellSize;
-    const targetC = Math.round(cellX - (shapeCols - 1) / 2);
-    const targetR = Math.round(cellY - (shapeRows - 1) / 2);
+    // Exact grid coordinates so piece center aligns with pointer
+    const cellX = xOnBoard / cellSizeX;
+    const cellY = yOnBoard / cellSizeY;
+    const targetC = Math.floor(cellX - shapeCols / 2 + 0.5);
+    const targetR = Math.floor(cellY - shapeRows / 2 + 0.5);
 
     // If completely outside playable grid bounds
     if (targetR < 0 || targetR + shapeRows > SIZE || targetC < 0 || targetC + shapeCols > SIZE) {
@@ -391,10 +408,17 @@ export default function BlockBlast() {
     const startY = e.clientY;
     let hasMoved = false;
 
-    // Determine current board cell size for perfectly scaled drag ghost
+    // Determine current board cell size for perfectly scaled 1:1 drag ghost
     let cellSize = 38;
     if (boardRef.current) {
-      cellSize = boardRef.current.getBoundingClientRect().width / SIZE;
+      const rect = boardRef.current.getBoundingClientRect();
+      const style = window.getComputedStyle(boardRef.current);
+      const padLeft = parseFloat(style.paddingLeft) || 0;
+      const padRight = parseFloat(style.paddingRight) || 0;
+      const borderLeft = parseFloat(style.borderLeftWidth) || 0;
+      const borderRight = parseFloat(style.borderRightWidth) || 0;
+      const innerWidth = rect.width - (padLeft + padRight + borderLeft + borderRight);
+      cellSize = innerWidth / SIZE;
     }
 
     const dragInfo: DragInfo = {
@@ -402,13 +426,26 @@ export default function BlockBlast() {
       piece,
       isTouch,
       cellSize,
+      startX,
+      startY,
     };
     dragInfoRef.current = dragInfo;
 
-    const updateGhostPosition = (cx: number, cy: number) => {
-      if (ghostRef.current) {
-        const offsetY = isTouch ? -64 : 0;
-        ghostRef.current.style.transform = `translate3d(${cx}px, ${cy + offsetY}px, 0)`;
+    let rafId: number | null = null;
+    let lastX = startX;
+    let lastY = startY;
+
+    const scheduleGhostUpdate = (cx: number, cy: number) => {
+      lastX = cx;
+      lastY = cy;
+      if (rafId === null) {
+        rafId = requestAnimationFrame(() => {
+          rafId = null;
+          if (ghostRef.current) {
+            const offsetY = isTouch ? -68 : 0;
+            ghostRef.current.style.transform = `translate3d(${lastX}px, ${lastY + offsetY}px, 0)`;
+          }
+        });
       }
     };
 
@@ -418,7 +455,7 @@ export default function BlockBlast() {
       if (!current) return;
 
       const dist = Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY);
-      if (!hasMoved && dist > 5) {
+      if (!hasMoved && dist > 4) {
         hasMoved = true;
         sfx.pick();
         setActiveDragPiece(current);
@@ -426,7 +463,7 @@ export default function BlockBlast() {
       }
 
       if (hasMoved) {
-        updateGhostPosition(moveEvent.clientX, moveEvent.clientY);
+        scheduleGhostUpdate(moveEvent.clientX, moveEvent.clientY);
 
         const target = calculateGridTarget(moveEvent.clientX, moveEvent.clientY, current.piece.shape, current.isTouch);
         const prev = hoverTargetRef.current;
@@ -446,6 +483,10 @@ export default function BlockBlast() {
     };
 
     const handlePointerUp = (upEvent: PointerEvent) => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerUp);
@@ -463,7 +504,11 @@ export default function BlockBlast() {
         return;
       }
 
-      const finalTarget = calculateGridTarget(upEvent.clientX, upEvent.clientY, current?.piece.shape || [], isTouch);
+      let finalTarget = calculateGridTarget(upEvent.clientX, upEvent.clientY, current?.piece.shape || [], isTouch);
+      // Fallback to the currently highlighted hover target if pointer release slightly shifted
+      if ((finalTarget.r === null || finalTarget.c === null || !finalTarget.isValid) && hoverTargetRef.current?.isValid) {
+        finalTarget = hoverTargetRef.current;
+      }
 
       if (current && finalTarget.r !== null && finalTarget.c !== null && finalTarget.isValid) {
         placePieceAt(current.index, finalTarget.r, finalTarget.c);
@@ -667,7 +712,7 @@ export default function BlockBlast() {
                 }}
                 onClick={() => handleCellClick(r, c)}
                 className={`rounded-[5px] relative overflow-hidden select-none ${
-                  isDropping ? "bb-drop scale-105" : ""
+                  isDropping ? "bb-drop" : ""
                 } ${isClearing ? "bb-clear scale-90 opacity-60" : ""}`}
                 style={{
                   background: bg,
@@ -756,6 +801,7 @@ export default function BlockBlast() {
             position: "fixed",
             left: 0,
             top: 0,
+            transform: `translate3d(${activeDragPiece.startX}px, ${activeDragPiece.startY + (activeDragPiece.isTouch ? -68 : 0)}px, 0)`,
             pointerEvents: "none",
             zIndex: 99999,
             willChange: "transform",
@@ -765,12 +811,12 @@ export default function BlockBlast() {
             style={{
               transform: "translate(-50%, -50%)",
             }}
-            className="filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)]"
+            className="filter drop-shadow-[0_16px_32px_rgba(0,0,0,0.85)]"
           >
             <MiniShape
               shape={activeDragPiece.piece.shape}
               color={activeDragPiece.piece.color}
-              cellSize={Math.max(24, Math.round(activeDragPiece.cellSize * 0.95))}
+              cellSize={activeDragPiece.cellSize}
               glow={isTargetValid}
             />
           </div>
