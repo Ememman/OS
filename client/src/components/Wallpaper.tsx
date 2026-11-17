@@ -74,6 +74,7 @@ function AuroraScene() {
 
 export default function Wallpaper() {
   const wallpaper = useOS((s) => s.wallpaper);
+  const themeMode = useOS((s) => s.themeMode);
 
   let scene = <OceanScene />;
   if (wallpaper === "bg1" || wallpaper === "bg2" || wallpaper === "bg3") {
@@ -94,6 +95,9 @@ export default function Wallpaper() {
             "linear-gradient(110deg, rgba(6, 10, 21, 0.18), transparent 58%, rgba(65, 49, 111, 0.12)), linear-gradient(0deg, rgba(5, 9, 18, 0.2), transparent 34%)",
         }}
       />
+      {themeMode === "night" && (
+        <div className="absolute inset-0 bg-black/35 pointer-events-none transition-opacity duration-500" />
+      )}
       <StarfieldCanvas />
     </div>
   );

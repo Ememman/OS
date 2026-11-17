@@ -289,7 +289,7 @@ function getLocalCommandFallback(cmd: string, args: string[]): string {
 }
 
 export default function Terminal() {
-  const { openApp, closeWindow, wallpapers, setWallpaper, osMode, toggleMissionControl } = useOS();
+  const { openApp, closeWindow, wallpapers, setWallpaper, osMode, toggleMissionControl, setThemeMode, setAccent, themeMode, accent } = useOS();
   const [history, setHistory] = useState<TerminalEntry[]>([
     { type: "banner", content: BANNER_DESKTOP },
     { type: "system", content: "Portfolio OS Kernel v2.4.0 (Gravity Edition) initialized." },
@@ -1024,18 +1024,23 @@ export default function Terminal() {
         if (!args[0]) {
           output = (
             <div className="space-y-1 text-xs">
-              <p className="text-amber-400">Usage: theme wallpaper &lt;name&gt; OR theme info</p>
-              <p className="text-white/60">System interactive accent is standardized to Electric Blue (#3b82f6) with active/hover feedback.</p>
+              <p className="text-amber-400">Usage: theme [dark | night | accent &lt;hex/value&gt; | wallpaper &lt;name&gt; | info]</p>
+              <p className="text-white/60">Current mode: <span className="text-accent font-semibold">{themeMode}</span> · Accent: <span className="text-accent font-semibold">{accent}</span></p>
               <p className="text-white/60">Available wallpapers: {wallpapers.map((w) => w.name).join(", ")}</p>
             </div>
           );
-        } else if (args[0] === "accent" || args[0] === "info") {
+        } else if (args[0] === "dark" || args[0] === "night") {
+          setThemeMode(args[0]);
+          output = <p className="text-emerald-400">Theme mode switched to {args[0]} mode.</p>;
+        } else if (args[0] === "accent" && args[1]) {
+          setAccent(args[1]);
+          output = <p className="text-emerald-400">System accent color set to {args[1]}.</p>;
+        } else if (args[0] === "info") {
           output = (
             <div className="space-y-1 text-xs">
-              <p className="text-cyan-400 font-semibold">Standard System Interactive Scheme:</p>
-              <p className="text-white/80">• Rest / Default: <span className="text-[#3b82f6] font-mono">#3b82f6</span> (Electric Blue)</p>
-              <p className="text-white/80">• Hover Glow: <span className="text-[#60a5fa] font-mono">#60a5fa</span> (Soft Azure)</p>
-              <p className="text-white/80">• Active / Click: <span className="text-[#1d4ed8] font-mono">#1d4ed8</span> (Deep Cobalt with tactile feedback)</p>
+              <p className="text-cyan-400 font-semibold">Active System Appearance:</p>
+              <p className="text-white/80">• Theme Mode: <span className="text-accent font-mono">{themeMode}</span></p>
+              <p className="text-white/80">• Accent Value: <span className="text-accent font-mono">{accent}</span></p>
             </div>
           );
         } else if (args[0] === "wallpaper" && args[1]) {

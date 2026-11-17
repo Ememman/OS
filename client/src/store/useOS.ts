@@ -156,8 +156,16 @@ export const APPS: Record<string, AppMetadata> = {
 
 const DEFAULT_ACCENT = "59 130 246"; // System Electric Blue calibrated for active, click, and hover
 
-const ACCENTS = [
-  { name: "System Blue", value: "59 130 246" },
+const ACCENTS: AccentColor[] = [
+  { name: "Electric Blue", value: "59 130 246" },   // #3b82f6 - Default macOS/Windows Signature
+  { name: "Cyber Emerald", value: "16 185 129" },   // #10b981 - Matrix Mint
+  { name: "Cosmic Violet", value: "139 92 246" },   // #8b5cf6 - Radiant Purple
+  { name: "Sunset Amber", value: "245 158 11" },    // #f59e0b - Warm Amber
+  { name: "Crimson Rose", value: "244 63 94" },     // #f43f5e - Vivid Coral
+  { name: "Electric Cyan", value: "6 182 212" },    // #06b6d4 - Aqua Neon
+  { name: "Radiant Fuchsia", value: "236 72 153" }, // #ec4899 - Neon Pink
+  { name: "Solar Orange", value: "249 115 22" },    // #f97316 - Dynamic Orange
+  { name: "Titanium Steel", value: "148 163 184" }, // #94a3b8 - Clean Platinum
 ];
 
 const WALLPAPERS = [
@@ -177,20 +185,20 @@ const dockPosition: DockPosition =
     ? savedDockPosition
     : "bottom";
 
-if (typeof window !== "undefined") {
-  localStorage.removeItem("os_theme_mode");
-  localStorage.removeItem("os_accent");
-}
+const savedThemeMode: ThemeMode =
+  typeof window !== "undefined"
+    ? ((localStorage.getItem("os_theme_mode") as ThemeMode) || "dark")
+    : "dark";
 
-const savedThemeMode: ThemeMode = "night";
-const initialAccentValue = DEFAULT_ACCENT;
-const initialPalette = harmonizeAccentColor(initialAccentValue, true);
+const savedAccent: string =
+  typeof window !== "undefined"
+    ? (localStorage.getItem("os_accent") || DEFAULT_ACCENT)
+    : DEFAULT_ACCENT;
+
+const initialPalette = harmonizeAccentColor(savedAccent, savedThemeMode);
 
 if (typeof document !== "undefined") {
-  document.documentElement.removeAttribute("data-theme");
-  document.documentElement.classList.remove("light-theme");
-  document.documentElement.classList.add("dark-theme");
-  applyHarmonizedPaletteToDoc(initialPalette, true);
+  applyHarmonizedPaletteToDoc(initialPalette, savedThemeMode);
 }
 
 let z = 10;
@@ -230,7 +238,7 @@ export const useOS = create<OSState>((set, get) => ({
   windows: [],
   themeMode: savedThemeMode,
   harmonizedPalette: initialPalette,
-  accent: DEFAULT_ACCENT,
+  accent: savedAccent,
   wallpaper: localStorage.getItem("os_wallpaper") || "bg1",
   reduceMotion: localStorage.getItem("os_motion") === "off",
   photoUrl: localStorage.getItem("os_photo") || "",
@@ -561,17 +569,19 @@ export const useOS = create<OSState>((set, get) => ({
     return null;
   },
 
-  setThemeMode: () => {
-    const palette = harmonizeAccentColor(DEFAULT_ACCENT, true);
-    applyHarmonizedPaletteToDoc(palette, true);
-    set({ themeMode: "night", harmonizedPalette: palette });
+  setThemeMode: (mode: ThemeMode) => {
+    localStorage.setItem("os_theme_mode", mode);
+    const curAccent = get().accent;
+    const palette = harmonizeAccentColor(curAccent, mode);
+    applyHarmonizedPaletteToDoc(palette, mode);
+    set({ themeMode: mode, harmonizedPalette: palette });
   },
 
-  setAccent: (value) => {
+  setAccent: (value: string) => {
     localStorage.setItem("os_accent", value);
-    const isNight = get().themeMode === "night";
-    const palette = harmonizeAccentColor(value, isNight);
-    applyHarmonizedPaletteToDoc(palette, isNight);
+    const mode = get().themeMode;
+    const palette = harmonizeAccentColor(value, mode);
+    applyHarmonizedPaletteToDoc(palette, mode);
     set({ accent: value, harmonizedPalette: palette });
   },
   setWallpaper: (id) => {

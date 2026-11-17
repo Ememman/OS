@@ -15,6 +15,7 @@ import {
   GIconPause,
   GIconLayoutCells,
   GIconClose,
+  GIconMoon,
 } from "./icons/GravityIcons";
 
 export default function ControlCenter() {
@@ -32,7 +33,8 @@ export default function ControlCenter() {
     reduceMotion,
     toggleMotion,
     systemSounds,
-    toggleMissionControl,
+    themeMode,
+    setThemeMode,
   } = useOS();
 
   const { queue, queueIdx, playing, togglePlay, volume, setVolume } = usePlayer();
@@ -193,13 +195,21 @@ export default function ControlCenter() {
           </button>
           <button
             onClick={() => {
-              toggleMissionControl();
+              const nextMode = themeMode === "night" ? "dark" : "night";
+              setThemeMode(nextMode);
               if (systemSounds) soundFx.playClick();
             }}
-            className="p-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-center transition flex flex-col items-center gap-1"
+            className={`p-2 rounded-xl border text-center transition flex flex-col items-center gap-1 cursor-pointer ${
+              themeMode === "night"
+                ? "bg-accent/20 border-accent/50 text-white"
+                : "bg-white/5 border-white/10 text-white/60 hover:text-white"
+            }`}
+            title="Toggle between Dark and Night Mode"
           >
-            <GIconLayoutCells size={14} />
-            <span className="text-[10px] font-medium leading-tight">Task View</span>
+            <GIconMoon size={14} className={themeMode === "night" ? "text-accent" : ""} />
+            <span className="text-[10px] font-medium leading-tight">
+              {themeMode === "night" ? "Night" : "Dark"}
+            </span>
           </button>
         </div>
 

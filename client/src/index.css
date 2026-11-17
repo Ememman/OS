@@ -2,6 +2,10 @@
 
 @theme {
   --breakpoint-xs: 420px;
+  --color-accent: rgb(var(--accent));
+  --color-accent-hover: rgb(var(--accent-hover));
+  --color-accent-active: rgb(var(--accent-active));
+  --color-accent-contrast: var(--accent-contrast);
 }
 
 :root {
@@ -15,11 +19,31 @@
   --accent-border: rgba(59, 130, 246, 0.36);
   --accent-glow: 0 0 24px rgba(59, 130, 246, 0.42);
   --accent-gradient: linear-gradient(135deg, rgb(59, 130, 246), rgb(96, 165, 250));
-  --glass: 12 18 32;
+  --glass: 15 22 36;
   --glass-alpha: 0.72;
   --radius-window: 16px;
   --surface-border: rgba(255, 255, 255, 0.12);
   --surface-shadow: 0 24px 72px rgba(0, 0, 0, 0.45);
+  --theme-bg: #080c16;
+  --theme-text: #EAF0FA;
+}
+
+.night-theme,
+[data-theme="night"] {
+  --glass: 5 7 12;
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --surface-shadow: 0 24px 80px rgba(0, 0, 0, 0.85);
+  --theme-bg: #020408;
+  --theme-text: #e2e8f0;
+}
+
+.dark-theme,
+[data-theme="dark"] {
+  --glass: 15 22 36;
+  --surface-border: rgba(255, 255, 255, 0.13);
+  --surface-shadow: 0 20px 60px rgba(0, 0, 0, 0.48);
+  --theme-bg: #080c16;
+  --theme-text: #f0f4fc;
 }
 
 * { box-sizing: border-box; }
@@ -355,18 +379,34 @@ body {
 
 .accent { color: rgb(var(--accent)); }
 .text-accent { color: rgb(var(--accent)); }
-.bg-accent {
+.bg-accent,
+button.bg-accent,
+a.bg-accent,
+[class*="bg-accent"]:not([class*="bg-accent/"]) {
   background-color: rgb(var(--accent));
-  color: var(--accent-contrast, #ffffff);
-  transition: background-color 0.15s ease, transform 0.12s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  color: var(--accent-contrast, #ffffff) !important;
+  transition: background-color 0.15s ease, transform 0.12s ease, filter 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
 }
-.bg-accent:hover {
+.bg-accent:hover,
+button.bg-accent:hover,
+a.bg-accent:hover {
   background-color: rgb(var(--accent-hover));
   box-shadow: var(--accent-glow);
 }
-.bg-accent:active {
+.bg-accent:active,
+button.bg-accent:active,
+a.bg-accent:active {
   background-color: rgb(var(--accent-active));
   transform: scale(0.97);
+}
+
+/* Ensure text and icons on primary bg-accent adapt to high-contrast text color */
+.bg-accent .text-white,
+.bg-accent.text-white {
+  color: var(--accent-contrast, #ffffff) !important;
+}
+.bg-accent svg {
+  color: currentColor !important;
 }
 .border-accent { border-color: rgb(var(--accent)); }
 .ring-accent { --tw-ring-color: rgb(var(--accent)); }
