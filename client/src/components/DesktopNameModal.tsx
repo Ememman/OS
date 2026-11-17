@@ -117,7 +117,7 @@ export default function DesktopNameModal() {
               </button>
               <button
                 type="submit"
-                className="px-4 py-1.5 rounded-xl bg-accent hover:brightness-110 active:scale-95 text-xs text-white font-medium shadow-md shadow-accent/25 transition flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-1.5 rounded-xl bg-accent hover:brightness-110 active:scale-95 text-xs text-accent-contrast font-medium shadow-md shadow-accent/25 transition flex items-center gap-1.5 cursor-pointer"
               >
                 <GIconCheck size={13} />
                 <span>Save Name</span>

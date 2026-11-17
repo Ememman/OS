@@ -379,38 +379,68 @@ body {
 
 .accent { color: rgb(var(--accent)); }
 .text-accent { color: rgb(var(--accent)); }
+.border-accent { border-color: rgb(var(--accent)); }
+.ring-accent { --tw-ring-color: rgb(var(--accent)); }
+.text-accent-contrast { color: var(--accent-contrast, #ffffff) !important; }
+
+/* Primary solid accent backgrounds - automatically adapts contrast */
 .bg-accent,
 button.bg-accent,
-a.bg-accent,
-[class*="bg-accent"]:not([class*="bg-accent/"]) {
-  background-color: rgb(var(--accent));
+a.bg-accent {
+  background-color: rgb(var(--accent)) !important;
   color: var(--accent-contrast, #ffffff) !important;
   transition: background-color 0.15s ease, transform 0.12s ease, filter 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
 }
+
+/* Ensure ALL text and icons inside .bg-accent adapt to high-contrast color */
+.bg-accent,
+.bg-accent *,
+.bg-accent span,
+.bg-accent p,
+.bg-accent div,
+.bg-accent h1,
+.bg-accent h2,
+.bg-accent h3,
+.bg-accent h4,
+.bg-accent strong,
+.bg-accent b,
+.bg-accent svg,
+.bg-accent .text-white,
+.bg-accent [class*="text-white"] {
+  color: var(--accent-contrast, #ffffff) !important;
+}
+
+.bg-accent svg {
+  stroke: currentColor;
+  fill: currentColor;
+}
+
+/* Sub-labels or muted text inside .bg-accent: maintain readability with proper contrast */
+.bg-accent .text-white\/80,
+.bg-accent .text-white\/75,
+.bg-accent .text-white\/70,
+.bg-accent .text-white\/60,
+.bg-accent .text-white\/50,
+.bg-accent [class*="text-white\/"] {
+  color: var(--accent-contrast, #ffffff) !important;
+  opacity: 0.82;
+}
+
 .bg-accent:hover,
 button.bg-accent:hover,
 a.bg-accent:hover {
-  background-color: rgb(var(--accent-hover));
+  background-color: rgb(var(--accent-hover)) !important;
   box-shadow: var(--accent-glow);
 }
+
 .bg-accent:active,
 button.bg-accent:active,
 a.bg-accent:active {
-  background-color: rgb(var(--accent-active));
+  background-color: rgb(var(--accent-active)) !important;
   transform: scale(0.97);
 }
 
-/* Ensure text and icons on primary bg-accent adapt to high-contrast text color */
-.bg-accent .text-white,
-.bg-accent.text-white {
-  color: var(--accent-contrast, #ffffff) !important;
-}
-.bg-accent svg {
-  color: currentColor !important;
-}
-.border-accent { border-color: rgb(var(--accent)); }
-.ring-accent { --tw-ring-color: rgb(var(--accent)); }
-.text-accent-contrast { color: var(--accent-contrast, #ffffff); }
+/* Subtle accent helpers */
 .bg-accent-subtle {
   background-color: var(--accent-subtle);
   transition: background-color 0.15s ease;

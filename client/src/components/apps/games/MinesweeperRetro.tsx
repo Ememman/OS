@@ -532,7 +532,7 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
               onClick={() => setDiff(d)}
               className={`px-2 py-0.5 rounded-lg text-[10.5px] font-semibold capitalize transition cursor-pointer ${
                 diff === d
-                  ? "bg-accent text-white shadow-sm"
+                  ? "bg-accent text-accent-contrast shadow-sm"
                   : "bg-white/5 hover:bg-white/10 text-white/70 hover:text-white"
               }`}
             >
@@ -717,7 +717,7 @@ export default function MinesweeperRetro({ onOpenLeaderboard }: { onOpenLeaderbo
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 py-2 rounded-xl text-xs font-bold bg-accent hover:brightness-110 active:scale-95 text-white shadow-lg shadow-accent/25 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="flex-1 py-2 rounded-xl text-xs font-bold bg-accent hover:brightness-110 active:scale-95 text-accent-contrast shadow-lg shadow-accent/25 transition flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     {submitting ? "Posting..." : "Post Score"}
                   </button>

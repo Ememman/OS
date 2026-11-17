@@ -169,7 +169,7 @@ export default function MissionControl() {
                     openApp(item.app);
                     closeMissionControl();
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-accent hover:text-white text-xs font-medium text-white/80 transition"
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-medium text-white/90 transition cursor-pointer"
                 >
                   {item.label}
                 </button>

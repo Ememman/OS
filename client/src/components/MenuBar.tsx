@@ -41,12 +41,12 @@ function MenuDropdown({ label, isOpen, onToggle, onClose, children }: MenuDropdo
     <div ref={ref} className="relative">
       <button
         onClick={onToggle}
-        className={`px-3 py-0.5 rounded transition-colors cursor-default text-[14px] ${isOpen ? "bg-white/15 text-white" : "hover:text-white text-white/90 font-medium"}`}>
+        className={`px-3 py-0.5 rounded transition-colors cursor-default text-[14px] ${isOpen ? "bg-white/15 text-white" : "hover:bg-white/10 hover:text-white text-white/90 font-medium"}`}>
         {label}
       </button>
       {isOpen && (
         <div
-          className="absolute top-full left-0 mt-1.5 min-w-[240px] max-w-[calc(100vw-24px)] max-h-[80vh] overflow-y-auto thin-scroll glass rounded-lg border border-white/10 shadow-2xl py-1.5 z-[1300] origin-top-left"
+          className="absolute top-full left-0 mt-1.5 min-w-[230px] max-w-[calc(100vw-24px)] max-h-[80vh] overflow-y-auto thin-scroll bg-[#0e1320]/95 backdrop-blur-2xl rounded-xl border border-white/12 shadow-[0_20px_60px_rgba(0,0,0,0.65)] p-1 z-[1300] origin-top-left"
           style={{ animation: "menuOpen 130ms cubic-bezier(.16,1,.3,1) both" }}>
           {children}
         </div>
@@ -68,22 +68,24 @@ function MenuItem({ children, onClick, disabled, checked, shortcut }: MenuItemPr
     <button
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
-      className={`w-full flex items-center gap-2 text-left px-4 py-2 text-[14px] ${
+      className={`w-full flex items-center gap-2 text-left px-3.5 py-1.5 mx-0.5 rounded-md text-[13px] sm:text-[14px] transition-colors select-none ${
         disabled
           ? "text-white/25 cursor-default"
-          : "text-white/85 hover:bg-accent hover:text-white cursor-default"
+          : "text-white/90 hover:bg-white/12 hover:text-white active:bg-white/18 cursor-default"
       }`}>
-      <span className="w-4 shrink-0">{checked && <GIconCheck size={14} />}</span>
-      <span className="flex-1">{children}</span>
+      <span className="w-4 shrink-0 flex items-center justify-center">
+        {checked && <GIconCheck size={13} className="text-white" />}
+      </span>
+      <span className="flex-1 truncate">{children}</span>
       {shortcut && (
-        <span className="text-[12px] text-white/35">{shortcut}</span>
+        <span className="text-[11px] font-mono text-white/35 group-hover:text-white/60 ml-2">{shortcut}</span>
       )}
     </button>
   );
 }
 
 function MenuSeparator() {
-  return <div className="h-px bg-white/10 my-2" />;
+  return <div className="h-px bg-white/10 my-1 mx-1.5" />;
 }
 
 interface InfoModalProps {
@@ -483,7 +485,7 @@ export default function MenuBar() {
           title="Mission Control (F3)"
           className={`flex items-center justify-center p-1.5 rounded-lg transition-all cursor-pointer ${
             missionControlOpen
-              ? "bg-accent text-white shadow-md shadow-accent/20"
+              ? "bg-accent text-accent-contrast shadow-md shadow-accent/20"
               : "hover:bg-white/10 text-white/80 hover:text-white"
           }`}
         >
@@ -516,7 +518,7 @@ export default function MenuBar() {
           title="Control Center (Display, Sound & System)"
           className={`flex items-center justify-center p-1.5 rounded-lg transition-all cursor-pointer ${
             controlCenterOpen
-              ? "bg-accent text-white shadow-md shadow-accent/20"
+              ? "bg-accent text-accent-contrast shadow-md shadow-accent/20"
               : "hover:bg-white/10 text-white/80 hover:text-white"
           }`}
         >
@@ -529,7 +531,7 @@ export default function MenuBar() {
             onClick={() => setWifiOpen(!wifiOpen)}
             title="Wi-Fi: Connected to Portfolio-OS-Mesh"
             className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-              wifiOpen ? "bg-accent text-white shadow-sm" : "hover:bg-white/10 text-white/80 hover:text-white"
+              wifiOpen ? "bg-accent text-accent-contrast shadow-sm" : "hover:bg-white/10 text-white/80 hover:text-white"
             }`}
           >
             <GIconSignal size={15} />
