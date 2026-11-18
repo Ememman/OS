@@ -562,7 +562,7 @@ app.post("/api/contact", strictSubmissionLimiter, (req, res) => {
   }
   res.status(201).json({
     ok: true,
-    message: `Thank you, ${cleanName}! Your message was successfully recorded. Bron will get back to ${cleanEmail} soon.`
+    message: `Thank you, ${cleanName}! Your message was successfully recorded. James will get back to ${cleanEmail} soon.`
   });
 });
 
@@ -621,6 +621,98 @@ app.get("/api/system/info", (req, res) => {
     },
     realtime: {
       connectedClients: io.engine.clientsCount || 1,
+    },
+    kernelVersion: "3.2.0-lts",
+    capabilities: [
+      "window-manager",
+      "socket-sync",
+      "arcade-engine",
+      "audio-synthesizer",
+      "cloud-fs",
+      "virtual-browser",
+      "predictive-search",
+      "theme-engine"
+    ]
+  });
+});
+
+// Live Kernel Diagnostics & Unified Telemetry
+app.get("/api/system/diagnostics", (req, res) => {
+  const mem = process.memoryUsage();
+  res.json({
+    ok: true,
+    service: "Portfolio OS Kernel Telemetry",
+    kernelVersion: "3.2.0-lts",
+    engine: "WebKit / Blink Hybrid Engine",
+    compositorFps: 60,
+    roundtripPingMs: 18,
+    memory: {
+      rssMb: Math.round((mem.rss / 1024 / 1024) * 10) / 10,
+      heapUsedMb: Math.round((mem.heapUsed / 1024 / 1024) * 10) / 10,
+      heapTotalMb: Math.round((mem.heapTotal / 1024 / 1024) * 10) / 10,
+    },
+    capabilities: [
+      "window-manager",
+      "socket-sync",
+      "arcade-engine",
+      "audio-synthesizer",
+      "cloud-fs",
+      "virtual-browser",
+      "predictive-search",
+      "theme-engine"
+    ],
+    timestamp: Date.now()
+  });
+});
+
+// Predictive Browser Search Index API
+app.get("/api/browser/search", (req, res) => {
+  const query = (req.query.q || "").toString().trim().toLowerCase();
+  const category = (req.query.category || "all").toString();
+
+  const searchItems = [
+    { id: "about", title: "James Emmanuel Mendoza — Biography & Background", url: "https://mendoza.dev/about", snippet: "Full-stack software developer based in Tondo, Manila. Crafts enterprise React 19 and Next.js applications.", category: "profile" },
+    { id: "exp-dowinn", title: "Front-End Developer at Dowinn Group — Enterprise Portals & Automation", url: "https://mendoza.dev/experience", snippet: "Sept 2026 – Present. Enterprise operational portals with Next.js, React, TypeScript, and TanStack Query.", category: "experience" },
+    { id: "exp-straive", title: "IT Support Specialist & Web Developer at Straive (OJT)", url: "https://mendoza.dev/experience", snippet: "Feb 2026 – Mar 2026. Built Straive IMS (Inventory Management System) in PHP MVC and MySQL.", category: "experience" },
+    { id: "skills", title: "Technical Skills Matrix — Modern Full-Stack & Engineering Stack", url: "https://mendoza.dev/skills", snippet: "Comprehensive proficiencies: React 19, Next.js, TypeScript, PHP (Laravel, CodeIgniter), PostgreSQL, MySQL.", category: "skills" },
+    { id: "academics", title: "Academic Honors & Degrees — Magna Cum Laude & Best in Research", url: "https://mendoza.dev/academics", snippet: "BS in Information Technology from National Teachers College (2022–2026). Graduated Magna Cum Laude.", category: "academics" },
+    { id: "contact", title: "Contact James Emmanuel Mendoza — Email, Phone & Manila HQ", url: "https://mendoza.dev/contact", snippet: "Direct contact channels: mendozajamesemmanuel@gmail.com, 0992 543 3570, Tondo, Manila.", category: "profile" },
+    { id: "diagnostics", title: "Portfolio OS Diagnostics & Telemetry — Live Kernel Telemetry", url: "os://diagnostics", snippet: "Real-time performance diagnostics measuring compositor framerates, memory allocation, and WebSocket ping.", category: "system" }
+  ];
+
+  let results = searchItems;
+  if (category && category !== "all") {
+    results = results.filter((item) => item.category === category);
+  }
+  if (query) {
+    results = results.filter((item) => item.title.toLowerCase().includes(query) || item.snippet.toLowerCase().includes(query));
+  }
+
+  res.json({
+    ok: true,
+    query,
+    category,
+    total: results.length,
+    results
+  });
+});
+
+// Browser Themes & Appearance Configurations API
+app.get("/api/browser/themes", (req, res) => {
+  res.json({
+    ok: true,
+    themes: [
+      { id: "default", name: "Obsidian Slate", accent: "#38bdf8" },
+      { id: "cosmos", name: "Deep Cosmos", accent: "#c084fc" },
+      { id: "aurora", name: "Sunset Aurora", accent: "#f43f5e" },
+      { id: "cyberpunk", name: "Emerald Matrix", accent: "#10b981" },
+      { id: "amber", name: "Warm Twilight", accent: "#f59e0b" },
+      { id: "glass", name: "Frosted Glass", accent: "#38bdf8" },
+      { id: "minimal", name: "Pitch Black", accent: "#e2e8f0" }
+    ],
+    widgets: {
+      shortcuts: true,
+      privacyReport: true
     }
   });
 });
@@ -966,6 +1058,26 @@ app.get("/api/system/processes", (req, res) => {
       threads: 4,
       status: "running",
       description: "V8 Heap Manager & Memory Compactor"
+    },
+    {
+      pid: process.pid + 5,
+      name: "browser-renderer-engine",
+      user: "system",
+      cpu: 0.2,
+      memoryMb: Math.max(8, Math.round(heapUsedMb * 0.25 * 10) / 10),
+      threads: 4,
+      status: "running",
+      description: "Unified Blink/WebKit Virtual Browser Engine & Predictive Search Indexer"
+    },
+    {
+      pid: process.pid + 6,
+      name: "compositor-surface-worker",
+      user: "system",
+      cpu: 0.1,
+      memoryMb: Math.max(6, Math.round(heapUsedMb * 0.15 * 10) / 10),
+      threads: 2,
+      status: "running",
+      description: "Window Compositor, Snap Assist & Glassmorphic Surface Shaper"
     }
   ];
 
@@ -2265,6 +2377,9 @@ app.get(["/api", "/api/spec"], (req, res) => {
     endpoints: [
       { path: "/api/health", method: "GET", description: "Health check, uptime and real-time socket client tally" },
       { path: "/api/system/info", method: "GET", description: "Hardware telemetry, host architecture, memory & CPU statistics" },
+      { path: "/api/system/diagnostics", method: "GET", description: "Kernel 3.2.0-LTS diagnostics, compositor FPS, and live telemetry" },
+      { path: "/api/browser/search", method: "GET", description: "Predictive search index query with category filtering" },
+      { path: "/api/browser/themes", method: "GET", description: "Available multi-tone browser background themes and configuration" },
       { path: "/api/system/metrics", method: "GET", description: "Historical telemetry series for live performance graphing" },
       { path: "/api/system/network", method: "GET", description: "Network interfaces, simulated throughput, active connections" },
       { path: "/api/system/benchmark", method: "POST", description: "Run server-side compute, prime calculation & JSON serialization benchmark" },
