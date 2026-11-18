@@ -1246,7 +1246,19 @@ app.get("/api/calc/constants", (req, res) => {
 
 app.get("/api/calc/convert", (req, res) => {
   const { type, from, to, value } = req.query;
-  const num = parseFloat(value);
+
+  // If no params given (e.g. Activity Monitor health check, API ping, or endpoint discovery)
+  if (!type && !from && !to && (value === undefined || value === "")) {
+    return res.json({
+      ok: true,
+      status: "ready",
+      message: "Unit conversion engine active",
+      sample: { type: "length", from: "km", to: "m", value: 1, result: 1000 },
+      supportedTypes: ["length", "weight", "data", "temp"]
+    });
+  }
+
+  const num = parseFloat(value !== undefined ? value : "1");
   if (isNaN(num)) return res.status(400).json({ error: "Invalid numeric value" });
 
   let result = null;
@@ -1256,17 +1268,18 @@ app.get("/api/calc/convert", (req, res) => {
 
   const f = String(from || "").toLowerCase();
   const t = String(to || "").toLowerCase();
+  const convType = String(type || "").toLowerCase();
 
-  if (type === "length" && lengthToMeters[f] && lengthToMeters[t]) {
+  if (convType === "length" && lengthToMeters[f] && lengthToMeters[t]) {
     const meters = num * lengthToMeters[f];
     result = meters / lengthToMeters[t];
-  } else if (type === "weight" && weightToKg[f] && weightToKg[t]) {
+  } else if (convType === "weight" && weightToKg[f] && weightToKg[t]) {
     const kg = num * weightToKg[f];
     result = kg / weightToKg[t];
-  } else if (type === "data" && dataToBytes[f] && dataToBytes[t]) {
+  } else if (convType === "data" && dataToBytes[f] && dataToBytes[t]) {
     const bytes = num * dataToBytes[f];
     result = bytes / dataToBytes[t];
-  } else if (type === "temp") {
+  } else if (convType === "temp") {
     if (f === "c" && t === "f") result = (num * 9) / 5 + 32;
     else if (f === "f" && t === "c") result = ((num - 32) * 5) / 9;
     else if (f === "c" && t === "k") result = num + 273.15;
@@ -1274,8 +1287,10 @@ app.get("/api/calc/convert", (req, res) => {
     else if (f === t) result = num;
   }
 
-  if (result === null) return res.status(400).json({ error: "Unsupported conversion" });
-  res.json({ ok: true, type, from: f, to: t, value: num, result: Math.round(result * 1000000) / 1000000 });
+  if (result === null) {
+    return res.status(400).json({ error: "Unsupported conversion", validTypes: ["length", "weight", "data", "temp"] });
+  }
+  res.json({ ok: true, type: convType, from: f, to: t, value: num, result: Math.round(result * 1000000) / 1000000 });
 });
 
 // ---------- Code Playground Snippets (Built-in + Custom CRUD) ----------
@@ -1720,18 +1735,31 @@ app.get("/api/weather", async (req, res) => {
     return res.json(cached.data);
   }
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=3`;
     const r = await fetch(url);
     if (r.ok) {
       const data = await r.json();
-      weatherCache.set(key, { ts: Date.now(), data });
-      return res.json(data);
+      if (data && data.current && data.hourly) {
+        weatherCache.set(key, { ts: Date.now(), data });
+        return res.json(data);
+      }
     }
   } catch (e) {}
+
+  // Safe mock fallback with full 24h hourly timestamps for uninterrupted widget rendering
+  const now = new Date();
+  const mockTimes = Array.from({ length: 24 }, (_, i) => {
+    const d = new Date(now.getTime() + i * 3600000);
+    return d.toISOString();
+  });
   res.json({
-    current: { temperature_2m: 29.2, weather_code: 1, relative_humidity_2m: 68, wind_speed_10m: 11 },
-    hourly: { temperature_2m: [27, 28, 29, 29, 28, 27], weather_code: [1, 1, 2, 1, 0, 0] },
-    daily: { temperature_2m_max: [31], temperature_2m_min: [25] },
+    current: { temperature_2m: 31.5, apparent_temperature: 35.0, weather_code: 2, relative_humidity_2m: 65, wind_speed_10m: 10 },
+    hourly: {
+      time: mockTimes,
+      temperature_2m: [31, 31, 30, 29, 28, 27, 27, 26, 26, 28, 30, 32, 33, 33, 32, 31, 30, 29, 28, 28, 27, 27, 26, 26],
+      weather_code: [2, 2, 2, 1, 1, 0, 0, 1, 1, 2, 2, 2, 1, 1, 2, 2, 1, 1, 2, 1, 1, 0, 0, 1]
+    },
+    daily: { temperature_2m_max: [33], temperature_2m_min: [26] },
     fallback: true
   });
 });
