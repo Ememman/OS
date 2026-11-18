@@ -898,6 +898,16 @@ const DEFAULT_ENDPOINTS: ApiEndpointInfo[] = [
     sampleResponse: { pi: 3.1415926535, e: 2.7182818284, speedOfLightMs: 299792458 }
   },
   {
+    path: "/api/calc/convert",
+    method: "GET",
+    category: "Utility",
+    description: "Unit conversions across length, weight, temperature, and digital storage",
+    security: "Public Safe (Live)",
+    params: "type?: string, from?: string, to?: string, value?: number",
+    samplePayload: { type: "length", from: "km", to: "m", value: 1 },
+    sampleResponse: { ok: true, type: "length", from: "km", to: "m", value: 1, result: 1000 }
+  },
+  {
     path: "/api/system/diagnostics",
     method: "GET",
     category: "System",
@@ -1433,7 +1443,14 @@ export default function ActivityMonitor() {
 
     if (isGet) {
       try {
-        const cleanPath = ep.path.replace(/:[a-zA-Z0-9_-]+/g, "1");
+        let cleanPath = ep.path.replace(/:[a-zA-Z0-9_-]+/g, "1");
+        if (cleanPath === "/api/calc/convert" && !customPayload) {
+          cleanPath = "/api/calc/convert?type=length&from=km&to=m&value=1";
+        } else if (cleanPath === "/api/browser/search" && !customPayload) {
+          cleanPath = "/api/browser/search?q=mendoza";
+        } else if (cleanPath === "/api/music/search" && !customPayload) {
+          cleanPath = "/api/music/search?q=lofi";
+        }
         const targetUrl = `${API_URL}${cleanPath}`;
         const res = await fetch(targetUrl, {
           method: "GET",
