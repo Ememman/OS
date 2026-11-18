@@ -5,7 +5,7 @@ import { useDesktopStore, STORAGE_KEY } from "../store/useDesktopStore";
 import { useOS } from "../store/useOS";
 import { APP_REGISTRY, type DesktopItem } from "../types/desktop";
 import DesktopFolderIcon from "./DesktopFolderIcon";
-import { GIconFileText } from "./icons/GravityIcons";
+import { GIconFileText, GIconChrome } from "./icons/GravityIcons";
 import { soundFx } from "../lib/soundFx";
 import { useIsMobile, useIsTablet } from "../lib/useMediaQuery";
 
@@ -201,7 +201,8 @@ function resolveDesktopOverlap(
 
 export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsGridProps) {
   const { items, combineItems, openFolder, moveItem } = useDesktopStore();
-  const { openApp, isWin, dockPosition, widgetsVisible, notify, getAppBadge } = useOS();
+  const { openApp, osMode, dockPosition, widgetsVisible, notify, getAppBadge } = useOS();
+  const isWin = osMode === "win";
   const tabletQuery = useIsTablet();
   const mobileQuery = useIsMobile();
   const isMobileDevice = isMobileProp ?? (tabletQuery || mobileQuery);
@@ -683,9 +684,14 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
 
           // Desktop App Item
           const reg = APP_REGISTRY[item.app];
-          const Icon = reg?.icon;
-          const label = item.app === "activity" && isWin ? "Task Manager" : item.label || reg?.label || item.app;
-          const color = item.color || reg?.color || "#38bdf8";
+          const Icon = item.app === "browser" && isWin ? GIconChrome : reg?.icon;
+          const label =
+            item.app === "activity" && isWin
+              ? "Task Manager"
+              : item.app === "browser" && isWin
+                ? "Google Chrome"
+                : item.label || reg?.label || item.app;
+          const color = item.app === "browser" && isWin ? "#4285F4" : item.color || reg?.color || "#38bdf8";
 
           return (
             <motion.div
@@ -791,7 +797,7 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
       </div>
 
       {/* Floating Drag Clone: Follows cursor at 60/120fps with target indicators */}
-      {renderFloatingClone(dragState, cloneRef)}
+      {renderFloatingClone(dragState, cloneRef, isWin)}
     </>
   );
 }
@@ -799,7 +805,11 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
 /**
  * High-performance hardware-accelerated floating drag clone.
  */
-function renderFloatingClone(dragState: DragState | null, ref?: React.RefObject<HTMLDivElement | null>) {
+function renderFloatingClone(
+  dragState: DragState | null,
+  ref?: React.RefObject<HTMLDivElement | null>,
+  isWin = false
+) {
   if (!dragState?.isDragging || typeof document === "undefined") return null;
 
   const isCombine = Boolean(dragState.hoverTargetId);
@@ -850,15 +860,23 @@ function renderFloatingClone(dragState: DragState | null, ref?: React.RefObject<
           {dragState.item.type === "app" ? (
             (() => {
               const reg = APP_REGISTRY[dragState.item.app];
-              const Icon = reg?.icon;
-              return Icon ? <Icon size={24} color={dragState.item.color || reg?.color} /> : null;
+              const Icon = dragState.item.app === "browser" && isWin ? GIconChrome : reg?.icon;
+              const color =
+                dragState.item.app === "browser" && isWin
+                  ? "#4285F4"
+                  : dragState.item.color || reg?.color;
+              return Icon ? <Icon size={24} color={color} /> : null;
             })()
           ) : (
             <span className="text-xs font-bold text-white">Folder</span>
           )}
         </div>
         <span className="text-[10px] font-bold text-white px-2 py-0.5 rounded bg-black/60 shadow-xs">
-          {dragState.item.type === "app" ? dragState.item.label : dragState.item.name}
+          {dragState.item.type === "app"
+            ? dragState.item.app === "browser" && isWin
+              ? "Google Chrome"
+              : dragState.item.label
+            : dragState.item.name}
         </span>
         {statusBadge}
       </motion.div>
