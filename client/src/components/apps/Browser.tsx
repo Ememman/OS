@@ -1586,43 +1586,159 @@ export default function Browser() {
                     {panel.description}
                   </p>
 
-                  <div className="rounded-xl bg-white/[0.02] border border-white/5 divide-y divide-white/5 overflow-hidden text-xs">
-                    {panel.attributes.map((attr, aIdx) => (
-                      <div key={aIdx} className="flex justify-between items-start gap-3 px-3 py-2">
-                        <span className="text-white/45 font-medium shrink-0 text-[11px]">{attr.label}</span>
-                        <span className="text-white/90 text-right text-[11px] font-medium leading-tight">
-                          {attr.value}
-                        </span>
+                  {/* Key Attributes Table */}
+                  <div className="rounded-2xl bg-white/[0.03] border border-white/10 divide-y divide-white/5 overflow-hidden text-xs">
+                    {panel.attributes.map((attr, aIdx) => {
+                      const isHonors = attr.label.toLowerCase().includes("honor");
+                      const isEmail = attr.label.toLowerCase().includes("email");
+                      const isPhone = attr.label.toLowerCase().includes("phone");
+                      const isRole = attr.label.toLowerCase().includes("current role");
+
+                      return (
+                        <div key={aIdx} className="flex justify-between items-start gap-3 px-3.5 py-2.5 hover:bg-white/[0.02] transition-colors">
+                          <span className="text-white/45 font-medium shrink-0 text-[11px]">{attr.label}</span>
+                          <span
+                            className={`text-right text-[11.5px] leading-snug break-words ${
+                              isHonors
+                                ? "text-amber-300 font-semibold"
+                                : isRole
+                                ? "text-emerald-400 font-semibold"
+                                : "text-white/90 font-medium"
+                            }`}
+                          >
+                            {isEmail ? (
+                              <a
+                                href={`mailto:${attr.value}`}
+                                className="text-sky-400 hover:text-sky-300 hover:underline"
+                                title="Send email"
+                              >
+                                {attr.value}
+                              </a>
+                            ) : isPhone ? (
+                              <a
+                                href={`tel:${attr.value.replace(/\s+/g, "")}`}
+                                className="text-sky-400 hover:text-sky-300 hover:underline font-mono"
+                                title="Call phone"
+                              >
+                                {attr.value}
+                              </a>
+                            ) : (
+                              attr.value
+                            )}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Core Stack & Expertise Tag Pills */}
+                  {panel.tags && panel.tags.length > 0 && (
+                    <div className="border-t border-white/10 pt-3.5 space-y-2">
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-white/50 uppercase tracking-wider">
+                        <span>Core Tech & Key Expertise</span>
+                        <span className="text-[10px] text-white/35 font-mono">{panel.tags.length} proficiencies</span>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {panel.tags.map((tag, tIdx) => {
+                          const isFrontend = /react|next|typescript|full-stack|tanstack/i.test(tag);
+                          const isBackend = /php|laravel|codeigniter|sql|postgres|mysql/i.test(tag);
+                          const isHighlight = /magna|cum laude|playwright|award|research/i.test(tag);
 
-                  <div className="flex flex-wrap gap-1.5 border-t border-white/5 pt-3">
-                    {panel.tags.map((tag, tIdx) => (
-                      <span
-                        key={tIdx}
-                        className="px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 text-[10px] text-white/70"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+                          const badgeStyle = isHighlight
+                            ? "bg-amber-500/10 text-amber-300 border-amber-500/25 hover:bg-amber-500/20"
+                            : isFrontend
+                            ? "bg-sky-500/10 text-sky-300 border-sky-500/25 hover:bg-sky-500/20"
+                            : isBackend
+                            ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/25 hover:bg-emerald-500/20"
+                            : "bg-white/[0.04] text-white/75 border-white/10 hover:bg-white/[0.08]";
 
-                  <div className="flex items-center gap-2 border-t border-white/5 pt-3 flex-wrap sm:flex-nowrap">
-                    {panel.links.map((link, lIdx) => (
-                      <button
-                        key={lIdx}
-                        onClick={() => {
-                          if (link.url.startsWith("http")) window.open(link.url, "_blank");
-                          else if (link.url.includes("pdf")) openApp("pdf-viewer");
-                          else navigateTabTo(currentTab.id, link.url, link.label);
-                        }}
-                        className="flex-1 min-w-[100px] flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 active:scale-95 transition cursor-pointer shadow-sm"
-                      >
-                        <span>{link.label}</span>
-                        <GIconExternalLink size={10} />
-                      </button>
-                    ))}
+                          return (
+                            <span
+                              key={tIdx}
+                              className={`px-2.5 py-1 rounded-lg border text-[10.5px] font-medium transition-all select-none ${badgeStyle}`}
+                            >
+                              {tag}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Knowledge Graph Verified Action Buttons */}
+                  <div className="grid grid-cols-3 gap-2.5 pt-3.5 border-t border-white/10">
+                    {panel.links.map((link, lIdx) => {
+                      let Icon = GIconExternalLink;
+                      let mainLabel = link.label;
+                      let subLabel = "";
+                      let isPrimary = false;
+
+                      if (link.url.includes("github")) {
+                        Icon = GIconCode;
+                        mainLabel = "GitHub";
+                        subLabel = "@Ememman";
+                      } else if (link.url.includes("linkedin")) {
+                        Icon = GIconGlobe;
+                        mainLabel = "LinkedIn";
+                        subLabel = "Connect";
+                      } else if (link.url.includes("cv") || link.url.includes("pdf")) {
+                        Icon = GIconFileText;
+                        mainLabel = "View CV";
+                        subLabel = "PDF Resume";
+                        isPrimary = true;
+                      } else if (link.url.includes("system-info")) {
+                        Icon = GIconTerminal;
+                        mainLabel = "Specs";
+                        subLabel = "Architecture";
+                      } else if (link.url.includes("shortcuts")) {
+                        Icon = GIconCode;
+                        mainLabel = "Shortcuts";
+                        subLabel = "Directory";
+                      } else if (link.url.includes("diagnostics")) {
+                        Icon = GIconActivity;
+                        mainLabel = "Telemetry";
+                        subLabel = "Live Stream";
+                        isPrimary = true;
+                      }
+
+                      return (
+                        <button
+                          key={lIdx}
+                          type="button"
+                          onClick={() => {
+                            if (link.url.startsWith("http")) window.open(link.url, "_blank");
+                            else if (link.url.includes("pdf")) openApp("pdf-viewer");
+                            else navigateTabTo(currentTab.id, link.url, link.label);
+                          }}
+                          title={`${link.label} (${link.url})`}
+                          className={`group relative flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border transition-all duration-150 cursor-pointer select-none text-center min-h-[54px] ${
+                            isPrimary
+                              ? "bg-accent text-accent-contrast border-accent/40 shadow-lg shadow-accent/20 hover:brightness-110 active:scale-[0.98]"
+                              : "bg-white/[0.04] hover:bg-white/[0.09] border-white/10 hover:border-white/20 text-white active:scale-[0.98]"
+                          }`}
+                        >
+                          <div className="flex items-center justify-center gap-1.5 font-semibold text-xs leading-none w-full">
+                            <Icon size={13} className={isPrimary ? "text-accent-contrast shrink-0" : "text-sky-400 shrink-0"} />
+                            <span className="truncate">{mainLabel}</span>
+                            <GIconExternalLink
+                              size={10}
+                              className={`shrink-0 transition-opacity ${
+                                isPrimary ? "opacity-75" : "text-white/40 group-hover:text-white"
+                              }`}
+                            />
+                          </div>
+                          {subLabel && (
+                            <span
+                              className={`text-[10px] mt-1 font-mono leading-none truncate w-full ${
+                                isPrimary ? "opacity-85" : "text-white/40 group-hover:text-white/70"
+                              }`}
+                            >
+                              {subLabel}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
