@@ -33,7 +33,7 @@ export const initialCloudFiles = [
     mimeType: "text/markdown",
     content: "# Portfolio OS Architecture\n\n- **Client**: React 19 + TypeScript + Tailwind CSS v4 + Framer Motion\n- **Backend**: Express 5 + NestJS 12 Parity + Socket.IO v4\n- **Real-Time**: Full bidirectional event sync for Chat, Guestbook, Files, Leaderboard, and Diagnostics",
     updatedAt: Date.now() - 86400000 * 1,
-    readOnly: false
+    readOnly: true
   },
   {
     id: "file-manifest",
