@@ -46,7 +46,16 @@ export const initialCloudFiles = [
       osName: "Portfolio OS",
       kernelVersion: "3.2.0-lts",
       theme: "midnight-frosted",
-      capabilities: ["window-manager", "socket-sync", "arcade-engine", "audio-synthesizer", "cloud-fs"]
+      capabilities: [
+        "window-manager",
+        "socket-sync",
+        "arcade-engine",
+        "audio-synthesizer",
+        "cloud-fs",
+        "virtual-browser",
+        "predictive-search",
+        "theme-engine"
+      ]
     }, null, 2),
     updatedAt: Date.now() - 86400000 * 2,
     readOnly: true

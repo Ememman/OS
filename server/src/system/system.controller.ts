@@ -190,6 +190,8 @@ export class SystemController {
       { pid: 312, name: "audio-synth-service", user: "bron", cpu: 2.1, memoryMb: 32.0, threads: 2, status: "running", description: "WebAudio Analyser & Music Streamer" },
       { pid: 418, name: "guestbook-worker", user: "system", cpu: 0.4, memoryMb: 12.8, threads: 1, status: "idle", description: "Guestbook Signature Processor" },
       { pid: 502, name: "analytics-telemetry", user: "system", cpu: 0.6, memoryMb: 14.3, threads: 1, status: "running", description: "OS Metrics & Diagnostics Collector" },
+      { pid: 508, name: "browser-engine", user: "system", cpu: 0.8, memoryMb: 24.8, threads: 4, status: "running", description: "Blink/WebKit Virtual Browser Engine & Search Indexer" },
+      { pid: 512, name: "compositor-worker", user: "bron", cpu: 1.1, memoryMb: 18.5, threads: 2, status: "running", description: "Window Compositor, Snap Assist & Glass Surfaces" },
     ];
   }
 
@@ -199,6 +201,16 @@ export class SystemController {
       ok: true,
       service: "Portfolio OS NestJS API Gateway",
       version: "3.2.0-lts",
+      capabilities: [
+        "window-manager",
+        "socket-sync",
+        "arcade-engine",
+        "audio-synthesizer",
+        "cloud-fs",
+        "virtual-browser",
+        "predictive-search",
+        "theme-engine"
+      ],
       realtime: { connectedClients: this.chatGateway.getOnlineCount() }
     };
   }

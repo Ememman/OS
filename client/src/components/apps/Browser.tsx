@@ -43,6 +43,7 @@ import {
 } from "../../data/browserKnowledge";
 import { useOS } from "../../store/useOS";
 import { soundFx } from "../../lib/soundFx";
+import { API_URL } from "../../lib/config";
 
 interface Tab {
   id: string;
@@ -1978,7 +1979,7 @@ export default function Browser() {
               </div>
 
               <div>
-                <h3 className="font-bold text-white uppercase text-[10px] tracking-wider text-white/50 mb-1">Professional Experience</h3>
+                <h3 className="font-bold uppercase text-[10px] tracking-wider text-white/50 mb-1">Professional Experience</h3>
                 <p className="font-semibold text-white">Dowinn Group — Front-End Developer (2026–Present)</p>
                 <p className="text-white/70">Engineered enterprise operational portals with Next.js, React, and TypeScript. Implemented TanStack Query for caching and automated test suites with Playwright.</p>
               </div>
@@ -2139,12 +2140,24 @@ export default function Browser() {
                 </div>
               ) : (
                 <form
-                  onSubmit={(e) => {
+                  onSubmit={async (e) => {
                     e.preventDefault();
                     if (!contactName.trim() || !contactMessage.trim()) return;
                     if (systemSounds) soundFx.playPop();
                     setContactSent(true);
-                    notify("Message Dispatched", `Thanks ${contactName}, your message has been sent.`, "success");
+                    try {
+                      await fetch(`${API_URL}/api/contact`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          name: contactName.trim(),
+                          email: contactEmail.trim() || "visitor@portfolio-os.dev",
+                          subject: "Browser Contact Form Inquiry",
+                          message: contactMessage.trim(),
+                        }),
+                      });
+                    } catch {}
+                    notify("Message Dispatched", `Thanks ${contactName}, your message has been sent to James.`, "success");
                   }}
                   className="space-y-3"
                 >
