@@ -22,7 +22,59 @@ import {
   GIconLock,
   GIconLink,
   GIconPlay,
+  GIconChrome,
+  GIconSafari,
+  GIconTerminal,
+  GIconCode,
+  GIconNotes,
+  GIconCalculator,
+  GIconFiles,
+  GIconSliders,
 } from "../icons/GravityIcons";
+
+function getAppMeta(app: string, isWin: boolean) {
+  switch (app) {
+    case "browser":
+      return {
+        name: isWin ? "Google Chrome" : "Safari",
+        icon: isWin ? GIconChrome : GIconSafari,
+        color: isWin ? "text-[#4285F4]" : "text-sky-400",
+        badge: "Browser",
+      };
+    case "terminal":
+      return { name: "Terminal", icon: GIconTerminal, color: "text-emerald-400", badge: "CLI Shell" };
+    case "codeplay":
+      return { name: "CodePlay", icon: GIconCode, color: "text-sky-400", badge: "IDE" };
+    case "notes":
+      return { name: "Notes", icon: GIconNotes, color: "text-amber-400", badge: "Editor" };
+    case "calculator":
+      return { name: "Calculator", icon: GIconCalculator, color: "text-cyan-400", badge: "Utility" };
+    case "files":
+      return { name: "Files", icon: GIconFiles, color: "text-sky-400", badge: "Cloud FS" };
+    case "music":
+      return { name: "Music", icon: GIconPlay, color: "text-rose-400", badge: "Media" };
+    case "games":
+      return { name: "Arcade Games", icon: GIconThunderbolt, color: "text-purple-400", badge: "Arcade" };
+    case "settings":
+      return { name: "Settings", icon: GIconSliders, color: "text-slate-300", badge: "System" };
+    case "activity":
+      return {
+        name: isWin ? "Task Manager" : "Activity Monitor",
+        icon: GIconActivity,
+        color: "text-emerald-400",
+        badge: "Telemetry",
+      };
+    case "pdf-viewer":
+    case "resume":
+      return { name: "Curriculum Vitae", icon: GIconFileText, color: "text-rose-400", badge: "Document" };
+    case "library":
+      return { name: "Projects Library", icon: GIconGlobe, color: "text-indigo-400", badge: "Showcase" };
+    case "chats":
+      return { name: "Guest Chat", icon: GIconGlobe, color: "text-emerald-400", badge: "Realtime" };
+    default:
+      return { name: "Application", icon: GIconActivity, color: "text-sky-400", badge: "Process" };
+  }
+}
 
 export interface PackageInfo {
   name: string;
@@ -393,6 +445,17 @@ const RUNTIME_PACKAGES: PackageInfo[] = [
     type: "DevTooling",
     color: "text-blue-400 bg-blue-500/10 border-blue-500/25",
     url: "https://www.npmjs.com/package/ts-node",
+  },
+  {
+    name: "Compression",
+    pkgName: "compression",
+    version: "1.8.2",
+    category: "Performance Middleware",
+    role: "Gzip and deflate compression middleware accelerating HTTP asset payload deliveries",
+    env: "Server",
+    type: "Production",
+    color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/25",
+    url: "https://www.npmjs.com/package/compression",
   },
 ];
 
@@ -833,6 +896,82 @@ const DEFAULT_ENDPOINTS: ApiEndpointInfo[] = [
     description: "Retrieve mathematical, physical, and scientific constants dictionary",
     security: "Public Safe (Live)",
     sampleResponse: { pi: 3.1415926535, e: 2.7182818284, speedOfLightMs: 299792458 }
+  },
+  {
+    path: "/api/system/diagnostics",
+    method: "GET",
+    category: "System",
+    description: "Live Kernel 3.2.0-LTS diagnostics, compositor FPS, WebKit/Blink engine, and telemetry",
+    security: "Public Safe (Live)",
+    sampleResponse: {
+      ok: true,
+      kernelVersion: "3.2.0-lts",
+      engine: "WebKit / Blink Hybrid Engine",
+      compositorFps: 60,
+      roundtripPingMs: 18,
+      capabilities: ["window-manager", "socket-sync", "virtual-browser", "predictive-search", "theme-engine"]
+    }
+  },
+  {
+    path: "/api/browser/search",
+    method: "GET",
+    category: "System",
+    description: "Query predictive search index with category filtering and James Mendoza knowledge graph",
+    security: "Public Safe (Live)",
+    params: "q: string (Search query), category?: string",
+    sampleResponse: {
+      query: "tanstack",
+      total: 3,
+      category: "all",
+      results: [
+        { id: "exp-dowinn", title: "Front-End Developer at Dowinn Group", url: "https://mendoza.dev/experience" }
+      ]
+    }
+  },
+  {
+    path: "/api/browser/themes",
+    method: "GET",
+    category: "System",
+    description: "Retrieve available multi-tone browser background themes and start page configuration",
+    security: "Public Safe (Live)",
+    sampleResponse: {
+      activeTheme: "default",
+      themesCount: 7,
+      presets: ["Obsidian Slate", "Deep Cosmos", "Sunset Aurora", "Emerald Matrix", "Warm Twilight", "Frosted Glass", "Pitch Black"]
+    }
+  },
+  {
+    path: "/api/contact",
+    method: "POST",
+    category: "Social",
+    description: "Contact inquiry submission gateway with email validation and real-time activity dispatch",
+    security: "Public Safe (Live)",
+    samplePayload: { name: "Visitor", email: "visitor@domain.com", subject: "Inquiry", message: "Hello James!" },
+    sampleResponse: { ok: true, message: "Thank you, Visitor! Your message was successfully recorded. James will get back to you soon." }
+  },
+  {
+    path: "/api/contact/inquiries",
+    method: "GET",
+    category: "Social",
+    description: "Retrieve recent contact inquiries and message counts recorded across sessions",
+    security: "Public Safe (Live)",
+    sampleResponse: { count: 3, inquiries: [{ id: "inq-1", name: "Recruiter", subject: "Front-End Role" }] }
+  },
+  {
+    path: "/api/files",
+    method: "GET",
+    category: "Storage",
+    description: "Retrieve virtual cloud drive directory tree, system files, and user custom documents",
+    security: "Public Safe (Live)",
+    sampleResponse: { total: 16, files: [{ id: "file-about", name: "About_Emman.txt", size: 264 }] }
+  },
+  {
+    path: "/api/files/stats",
+    method: "GET",
+    category: "Storage",
+    description: "Retrieve cloud storage usage, quota, and virtual sector allocations",
+    security: "Public Safe (Live)",
+    sampleResponse: { totalKb: 2.4, allocatedDriveMb: 50, totalFiles: 16 }
   }
 ];
 
@@ -853,6 +992,8 @@ const DEFAULT_DAEMONS: OsProcess[] = [
   { pid: 103, name: "express-dispatcher", user: "system", cpu: 0.3, memoryMb: 16.4, threads: 2, status: "running", description: "HTTP REST API Dispatcher & Static File Server" },
   { pid: 104, name: "event-loop-scheduler", user: "system", cpu: 0.1, memoryMb: 8.5, threads: 1, status: "running", description: "libuv Event Loop & Microtask Scheduler" },
   { pid: 105, name: "v8-gc-manager", user: "system", cpu: 0.1, memoryMb: 10.2, threads: 4, status: "running", description: "V8 Heap Manager & Memory Compactor" },
+  { pid: 106, name: "browser-renderer-engine", user: "system", cpu: 0.3, memoryMb: 24.6, threads: 4, status: "running", description: "Blink/WebKit Unified Virtual Browser Engine & Predictive Search Indexer" },
+  { pid: 107, name: "compositor-surface-worker", user: "system", cpu: 0.2, memoryMb: 18.2, threads: 2, status: "running", description: "Window Compositor, Snap Assist & Glassmorphic Layer Surface Engine" },
 ];
 
 export interface SystemLogItem {
@@ -1799,10 +1940,23 @@ export default function ActivityMonitor() {
                         </thead>
                         <tbody className="divide-y divide-white/5">
                           {filteredWindows.map((win) => {
+                            const meta = getAppMeta(win.app, isWin);
+                            const AppIcon = meta.icon;
                             return (
                               <tr key={win.id} className="hover:bg-white/5 transition-colors">
-                                <td className="py-2.5 px-3 font-medium flex items-center gap-2 whitespace-nowrap">
-                                  <span className="text-white font-medium truncate max-w-[160px]">{win.title}</span>
+                                <td className="py-2.5 px-3 font-medium flex items-center gap-2.5 whitespace-nowrap">
+                                  <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                    <AppIcon size={14} className={meta.color} />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-white font-medium truncate max-w-[150px]">{win.title}</span>
+                                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/5 text-white/50 border border-white/5 font-mono">
+                                        {meta.badge}
+                                      </span>
+                                    </div>
+                                    <span className="text-[10px] text-white/40 block truncate">{meta.name}</span>
+                                  </div>
                                 </td>
                                 <td className="py-2.5 px-3 font-mono text-white/40 whitespace-nowrap">
                                   #win-{win.id}
@@ -1869,11 +2023,19 @@ export default function ActivityMonitor() {
                     {/* Mobile View: Responsive Card Grid (No horizontal clipping!) */}
                     <div className="sm:hidden space-y-2">
                       {filteredWindows.map((win) => {
+                        const meta = getAppMeta(win.app, isWin);
+                        const AppIcon = meta.icon;
                         return (
                           <div key={win.id} className="p-3 rounded-xl border border-white/10 bg-white/[0.03] space-y-2.5">
                             <div className="flex items-start justify-between gap-2">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <span className="font-semibold text-white truncate text-xs">{win.title}</span>
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                  <AppIcon size={15} className={meta.color} />
+                                </div>
+                                <div className="min-w-0">
+                                  <span className="font-semibold text-white truncate text-xs block">{win.title}</span>
+                                  <span className="text-[10px] text-white/40 block truncate">{meta.name} · {meta.badge}</span>
+                                </div>
                               </div>
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border shrink-0 ${
                                 win.minimized
@@ -2888,12 +3050,37 @@ export default function ActivityMonitor() {
         {/* System Specs Tab */}
         {activeTab === "specs" && (
           <div className="space-y-4">
-            <div className="p-4 rounded-xl border border-white/10 bg-white/5 space-y-3">
-              <h4 className="font-display text-sm font-semibold text-white/90">Portfolio OS Environment</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-white/70">
+            <div className="p-4 sm:p-5 rounded-xl border border-white/10 bg-white/5 space-y-3">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                <h4 className="font-display text-sm font-semibold text-white/90">
+                  Portfolio OS Environment & Kernel Subsystems
+                </h4>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-semibold">
+                  Kernel 3.2.0-LTS
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-white/70 text-xs">
                 <div className="flex justify-between py-1.5 border-b border-white/5">
-                  <span className="text-white/40">OS Mode:</span>
-                  <span className="font-medium text-white">{isWin ? "Windows 11 Fluent" : "macOS Sonoma Glass"}</span>
+                  <span className="text-white/40">Active OS Persona:</span>
+                  <span className="font-medium text-white">{isWin ? "Windows 11 Fluent (Taskbar & Start)" : "macOS Sonoma Glass (Menu Bar & Dock)"}</span>
+                </div>
+                <div className="flex justify-between py-1.5 border-b border-white/5">
+                  <span className="text-white/40">Web Browser Engine:</span>
+                  <span className="font-medium text-white">
+                    {isWin ? "Google Chrome 128 (Blink Engine, WinFluent)" : "Apple Safari 128 (WebKit Engine, Glassmorphic)"}
+                  </span>
+                </div>
+                <div className="flex justify-between py-1.5 border-b border-white/5">
+                  <span className="text-white/40">Browser Customizer:</span>
+                  <span className="text-accent font-medium">7 Persistent Themes + Start Page Widgets</span>
+                </div>
+                <div className="flex justify-between py-1.5 border-b border-white/5">
+                  <span className="text-white/40">Search & Knowledge Engine:</span>
+                  <span className="text-white">Predictive Indexer (James Mendoza Knowledge Graph)</span>
+                </div>
+                <div className="flex justify-between py-1.5 border-b border-white/5">
+                  <span className="text-white/40">Compositor Engine:</span>
+                  <span className="text-emerald-400 font-medium">Framer Motion 14 (Hardware Accelerated 60 FPS)</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-white/5">
                   <span className="text-white/40">Viewport Resolution:</span>
@@ -2907,15 +3094,23 @@ export default function ActivityMonitor() {
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-white/5">
                   <span className="text-white/40">Runtime Engine:</span>
-                  <span className="text-white">Node {sysInfo?.node?.version || "v20"} + Express 5 + NestJS</span>
+                  <span className="text-white">Node {sysInfo?.node?.version || "v20"} + Express 5 + NestJS 12</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-white/5">
                   <span className="text-white/40">Frontend Framework:</span>
-                  <span className="text-white">React 19 + Vite 8.1 + Tailwind v4</span>
+                  <span className="text-white">React 19 + TypeScript + Vite 8.1 + Tailwind v4</span>
+                </div>
+                <div className="flex justify-between py-1.5 border-b border-white/5">
+                  <span className="text-white/40">Real-Time Hub:</span>
+                  <span className="text-white">Socket.IO v4 (Multi-Room Bidirectional Sync)</span>
+                </div>
+                <div className="flex justify-between py-1.5 border-b border-white/5">
+                  <span className="text-white/40">Virtual Cloud Drive:</span>
+                  <span className="text-white">50 MB Quota with Bidirectional Real-time Event Sync</span>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-white/5">
                   <span className="text-white/40">Audio Synthesizer:</span>
-                  <span className="text-white">Web Audio API (Procedural Oscillator)</span>
+                  <span className="text-white">Web Audio API (Procedural Oscillator & Stereo Panner)</span>
                 </div>
               </div>
             </div>

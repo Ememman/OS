@@ -121,6 +121,31 @@ export const fileTree: FolderNode = {
       readOnly: true,
       content:
         "This portfolio runs as a desktop-style OS — windows, a dock/taskbar, live widgets, code playground, and a real-time guest chat.\n\nSwitch between macOS and Windows 11 styles anytime from Settings."
+    },
+    {
+      name: "os-manifest.json",
+      type: "text",
+      isDefault: true,
+      readOnly: true,
+      content: JSON.stringify(
+        {
+          osName: "Portfolio OS",
+          kernelVersion: "3.2.0-lts",
+          theme: "midnight-frosted",
+          capabilities: [
+            "window-manager",
+            "socket-sync",
+            "arcade-engine",
+            "audio-synthesizer",
+            "cloud-fs",
+            "virtual-browser",
+            "predictive-search",
+            "theme-engine"
+          ]
+        },
+        null,
+        2
+      )
     }
   ]
 };
