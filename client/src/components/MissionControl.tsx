@@ -20,6 +20,7 @@ import {
   GIconActivity,
   GIconBookOpen,
   GIconCode,
+  GIconFileText,
 } from "./icons/GravityIcons";
 
 const ICON_MAP: Record<string, any> = {
@@ -37,6 +38,7 @@ const ICON_MAP: Record<string, any> = {
   files: { icon: GIconFiles, color: "#E0B84E" },
   settings: { icon: GIconSettings, color: "#8892A6" },
   resume: { icon: GIconResume, color: "#4B5A73" },
+  "pdf-viewer": { icon: GIconFileText, color: "#f43f5e" },
   codeplay: { icon: GIconCode, color: "#38bdf8" },
 };
 

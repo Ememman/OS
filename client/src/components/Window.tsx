@@ -19,6 +19,7 @@ import {
   GIconFiles,
   GIconSettings,
   GIconResume,
+  GIconFileText,
 } from "./icons/GravityIcons";
 import { useOS } from "../store/useOS";
 import { useIsMobile } from "../lib/useMediaQuery";
@@ -39,6 +40,7 @@ const WIN_APP_ICONS: Record<string, { icon: React.ComponentType<any>; color: str
   files: { icon: GIconFiles, color: "#E0B84E" },
   settings: { icon: GIconSettings, color: "#8892A6" },
   resume: { icon: GIconResume, color: "#4B5A73" },
+  "pdf-viewer": { icon: GIconFileText, color: "#f43f5e" },
 };
 
 export default function Window({ win, children }) {

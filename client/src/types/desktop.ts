@@ -15,6 +15,7 @@ import {
   GIconGallery,
   GIconFiles,
   GIconSettings,
+  GIconFileText,
 } from "../components/icons/GravityIcons";
 
 export interface DesktopAppItem {
@@ -70,15 +71,36 @@ export const APP_REGISTRY: Record<string, AppDefinition> = {
   gallery: { label: "Gallery", icon: GIconGallery, color: "#B8C25A", desc: "Showcase photography & images" },
   files: { label: "Files", icon: GIconFiles, color: "#E0B84E", desc: "Virtual filesystem explorer" },
   settings: { label: "Settings", icon: GIconSettings, color: "#8892A6", desc: "System preferences & theme" },
+  "pdf-viewer": { label: "PDF Viewer", icon: GIconFileText, color: "#f43f5e", desc: "PDF Document Reader" },
 };
 
 export const DEFAULT_DESKTOP_ITEMS: DesktopItem[] = [
-  { id: "app-resume", type: "app", app: "resume", label: "Resume", color: "#4B5A73" },
-  { id: "app-games", type: "app", app: "games", label: "Games", color: "#D98A4E" },
-  { id: "app-codeplay", type: "app", app: "codeplay", label: "CodePlay", color: "#38bdf8" },
-  { id: "app-terminal", type: "app", app: "terminal", label: "Terminal", color: "#22c55e" },
-  { id: "app-notes", type: "app", app: "notes", label: "Notes", color: "#f59e0b" },
-  { id: "app-calculator", type: "app", app: "calculator", label: "Calculator", color: "#06b6d4" },
-  { id: "app-activity", type: "app", app: "activity", label: "Activity", color: "#10b981" },
-  { id: "app-guestbook", type: "app", app: "guestbook", label: "Guestbook", color: "#8b5cf6" },
+  {
+    id: "file-resume-cv",
+    type: "app",
+    app: "pdf-viewer",
+    label: "MendozaJamesEmmanuelCV.pdf",
+    color: "#f43f5e",
+  },
+  {
+    id: "app-games",
+    type: "app",
+    app: "games",
+    label: "Games",
+    color: "#D98A4E",
+  },
+  {
+    id: "app-chats",
+    type: "app",
+    app: "chats",
+    label: "Chats",
+    color: "#8E7BE0",
+  },
+  {
+    id: "app-terminal",
+    type: "app",
+    app: "terminal",
+    label: "Terminal",
+    color: "#22c55e",
+  },
 ];
