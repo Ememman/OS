@@ -154,7 +154,7 @@ function FileIcon({ item, size = 32 }: { item: any; size?: number }) {
     return <GIconFolder size={size} className="text-sky-300" />;
   }
   if (item.type === "app-link") {
-    if (name.endsWith(".pdf") || item.app === "resume") {
+    if (name.endsWith(".pdf") || item.app === "resume" || item.app === "pdf-viewer") {
       return <GIconFileText size={size} className="text-rose-400" />;
     }
     return <GIconExternalLink size={size} className="text-amber-300" />;
@@ -457,7 +457,11 @@ export default function Files() {
     if (item.type === "folder") {
       navigateTo([...path, item.name]);
     } else if (item.type === "app-link") {
-      openApp(item.app);
+      if (item.name?.toLowerCase().endsWith(".pdf") || item.app === "pdf-viewer" || item.app === "resume") {
+        openApp("pdf-viewer");
+      } else {
+        openApp(item.app);
+      }
     } else if (item.type === "text") {
       const isDefault = isDefaultFile(item);
       setOpenText({

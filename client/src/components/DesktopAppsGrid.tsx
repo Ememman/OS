@@ -602,6 +602,10 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
   const handleItemClick = (item: DesktopItem) => {
     if (didDragRef.current) return;
     if (item.type === "app") {
+      if (item.label?.toLowerCase().endsWith(".pdf") || item.app === "pdf-viewer") {
+        openApp("pdf-viewer");
+        return;
+      }
       openApp(item.app);
     } else {
       openFolder(item.id);

@@ -15,6 +15,7 @@ import {
   GIconGallery,
   GIconFiles,
   GIconSettings,
+  GIconFileText,
 } from "../components/icons/GravityIcons";
 
 export interface DesktopAppItem {
@@ -70,13 +71,14 @@ export const APP_REGISTRY: Record<string, AppDefinition> = {
   gallery: { label: "Gallery", icon: GIconGallery, color: "#B8C25A", desc: "Showcase photography & images" },
   files: { label: "Files", icon: GIconFiles, color: "#E0B84E", desc: "Virtual filesystem explorer" },
   settings: { label: "Settings", icon: GIconSettings, color: "#8892A6", desc: "System preferences & theme" },
+  "pdf-viewer": { label: "PDF Viewer", icon: GIconFileText, color: "#f43f5e", desc: "PDF Document Reader" },
 };
 
 export const DEFAULT_DESKTOP_ITEMS: DesktopItem[] = [
   {
     id: "file-resume-cv",
     type: "app",
-    app: "resume",
+    app: "pdf-viewer",
     label: "MendozaJamesEmmanuelCV.pdf",
     color: "#f43f5e",
   },

@@ -74,11 +74,18 @@ const loadStoredItems = (): DesktopItem[] => {
             }),
           };
         }
-        const reg = APP_REGISTRY[item.app];
+        const isPdfItem =
+          item.label?.toLowerCase().endsWith(".pdf") ||
+          (item as any).name?.toLowerCase().endsWith(".pdf") ||
+          item.id === "file-resume-cv" ||
+          item.id === "resume-pdf";
+        const appKey = isPdfItem ? "pdf-viewer" : item.app;
+        const reg = APP_REGISTRY[appKey] || APP_REGISTRY[item.app];
         return {
           ...item,
+          app: appKey,
           label: item.label || reg?.label || item.app,
-          color: item.color || reg?.color || "#38bdf8",
+          color: isPdfItem ? "#f43f5e" : item.color || reg?.color || "#38bdf8",
         };
       });
 

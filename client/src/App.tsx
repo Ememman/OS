@@ -45,6 +45,7 @@ const Games = lazy(() => import("./components/apps/Games"));
 const Files = lazy(() => import("./components/apps/Files"));
 const Settings = lazy(() => import("./components/apps/Settings"));
 const Resume = lazy(() => import("./components/apps/Resume"));
+const PdfViewer = lazy(() => import("./components/apps/PdfViewer"));
 const Terminal = lazy(() => import("./components/apps/Terminal"));
 const Calculator = lazy(() => import("./components/apps/Calculator"));
 const Notes = lazy(() => import("./components/apps/Notes"));
@@ -63,6 +64,7 @@ const APP_COMPONENTS: Record<string, any> = {
   files: Files,
   settings: Settings,
   resume: Resume,
+  "pdf-viewer": PdfViewer,
   terminal: Terminal,
   calculator: Calculator,
   notes: Notes,

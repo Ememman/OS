@@ -105,8 +105,8 @@ export const fileTree: FolderNode = {
       content:
         "React · React Native / Expo · Node.js · Express · NestJS · MongoDB\nPHP (MVC) · MySQL · Socket.IO · Tailwind CSS · REST APIs · TypeScript"
     },
-    { name: "MendozaJamesEmmanuelCV.pdf", type: "app-link", app: "resume", isDefault: true, readOnly: true },
-    { name: "resume.pdf", type: "app-link", app: "resume", isDefault: true, readOnly: true },
+    { name: "MendozaJamesEmmanuelCV.pdf", type: "app-link", app: "pdf-viewer", isDefault: true, readOnly: true },
+    { name: "resume.pdf", type: "app-link", app: "pdf-viewer", isDefault: true, readOnly: true },
     {
       name: "README.md",
       type: "text",

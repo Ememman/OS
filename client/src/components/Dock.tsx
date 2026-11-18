@@ -22,6 +22,7 @@ import {
   GIconTrash,
   GIconCode,
   GIconLayoutCells,
+  GIconFileText,
 } from "./icons/GravityIcons";
 
 const DOCK_ITEMS = [
@@ -40,6 +41,7 @@ const DOCK_ITEMS = [
   { app: "files", label: "Files", icon: GIconFiles, color: "#E0B84E" },
   { app: "settings", label: "Settings", icon: GIconSettings, color: "#8892A6" },
   { app: "resume", label: "Resume", icon: GIconResume, color: "#4B5A73" },
+  { app: "pdf-viewer", label: "PDF Viewer", icon: GIconFileText, color: "#f43f5e" },
 ];
 
 const DOCK_ITEMS_MAP = Object.fromEntries(DOCK_ITEMS.map((item) => [item.app, item]));
