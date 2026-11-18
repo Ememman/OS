@@ -203,8 +203,8 @@ function SuggestionsDropdown({
   }
 
   const containerClasses = embedded
-    ? "p-2 space-y-0.5 text-left select-none max-h-[380px] overflow-y-auto thin-scroll"
-    : "absolute top-full left-0 right-0 mt-1.5 z-50 bg-[#181d29]/98 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] p-2 space-y-0.5 text-left select-none max-h-[380px] overflow-y-auto thin-scroll";
+    ? "p-1.5 sm:p-2 space-y-0.5 text-left select-none max-h-[260px] sm:max-h-[380px] overflow-y-auto thin-scroll"
+    : "absolute top-full left-0 right-0 mt-1.5 z-50 bg-[#181d29]/98 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] p-1.5 sm:p-2 space-y-0.5 text-left select-none max-h-[260px] sm:max-h-[380px] overflow-y-auto thin-scroll";
 
   return (
     <div className={containerClasses}>
@@ -216,7 +216,7 @@ function SuggestionsDropdown({
         return (
           <div key={`${entry.type}-${entry.query}-${idx}`}>
             {isFirstRecent && (
-              <div className="flex items-center justify-between px-3 py-1.5 text-[10px] uppercase font-bold text-white/40 tracking-wider">
+              <div className="flex items-center justify-between px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] uppercase font-bold text-white/40 tracking-wider">
                 <div className="flex items-center gap-1.5">
                   <GIconClock size={11} className="text-white/40" />
                   <span>Recent Searches</span>
@@ -227,7 +227,7 @@ function SuggestionsDropdown({
                     e.preventDefault();
                     onClearAllRecents(e);
                   }}
-                  className="hover:text-white transition cursor-pointer normal-case text-[11px] font-normal text-white/40 hover:underline"
+                  className="hover:text-white transition cursor-pointer normal-case text-[10.5px] sm:text-[11px] font-normal text-white/40 hover:underline"
                 >
                   Clear all
                 </button>
@@ -236,7 +236,7 @@ function SuggestionsDropdown({
 
             {isFirstExplore && (
               <div
-                className={`flex items-center justify-between px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider ${
+                className={`flex items-center justify-between px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] uppercase font-bold tracking-wider ${
                   idx > 0 ? "border-t border-white/5 pt-2 mt-1" : ""
                 } text-sky-400/80`}
               >
@@ -253,7 +253,7 @@ function SuggestionsDropdown({
                 e.preventDefault();
                 onSelect(entry);
               }}
-              className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs sm:text-[13px] transition-all cursor-pointer ${
+              className={`group flex items-center justify-between px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] transition-all cursor-pointer ${
                 isSelected
                   ? "bg-white/15 text-white font-medium shadow-xs"
                   : "text-white/80 hover:bg-white/10 hover:text-white"
@@ -348,8 +348,8 @@ function SuggestionsDropdown({
         );
       })}
 
-      {/* Footer helper */}
-      <div className="flex items-center justify-between px-3 py-1 text-[10px] text-white/30 border-t border-white/5 pt-1.5 mt-1">
+      {/* Footer helper (hidden on mobile touchscreens) */}
+      <div className="hidden sm:flex items-center justify-between px-3 py-1 text-[10px] text-white/30 border-t border-white/5 pt-1.5 mt-1">
         <span>
           Press <kbd className="font-mono text-white/50">↑</kbd> <kbd className="font-mono text-white/50">↓</kbd> to navigate
         </span>
@@ -1177,9 +1177,7 @@ export default function Browser() {
     if (isStartPage) {
       return (
         <div
-          className={`flex-1 flex flex-col items-center justify-center p-4 ${
-            isSplit ? "sm:p-4" : "sm:p-8"
-          } max-w-4xl mx-auto w-full my-auto relative`}
+          className={`flex-1 flex flex-col items-center justify-center p-3 sm:p-6 lg:p-8 max-w-4xl mx-auto w-full my-auto relative`}
         >
           {/* Ambient Lighting Overlay from Active Theme */}
           {activeTheme.canvasOverlay && (
@@ -1191,8 +1189,8 @@ export default function Browser() {
 
           {/* Header Brand */}
           {isWin ? (
-            <div className="flex flex-col items-center mb-6 space-y-2">
-              <div className="text-4xl sm:text-5xl font-bold tracking-tight font-sans flex items-center select-none">
+            <div className="flex flex-col items-center mb-4 sm:mb-6 space-y-1 sm:space-y-2">
+              <div className="text-3xl sm:text-5xl font-bold tracking-tight font-sans flex items-center select-none">
                 <span className="text-[#4285F4]">G</span>
                 <span className="text-[#EA4335]">o</span>
                 <span className="text-[#FBBC05]">o</span>
@@ -1200,22 +1198,26 @@ export default function Browser() {
                 <span className="text-[#34A853]">l</span>
                 <span className="text-[#EA4335]">e</span>
               </div>
-              <p className="text-xs text-white/50">Search everything about James Mendoza & Portfolio OS</p>
+              <p className="text-[11px] sm:text-xs text-white/50 text-center px-2">
+                Search everything about James Mendoza & Portfolio OS
+              </p>
             </div>
           ) : (
-            <div className="flex flex-col items-center mb-6 space-y-2">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#0288d1] to-[#29b6f6] flex items-center justify-center shadow-lg shadow-sky-500/30 p-2">
-                <GIconSafari size={42} />
+            <div className="flex flex-col items-center mb-4 sm:mb-6 space-y-1 sm:space-y-2">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-[#0288d1] to-[#29b6f6] flex items-center justify-center shadow-lg shadow-sky-500/30 p-2">
+                <GIconSafari size={34} />
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Safari Start Page</h1>
-              <p className="text-xs text-white/50">Explore developer biography, tech stack, and OS kernel specs</p>
+              <h1 className="text-lg sm:text-2xl font-bold text-white tracking-tight">Safari Start Page</h1>
+              <p className="text-[11px] sm:text-xs text-white/50 text-center px-2">
+                Explore developer biography, tech stack, and OS kernel specs
+              </p>
             </div>
           )}
 
           {/* Central Search Bar */}
           {!isSplit ? (
             <div
-              className={`relative w-full max-w-2xl mb-6 rounded-2xl sm:rounded-3xl transition-[background-color,border-color,box-shadow] duration-150 ${
+              className={`relative w-full max-w-2xl mb-4 sm:mb-6 rounded-2xl sm:rounded-3xl transition-[background-color,border-color,box-shadow] duration-150 ${
                 isHomeSearchFocused && homeSuggestions.length > 0
                   ? "bg-[#181d29] border border-white/25 shadow-2xl backdrop-blur-xl ring-1 ring-white/10"
                   : "bg-white/[0.06] hover:bg-white/[0.09] border border-white/15 shadow-xl backdrop-blur-md"
@@ -1230,12 +1232,12 @@ export default function Browser() {
                     executeSearch(homeSearchQuery);
                   }
                 }}
-                className="w-full px-4 py-2.5 sm:py-3 flex items-center gap-3"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-2 sm:gap-3"
               >
                 {isWin ? (
-                  <span className="font-bold text-sm text-white/90 select-none px-0.5">G</span>
+                  <span className="font-bold text-xs sm:text-sm text-white/90 select-none px-0.5">G</span>
                 ) : (
-                  <GIconSafari size={16} className="text-sky-400 shrink-0" />
+                  <GIconSafari size={15} className="text-sky-400 shrink-0" />
                 )}
 
                 <input
@@ -1244,7 +1246,7 @@ export default function Browser() {
                   placeholder={
                     isWin ? "Search Google or type a URL..." : "Search Safari or enter keywords..."
                   }
-                  className="w-full bg-transparent text-sm text-white placeholder:text-white/35 outline-none font-sans"
+                  className="w-full bg-transparent text-xs sm:text-sm text-white placeholder:text-white/35 outline-none font-sans"
                   onChange={(e) => {
                     setHomeSearchQuery(e.target.value);
                     setSelectedSuggestionIdx(-1);
@@ -1297,7 +1299,7 @@ export default function Browser() {
 
                 <button
                   type="submit"
-                  className="px-3.5 py-1.5 rounded-full bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 cursor-pointer transition shrink-0 shadow-sm"
+                  className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-accent text-accent-contrast text-[11px] sm:text-xs font-semibold hover:brightness-110 cursor-pointer transition shrink-0 shadow-sm"
                 >
                   Search
                 </button>
@@ -1350,8 +1352,8 @@ export default function Browser() {
 
           {/* Quick Favorites / Shortcuts Tiles Grid */}
           {showFavoritesWidget && (
-            <div className="w-full max-w-2xl px-2 my-2">
-              <div className="flex items-center justify-between text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-3 px-1">
+            <div className="w-full max-w-2xl px-1 sm:px-2 my-2">
+              <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2.5 sm:mb-3 px-1">
                 <span>{isWin ? "Shortcuts" : "Favorites"}</span>
                 <span>{BROWSER_FAVORITES.length} portals</span>
               </div>
@@ -1359,7 +1361,7 @@ export default function Browser() {
               <div
                 className={`grid ${
                   isSplit ? "grid-cols-2 xs:grid-cols-4" : "grid-cols-4 sm:grid-cols-4"
-                } gap-2.5 sm:gap-4 justify-items-center`}
+                } gap-2 sm:gap-4 justify-items-center`}
               >
                 {BROWSER_FAVORITES.map((fav, i) => (
                   <div
@@ -1375,13 +1377,13 @@ export default function Browser() {
                         navigateTabTo(currentTab.id, fav.url, fav.title);
                       }
                     }}
-                    className="group flex flex-col items-center gap-1.5 p-2 rounded-2xl hover:bg-white/[0.06] transition-all duration-150 cursor-pointer text-center select-none w-full max-w-[120px]"
+                    className="group flex flex-col items-center gap-1 sm:gap-1.5 p-1.5 sm:p-2 rounded-2xl hover:bg-white/[0.06] transition-all duration-150 cursor-pointer text-center select-none w-full max-w-[80px] sm:max-w-[120px]"
                   >
                     <div
                       className={`${
                         isWin
-                          ? "w-12 h-12 rounded-full bg-[#242938] border border-white/10"
-                          : "w-12 h-12 sm:w-13 sm:h-13 rounded-2xl"
+                          ? "w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#242938] border border-white/10"
+                          : "w-10 h-10 sm:w-13 sm:h-13 rounded-2xl"
                       } flex items-center justify-center shadow-lg transition-transform duration-150 group-hover:scale-105`}
                       style={
                         isWin
@@ -1394,20 +1396,20 @@ export default function Browser() {
                       }
                     >
                       {fav.category === "profile" ? (
-                        <GIconFileText size={20} style={{ color: fav.color }} />
+                        <GIconFileText size={17} style={{ color: fav.color }} />
                       ) : fav.category === "experience" ? (
-                        <GIconBriefcase size={20} style={{ color: fav.color }} />
+                        <GIconBriefcase size={17} style={{ color: fav.color }} />
                       ) : fav.category === "skills" ? (
-                        <GIconCode size={20} style={{ color: fav.color }} />
+                        <GIconCode size={17} style={{ color: fav.color }} />
                       ) : fav.category === "projects" ? (
-                        <GIconGlobe size={20} style={{ color: fav.color }} />
+                        <GIconGlobe size={17} style={{ color: fav.color }} />
                       ) : fav.category === "system" ? (
-                        <GIconTerminal size={20} style={{ color: fav.color }} />
+                        <GIconTerminal size={17} style={{ color: fav.color }} />
                       ) : (
-                        <GIconExternalLink size={20} style={{ color: fav.color }} />
+                        <GIconExternalLink size={17} style={{ color: fav.color }} />
                       )}
                     </div>
-                    <span className="text-xs font-medium text-white/85 group-hover:text-white truncate w-full text-center">
+                    <span className="text-[10px] sm:text-xs font-medium text-white/85 group-hover:text-white truncate w-full text-center max-w-[70px] sm:max-w-[110px]">
                       {fav.title}
                     </span>
                   </div>
@@ -1418,21 +1420,21 @@ export default function Browser() {
 
           {/* Privacy Report (Safari) / Google Safe Browsing (Chrome) */}
           {showPrivacyWidget && !isSplit && (
-            <div className="mt-6 w-full max-w-2xl p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs text-white/60">
-              <div className="flex items-center gap-2.5">
+            <div className="mt-4 sm:mt-6 w-full max-w-2xl p-2.5 sm:p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs text-white/60">
+              <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
                 <GIconShield size={16} className={isWin ? "text-[#34A853] shrink-0" : "text-emerald-400 shrink-0"} />
-                <div>
-                  <span className="font-semibold text-white">
+                <div className="min-w-0">
+                  <span className="font-semibold text-white block text-[11px] sm:text-xs">
                     {isWin ? "Google Safe Browsing" : "Privacy Report"}
                   </span>
-                  <p className="text-[11px] text-white/45">
+                  <p className="text-[10px] sm:text-[11px] text-white/45 truncate">
                     {isWin
                       ? "Standard protection is active across all browsing sessions."
                       : "Safari has blocked tracking attempts on your session."}
                   </p>
                 </div>
               </div>
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-medium">
+              <span className="text-[10px] sm:text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-medium shrink-0 ml-2">
                 {isWin ? "Active & Safe" : "Protected"}
               </span>
             </div>
@@ -1443,13 +1445,13 @@ export default function Browser() {
             <button
               type="button"
               onClick={() => setShowCustomizeModal(true)}
-              className="fixed bottom-4 right-4 z-30 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-xs text-white/90 hover:text-white transition shadow-xl cursor-pointer backdrop-blur-md hover:scale-105 active:scale-95"
+              className="absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 z-30 flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-[10.5px] sm:text-xs text-white/90 hover:text-white transition shadow-xl cursor-pointer backdrop-blur-md hover:scale-105 active:scale-95"
               title={isWin ? "Customize Google Chrome Appearance" : "Customize Safari Start Page"}
             >
               {isWin ? (
-                <GIconPencil size={13} className="text-[#4285F4]" />
+                <GIconPencil size={12} className="text-[#4285F4]" />
               ) : (
-                <GIconSliders size={13} className="text-sky-400" />
+                <GIconSliders size={12} className="text-sky-400" />
               )}
               <span>{isWin ? "Customize Chrome" : "Customize Safari"}</span>
             </button>
@@ -1460,9 +1462,9 @@ export default function Browser() {
 
     if (isSearchPage) {
       return (
-        <div className={`flex-1 flex flex-col p-4 ${isSplit ? "sm:p-4" : "sm:p-6"} max-w-5xl mx-auto w-full`}>
+        <div className={`flex-1 flex flex-col p-2.5 sm:p-6 max-w-5xl mx-auto w-full`}>
           {/* Top Filter Tabs */}
-          <div className="flex items-center gap-1.5 pb-3 border-b border-white/10 text-xs overflow-x-auto thin-scroll shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 pb-2.5 sm:pb-3 border-b border-white/10 text-xs overflow-x-auto thin-scroll shrink-0">
             {[
               { id: "all", label: "All Results" },
               { id: "profile", label: "James Mendoza" },
@@ -1475,7 +1477,7 @@ export default function Browser() {
               <button
                 key={cat.id}
                 onClick={() => setSearchCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-xl font-medium transition cursor-pointer whitespace-nowrap ${
+                className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-medium transition cursor-pointer whitespace-nowrap ${
                   searchCategory === cat.id
                     ? "bg-accent text-accent-contrast shadow-sm"
                     : "text-white/60 hover:text-white hover:bg-white/5"
@@ -1486,17 +1488,17 @@ export default function Browser() {
             ))}
           </div>
 
-          <div className="py-2.5 text-[11px] text-white/40">
+          <div className="py-2 text-[10.5px] sm:text-[11px] text-white/40">
             About {results.length} verified results for{" "}
             <span className="font-bold text-white/80">"{query}"</span>
           </div>
 
-          <div className={`grid grid-cols-1 ${isSplit ? "gap-4" : "lg:grid-cols-12 gap-6"} mt-1`}>
+          <div className={`flex flex-col ${isSplit ? "gap-4" : "lg:grid lg:grid-cols-12 gap-5 lg:gap-6"} mt-1`}>
             {/* Left Column: Organic Results */}
-            <div className={`${isSplit ? "space-y-4" : "lg:col-span-7 space-y-5"}`}>
+            <div className={`${isSplit ? "space-y-4" : "lg:col-span-7 space-y-4 sm:space-y-5"}`}>
               {results.length === 0 ? (
-                <div className="p-8 text-center space-y-2 border border-white/10 rounded-2xl bg-white/[0.02]">
-                  <GIconSearch size={32} className="mx-auto text-white/30" />
+                <div className="p-6 sm:p-8 text-center space-y-2 border border-white/10 rounded-2xl bg-white/[0.02]">
+                  <GIconSearch size={28} className="mx-auto text-white/30" />
                   <p className="text-sm font-semibold text-white">No exact match found for "{query}"</p>
                   <p className="text-xs text-white/50">
                     Try searching for "James", "Dowinn", "Straive", "skills", "React", "PostgreSQL", or "shortcuts".
@@ -1506,13 +1508,13 @@ export default function Browser() {
                 results.map((item) => (
                   <div
                     key={item.id}
-                    className="group flex flex-col space-y-1 p-3.5 rounded-xl hover:bg-white/[0.03] transition border border-transparent hover:border-white/5"
+                    className="group flex flex-col space-y-1 p-3 sm:p-3.5 rounded-xl hover:bg-white/[0.03] transition border border-transparent hover:border-white/5"
                   >
-                    <div className="flex items-center gap-1.5 text-[11px] text-emerald-400/90 font-mono">
+                    <div className="flex items-center gap-1.5 text-[10.5px] sm:text-[11px] text-emerald-400/90 font-mono">
                       <GIconGlobe size={11} className="text-white/40" />
-                      <span>{item.displayUrl}</span>
+                      <span className="truncate">{item.displayUrl}</span>
                       {item.badge && (
-                        <span className="px-1.5 py-0.2 rounded text-[9px] bg-accent/20 text-accent font-sans font-semibold">
+                        <span className="px-1.5 py-0.2 rounded text-[9px] bg-accent/20 text-accent font-sans font-semibold shrink-0">
                           {item.badge}
                         </span>
                       )}
@@ -1531,7 +1533,7 @@ export default function Browser() {
                     <p className="text-xs text-white/70 leading-relaxed font-sans">{item.snippet}</p>
 
                     {item.sitelinks && item.sitelinks.length > 0 && (
-                      <div className="grid grid-cols-2 gap-2 pt-2 mt-1 border-t border-white/5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 mt-1 border-t border-white/5">
                         {item.sitelinks.map((sl, slIdx) => (
                           <div
                             key={slIdx}
@@ -1553,17 +1555,17 @@ export default function Browser() {
               )}
             </div>
 
-            {/* Right Column: Knowledge Graph Panel */}
+            {/* Right Column: Knowledge Graph Panel (Top on mobile, right column on desktop) */}
             {panel && (
-              <div className={`${isSplit ? "w-full" : "lg:col-span-5"} self-start`}>
-                <div className="bg-[#151926] border border-white/10 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
-                  <div className="flex items-start gap-3.5">
+              <div className={`${isSplit ? "w-full" : "lg:col-span-5 order-first lg:order-last"} self-start`}>
+                <div className="bg-[#151926] border border-white/10 rounded-2xl p-3.5 sm:p-5 shadow-xl space-y-3.5 sm:space-y-4">
+                  <div className="flex items-start gap-3 sm:gap-3.5">
                     {panel.id === "system" ? (
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-lg shrink-0">
-                        <GIconTerminal size={24} />
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-lg shrink-0">
+                        <GIconTerminal size={20} />
                       </div>
                     ) : (
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white font-bold text-base shadow-lg shrink-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-lg shrink-0">
                         JM
                       </div>
                     )}
@@ -1572,14 +1574,14 @@ export default function Browser() {
                         <span className="text-[10px] uppercase font-bold text-accent tracking-wider">
                           Knowledge Graph
                         </span>
-                        <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 font-semibold shrink-0">
+                        <span className="inline-flex items-center gap-1 text-[9.5px] sm:text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 font-semibold shrink-0">
                           <GIconCheck size={10} /> Verified
                         </span>
                       </div>
-                      <h2 className="text-base sm:text-lg font-bold text-white mt-0.5 leading-snug">
+                      <h2 className="text-sm sm:text-lg font-bold text-white mt-0.5 leading-snug">
                         {panel.title}
                       </h2>
-                      <p className="text-xs text-white/50 truncate">{panel.subtitle}</p>
+                      <p className="text-[11px] sm:text-xs text-white/50 truncate">{panel.subtitle}</p>
                     </div>
                   </div>
 
@@ -1588,7 +1590,7 @@ export default function Browser() {
                   </p>
 
                   {/* Key Attributes Table */}
-                  <div className="rounded-2xl bg-white/[0.03] border border-white/10 divide-y divide-white/5 overflow-hidden text-xs">
+                  <div className="rounded-xl sm:rounded-2xl bg-white/[0.03] border border-white/10 divide-y divide-white/5 overflow-hidden text-xs">
                     {panel.attributes.map((attr, aIdx) => {
                       const isHonors = attr.label.toLowerCase().includes("honor");
                       const isEmail = attr.label.toLowerCase().includes("email");
@@ -1596,10 +1598,10 @@ export default function Browser() {
                       const isRole = attr.label.toLowerCase().includes("current role");
 
                       return (
-                        <div key={aIdx} className="flex justify-between items-start gap-3 px-3.5 py-2.5 hover:bg-white/[0.02] transition-colors">
-                          <span className="text-white/45 font-medium shrink-0 text-[11px]">{attr.label}</span>
+                        <div key={aIdx} className="flex justify-between items-start gap-2.5 sm:gap-3 px-2.5 sm:px-3.5 py-2 sm:py-2.5 hover:bg-white/[0.02] transition-colors">
+                          <span className="text-white/45 font-medium shrink-0 text-[10.5px] sm:text-[11px]">{attr.label}</span>
                           <span
-                            className={`text-right text-[11.5px] leading-snug break-words ${
+                            className={`text-right text-[11px] sm:text-[11.5px] leading-snug break-words ${
                               isHonors
                                 ? "text-amber-300 font-semibold"
                                 : isRole
@@ -1634,8 +1636,8 @@ export default function Browser() {
 
                   {/* Core Stack & Expertise Tag Pills */}
                   {panel.tags && panel.tags.length > 0 && (
-                    <div className="border-t border-white/10 pt-3.5 space-y-2">
-                      <div className="flex items-center justify-between text-[11px] font-semibold text-white/50 uppercase tracking-wider">
+                    <div className="border-t border-white/10 pt-3 sm:pt-3.5 space-y-2">
+                      <div className="flex items-center justify-between text-[10.5px] sm:text-[11px] font-semibold text-white/50 uppercase tracking-wider">
                         <span>Core Tech & Key Expertise</span>
                         <span className="text-[10px] text-white/35 font-mono">{panel.tags.length} proficiencies</span>
                       </div>
@@ -1656,7 +1658,7 @@ export default function Browser() {
                           return (
                             <span
                               key={tIdx}
-                              className={`px-2.5 py-1 rounded-lg border text-[10.5px] font-medium transition-all select-none ${badgeStyle}`}
+                              className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg border text-[10px] sm:text-[10.5px] font-medium transition-all select-none ${badgeStyle}`}
                             >
                               {tag}
                             </span>
@@ -1667,12 +1669,11 @@ export default function Browser() {
                   )}
 
                   {/* Knowledge Graph Verified Action Buttons */}
-                  <div className="grid grid-cols-3 gap-2.5 pt-3.5 border-t border-white/10">
+                  <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 pt-3.5 border-t border-white/10 items-stretch">
                     {panel.links.map((link, lIdx) => {
                       let Icon = GIconExternalLink;
                       let mainLabel = link.label;
                       let subLabel = "";
-                      let isPrimary = false;
 
                       if (link.url.includes("github")) {
                         Icon = GIconCode;
@@ -1686,7 +1687,6 @@ export default function Browser() {
                         Icon = GIconFileText;
                         mainLabel = "View CV";
                         subLabel = "PDF Resume";
-                        isPrimary = true;
                       } else if (link.url.includes("system-info")) {
                         Icon = GIconTerminal;
                         mainLabel = "Specs";
@@ -1699,7 +1699,6 @@ export default function Browser() {
                         Icon = GIconActivity;
                         mainLabel = "Telemetry";
                         subLabel = "Live Stream";
-                        isPrimary = true;
                       }
 
                       return (
@@ -1712,28 +1711,18 @@ export default function Browser() {
                             else navigateTabTo(currentTab.id, link.url, link.label);
                           }}
                           title={`${link.label} (${link.url})`}
-                          className={`group relative flex flex-col items-center justify-center py-2.5 px-2 rounded-2xl border transition-all duration-150 cursor-pointer select-none text-center min-h-[54px] ${
-                            isPrimary
-                              ? "bg-accent text-accent-contrast border-accent/40 shadow-lg shadow-accent/20 hover:brightness-110 active:scale-[0.98]"
-                              : "bg-white/[0.04] hover:bg-white/[0.09] border-white/10 hover:border-white/20 text-white active:scale-[0.98]"
-                          }`}
+                          className="group relative flex flex-col items-center justify-center py-2 sm:py-2.5 px-1.5 sm:px-2 rounded-xl sm:rounded-2xl border transition-all duration-150 cursor-pointer select-none text-center h-full min-h-[50px] sm:min-h-[54px] bg-accent hover:brightness-110 active:scale-[0.98] text-accent-contrast border-accent/40 shadow-md shadow-accent/20"
                         >
-                          <div className="flex items-center justify-center gap-1.5 font-semibold text-xs leading-none w-full">
-                            <Icon size={13} className={isPrimary ? "text-accent-contrast shrink-0" : "text-sky-400 shrink-0"} />
+                          <div className="flex items-center justify-center gap-1 font-semibold text-[11px] sm:text-xs leading-none w-full">
+                            <Icon size={12} className="text-accent-contrast shrink-0" />
                             <span className="truncate">{mainLabel}</span>
                             <GIconExternalLink
-                              size={10}
-                              className={`shrink-0 transition-opacity ${
-                                isPrimary ? "opacity-75" : "text-white/40 group-hover:text-white"
-                              }`}
+                              size={9}
+                              className="shrink-0 opacity-75 group-hover:opacity-100 transition-opacity"
                             />
                           </div>
                           {subLabel && (
-                            <span
-                              className={`text-[10px] mt-1 font-mono leading-none truncate w-full ${
-                                isPrimary ? "opacity-85" : "text-white/40 group-hover:text-white/70"
-                              }`}
-                            >
+                            <span className="text-[9.5px] sm:text-[10px] mt-1 font-mono leading-none truncate w-full opacity-85">
                               {subLabel}
                             </span>
                           )}
@@ -1751,34 +1740,34 @@ export default function Browser() {
 
     // View 3: Virtual Simulated Webpages
     return (
-      <div className={`flex-1 p-4 ${isSplit ? "sm:p-4" : "sm:p-8"} max-w-4xl mx-auto w-full space-y-6`}>
+      <div className={`flex-1 p-3 sm:p-6 lg:p-8 max-w-4xl mx-auto w-full space-y-4 sm:space-y-6`}>
         {/* WEBPAGE 3A: ABOUT ME / PROFILE */}
         {(currentTab.url.includes("mendoza.dev/about") || currentTab.url === "https://mendoza.dev") && (
-          <div className="space-y-6">
-            <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-tr from-white/[0.04] to-accent/10 border border-white/10 space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/20 border border-accent/30 text-accent text-xs font-semibold">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="p-4 sm:p-8 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-white/[0.04] to-accent/10 border border-white/10 space-y-3 sm:space-y-4">
+              <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 rounded-full bg-accent/20 border border-accent/30 text-accent text-[11px] sm:text-xs font-semibold">
                 <GIconGraduationCap size={14} />
                 <span>Magna Cum Laude · BSIT Graduate</span>
               </div>
 
-              <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              <h1 className="text-xl sm:text-4xl font-extrabold text-white tracking-tight">
                 James Emmanuel E. Mendoza
               </h1>
-              <p className="text-sm sm:text-base text-white/80 leading-relaxed font-sans max-w-2xl">
+              <p className="text-xs sm:text-base text-white/80 leading-relaxed font-sans max-w-2xl">
                 Full-stack software developer based in Tondo, Manila. Crafting resilient enterprise front-end web apps with React 19, Next.js, and TypeScript, backed by robust PHP (Laravel, CodeIgniter, MVC) and real-time Socket.IO architectures.
               </p>
 
-              <div className="flex items-center gap-3 pt-2 flex-wrap">
+              <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 sm:gap-3 pt-2">
                 <button
                   onClick={() => openApp("pdf-viewer")}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 transition cursor-pointer shadow-md shadow-accent/20"
+                  className="flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 transition cursor-pointer shadow-md shadow-accent/20"
                 >
                   <GIconFileText size={14} />
                   <span>View Curriculum Vitae (PDF)</span>
                 </button>
                 <button
                   onClick={() => navigateTabTo(currentTab.id, "https://mendoza.dev/experience", "Experience")}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-medium transition cursor-pointer"
+                  className="flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-medium transition cursor-pointer"
                 >
                   <GIconBriefcase size={14} />
                   <span>Work Experience</span>
@@ -1786,18 +1775,18 @@ export default function Browser() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+              <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
                 <span className="text-[10px] text-white/40 uppercase font-bold tracking-wider">Current Role</span>
                 <div className="text-sm font-semibold text-white">Front-End Developer</div>
                 <div className="text-xs text-white/60">Dowinn Group (Enterprise)</div>
               </div>
-              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
+              <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
                 <span className="text-[10px] text-white/40 uppercase font-bold tracking-wider">Education</span>
                 <div className="text-sm font-semibold text-white">BS in Information Technology</div>
                 <div className="text-xs text-white/60">National Teachers College (2022–2026)</div>
               </div>
-              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
+              <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
                 <span className="text-[10px] text-white/40 uppercase font-bold tracking-wider">Contact</span>
                 <div className="text-sm font-semibold text-white">Tondo, Manila, PH</div>
                 <div className="text-xs text-white/60">0992 543 3570</div>
@@ -2060,13 +2049,13 @@ export default function Browser() {
 
         {/* WEBPAGE 3F: CONTACT JAMES EMMANUEL MENDOZA */}
         {currentTab.url.includes("mendoza.dev/contact") && (
-          <div className="space-y-6">
-            <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-tr from-white/[0.04] to-sky-500/10 border border-white/10 space-y-3">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-300 text-xs font-semibold">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="p-4 sm:p-8 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-white/[0.04] to-sky-500/10 border border-white/10 space-y-2.5 sm:space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-300 text-[11px] sm:text-xs font-semibold">
                 <GIconMail size={13} />
                 <span>Verified Direct Inquiries · Open for Contracting</span>
               </div>
-              <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              <h1 className="text-xl sm:text-4xl font-extrabold text-white tracking-tight">
                 Contact James Emmanuel Mendoza
               </h1>
               <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-sans max-w-2xl">
@@ -2075,8 +2064,8 @@ export default function Browser() {
             </div>
 
             {/* Direct Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 text-xs">
+              <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
                 <div className="flex items-center gap-2 text-sky-400">
                   <GIconMail size={14} />
                   <span className="font-bold uppercase text-[10px] tracking-wider text-white/50">Email</span>
@@ -2095,7 +2084,7 @@ export default function Browser() {
                 </button>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
+              <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
                 <div className="flex items-center gap-2 text-emerald-400">
                   <GIconPhone size={14} />
                   <span className="font-bold uppercase text-[10px] tracking-wider text-white/50">Phone / WhatsApp</span>
@@ -2104,7 +2093,7 @@ export default function Browser() {
                 <span className="text-[11px] text-white/40 block pt-1">Direct Mobile (Philippines)</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
+              <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
                 <div className="flex items-center gap-2 text-amber-400">
                   <GIconGlobe size={14} />
                   <span className="font-bold uppercase text-[10px] tracking-wider text-white/50">Location</span>
@@ -2115,8 +2104,8 @@ export default function Browser() {
             </div>
 
             {/* Interactive Dispatcher Form */}
-            <div className="p-5 sm:p-6 rounded-2xl bg-[#131724] border border-white/10 space-y-4 shadow-xl">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
+            <div className="p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-[#131724] border border-white/10 space-y-3.5 sm:space-y-4 shadow-xl">
+              <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
                 <GIconMail size={16} className="text-accent" />
                 <span>Quick Dispatch / Send Direct Inquiry</span>
               </h2>
@@ -2493,7 +2482,7 @@ export default function Browser() {
       {/* CHROME TABS STRIP (WINDOWS MODE) */}
       {/* ------------------------------------------------------------- */}
       {isWin && (
-        <div className="flex items-center px-2 pt-1.5 bg-[#1b1f2b] border-b border-black/40 gap-1 overflow-x-auto thin-scroll shrink-0">
+        <div className="flex items-center px-1.5 sm:px-2 pt-1 sm:pt-1.5 bg-[#1b1f2b] border-b border-black/40 gap-1 overflow-x-auto thin-scroll shrink-0">
           <div className="flex items-center gap-1 min-w-0 flex-1">
             {tabs.map((tab) => {
               const isActive = tab.id === activeTabId;
@@ -2516,10 +2505,10 @@ export default function Browser() {
                     });
                   }}
                   title={tab.title}
-                  className={`group relative flex items-center gap-2 h-8 rounded-t-xl text-xs transition cursor-pointer select-none ${
+                  className={`group relative flex items-center gap-1.5 sm:gap-2 h-7 sm:h-8 rounded-t-lg sm:rounded-t-xl text-[10.5px] sm:text-xs transition cursor-pointer select-none ${
                     tab.isPinned
-                      ? "w-9 min-w-[36px] max-w-[40px] px-2 justify-center"
-                      : "px-3 max-w-[200px] min-w-[110px]"
+                      ? "w-8 sm:w-9 min-w-[32px] sm:min-w-[36px] max-w-[40px] px-1.5 sm:px-2 justify-center"
+                      : "px-2 sm:px-3 max-w-[180px] min-w-[70px] sm:min-w-[110px]"
                   } ${
                     isActive
                       ? "bg-[#282d3c] text-white font-medium shadow-md border-t border-x border-white/10"
@@ -2531,10 +2520,10 @@ export default function Browser() {
                   {tab.isPinned ? (
                     <GIconPin size={11} className="text-amber-400 shrink-0" />
                   ) : (
-                    <GIconChrome size={13} className="shrink-0" />
+                    <GIconChrome size={12} className="shrink-0" />
                   )}
                   {!tab.isPinned && (
-                    <span className="truncate flex-1 text-[11px]">{tab.title}</span>
+                    <span className="truncate flex-1 text-[10.5px] sm:text-[11px]">{tab.title}</span>
                   )}
                   {tab.isMuted && (
                     <button
@@ -2552,7 +2541,7 @@ export default function Browser() {
                   {!tab.isPinned && (
                     <button
                       onClick={(e) => handleCloseTab(tab.id, e)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded-full hover:bg-white/20 text-white/50 hover:text-white transition cursor-pointer"
+                      className="opacity-0 group-hover:opacity-100 hidden sm:block p-0.5 rounded-full hover:bg-white/20 text-white/50 hover:text-white transition cursor-pointer"
                       title="Close tab (Ctrl+W)"
                     >
                       <GIconClose size={10} />
@@ -2564,14 +2553,14 @@ export default function Browser() {
 
             <button
               onClick={handleNewTab}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition cursor-pointer"
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition cursor-pointer"
               title="New Tab"
             >
-              <GIconPlus size={13} />
+              <GIconPlus size={12} />
             </button>
           </div>
 
-          <div className="flex items-center gap-1 text-white/50 px-2 shrink-0">
+          <div className="flex items-center gap-1 text-white/50 px-1 sm:px-2 shrink-0">
             <button
               onClick={() => {
                 if (splitTabId) {
@@ -2583,14 +2572,14 @@ export default function Browser() {
                   handleNewTab();
                 }
               }}
-              className={`p-1.5 rounded-md hover:bg-white/10 hover:text-white transition cursor-pointer ${
+              className={`hidden sm:flex p-1.5 rounded-md hover:bg-white/10 hover:text-white transition cursor-pointer ${
                 splitTabId ? "text-sky-400 bg-sky-500/15" : ""
               }`}
               title={splitTabId ? "Exit Split View" : "Split View"}
             >
               <GIconLayoutColumns size={13} />
             </button>
-            <div className="w-6 h-6 rounded-full bg-sky-600/30 border border-sky-400/40 text-[10px] font-bold text-sky-300 flex items-center justify-center select-none" title="James Mendoza Profile">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-sky-600/30 border border-sky-400/40 text-[9px] sm:text-[10px] font-bold text-sky-300 flex items-center justify-center select-none" title="James Mendoza Profile">
               JM
             </div>
           </div>
@@ -2601,7 +2590,7 @@ export default function Browser() {
       {/* TOP NAVIGATION & OMNIBOX ROW (CHROME / SAFARI) */}
       {/* ------------------------------------------------------------- */}
       <div
-        className={`flex items-center px-2.5 sm:px-3 py-1.5 border-b border-white/10 shrink-0 gap-1.5 sm:gap-2 ${
+        className={`flex items-center px-1.5 sm:px-3 py-1 sm:py-1.5 border-b border-white/10 shrink-0 gap-1 sm:gap-2 ${
           isWin ? "bg-[#282d3c]" : "bg-[#181d28]/95 backdrop-blur-md"
         }`}
       >
@@ -2610,25 +2599,25 @@ export default function Browser() {
           <button
             onClick={handleBack}
             disabled={!canGoBack}
-            className="flex items-center justify-center w-7 h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer"
+            className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer"
             title="Back"
           >
-            <GIconChevronLeft size={14} />
+            <GIconChevronLeft size={13} />
           </button>
           <button
             onClick={handleForward}
             disabled={!canGoForward}
-            className="flex items-center justify-center w-7 h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer"
+            className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-25 disabled:cursor-not-allowed transition cursor-pointer"
             title="Forward"
           >
-            <GIconChevronRight size={14} />
+            <GIconChevronRight size={13} />
           </button>
           <button
             onClick={handleReload}
-            className="flex items-center justify-center w-7 h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
+            className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
             title="Reload this page"
           >
-            <GIconRotateRight size={13} className={isLoading ? "animate-spin text-sky-400" : ""} />
+            <GIconRotateRight size={12} className={isLoading ? "animate-spin text-sky-400" : ""} />
           </button>
           <button
             onClick={handleHome}
@@ -2643,19 +2632,19 @@ export default function Browser() {
         <div className="relative flex-1 min-w-0">
           <form
             onSubmit={handleSubmitUrl}
-            className={`flex items-center h-8 px-2.5 rounded-xl border transition-all ${
+            className={`flex items-center h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg sm:rounded-xl border transition-all ${
               isOmniboxFocused
                 ? "bg-black/60 border-accent ring-1 ring-accent"
                 : "bg-black/35 hover:bg-black/45 border-white/10"
             }`}
           >
-            <div className="flex items-center gap-1.5 text-white/40 mr-1 shrink-0">
+            <div className="flex items-center gap-1 text-white/40 mr-1 shrink-0">
               {inputUrl.startsWith("https://") ? (
-                <GIconLock size={11} className="text-emerald-400" title="Secure Connection" />
+                <GIconLock size={10} className="text-emerald-400" title="Secure Connection" />
               ) : isWin ? (
-                <GIconChrome size={12} />
+                <GIconChrome size={11} />
               ) : (
-                <GIconSafari size={12} />
+                <GIconSafari size={11} />
               )}
             </div>
 
@@ -2704,7 +2693,7 @@ export default function Browser() {
                 }
               }}
               placeholder={isWin ? "Search Google or type a URL..." : "Search or enter website name..."}
-              className="w-full bg-transparent text-xs text-white placeholder:text-white/35 outline-none font-mono selection:bg-accent/40"
+              className="w-full bg-transparent text-[11.5px] sm:text-xs text-white placeholder:text-white/35 outline-none font-mono selection:bg-accent/40"
             />
 
             {inputUrl && (
@@ -2737,27 +2726,27 @@ export default function Browser() {
         </div>
 
         {/* Action icons right */}
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           <button
             onClick={() => setShowCustomizeModal((prev) => !prev)}
-            className={`flex items-center justify-center w-7 h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${
+            className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${
               showCustomizeModal ? "text-accent bg-white/10 ring-1 ring-white/20" : ""
             }`}
             title="Customize Appearance & Background"
           >
-            <GIconPalette size={13} />
+            <GIconPalette size={12} />
           </button>
 
           <button
             onClick={handleCopyUrl}
-            className="flex items-center justify-center w-7 h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
+            className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
             title="Copy Page URL"
           >
-            {copiedUrl ? <GIconCheck size={12} className="text-emerald-400" /> : <GIconCopy size={12} />}
+            {copiedUrl ? <GIconCheck size={11} className="text-emerald-400" /> : <GIconCopy size={11} />}
           </button>
 
           {!isWin && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5 sm:gap-1">
               <button
                 onClick={() => {
                   if (splitTabId) {
@@ -2769,7 +2758,7 @@ export default function Browser() {
                     handleNewTab();
                   }
                 }}
-                className={`flex items-center justify-center w-7 h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${
+                className={`hidden sm:flex items-center justify-center w-7 h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${
                   splitTabId ? "text-sky-400 bg-sky-500/15" : ""
                 }`}
                 title={splitTabId ? "Exit Split Screen" : "Side-by-side Split View"}
@@ -2778,10 +2767,10 @@ export default function Browser() {
               </button>
               <button
                 onClick={handleNewTab}
-                className="flex items-center justify-center w-7 h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
                 title="New Tab"
               >
-                <GIconPlus size={13} />
+                <GIconPlus size={12} />
               </button>
             </div>
           )}
@@ -2792,7 +2781,7 @@ export default function Browser() {
       {/* SAFARI TABS BAR (MACOS MODE ONLY) */}
       {/* ------------------------------------------------------------- */}
       {!isWin && (tabs.length > 1 || tabs.some((t) => t.isPinned)) && (
-        <div className="flex items-center px-2 py-1 bg-[#141822] border-b border-white/5 gap-1 overflow-x-auto thin-scroll shrink-0">
+        <div className="flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 bg-[#141822] border-b border-white/5 gap-1 overflow-x-auto thin-scroll shrink-0">
           {tabs.map((tab) => {
             const isActive = tab.id === activeTabId;
             const isSplit = tab.id === splitTabId;
@@ -2814,10 +2803,10 @@ export default function Browser() {
                   });
                 }}
                 title={tab.title}
-                className={`group flex items-center gap-1.5 rounded-lg text-xs transition cursor-pointer select-none ${
+                className={`group flex items-center gap-1.5 rounded-md sm:rounded-lg text-[10.5px] sm:text-xs transition cursor-pointer select-none ${
                   tab.isPinned
-                    ? "w-8 min-w-[32px] max-w-[36px] px-1.5 py-1 justify-center"
-                    : "px-3 py-1 max-w-[180px] min-w-[90px]"
+                    ? "w-7 sm:w-8 min-w-[28px] sm:min-w-[32px] max-w-[36px] px-1 sm:px-1.5 py-0.5 sm:py-1 justify-center"
+                    : "px-2 sm:px-3 py-0.5 sm:py-1 max-w-[160px] min-w-[68px] sm:min-w-[90px]"
                 } ${
                   isActive
                     ? "bg-white/15 text-white font-medium shadow-xs"
@@ -2832,7 +2821,7 @@ export default function Browser() {
                   <GIconGlobe size={11} className="text-white/40 shrink-0" />
                 )}
                 {!tab.isPinned && (
-                  <span className="truncate flex-1 text-[11px]">{tab.title}</span>
+                  <span className="truncate flex-1 text-[10.5px] sm:text-[11px]">{tab.title}</span>
                 )}
                 {tab.isMuted && (
                   <button
@@ -2850,7 +2839,7 @@ export default function Browser() {
                 {!tab.isPinned && (
                   <button
                     onClick={(e) => handleCloseTab(tab.id, e)}
-                    className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/20 rounded text-white/50 hover:text-white"
+                    className="opacity-0 group-hover:opacity-100 hidden sm:block p-0.5 hover:bg-white/20 rounded text-white/50 hover:text-white"
                     title="Close tab (⌘W)"
                   >
                     <GIconClose size={9} />
@@ -2897,16 +2886,16 @@ export default function Browser() {
       {/* ------------------------------------------------------------- */}
       {/* BOTTOM STATUS BAR */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex items-center justify-between px-3 py-1 border-t border-white/5 bg-black/40 text-[10.5px] text-white/40 shrink-0">
-        <div className="flex items-center gap-2">
-          <span>{isWin ? "Google Chrome" : "Safari"} 128.0</span>
+      <div className="flex items-center justify-between px-2.5 sm:px-3 py-0.5 sm:py-1 border-t border-white/5 bg-black/40 text-[10px] sm:text-[10.5px] text-white/40 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+          <span className="truncate">{isWin ? "Google Chrome" : "Safari"} 128.0</span>
           <span>•</span>
-          <span className="text-emerald-400">Online & Secure</span>
+          <span className="text-emerald-400 shrink-0">Online & Secure</span>
         </div>
-        <div className="flex items-center gap-2 font-mono">
+        <div className="flex items-center gap-1.5 sm:gap-2 font-mono shrink-0 ml-2">
           <span>{tabs.length} tabs open</span>
-          <span>•</span>
-          <span>WebKit/Blink Engine</span>
+          <span className="hidden sm:inline">•</span>
+          <span className="hidden sm:inline">WebKit/Blink Engine</span>
         </div>
       </div>
 
@@ -2924,7 +2913,7 @@ export default function Browser() {
         createPortal(
           <div
             ref={contextMenuRef}
-            className={`fixed z-[99999] min-w-[220px] py-1.5 select-none animate-in fade-in zoom-in-95 duration-100 ${
+            className={`fixed z-[99999] min-w-[210px] max-w-[calc(100vw-16px)] py-1.5 select-none animate-in fade-in zoom-in-95 duration-100 ${
               isWin
                 ? "bg-[#202430]/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl text-xs text-white/90 font-sans"
                 : "bg-[#1c202d]/90 backdrop-blur-2xl border border-white/15 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] text-xs text-white/90 font-sans"
@@ -3086,20 +3075,20 @@ export default function Browser() {
             }}
           >
             <div
-              className="w-full max-w-lg bg-[#141824] border border-white/20 rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-6 space-y-6 text-white text-left overflow-hidden relative"
+              className="w-full max-w-lg max-h-[90vh] overflow-y-auto thin-scroll bg-[#141824] border border-white/20 rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-4 sm:p-6 space-y-4 sm:space-y-6 text-white text-left relative"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center text-accent">
-                    <GIconPalette size={16} />
+              <div className="flex items-center justify-between border-b border-white/10 pb-3 sm:pb-4">
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center text-accent shrink-0">
+                    <GIconPalette size={15} />
                   </div>
-                  <div>
-                    <h2 className="text-base font-bold text-white leading-tight">
+                  <div className="min-w-0">
+                    <h2 className="text-sm sm:text-base font-bold text-white leading-tight truncate">
                       {isWin ? "Customize Google Chrome" : "Customize Safari"}
                     </h2>
-                    <p className="text-xs text-white/50">
+                    <p className="text-[11px] sm:text-xs text-white/50 truncate">
                       Background theme, canvas palette, and start page widgets
                     </p>
                   </div>
@@ -3107,25 +3096,25 @@ export default function Browser() {
                 <button
                   type="button"
                   onClick={() => setShowCustomizeModal(false)}
-                  className="p-1.5 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition cursor-pointer"
+                  className="p-1.5 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition cursor-pointer shrink-0 ml-2"
                   title="Close Customizer"
                 >
-                  <GIconClose size={14} />
+                  <GIconClose size={13} />
                 </button>
               </div>
 
               {/* Theme Picker Grid */}
-              <div className="space-y-3">
+              <div className="space-y-2.5 sm:space-y-3">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-white/70 uppercase tracking-wider text-[11px]">
+                  <span className="font-semibold text-white/70 uppercase tracking-wider text-[10.5px] sm:text-[11px]">
                     Background Theme ({BROWSER_THEMES.length})
                   </span>
-                  <span className="text-xs text-accent font-medium">
+                  <span className="text-[11px] sm:text-xs text-accent font-medium truncate max-w-[150px]">
                     Current: {activeTheme.name}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-56 overflow-y-auto thin-scroll p-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5 max-h-48 sm:max-h-56 overflow-y-auto thin-scroll p-1">
                   {BROWSER_THEMES.map((theme) => {
                     const isSelected = theme.id === browserThemeId;
                     return (
@@ -3133,7 +3122,7 @@ export default function Browser() {
                         key={theme.id}
                         type="button"
                         onClick={() => handleSelectTheme(theme.id)}
-                        className={`group relative flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all cursor-pointer text-left ${
+                        className={`group relative flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl sm:rounded-2xl border transition-all cursor-pointer text-left ${
                           isSelected
                             ? "bg-white/[0.08] border-accent ring-2 ring-accent/30 shadow-lg scale-[1.02]"
                             : "bg-white/[0.03] hover:bg-white/[0.06] border-white/10 hover:border-white/20"
@@ -3141,21 +3130,21 @@ export default function Browser() {
                       >
                         {/* Theme preview swatch */}
                         <div
-                          className="w-12 h-12 rounded-xl shadow-inner border border-white/20 flex items-center justify-center transition-transform group-hover:scale-105"
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl shadow-inner border border-white/20 flex items-center justify-center transition-transform group-hover:scale-105"
                           style={{ background: theme.preview }}
                         >
                           {isSelected && (
-                            <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-accent-contrast shadow-md">
-                              <GIconCheck size={13} />
+                            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-accent flex items-center justify-center text-accent-contrast shadow-md">
+                              <GIconCheck size={12} />
                             </div>
                           )}
                         </div>
                         <div className="text-center w-full">
-                          <span className="text-xs font-semibold text-white block truncate">
+                          <span className="text-[11px] sm:text-xs font-semibold text-white block truncate">
                             {theme.name}
                           </span>
                           {theme.badge && (
-                            <span className="text-[10px] text-white/40 block">
+                            <span className="text-[9.5px] sm:text-[10px] text-white/40 block">
                               {theme.badge}
                             </span>
                           )}
@@ -3167,15 +3156,15 @@ export default function Browser() {
               </div>
 
               {/* Widget Toggles */}
-              <div className="space-y-3 pt-2 border-t border-white/10">
-                <span className="font-semibold text-white/70 uppercase tracking-wider text-[11px] block">
+              <div className="space-y-2.5 sm:space-y-3 pt-2 border-t border-white/10">
+                <span className="font-semibold text-white/70 uppercase tracking-wider text-[10.5px] sm:text-[11px] block">
                   Start Page Widgets
                 </span>
 
                 <div className="space-y-2">
                   <div
                     onClick={handleToggleFavoritesWidget}
-                    className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 cursor-pointer transition select-none"
+                    className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 cursor-pointer transition select-none"
                   >
                     <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-lg bg-sky-500/15 text-sky-400 flex items-center justify-center">
@@ -3206,7 +3195,7 @@ export default function Browser() {
 
                   <div
                     onClick={handleTogglePrivacyWidget}
-                    className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 cursor-pointer transition select-none"
+                    className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 cursor-pointer transition select-none"
                   >
                     <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
