@@ -810,19 +810,19 @@ export default function Files() {
       {/* Main File Browser Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Navigation & Toolbar Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-3 py-2 border-b border-white/10 shrink-0 gap-2 bg-[#0d111d]/95 backdrop-blur-md">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-2.5 sm:px-3 py-2 border-b border-white/10 shrink-0 gap-1.5 sm:gap-2 bg-[#0d111d]/95 backdrop-blur-md">
           {/* Breadcrumbs & Navigation Controls */}
-          <div className="flex items-center gap-1 text-xs text-white/60 min-w-0 overflow-hidden">
+          <div className="flex items-center gap-1 text-xs text-white/60 min-w-0 flex-1 overflow-hidden">
             <button
               onClick={() => setMobileSidebar(true)}
-              className="sm:hidden p-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white/80 shrink-0 cursor-pointer mr-1"
+              className="sm:hidden p-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white/80 shrink-0 cursor-pointer mr-0.5"
               title="Toggle Favorites"
             >
               <GIconPin size={12} />
             </button>
 
             {/* Back / Forward / Up Buttons */}
-            <div className="hidden xs:flex items-center gap-0.5 mr-1.5 border-r border-white/10 pr-1.5">
+            <div className="flex items-center gap-0.5 mr-1 border-r border-white/10 pr-1 shrink-0">
               <button
                 onClick={goBack}
                 disabled={historyIdx <= 0}
@@ -850,7 +850,7 @@ export default function Files() {
             </div>
 
             {/* Breadcrumb Path Trail */}
-            <div className="flex items-center gap-1 truncate">
+            <div className="flex items-center gap-1 min-w-0 truncate">
               <button
                 onClick={() => navigateTo([])}
                 className={`hover:text-white shrink-0 font-medium cursor-pointer ${
@@ -876,7 +876,7 @@ export default function Files() {
           </div>
 
           {/* Search bar, Sort & View Toggles */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             {/* Filter Search Input */}
             <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2 py-1 transition-all focus-within:border-accent focus-within:ring-1 focus-within:ring-accent">
               <GIconSearch size={12} className="text-white/40 shrink-0" />
@@ -885,7 +885,7 @@ export default function Files() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Filter..."
-                className="bg-transparent text-xs text-white placeholder:text-white/30 outline-none w-14 sm:w-28"
+                className="bg-transparent text-xs text-white placeholder:text-white/30 outline-none w-14 xs:w-20 sm:w-28 focus:w-20 xs:focus:w-24 sm:focus:w-32 transition-all"
               />
               {searchQuery && (
                 <button
@@ -910,7 +910,7 @@ export default function Files() {
             </select>
 
             {/* View Mode Toggle */}
-            <div className="flex gap-0.5 bg-white/5 p-0.5 rounded-lg border border-white/10">
+            <div className="flex gap-0.5 bg-white/5 p-0.5 rounded-lg border border-white/10 shrink-0">
               <button
                 onClick={() => setView("grid")}
                 title="Grid View"
@@ -934,7 +934,7 @@ export default function Files() {
         </div>
 
         {/* File Container Area */}
-        <div className="flex-1 p-3 overflow-y-auto thin-scroll">
+        <div className="flex-1 p-2.5 sm:p-3 overflow-y-auto thin-scroll">
           {filteredItems.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-white/40 text-xs space-y-2">
               <GIconFolder size={36} className="opacity-30" />
@@ -948,7 +948,7 @@ export default function Files() {
             </div>
           ) : view === "grid" ? (
             /* GRID VIEW */
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
               {filteredItems.map((item: any, i) => {
                 const isDefault = isDefaultFile(item);
                 return (
@@ -1099,26 +1099,26 @@ export default function Files() {
         </div>
 
         {/* Bottom Storage Telemetry Bar */}
-        <div className="px-3 py-1.5 border-t border-white/5 bg-black/30 flex items-center justify-between text-[11px] text-white/40 shrink-0">
-          <div className="flex items-center gap-2">
-            <span>
-              Cloud Drive: {storageStats ? `${storageStats.totalKb} KB / ${storageStats.allocatedDriveMb} MB allocated` : "Online & Synced"}
+        <div className="px-2.5 sm:px-3 py-1.5 border-t border-white/5 bg-black/30 flex items-center justify-between text-[10px] sm:text-[11px] text-white/40 shrink-0 gap-2 overflow-hidden">
+          <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+            <span className="truncate">
+              Cloud Drive: {storageStats ? `${storageStats.totalKb} KB / ${storageStats.allocatedDriveMb} MB` : "Online & Synced"}
             </span>
             <span>•</span>
-            <span className="text-white/50">{allItems.filter((i) => !isDefaultFile(i)).length} user files</span>
+            <span className="text-white/50 shrink-0">{allItems.filter((i) => !isDefaultFile(i)).length} user files</span>
           </div>
-          <span>{filteredItems.length} items shown</span>
+          <span className="shrink-0">{filteredItems.length} items</span>
         </div>
       </div>
 
       {/* New File Creation Modal */}
       {creatingFile && (
         <div
-          className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 backdrop-blur-xs"
+          className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3 sm:p-4 backdrop-blur-xs"
           onClick={() => setCreatingFile(false)}
         >
           <div
-            className="bg-[#121624] rounded-2xl max-w-sm w-full p-5 border border-white/15 shadow-2xl space-y-3.5"
+            className="bg-[#121624] rounded-2xl max-w-[94vw] sm:max-w-sm w-full p-4 sm:p-5 border border-white/15 shadow-2xl space-y-3.5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2 border-b border-white/10">
@@ -1207,11 +1207,11 @@ export default function Files() {
       {/* Rename File Modal */}
       {renamingItem && (
         <div
-          className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 backdrop-blur-xs"
+          className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-3 sm:p-4 backdrop-blur-xs"
           onClick={() => setRenamingItem(null)}
         >
           <div
-            className="bg-[#121624] rounded-2xl max-w-sm w-full p-5 border border-white/15 shadow-2xl space-y-3.5"
+            className="bg-[#121624] rounded-2xl max-w-[94vw] sm:max-w-sm w-full p-4 sm:p-5 border border-white/15 shadow-2xl space-y-3.5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2 border-b border-white/10">
@@ -1263,38 +1263,51 @@ export default function Files() {
       {/* File Viewer / Editor Modal */}
       {openText && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3 sm:p-6 backdrop-blur-xs"
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-2.5 sm:p-6 backdrop-blur-xs"
           onClick={() => setOpenText(null)}
         >
           <div
-            className="bg-[#101422] rounded-2xl max-w-2xl w-full p-4 sm:p-5 border border-white/15 shadow-2xl flex flex-col max-h-[88vh]"
+            className="bg-[#101422] rounded-2xl w-full max-w-[95vw] sm:max-w-2xl p-3 sm:p-5 border border-white/15 shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh]"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-3 gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <GIconFileText size={18} className="text-accent shrink-0" />
-                <span className="text-xs sm:text-sm font-semibold text-white truncate">
-                  {openText.name}
-                </span>
+            {/* Header: Responsive layout that never overlaps on mobile */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-2.5 sm:pb-3 mb-2.5 sm:mb-3 border-b border-white/10 gap-2">
+              {/* Row 1 on Mobile / Left on Desktop: File icon, name, badge, and mobile close */}
+              <div className="flex items-center justify-between gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <GIconFileText size={17} className="text-accent shrink-0" />
+                  <span className="text-xs sm:text-sm font-semibold text-white truncate" title={openText.name}>
+                    {openText.name}
+                  </span>
 
-                {/* Read-Only Status Badge for Default System Files */}
-                {openText.readOnly ? (
-                  <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 shrink-0 font-medium">
-                    <GIconShield size={10} />
-                    <span>Read-Only · System File</span>
-                  </span>
-                ) : (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 shrink-0 font-medium">
-                    User File
-                  </span>
-                )}
+                  {/* Read-Only Status Badge for Default System Files */}
+                  {openText.readOnly ? (
+                    <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 shrink-0 font-medium whitespace-nowrap">
+                      <GIconShield size={10} />
+                      <span>Read-Only</span>
+                    </span>
+                  ) : (
+                    <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 shrink-0 font-medium whitespace-nowrap">
+                      User File
+                    </span>
+                  )}
+                </div>
+
+                {/* Mobile top-right close button */}
+                <button
+                  onClick={() => setOpenText(null)}
+                  className="sm:hidden p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition cursor-pointer shrink-0"
+                  title="Close Modal"
+                >
+                  <GIconClose size={15} />
+                </button>
               </div>
 
-              <div className="flex items-center gap-1.5 shrink-0">
+              {/* Row 2 on Mobile / Right on Desktop: Action Buttons */}
+              <div className="flex items-center justify-between sm:justify-end gap-1.5 shrink-0 flex-wrap">
                 {/* Markdown Mode Toggle */}
                 {openText.name.endsWith(".md") && !isEditingText && (
-                  <div className="flex bg-white/5 p-0.5 rounded-lg border border-white/10 mr-1 text-[11px]">
+                  <div className="flex bg-white/5 p-0.5 rounded-lg border border-white/10 text-[11px] shrink-0">
                     <button
                       onClick={() => setPreviewMode("rendered")}
                       className={`px-2 py-0.5 rounded-md transition cursor-pointer ${
@@ -1314,75 +1327,78 @@ export default function Files() {
                   </div>
                 )}
 
-                {/* EDIT BUTTON: ONLY shown for user-created files! NEVER for default files! */}
-                {!openText.readOnly && (
+                <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
+                  {/* EDIT BUTTON: ONLY shown for user-created files! NEVER for default files! */}
+                  {!openText.readOnly && (
+                    <button
+                      onClick={() => {
+                        if (isEditingText) handleSaveFileEdit();
+                        else setIsEditingText(true);
+                      }}
+                      className={`text-xs px-2.5 sm:px-3 py-1 rounded-lg font-semibold transition cursor-pointer shrink-0 ${
+                        isEditingText
+                          ? "bg-accent text-accent-contrast shadow-md shadow-accent/25 hover:brightness-110"
+                          : "bg-white/10 hover:bg-white/20 text-white"
+                      }`}
+                    >
+                      {isEditingText ? "Save Changes" : "Edit"}
+                    </button>
+                  )}
+
+                  {/* DUPLICATE & EDIT: Allows user to make an editable copy of protected default files */}
+                  {openText.readOnly && (
+                    <button
+                      onClick={() => handleDuplicateFile(openText)}
+                      className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-accent/20 hover:bg-accent/30 text-accent border border-accent/30 font-medium transition cursor-pointer shrink-0 whitespace-nowrap"
+                      title="Make an editable copy of this system file"
+                    >
+                      <GIconCopy size={12} />
+                      <span>Duplicate & Edit</span>
+                    </button>
+                  )}
+
+                  {/* Copy content button */}
                   <button
-                    onClick={() => {
-                      if (isEditingText) handleSaveFileEdit();
-                      else setIsEditingText(true);
-                    }}
-                    className={`text-xs px-3 py-1 rounded-lg font-semibold transition cursor-pointer ${
-                      isEditingText
-                        ? "bg-accent text-accent-contrast shadow-md shadow-accent/25 hover:brightness-110"
-                        : "bg-white/10 hover:bg-white/20 text-white"
-                    }`}
+                    onClick={() => handleCopyContent(isEditingText ? editBuffer : openText.content)}
+                    className="p-1.5 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition cursor-pointer shrink-0"
+                    title="Copy Content to Clipboard"
                   >
-                    {isEditingText ? "Save Changes" : "Edit"}
+                    <GIconCopy size={14} />
                   </button>
-                )}
 
-                {/* DUPLICATE & EDIT: Allows user to make an editable copy of protected default files */}
-                {openText.readOnly && (
+                  {/* Download button */}
                   <button
-                    onClick={() => handleDuplicateFile(openText)}
-                    className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-accent/20 hover:bg-accent/30 text-accent border border-accent/30 font-medium transition cursor-pointer"
-                    title="Make an editable copy of this system file"
+                    onClick={() => handleDownloadFile(openText.name, isEditingText ? editBuffer : openText.content)}
+                    className="p-1.5 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition cursor-pointer shrink-0"
+                    title="Download File to Computer"
                   >
-                    <GIconCopy size={12} />
-                    <span>Duplicate & Edit</span>
+                    <GIconDownload size={14} />
                   </button>
-                )}
 
-                {/* Copy content button */}
-                <button
-                  onClick={() => handleCopyContent(isEditingText ? editBuffer : openText.content)}
-                  className="p-1.5 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition cursor-pointer"
-                  title="Copy Content to Clipboard"
-                >
-                  <GIconCopy size={14} />
-                </button>
-
-                {/* Download button */}
-                <button
-                  onClick={() => handleDownloadFile(openText.name, isEditingText ? editBuffer : openText.content)}
-                  className="p-1.5 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition cursor-pointer"
-                  title="Download File to Computer"
-                >
-                  <GIconDownload size={14} />
-                </button>
-
-                {/* Close modal */}
-                <button
-                  onClick={() => setOpenText(null)}
-                  className="p-1.5 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition cursor-pointer"
-                >
-                  <GIconClose size={14} />
-                </button>
+                  {/* Desktop close button */}
+                  <button
+                    onClick={() => setOpenText(null)}
+                    className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition cursor-pointer shrink-0"
+                    title="Close Modal"
+                  >
+                    <GIconClose size={14} />
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* Content / Editor Viewport */}
             {isEditingText ? (
-              <div className="flex-1 flex flex-col min-h-[300px]">
+              <div className="flex-1 flex flex-col min-h-[160px] sm:min-h-[280px]">
                 <textarea
                   value={editBuffer}
                   onChange={(e) => setEditBuffer(e.target.value)}
                   placeholder="Type document content..."
-                  className="w-full flex-1 p-3.5 bg-black/40 border border-white/10 rounded-xl text-xs text-white font-mono leading-relaxed outline-none focus:border-accent focus:ring-1 focus:ring-accent resize-none thin-scroll transition-all"
+                  className="w-full flex-1 p-3 sm:p-3.5 bg-black/40 border border-white/10 rounded-xl text-xs text-white font-mono leading-relaxed outline-none focus:border-accent focus:ring-1 focus:ring-accent resize-none thin-scroll transition-all"
                 />
               </div>
             ) : previewMode === "rendered" && openText.name.endsWith(".md") ? (
-              <div className="flex-1 p-4 bg-black/30 rounded-xl border border-white/5 overflow-y-auto thin-scroll text-xs text-white/85 leading-relaxed space-y-2.5 min-h-[300px]">
+              <div className="flex-1 p-3 sm:p-4 bg-black/30 rounded-xl border border-white/5 overflow-y-auto thin-scroll text-xs text-white/85 leading-relaxed space-y-2.5 min-h-[160px] sm:min-h-[280px]">
                 {openText.content.split("\n\n").map((para, i) => {
                   if (para.startsWith("# ")) {
                     return <h1 key={i} className="text-base font-bold text-white border-b border-white/10 pb-1">{para.replace("# ", "")}</h1>;
@@ -1404,25 +1420,25 @@ export default function Files() {
                 })}
               </div>
             ) : (
-              <pre className="text-xs text-white/85 whitespace-pre-wrap font-mono leading-relaxed overflow-y-auto thin-scroll flex-1 p-3.5 bg-black/30 rounded-xl border border-white/5 min-h-[300px]">
+              <pre className="text-xs text-white/85 whitespace-pre-wrap font-mono leading-relaxed overflow-y-auto thin-scroll flex-1 p-3 sm:p-3.5 bg-black/30 rounded-xl border border-white/5 min-h-[160px] sm:min-h-[280px]">
                 {openText.content}
               </pre>
             )}
 
-            {/* Footer with Metadata */}
-            <div className="mt-3 flex justify-between items-center pt-2.5 border-t border-white/10 text-[11px] text-white/40">
-              <div className="flex items-center gap-2">
-                <span>{(isEditingText ? editBuffer : openText.content).length} characters</span>
+            {/* Footer with Metadata & Actions (Responsive wrap) */}
+            <div className="mt-2.5 sm:mt-3 flex flex-col xs:flex-row justify-between items-start xs:items-center pt-2.5 border-t border-white/10 text-[10px] sm:text-[11px] text-white/40 gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <span>{(isEditingText ? editBuffer : openText.content).length} chars</span>
                 <span>•</span>
                 <span>{(isEditingText ? editBuffer : openText.content).split(/\s+/).filter(Boolean).length} words</span>
                 {openText.readOnly && (
                   <>
                     <span>•</span>
-                    <span className="text-amber-400/80">Protected System File</span>
+                    <span className="text-amber-400/80 font-medium">Protected System File</span>
                   </>
                 )}
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2 self-end xs:self-auto shrink-0">
                 <button
                   onClick={() => handleDownloadFile(openText.name, isEditingText ? editBuffer : openText.content)}
                   className="hover:text-white transition cursor-pointer"
