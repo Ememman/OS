@@ -1236,8 +1236,8 @@ export default function Notes() {
       {/* Editor Body */}
       {activeNote ? (
         <div className={`flex-1 flex flex-col min-w-0 bg-[#0d0e15] ${mobileView === "editor" ? "flex" : "hidden sm:flex"}`}>
-          {/* Sticky Editor Header Bar (Organized & Uncrowded) */}
-          <div className="sticky top-0 z-20 shrink-0 px-2.5 sm:px-4 py-2 bg-[#0c0d14]/95 backdrop-blur-md border-b border-white/10 flex items-center justify-between gap-2 shadow-sm">
+          {/* Sticky Editor Header Bar (Organized & Uncrowded, elevated z-40 so tag dropdown floats over tools) */}
+          <div className="sticky top-0 z-40 shrink-0 px-2.5 sm:px-4 py-2 bg-[#0c0d14]/95 backdrop-blur-md border-b border-white/10 flex items-center justify-between gap-2 shadow-sm">
             {/* Left Section: Back on mobile, color, title, and tag */}
             <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
               {/* Back to list button on mobile */}
@@ -1288,8 +1288,8 @@ export default function Notes() {
                 className="bg-transparent text-xs sm:text-base font-semibold text-white outline-none flex-1 min-w-0 placeholder:text-white/30 truncate px-2 py-0.5 rounded-lg border border-transparent focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all"
               />
 
-              {/* Tag Selector Dropdown */}
-              <div className="hidden xs:inline-block shrink-0">
+              {/* Tag Selector Dropdown (Elevated z-index and right-aligned under tag pill) */}
+              <div className="hidden xs:inline-block shrink-0 relative z-50">
                 <CustomDropdown
                   value={activeNote.tag || "ideas"}
                   onChange={(val) => updateActiveNote({ tag: val })}
@@ -1301,6 +1301,7 @@ export default function Notes() {
                     { value: "personal", label: "#personal" },
                   ]}
                   size="xs"
+                  align="right"
                 />
               </div>
             </div>
@@ -1349,8 +1350,8 @@ export default function Notes() {
             </div>
           </div>
 
-          {/* Sticky Formatting Toolbar (Overflow-visible so templates dropdown never clips!) */}
-          <div className="sticky top-[41px] sm:top-[45px] z-30 shrink-0 px-2 sm:px-3 py-1.5 bg-[#0b0c13]/95 backdrop-blur-md border-b border-white/5 flex items-center justify-between gap-1.5 text-xs overflow-visible">
+          {/* Sticky Formatting Toolbar (z-20 so header dropdowns float above it, overflow-visible for templates) */}
+          <div className="sticky top-[41px] sm:top-[45px] z-20 shrink-0 px-2 sm:px-3 py-1.5 bg-[#0b0c13]/95 backdrop-blur-md border-b border-white/5 flex items-center justify-between gap-1.5 text-xs overflow-visible">
             {/* Left Tools Group: Templates Dropdown (Fixed z-index elevation, floating over editor) */}
             <div className="relative shrink-0">
               <button
