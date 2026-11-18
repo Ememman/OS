@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   GIconSafari,
   GIconChrome,
@@ -25,6 +26,12 @@ import {
   GIconVolume,
   GIconVolumeMute,
   GIconLayoutColumns,
+  GIconPalette,
+  GIconPencil,
+  GIconSliders,
+  GIconMail,
+  GIconPhone,
+  GIconActivity,
 } from "../icons/GravityIcons";
 import {
   SEARCH_INDEX,
@@ -58,6 +65,83 @@ function sanitizeRecentSearches(list: unknown): string[] {
     .filter((item) => item.length > 0 && !UNRELATED_SEARCH_REGEX.test(item))
     .slice(0, 10);
 }
+
+type BrowserThemeId =
+  | "default"
+  | "cosmos"
+  | "aurora"
+  | "cyberpunk"
+  | "amber"
+  | "glass"
+  | "minimal";
+
+interface BrowserTheme {
+  id: BrowserThemeId;
+  name: string;
+  preview: string;
+  bgClass: string;
+  accentColor: string;
+  canvasOverlay?: string;
+  badge?: string;
+}
+
+const BROWSER_THEMES: BrowserTheme[] = [
+  {
+    id: "default",
+    name: "Obsidian Slate",
+    preview: "#0e111a",
+    bgClass: "bg-[#0e111a]",
+    accentColor: "#38bdf8",
+    badge: "Default",
+  },
+  {
+    id: "cosmos",
+    name: "Deep Cosmos",
+    preview: "linear-gradient(135deg, #090b14, #151126, #25133d)",
+    bgClass: "bg-gradient-to-br from-[#090b14] via-[#151126] to-[#25133d]",
+    accentColor: "#c084fc",
+    canvasOverlay: "radial-gradient(ellipse at 80% 20%, rgba(192, 132, 252, 0.15), transparent 60%)",
+  },
+  {
+    id: "aurora",
+    name: "Sunset Aurora",
+    preview: "linear-gradient(135deg, #0c0d18, #22122b, #381226)",
+    bgClass: "bg-gradient-to-br from-[#0c0d18] via-[#22122b] to-[#381226]",
+    accentColor: "#f43f5e",
+    canvasOverlay: "radial-gradient(ellipse at 20% 80%, rgba(244, 63, 94, 0.15), transparent 60%)",
+  },
+  {
+    id: "cyberpunk",
+    name: "Emerald Matrix",
+    preview: "linear-gradient(135deg, #060d14, #081a18, #05261d)",
+    bgClass: "bg-gradient-to-br from-[#060d14] via-[#081a18] to-[#05261d]",
+    accentColor: "#10b981",
+    canvasOverlay: "radial-gradient(ellipse at 50% 10%, rgba(16, 185, 129, 0.15), transparent 60%)",
+  },
+  {
+    id: "amber",
+    name: "Warm Twilight",
+    preview: "linear-gradient(135deg, #140f0c, #24160e, #361c10)",
+    bgClass: "bg-gradient-to-br from-[#140f0c] via-[#24160e] to-[#361c10]",
+    accentColor: "#f59e0b",
+    canvasOverlay: "radial-gradient(ellipse at 70% 70%, rgba(245, 158, 11, 0.15), transparent 60%)",
+  },
+  {
+    id: "glass",
+    name: "Frosted Glass",
+    preview: "linear-gradient(135deg, #131722, #1a2030, #252e45)",
+    bgClass: "bg-gradient-to-tr from-[#131722] via-[#1a2030] to-[#252e45]",
+    accentColor: "#38bdf8",
+    canvasOverlay: "radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.1), transparent 70%)",
+  },
+  {
+    id: "minimal",
+    name: "Pitch Black",
+    preview: "#050608",
+    bgClass: "bg-[#050608]",
+    accentColor: "#e2e8f0",
+  },
+];
 
 interface SuggestionEntry {
   type: "search" | "recent" | "keyword" | "site" | "explore";
@@ -299,10 +383,84 @@ export default function Browser() {
   );
 
   // Address bar input state
-  const [inputUrl, setInputUrl] = useState<string>(activeTab.url);
+  const [inputUrl, setInputUrl] = useState<string>("");
   const [isOmniboxFocused, setIsOmniboxFocused] = useState<boolean>(false);
   const [copiedUrl, setCopiedUrl] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [hoveredLink, setHoveredLink] = useState<string | null>(null);
+
+  // Browser theme & appearance state (persisted across sessions)
+  const [browserThemeId, setBrowserThemeId] = useState<BrowserThemeId>(() => {
+    try {
+      const saved = localStorage.getItem("browser_theme");
+      if (saved && BROWSER_THEMES.some((t) => t.id === saved)) {
+        return saved as BrowserThemeId;
+      }
+    } catch {}
+    return "default";
+  });
+  const [showCustomizeModal, setShowCustomizeModal] = useState<boolean>(false);
+  const [showFavoritesWidget, setShowFavoritesWidget] = useState<boolean>(() => {
+    try {
+      const s = localStorage.getItem("browser_show_favs");
+      return s !== null ? JSON.parse(s) : true;
+    } catch {
+      return true;
+    }
+  });
+  const [showPrivacyWidget, setShowPrivacyWidget] = useState<boolean>(() => {
+    try {
+      const s = localStorage.getItem("browser_show_privacy");
+      return s !== null ? JSON.parse(s) : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const activeTheme = useMemo(
+    () => BROWSER_THEMES.find((t) => t.id === browserThemeId) || BROWSER_THEMES[0],
+    [browserThemeId]
+  );
+
+  const handleSelectTheme = (themeId: BrowserThemeId) => {
+    if (systemSounds) soundFx.playPop();
+    setBrowserThemeId(themeId);
+    try {
+      localStorage.setItem("browser_theme", themeId);
+    } catch {}
+  };
+
+  const handleToggleFavoritesWidget = () => {
+    if (systemSounds) soundFx.playClick();
+    setShowFavoritesWidget((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("browser_show_favs", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const handleTogglePrivacyWidget = () => {
+    if (systemSounds) soundFx.playClick();
+    setShowPrivacyWidget((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("browser_show_privacy", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  // Interactive contact form state
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [contactSent, setContactSent] = useState(false);
+
+  // Live diagnostics benchmark state
+  const [benchmarkRunning, setBenchmarkRunning] = useState(false);
+  const [benchmarkScore, setBenchmarkScore] = useState<number | null>(null);
 
   // Home search bar state
   const [homeSearchQuery, setHomeSearchQuery] = useState<string>("");
@@ -331,6 +489,56 @@ export default function Browser() {
       localStorage.setItem("browser_recent_searches", JSON.stringify(recentSearches));
     } catch {}
   }, [recentSearches]);
+
+  // Synchronize tabs and persona when switching between Windows (Google Chrome) and macOS (Safari)
+  useEffect(() => {
+    setTabs((prev) =>
+      prev.map((tab) => {
+        if (isWin) {
+          if (tab.url === "safari://start") {
+            return {
+              ...tab,
+              url: "google://home",
+              title: "New Tab",
+              history: tab.history.map((h) => (h === "safari://start" ? "google://home" : h)),
+            };
+          }
+          if (tab.url.startsWith("safari://search?q=")) {
+            const newUrl = tab.url.replace("safari://search?q=", "google://search?q=");
+            return {
+              ...tab,
+              url: newUrl,
+              title: `${decodeURIComponent(newUrl.split("q=")[1] || "")} - Google Search`,
+              history: tab.history.map((h) =>
+                h.startsWith("safari://search?q=") ? h.replace("safari://search?q=", "google://search?q=") : h
+              ),
+            };
+          }
+        } else {
+          if (tab.url === "google://home") {
+            return {
+              ...tab,
+              url: "safari://start",
+              title: "Start Page",
+              history: tab.history.map((h) => (h === "google://home" ? "safari://start" : h)),
+            };
+          }
+          if (tab.url.startsWith("google://search?q=")) {
+            const newUrl = tab.url.replace("google://search?q=", "safari://search?q=");
+            return {
+              ...tab,
+              url: newUrl,
+              title: `${decodeURIComponent(newUrl.split("q=")[1] || "")} - Safari Search`,
+              history: tab.history.map((h) =>
+                h.startsWith("google://search?q=") ? h.replace("google://search?q=", "safari://search?q=") : h
+              ),
+            };
+          }
+        }
+        return tab;
+      })
+    );
+  }, [isWin]);
 
   // Search Results Page category filter
   const [searchCategory, setSearchCategory] = useState<string>("all");
@@ -373,16 +581,32 @@ export default function Browser() {
     };
   }, [tabContextMenu.isOpen]);
 
-  // Synchronize address input with active tab URL
+  const formatAddressDisplay = (url: string): string => {
+    if (url === "safari://start" || url === "google://home") return "";
+    if (url.startsWith("google://search?q=")) {
+      const q = decodeURIComponent(url.split("q=")[1] || "");
+      return `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+    }
+    if (url.startsWith("safari://search?q=")) {
+      const q = decodeURIComponent(url.split("q=")[1] || "");
+      return `https://search.safari.com/?q=${encodeURIComponent(q)}`;
+    }
+    if (url === "os://system-info") return "portfolio-os://kernel/system-info";
+    if (url === "os://shortcuts") return "portfolio-os://system/shortcuts";
+    return url;
+  };
+
+  // Synchronize address input with active tab URL (clean display without showing raw internal scheme on start pages)
   useEffect(() => {
-    setInputUrl(activeTab.url);
-  }, [activeTab.url]);
+    if (!isOmniboxFocused) {
+      setInputUrl(formatAddressDisplay(activeTab.url));
+    }
+  }, [activeTab.url, isOmniboxFocused]);
 
   const formatTabTitle = (url: string): string => {
-    if (url === "safari://start" || url === "google://home") {
-      return isWin ? "Google" : "Start Page";
-    }
-    if (url.startsWith("search://") || url.startsWith("google://search?q=")) {
+    if (url === "safari://start") return "Start Page";
+    if (url === "google://home") return "New Tab";
+    if (url.startsWith("search://") || url.startsWith("google://search?q=") || url.startsWith("safari://search?q=")) {
       const q = decodeURIComponent(url.split("q=")[1] || "");
       return `${q} - ${isWin ? "Google Search" : "Safari Search"}`;
     }
@@ -390,6 +614,7 @@ export default function Browser() {
     if (url.includes("mendoza.dev/skills")) return "Technical Skills — James Mendoza";
     if (url.includes("mendoza.dev/projects")) return "Projects — James Mendoza";
     if (url.includes("mendoza.dev/about")) return "About Me — James Mendoza";
+    if (url.includes("mendoza.dev/cv.pdf") || url.includes("cv.pdf")) return "Curriculum Vitae — James Mendoza (PDF)";
     if (url.includes("mendoza.dev")) return "James Mendoza — Portfolio";
     if (url === "os://system-info") return "Portfolio OS Architecture";
     if (url === "os://shortcuts") return "Keyboard Shortcuts Directory";
@@ -591,6 +816,8 @@ export default function Browser() {
         };
         setTabs((prev) => [...prev, newTab]);
         setSplitTabId(newId);
+      } else if (targetTabId !== activeTabId) {
+        setSplitTabId(targetTabId);
       } else {
         const otherTab = tabs.find((t) => t.id !== targetTabId);
         setSplitTabId(otherTab ? otherTab.id : targetTabId);
@@ -625,6 +852,9 @@ export default function Browser() {
   // Global Browser Keyboard Shortcuts (Ctrl/Cmd+W, Ctrl/Cmd+R, Ctrl/Cmd+T)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowCustomizeModal(false);
+      }
       const isMod = isWin ? e.ctrlKey : e.metaKey || e.ctrlKey;
       if (isMod && (e.key === "w" || e.key === "W")) {
         e.preventDefault();
@@ -948,8 +1178,16 @@ export default function Browser() {
         <div
           className={`flex-1 flex flex-col items-center justify-center p-4 ${
             isSplit ? "sm:p-4" : "sm:p-8"
-          } max-w-4xl mx-auto w-full my-auto`}
+          } max-w-4xl mx-auto w-full my-auto relative`}
         >
+          {/* Ambient Lighting Overlay from Active Theme */}
+          {activeTheme.canvasOverlay && (
+            <div
+              className="absolute inset-0 pointer-events-none rounded-3xl opacity-80"
+              style={{ background: activeTheme.canvasOverlay }}
+            />
+          )}
+
           {/* Header Brand */}
           {isWin ? (
             <div className="flex flex-col items-center mb-6 space-y-2">
@@ -1109,70 +1347,111 @@ export default function Browser() {
             </div>
           )}
 
-          {/* Quick Favorites Tiles Grid */}
-          <div className="w-full max-w-2xl space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-semibold text-white/40 uppercase tracking-wider px-1">
-              <span>Favorites & Quick Access</span>
-              <span>{BROWSER_FAVORITES.length} portals</span>
-            </div>
+          {/* Quick Favorites / Shortcuts Tiles Grid */}
+          {showFavoritesWidget && (
+            <div className="w-full max-w-2xl px-2 my-2">
+              <div className="flex items-center justify-between text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-3 px-1">
+                <span>{isWin ? "Shortcuts" : "Favorites"}</span>
+                <span>{BROWSER_FAVORITES.length} portals</span>
+              </div>
 
-            <div
-              className={`grid ${
-                isSplit ? "grid-cols-2" : "grid-cols-2 xs:grid-cols-4 sm:grid-cols-4"
-              } gap-2.5 sm:gap-3`}
-            >
-              {BROWSER_FAVORITES.map((fav, i) => (
-                <div
-                  key={i}
-                  onClick={() => {
-                    if (fav.url === "mendoza.dev/cv.pdf") {
-                      openApp("pdf-viewer");
-                    } else if (fav.url.startsWith("https://github") || fav.url.startsWith("https://linkedin")) {
-                      window.open(fav.url, "_blank");
-                    } else {
-                      navigateTabTo(currentTab.id, fav.url, fav.title);
-                    }
-                  }}
-                  className="group flex flex-col items-center p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/20 transition-all duration-150 cursor-pointer text-center select-none shadow-xs"
-                >
+              <div
+                className={`grid ${
+                  isSplit ? "grid-cols-2 xs:grid-cols-4" : "grid-cols-4 sm:grid-cols-4"
+                } gap-2.5 sm:gap-4 justify-items-center`}
+              >
+                {BROWSER_FAVORITES.map((fav, i) => (
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center mb-2 shadow-md transform group-hover:scale-105 transition-transform"
-                    style={{ backgroundColor: `${fav.color}22`, border: `1px solid ${fav.color}44` }}
+                    key={i}
+                    onMouseEnter={() => setHoveredLink(fav.url)}
+                    onMouseLeave={() => setHoveredLink(null)}
+                    onClick={() => {
+                      if (fav.url === "mendoza.dev/cv.pdf") {
+                        openApp("pdf-viewer");
+                      } else if (fav.url.startsWith("https://github") || fav.url.startsWith("https://linkedin")) {
+                        window.open(fav.url, "_blank");
+                      } else {
+                        navigateTabTo(currentTab.id, fav.url, fav.title);
+                      }
+                    }}
+                    className="group flex flex-col items-center gap-1.5 p-2 rounded-2xl hover:bg-white/[0.06] transition-all duration-150 cursor-pointer text-center select-none w-full max-w-[120px]"
                   >
-                    {fav.category === "profile" ? (
-                      <GIconFileText size={18} style={{ color: fav.color }} />
-                    ) : fav.category === "experience" ? (
-                      <GIconBriefcase size={18} style={{ color: fav.color }} />
-                    ) : fav.category === "skills" ? (
-                      <GIconCode size={18} style={{ color: fav.color }} />
-                    ) : fav.category === "system" ? (
-                      <GIconTerminal size={18} style={{ color: fav.color }} />
-                    ) : (
-                      <GIconExternalLink size={18} style={{ color: fav.color }} />
-                    )}
+                    <div
+                      className={`${
+                        isWin
+                          ? "w-12 h-12 rounded-full bg-[#242938] border border-white/10"
+                          : "w-12 h-12 sm:w-13 sm:h-13 rounded-2xl"
+                      } flex items-center justify-center shadow-lg transition-transform duration-150 group-hover:scale-105`}
+                      style={
+                        isWin
+                          ? { borderColor: `${fav.color}40`, boxShadow: `0 4px 12px ${fav.color}15` }
+                          : {
+                              background: `linear-gradient(135deg, ${fav.color}28, ${fav.color}10)`,
+                              border: `1px solid ${fav.color}45`,
+                              boxShadow: `0 4px 12px ${fav.color}18`,
+                            }
+                      }
+                    >
+                      {fav.category === "profile" ? (
+                        <GIconFileText size={20} style={{ color: fav.color }} />
+                      ) : fav.category === "experience" ? (
+                        <GIconBriefcase size={20} style={{ color: fav.color }} />
+                      ) : fav.category === "skills" ? (
+                        <GIconCode size={20} style={{ color: fav.color }} />
+                      ) : fav.category === "projects" ? (
+                        <GIconGlobe size={20} style={{ color: fav.color }} />
+                      ) : fav.category === "system" ? (
+                        <GIconTerminal size={20} style={{ color: fav.color }} />
+                      ) : (
+                        <GIconExternalLink size={20} style={{ color: fav.color }} />
+                      )}
+                    </div>
+                    <span className="text-xs font-medium text-white/85 group-hover:text-white truncate w-full text-center">
+                      {fav.title}
+                    </span>
                   </div>
-                  <span className="text-xs font-semibold text-white/90 group-hover:text-white truncate w-full">
-                    {fav.title}
-                  </span>
-                  <span className="text-[10px] text-white/40 truncate w-full mt-0.5">{fav.desc}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {!isWin && !isSplit && (
+          {/* Privacy Report (Safari) / Google Safe Browsing (Chrome) */}
+          {showPrivacyWidget && !isSplit && (
             <div className="mt-6 w-full max-w-2xl p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs text-white/60">
               <div className="flex items-center gap-2.5">
-                <GIconShield size={16} className="text-emerald-400 shrink-0" />
+                <GIconShield size={16} className={isWin ? "text-[#34A853] shrink-0" : "text-emerald-400 shrink-0"} />
                 <div>
-                  <span className="font-semibold text-white">Privacy Report</span>
-                  <p className="text-[11px] text-white/45">Safari has blocked tracking attempts on your session.</p>
+                  <span className="font-semibold text-white">
+                    {isWin ? "Google Safe Browsing" : "Privacy Report"}
+                  </span>
+                  <p className="text-[11px] text-white/45">
+                    {isWin
+                      ? "Standard protection is active across all browsing sessions."
+                      : "Safari has blocked tracking attempts on your session."}
+                  </p>
                 </div>
               </div>
               <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-medium">
-                Protected
+                {isWin ? "Active & Safe" : "Protected"}
               </span>
             </div>
+          )}
+
+          {/* Floating Customize Appearance Button */}
+          {!isSplit && (
+            <button
+              type="button"
+              onClick={() => setShowCustomizeModal(true)}
+              className="fixed bottom-4 right-4 z-30 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-xs text-white/90 hover:text-white transition shadow-xl cursor-pointer backdrop-blur-md hover:scale-105 active:scale-95"
+              title={isWin ? "Customize Google Chrome Appearance" : "Customize Safari Start Page"}
+            >
+              {isWin ? (
+                <GIconPencil size={13} className="text-[#4285F4]" />
+              ) : (
+                <GIconSliders size={13} className="text-sky-400" />
+              )}
+              <span>{isWin ? "Customize Chrome" : "Customize Safari"}</span>
+            </button>
           )}
         </div>
       );
@@ -1499,6 +1778,103 @@ export default function Browser() {
           </div>
         )}
 
+        {/* WEBPAGE 3C2: PROJECTS */}
+        {currentTab.url.includes("mendoza.dev/projects") && (
+          <div className="space-y-5">
+            <div>
+              <h1 className="text-2xl font-bold text-white">Featured Engineering Projects</h1>
+              <p className="text-xs text-white/50">Enterprise platforms, interactive web applications, and developer tools</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                {
+                  title: "Portfolio OS (Current)",
+                  desc: "Desktop simulation web operating system featuring window compositor, multi-tab Safari & Chrome, real-time Socket.IO sync, and dual macOS/Windows skins.",
+                  tags: ["React 19", "TypeScript", "Tailwind CSS", "Socket.IO"],
+                  color: "#38bdf8",
+                },
+                {
+                  title: "Straive IMS (Inventory System)",
+                  desc: "Enterprise IT inventory asset tracking portal with role-based access, device deployment auditing, and REST reporting.",
+                  tags: ["PHP (MVC)", "MySQL", "REST APIs", "Tailwind CSS"],
+                  color: "#10b981",
+                },
+                {
+                  title: "Quiz Application & Timed Challenges",
+                  desc: "Timed browser-based challenge platform with instant validation, 60-second countdown timer, live score tracking, and lifetime analytics.",
+                  tags: ["React", "TypeScript", "Zustand", "Vite"],
+                  color: "#f59e0b",
+                },
+                {
+                  title: "Interactive Study Flashcards",
+                  desc: "Adaptive spaced repetition card learning platform with categorical filtering, performance ratings, and progress metrics.",
+                  tags: ["Next.js", "TypeScript", "Tailwind CSS"],
+                  color: "#8b5cf6",
+                },
+              ].map((proj, pIdx) => (
+                <div key={pIdx} className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-2 hover:border-white/20 transition">
+                  <h3 className="text-sm font-bold text-white flex items-center justify-between">
+                    <span>{proj.title}</span>
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: proj.color }} />
+                  </h3>
+                  <p className="text-xs text-white/70 leading-relaxed">{proj.desc}</p>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {proj.tags.map((t) => (
+                      <span key={t} className="px-2 py-0.5 rounded-md bg-white/5 text-[10px] text-white/60 font-mono">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* WEBPAGE 3C3: CURRICULUM VITAE / PDF PREVIEW */}
+        {(currentTab.url.includes("cv.pdf") || currentTab.url.includes("mendoza.dev/cv")) && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                  <GIconFileText size={20} />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-white">MendozaJamesEmmanuelCV.pdf</h2>
+                  <p className="text-xs text-white/50">Executive Curriculum Vitae · Verified Developer Document</p>
+                </div>
+              </div>
+              <button
+                onClick={() => openApp("pdf-viewer")}
+                className="px-3.5 py-1.5 rounded-xl bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 transition cursor-pointer shrink-0 shadow-sm flex items-center gap-1.5"
+              >
+                <GIconExternalLink size={12} />
+                <span>Open in PDF Viewer Window</span>
+              </button>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-[#141824] border border-white/10 space-y-4 text-xs text-white/80 leading-relaxed font-sans max-w-2xl mx-auto shadow-xl">
+              <div className="border-b border-white/10 pb-3">
+                <h1 className="text-lg font-bold text-white">James Emmanuel E. Mendoza</h1>
+                <p className="text-xs text-accent">Front-End Developer · Magna Cum Laude BSIT</p>
+                <p className="text-[11px] text-white/45">Tondo, Manila · 0992 543 3570 · mendozajamesemmanuel@gmail.com</p>
+              </div>
+
+              <div>
+                <h3 className="font-bold text-white uppercase text-[10px] tracking-wider text-white/50 mb-1">Professional Experience</h3>
+                <p className="font-semibold text-white">Dowinn Group — Front-End Developer (2026–Present)</p>
+                <p className="text-white/70">Engineered enterprise operational portals with Next.js, React, and TypeScript. Implemented TanStack Query for caching and automated test suites with Playwright.</p>
+              </div>
+
+              <div className="border-t border-white/5 pt-3">
+                <p className="font-semibold text-white">Straive — IT Support Specialist & Web Developer OJT (2026)</p>
+                <p className="text-white/70">Engineered Straive IMS (Inventory Management System) in PHP (MVC) and MySQL. Administered BitLocker, 1Kosmos MFA, and Sentinel.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* WEBPAGE 3D: PORTFOLIO OS ARCHITECTURE */}
         {currentTab.url === "os://system-info" && (
           <div className="space-y-5">
@@ -1564,6 +1940,420 @@ export default function Browser() {
             </div>
           </div>
         )}
+
+        {/* WEBPAGE 3F: CONTACT JAMES EMMANUEL MENDOZA */}
+        {currentTab.url.includes("mendoza.dev/contact") && (
+          <div className="space-y-6">
+            <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-tr from-white/[0.04] to-sky-500/10 border border-white/10 space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-300 text-xs font-semibold">
+                <GIconMail size={13} />
+                <span>Verified Direct Inquiries · Open for Contracting</span>
+              </div>
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                Contact James Emmanuel Mendoza
+              </h1>
+              <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-sans max-w-2xl">
+                Ready to collaborate on modern enterprise front-end engineering, React/Next.js architectures, or full-stack software solutions. Get in touch directly or dispatch a message below.
+              </p>
+            </div>
+
+            {/* Direct Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
+                <div className="flex items-center gap-2 text-sky-400">
+                  <GIconMail size={14} />
+                  <span className="font-bold uppercase text-[10px] tracking-wider text-white/50">Email</span>
+                </div>
+                <div className="font-semibold text-white truncate">mendozajamesemmanuel@gmail.com</div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText("mendozajamesemmanuel@gmail.com");
+                    if (systemSounds) soundFx.playClick();
+                    notify("Copied", "Email copied to clipboard.", "info");
+                  }}
+                  className="text-[11px] text-accent hover:underline pt-1 block cursor-pointer"
+                >
+                  Copy Email
+                </button>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <GIconPhone size={14} />
+                  <span className="font-bold uppercase text-[10px] tracking-wider text-white/50">Phone / WhatsApp</span>
+                </div>
+                <div className="font-semibold text-white">0992 543 3570</div>
+                <span className="text-[11px] text-white/40 block pt-1">Direct Mobile (Philippines)</span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
+                <div className="flex items-center gap-2 text-amber-400">
+                  <GIconGlobe size={14} />
+                  <span className="font-bold uppercase text-[10px] tracking-wider text-white/50">Location</span>
+                </div>
+                <div className="font-semibold text-white">Tondo, Manila, PH</div>
+                <span className="text-[11px] text-white/40 block pt-1">Timezone: GMT+8 (PHT)</span>
+              </div>
+            </div>
+
+            {/* Interactive Dispatcher Form */}
+            <div className="p-5 sm:p-6 rounded-2xl bg-[#131724] border border-white/10 space-y-4 shadow-xl">
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <GIconMail size={16} className="text-accent" />
+                <span>Quick Dispatch / Send Direct Inquiry</span>
+              </h2>
+
+              {contactSent ? (
+                <div className="p-4 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between">
+                  <div>
+                    <span className="font-bold block">Inquiry Dispatched Successfully!</span>
+                    <span className="text-[11px] opacity-80">James Mendoza will respond to your provided contact information shortly.</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setContactSent(false);
+                      setContactMessage("");
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-xs font-semibold cursor-pointer"
+                  >
+                    Send Another
+                  </button>
+                </div>
+              ) : (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!contactName.trim() || !contactMessage.trim()) return;
+                    if (systemSounds) soundFx.playPop();
+                    setContactSent(true);
+                    notify("Message Dispatched", `Thanks ${contactName}, your message has been sent.`, "success");
+                  }}
+                  className="space-y-3"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] text-white/60 block mb-1">Your Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={contactName}
+                        onChange={(e) => setContactName(e.target.value)}
+                        placeholder="e.g. Alex Rivera"
+                        className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder:text-white/30 outline-none focus:border-accent"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-white/60 block mb-1">Your Email or Handle *</label>
+                      <input
+                        type="text"
+                        required
+                        value={contactEmail}
+                        onChange={(e) => setContactEmail(e.target.value)}
+                        placeholder="e.g. alex@company.com"
+                        className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder:text-white/30 outline-none focus:border-accent"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] text-white/60 block mb-1">Message / Project Details *</label>
+                    <textarea
+                      required
+                      rows={3}
+                      value={contactMessage}
+                      onChange={(e) => setContactMessage(e.target.value)}
+                      placeholder="Describe your project, timeline, tech stack, or inquiry..."
+                      className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-white placeholder:text-white/30 outline-none focus:border-accent resize-none font-sans"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 active:scale-95 transition cursor-pointer shadow-md"
+                  >
+                    Dispatch Inquiry
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* WEBPAGE 3G: ACADEMICS & HONORS */}
+        {currentTab.url.includes("mendoza.dev/academics") && (
+          <div className="space-y-6">
+            <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-tr from-white/[0.04] to-accent/10 border border-white/10 space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/20 border border-accent/30 text-accent text-xs font-semibold">
+                <GIconGraduationCap size={14} />
+                <span>National Teachers College · Magna Cum Laude Honors</span>
+              </div>
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                Academic Background & Distinctions
+              </h1>
+              <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-sans max-w-2xl">
+                Graduated Magna Cum Laude with a Bachelor of Science in Information Technology (2022–2026). Conferred the prestigious "Best in Research" award for departmental capstone leadership.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-2">
+                <span className="text-[10px] text-accent font-bold uppercase tracking-wider">Academic Degree</span>
+                <h3 className="text-base font-bold text-white">BS in Information Technology</h3>
+                <p className="text-xs text-white/50">National Teachers College (2022–2026)</p>
+                <div className="pt-2 text-xs text-white/75 space-y-1">
+                  <div>• <strong>Honors</strong>: Conferred Magna Cum Laude</div>
+                  <div>• <strong>Major</strong>: Software Development & Network Systems</div>
+                  <div>• <strong>Academic Standing</strong>: Dean's Honor Roll</div>
+                </div>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-2">
+                <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Research Excellence</span>
+                <h3 className="text-base font-bold text-white">Best in Research (SALON 2026)</h3>
+                <p className="text-xs text-white/50">Conferred May 02, 2026</p>
+                <p className="text-xs text-white/75 pt-2 leading-relaxed">
+                  Recognized for lead full-stack software architecture and empirical evaluation in departmental research symposium.
+                </p>
+              </div>
+            </div>
+
+            {/* Certifications Box */}
+            <div className="p-5 rounded-2xl bg-[#141824] border border-white/10 space-y-3">
+              <h3 className="text-sm font-bold text-white">Verified Certifications</h3>
+              <div className="divide-y divide-white/5">
+                <div className="py-2.5 flex items-center justify-between text-xs">
+                  <div>
+                    <span className="font-semibold text-white block">SoloLearn Web Development Certification</span>
+                    <span className="text-[11px] text-white/40">Credential ID: Issued January 30, 2025</span>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 font-semibold text-[10px]">
+                    Verified
+                  </span>
+                </div>
+                <div className="py-2.5 flex items-center justify-between text-xs">
+                  <div>
+                    <span className="font-semibold text-white block">SoloLearn HTML5 Specialist</span>
+                    <span className="text-[11px] text-white/40">Credential ID: Issued November 01, 2023</span>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 font-semibold text-[10px]">
+                    Verified
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* WEBPAGE 3H: SYSTEM DIAGNOSTICS & TELEMETRY */}
+        {currentTab.url.includes("os://diagnostics") && (
+          <div className="space-y-6">
+            <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-tr from-white/[0.04] to-emerald-500/10 border border-white/10 space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
+                <GIconActivity size={13} />
+                <span>Kernel 3.2.0-LTS · Live Diagnostic Stream</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                Operating System Telemetry & Performance
+              </h1>
+              <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-sans max-w-2xl">
+                Real-time performance diagnostics measuring compositor framerates, memory allocation, and WebSocket roundtrip latency.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
+                <span className="text-[10px] text-white/40 uppercase font-bold tracking-wider">Roundtrip Ping</span>
+                <div className="text-lg font-bold text-emerald-400 font-mono">18 ms</div>
+                <span className="text-[10px] text-white/50">WebSocket live sync</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
+                <span className="text-[10px] text-white/40 uppercase font-bold tracking-wider">Renderer Engine</span>
+                <div className="text-lg font-bold text-sky-400 font-mono">WebKit / Blink</div>
+                <span className="text-[10px] text-white/50">Hardware Accelerated</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
+                <span className="text-[10px] text-white/40 uppercase font-bold tracking-wider">Compositor FPS</span>
+                <div className="text-lg font-bold text-accent font-mono">60 FPS</div>
+                <span className="text-[10px] text-white/50">Framer Motion Spring</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-1">
+                <span className="text-[10px] text-white/40 uppercase font-bold tracking-wider">Active Tabs</span>
+                <div className="text-lg font-bold text-amber-400 font-mono">{tabs.length} tabs</div>
+                <span className="text-[10px] text-white/50">Isolated thread states</span>
+              </div>
+            </div>
+
+            {/* In-Browser Benchmark Card */}
+            <div className="p-5 rounded-2xl bg-[#141824] border border-white/10 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-white">Browser Core Benchmark</h3>
+                  <p className="text-xs text-white/50">Run compute and rendering stress-test</p>
+                </div>
+                <button
+                  type="button"
+                  disabled={benchmarkRunning}
+                  onClick={() => {
+                    setBenchmarkRunning(true);
+                    if (systemSounds) soundFx.playPop();
+                    setTimeout(() => {
+                      const score = Math.floor(9400 + Math.random() * 500);
+                      setBenchmarkScore(score);
+                      setBenchmarkRunning(false);
+                      if (systemSounds) soundFx.playPop();
+                      notify("Benchmark Complete", `Browser Core Score: ${score} pts`, "success");
+                    }, 1200);
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 disabled:opacity-50 cursor-pointer transition shadow-sm"
+                >
+                  {benchmarkRunning ? "Running Benchmark..." : "Run Benchmark"}
+                </button>
+              </div>
+
+              {benchmarkScore && (
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs flex items-center justify-between">
+                  <span className="text-white/80">Benchmark Result Score:</span>
+                  <span className="text-sm font-mono font-bold text-emerald-400">{benchmarkScore} Points (Optimal)</span>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => openApp("activity")}
+              className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-white/80 hover:text-white transition cursor-pointer flex items-center justify-center gap-2"
+            >
+              <GIconActivity size={14} className="text-emerald-400" />
+              <span>Launch Full Activity Monitor Application</span>
+            </button>
+          </div>
+        )}
+
+        {/* WEBPAGE 3I: UNIVERSAL SMART ARTICLE / DOCUMENT VIEWER (HANDLES ALL SEARCH DESTINATIONS) */}
+        {!currentTab.url.includes("mendoza.dev/about") &&
+          currentTab.url !== "https://mendoza.dev" &&
+          !currentTab.url.includes("mendoza.dev/experience") &&
+          !currentTab.url.includes("mendoza.dev/skills") &&
+          !currentTab.url.includes("mendoza.dev/projects") &&
+          !currentTab.url.includes("cv.pdf") &&
+          !currentTab.url.includes("mendoza.dev/cv") &&
+          currentTab.url !== "os://system-info" &&
+          currentTab.url !== "os://shortcuts" &&
+          !currentTab.url.includes("mendoza.dev/contact") &&
+          !currentTab.url.includes("mendoza.dev/academics") &&
+          !currentTab.url.includes("os://diagnostics") && (() => {
+            const matched = SEARCH_INDEX.find(
+              (item) =>
+                item.url === currentTab.url ||
+                currentTab.url.startsWith(item.url) ||
+                item.url.startsWith(currentTab.url) ||
+                item.title.toLowerCase() === currentTab.title.toLowerCase()
+            );
+
+            const displayTitle = matched?.title || currentTab.title || "Webpage Document";
+            const displaySnippet =
+              matched?.snippet ||
+              "Explore comprehensive developer insights, technical architecture, and system documentations verified across the Portfolio OS.";
+            const displayUrl = matched?.displayUrl || currentTab.url;
+            const category = matched?.category || "portal";
+
+            return (
+              <div className="space-y-6">
+                {/* Article Header & Domain Verified Banner */}
+                <div className="p-5 sm:p-7 rounded-3xl bg-gradient-to-tr from-white/[0.04] to-accent/10 border border-white/10 space-y-3">
+                  <div className="flex items-center gap-2 text-[11px] text-emerald-400 font-mono">
+                    <GIconGlobe size={13} className="text-white/40" />
+                    <span className="truncate">{displayUrl}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-sans font-semibold text-[10px]">
+                      Verified Source
+                    </span>
+                  </div>
+
+                  <h1 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug">
+                    {displayTitle}
+                  </h1>
+
+                  <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-sans max-w-2xl">
+                    {displaySnippet}
+                  </p>
+
+                  <div className="flex items-center gap-2.5 pt-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const searchUrl = isWin ? "google://home" : "safari://start";
+                        navigateTo(searchUrl);
+                      }}
+                      className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <GIconSearch size={12} />
+                      <span>Search Other Topics</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyUrl()}
+                      className="px-3.5 py-1.5 rounded-xl bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <GIconCopy size={12} />
+                      <span>{copiedUrl ? "Link Copied!" : "Share Link"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Sitelinks or Related Subsections */}
+                {matched?.sitelinks && matched.sitelinks.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-wider px-1">
+                      Explore Subsections & Related Links
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {matched.sitelinks.map((sl, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => navigateTabTo(currentTab.id, sl.url, sl.title)}
+                          className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/10 hover:border-white/20 transition cursor-pointer space-y-1"
+                        >
+                          <span className="text-xs font-semibold text-sky-400 hover:underline block">
+                            {sl.title}
+                          </span>
+                          {sl.snippet && (
+                            <p className="text-[11px] text-white/50 leading-relaxed">{sl.snippet}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Key Attributes / Fact Matrix */}
+                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-2">
+                  <span className="text-[10px] text-white/40 font-bold uppercase tracking-wider">
+                    Document Metadata
+                  </span>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
+                      <span className="text-[10px] text-white/40 block">Author</span>
+                      <span className="font-semibold text-white">James Mendoza</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
+                      <span className="text-[10px] text-white/40 block">Category</span>
+                      <span className="font-semibold text-accent capitalize">{category}</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
+                      <span className="text-[10px] text-white/40 block">Status</span>
+                      <span className="font-semibold text-emerald-400">Live & Indexed</span>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5">
+                      <span className="text-[10px] text-white/40 block">Security</span>
+                      <span className="font-semibold text-sky-400">TLS 1.3 / Verified</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
       </div>
     );
   };
@@ -1652,9 +2442,28 @@ export default function Browser() {
             </button>
           </div>
 
-          <div className="hidden sm:flex items-center gap-1.5 text-white/40 text-[11px] px-2 shrink-0">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-semibold text-white/70">Google Chrome</span>
+          <div className="flex items-center gap-1 text-white/50 px-2 shrink-0">
+            <button
+              onClick={() => {
+                if (splitTabId) {
+                  setSplitTabId(null);
+                } else if (tabs.length > 1) {
+                  const other = tabs.find((t) => t.id !== activeTabId);
+                  if (other) setSplitTabId(other.id);
+                } else {
+                  handleNewTab();
+                }
+              }}
+              className={`p-1.5 rounded-md hover:bg-white/10 hover:text-white transition cursor-pointer ${
+                splitTabId ? "text-sky-400 bg-sky-500/15" : ""
+              }`}
+              title={splitTabId ? "Exit Split View" : "Split View"}
+            >
+              <GIconLayoutColumns size={13} />
+            </button>
+            <div className="w-6 h-6 rounded-full bg-sky-600/30 border border-sky-400/40 text-[10px] font-bold text-sky-300 flex items-center justify-center select-none" title="James Mendoza Profile">
+              JM
+            </div>
           </div>
         </div>
       )}
@@ -1732,6 +2541,9 @@ export default function Browser() {
               onFocus={() => {
                 setIsOmniboxFocused(true);
                 setSelectedSuggestionIdx(-1);
+                if (inputUrl === "safari://start" || inputUrl === "google://home") {
+                  setInputUrl("");
+                }
               }}
               onBlur={() => setTimeout(() => setIsOmniboxFocused(false), 220)}
               onKeyDown={(e) => {
@@ -1798,6 +2610,16 @@ export default function Browser() {
         {/* Action icons right */}
         <div className="flex items-center gap-1 shrink-0">
           <button
+            onClick={() => setShowCustomizeModal((prev) => !prev)}
+            className={`flex items-center justify-center w-7 h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${
+              showCustomizeModal ? "text-accent bg-white/10 ring-1 ring-white/20" : ""
+            }`}
+            title="Customize Appearance & Background"
+          >
+            <GIconPalette size={13} />
+          </button>
+
+          <button
             onClick={handleCopyUrl}
             className="flex items-center justify-center w-7 h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
             title="Copy Page URL"
@@ -1806,8 +2628,25 @@ export default function Browser() {
           </button>
 
           {!isWin && (
-            /* Safari New Tab & App Indicator */
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  if (splitTabId) {
+                    setSplitTabId(null);
+                  } else if (tabs.length > 1) {
+                    const other = tabs.find((t) => t.id !== activeTabId);
+                    if (other) setSplitTabId(other.id);
+                  } else {
+                    handleNewTab();
+                  }
+                }}
+                className={`flex items-center justify-center w-7 h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${
+                  splitTabId ? "text-sky-400 bg-sky-500/15" : ""
+                }`}
+                title={splitTabId ? "Exit Split Screen" : "Side-by-side Split View"}
+              >
+                <GIconLayoutColumns size={13} />
+              </button>
               <button
                 onClick={handleNewTab}
                 className="flex items-center justify-center w-7 h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
@@ -1815,10 +2654,6 @@ export default function Browser() {
               >
                 <GIconPlus size={13} />
               </button>
-              <div className="hidden md:flex items-center gap-1 text-[11px] text-white/40 px-1 font-semibold">
-                <GIconSafari size={14} />
-                <span>Safari</span>
-              </div>
             </div>
           )}
         </div>
@@ -1903,10 +2738,10 @@ export default function Browser() {
       {/* ------------------------------------------------------------- */}
       {splitTab ? (
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden divide-y md:divide-y-0 md:divide-x divide-white/10">
-          <div className="flex-1 flex flex-col min-w-0 overflow-y-auto thin-scroll">
+          <div className={`flex-1 flex flex-col min-w-0 overflow-y-auto thin-scroll ${activeTheme.bgClass}`}>
             {renderTabCanvas(activeTab, false)}
           </div>
-          <div className="flex-1 flex flex-col min-w-0 overflow-y-auto thin-scroll bg-[#0b0e16]">
+          <div className={`flex-1 flex flex-col min-w-0 overflow-y-auto thin-scroll ${activeTheme.bgClass}`}>
             <div className="flex items-center justify-between px-3 py-1.5 bg-[#141822] border-b border-white/10 text-xs shrink-0">
               <div className="flex items-center gap-1.5 truncate text-white/80">
                 <GIconLayoutColumns size={13} className="text-sky-400 shrink-0" />
@@ -1925,7 +2760,7 @@ export default function Browser() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 bg-[#0e111a] overflow-y-auto thin-scroll flex flex-col">
+        <div className={`flex-1 ${activeTheme.bgClass} overflow-y-auto thin-scroll flex flex-col relative`}>
           {renderTabCanvas(activeTab, false)}
         </div>
       )}
@@ -1946,153 +2781,360 @@ export default function Browser() {
         </div>
       </div>
 
-      {/* ------------------------------------------------------------- */}
-      {/* TAB CONTEXT MENU (CHROME / SAFARI RIGHT-CLICK MENU) */}
-      {/* ------------------------------------------------------------- */}
-      {tabContextMenu.isOpen && (
-        <div
-          ref={contextMenuRef}
-          className="fixed z-50 min-w-[220px] py-1.5 bg-[#1e2330]/95 backdrop-blur-xl border border-white/15 rounded-xl shadow-2xl text-xs text-white/90 animate-in fade-in zoom-in-95 duration-100"
-          style={{
-            top: Math.min(tabContextMenu.y, window.innerHeight - 340),
-            left: Math.min(tabContextMenu.x, window.innerWidth - 240),
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {(() => {
-            const target = tabs.find((t) => t.id === tabContextMenu.tabId);
-            const isPinned = target?.isPinned ?? false;
-            const isMuted = target?.isMuted ?? false;
-            const isTargetSplit = splitTabId === tabContextMenu.tabId;
-
-            return (
-              <>
-                <button
-                  onClick={() => {
-                    handleNewTabToRight(tabContextMenu.tabId);
-                    setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                  }}
-                  className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
-                >
-                  <span className="flex items-center gap-2">
-                    <GIconPlus size={13} className="text-white/60" />
-                    <span>New tab to the right</span>
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    handleToggleSplitView(tabContextMenu.tabId);
-                    setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                  }}
-                  className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
-                >
-                  <span className="flex items-center gap-2">
-                    <GIconLayoutColumns size={13} className="text-white/60" />
-                    <span>{isTargetSplit || splitTabId ? "Exit split view" : "Add tab to new split view"}</span>
-                  </span>
-                </button>
-
-                <div className="h-px bg-white/10 my-1 mx-2" />
-
-                <button
-                  onClick={() => {
-                    handleReloadTab(tabContextMenu.tabId);
-                    setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                  }}
-                  className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
-                >
-                  <span className="flex items-center gap-2">
-                    <GIconRotateRight size={13} className="text-white/60" />
-                    <span>Reload</span>
-                  </span>
-                  <span className="text-[10px] text-white/40 font-mono">{isWin ? "Ctrl+R" : "⌘R"}</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    handleDuplicateTab(tabContextMenu.tabId);
-                    setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                  }}
-                  className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
-                >
-                  <span className="flex items-center gap-2">
-                    <GIconCopy size={13} className="text-white/60" />
-                    <span>Duplicate</span>
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    handleTogglePinTab(tabContextMenu.tabId);
-                    setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                  }}
-                  className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
-                >
-                  <span className="flex items-center gap-2">
-                    <GIconPin size={13} className="text-white/60" />
-                    <span>{isPinned ? "Unpin tab" : "Pin tab"}</span>
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    handleToggleMuteTab(tabContextMenu.tabId);
-                    setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                  }}
-                  className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
-                >
-                  <span className="flex items-center gap-2">
-                    {isMuted ? (
-                      <GIconVolume size={13} className="text-white/60" />
-                    ) : (
-                      <GIconVolumeMute size={13} className="text-white/60" />
-                    )}
-                    <span>{isMuted ? "Unmute site" : "Mute site"}</span>
-                  </span>
-                </button>
-
-                <div className="h-px bg-white/10 my-1 mx-2" />
-
-                <button
-                  onClick={() => {
-                    handleCloseTab(tabContextMenu.tabId);
-                    setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                  }}
-                  className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-rose-500/20 hover:text-rose-300 text-left cursor-pointer transition-colors"
-                >
-                  <span className="flex items-center gap-2">
-                    <GIconClose size={13} className="text-rose-400/80" />
-                    <span>Close</span>
-                  </span>
-                  <span className="text-[10px] text-white/40 font-mono">{isWin ? "Ctrl+W" : "⌘W"}</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    handleCloseOtherTabs(tabContextMenu.tabId);
-                    setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                  }}
-                  disabled={tabs.length <= 1}
-                  className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <span>Close other tabs</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    handleCloseTabsToRight(tabContextMenu.tabId);
-                    setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                  }}
-                  className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors"
-                >
-                  <span>Close tabs to the right</span>
-                </button>
-              </>
-            );
-          })()}
+      {/* Floating Hover Link URL Preview Pill */}
+      {hoveredLink && (
+        <div className="absolute bottom-2 left-2 z-40 max-w-sm sm:max-w-md px-2.5 py-0.5 rounded-md bg-[#161a25]/95 backdrop-blur-md border border-white/15 text-[11px] font-mono text-white/85 shadow-lg pointer-events-none truncate animate-in fade-in duration-100">
+          {hoveredLink}
         </div>
       )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* TAB CONTEXT MENU (CHROME / SAFARI RIGHT-CLICK MENU VIA PORTAL) */}
+      {/* ------------------------------------------------------------- */}
+      {tabContextMenu.isOpen &&
+        createPortal(
+          <div
+            ref={contextMenuRef}
+            className={`fixed z-[99999] min-w-[220px] py-1.5 select-none animate-in fade-in zoom-in-95 duration-100 ${
+              isWin
+                ? "bg-[#202430]/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl text-xs text-white/90 font-sans"
+                : "bg-[#1c202d]/90 backdrop-blur-2xl border border-white/15 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] text-xs text-white/90 font-sans"
+            }`}
+            style={{
+              top: Math.max(8, Math.min(tabContextMenu.y, window.innerHeight - 340)),
+              left: Math.max(8, Math.min(tabContextMenu.x, window.innerWidth - 240)),
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {(() => {
+              const target = tabs.find((t) => t.id === tabContextMenu.tabId);
+              const isPinned = target?.isPinned ?? false;
+              const isMuted = target?.isMuted ?? false;
+              const isTargetSplit = splitTabId === tabContextMenu.tabId;
+
+              return (
+                <>
+                  <button
+                    onClick={() => {
+                      handleNewTabToRight(tabContextMenu.tabId);
+                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GIconPlus size={13} className="text-white/60" />
+                      <span>New tab to the right</span>
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleToggleSplitView(tabContextMenu.tabId);
+                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GIconLayoutColumns size={13} className="text-white/60" />
+                      <span>{isTargetSplit || splitTabId ? "Exit split view" : "Add tab to new split view"}</span>
+                    </span>
+                  </button>
+
+                  <div className="h-px bg-white/10 my-1 mx-2" />
+
+                  <button
+                    onClick={() => {
+                      handleReloadTab(tabContextMenu.tabId);
+                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GIconRotateRight size={13} className="text-white/60" />
+                      <span>Reload</span>
+                    </span>
+                    <span className="text-[10px] text-white/40 font-mono">{isWin ? "Ctrl+R" : "⌘R"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleDuplicateTab(tabContextMenu.tabId);
+                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GIconCopy size={13} className="text-white/60" />
+                      <span>Duplicate</span>
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleTogglePinTab(tabContextMenu.tabId);
+                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GIconPin size={13} className="text-white/60" />
+                      <span>{isPinned ? "Unpin tab" : "Pin tab"}</span>
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleToggleMuteTab(tabContextMenu.tabId);
+                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      {isMuted ? (
+                        <GIconVolume size={13} className="text-white/60" />
+                      ) : (
+                        <GIconVolumeMute size={13} className="text-white/60" />
+                      )}
+                      <span>{isMuted ? "Unmute site" : "Mute site"}</span>
+                    </span>
+                  </button>
+
+                  <div className="h-px bg-white/10 my-1 mx-2" />
+
+                  <button
+                    onClick={() => {
+                      handleCloseTab(tabContextMenu.tabId);
+                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-rose-500/20 hover:text-rose-300 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GIconClose size={13} className="text-rose-400/80" />
+                      <span>Close</span>
+                    </span>
+                    <span className="text-[10px] text-white/40 font-mono">{isWin ? "Ctrl+W" : "⌘W"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleCloseOtherTabs(tabContextMenu.tabId);
+                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                    }}
+                    disabled={tabs.length <= 1}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <span>Close other tabs</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleCloseTabsToRight(tabContextMenu.tabId);
+                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors"
+                  >
+                    <span>Close tabs to the right</span>
+                  </button>
+                </>
+              );
+            })()}
+          </div>,
+          document.body
+        )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* CUSTOMIZE APPEARANCE & THEME MODAL (PORTALED TO BODY)         */}
+      {/* ------------------------------------------------------------- */}
+      {showCustomizeModal &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowCustomizeModal(false);
+              }
+            }}
+          >
+            <div
+              className="w-full max-w-lg bg-[#141824] border border-white/20 rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-6 space-y-6 text-white text-left overflow-hidden relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center text-accent">
+                    <GIconPalette size={16} />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-white leading-tight">
+                      {isWin ? "Customize Google Chrome" : "Customize Safari"}
+                    </h2>
+                    <p className="text-xs text-white/50">
+                      Background theme, canvas palette, and start page widgets
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomizeModal(false)}
+                  className="p-1.5 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition cursor-pointer"
+                  title="Close Customizer"
+                >
+                  <GIconClose size={14} />
+                </button>
+              </div>
+
+              {/* Theme Picker Grid */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-white/70 uppercase tracking-wider text-[11px]">
+                    Background Theme ({BROWSER_THEMES.length})
+                  </span>
+                  <span className="text-xs text-accent font-medium">
+                    Current: {activeTheme.name}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-56 overflow-y-auto thin-scroll p-1">
+                  {BROWSER_THEMES.map((theme) => {
+                    const isSelected = theme.id === browserThemeId;
+                    return (
+                      <button
+                        key={theme.id}
+                        type="button"
+                        onClick={() => handleSelectTheme(theme.id)}
+                        className={`group relative flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all cursor-pointer text-left ${
+                          isSelected
+                            ? "bg-white/[0.08] border-accent ring-2 ring-accent/30 shadow-lg scale-[1.02]"
+                            : "bg-white/[0.03] hover:bg-white/[0.06] border-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        {/* Theme preview swatch */}
+                        <div
+                          className="w-12 h-12 rounded-xl shadow-inner border border-white/20 flex items-center justify-center transition-transform group-hover:scale-105"
+                          style={{ background: theme.preview }}
+                        >
+                          {isSelected && (
+                            <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-accent-contrast shadow-md">
+                              <GIconCheck size={13} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-center w-full">
+                          <span className="text-xs font-semibold text-white block truncate">
+                            {theme.name}
+                          </span>
+                          {theme.badge && (
+                            <span className="text-[10px] text-white/40 block">
+                              {theme.badge}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Widget Toggles */}
+              <div className="space-y-3 pt-2 border-t border-white/10">
+                <span className="font-semibold text-white/70 uppercase tracking-wider text-[11px] block">
+                  Start Page Widgets
+                </span>
+
+                <div className="space-y-2">
+                  <div
+                    onClick={handleToggleFavoritesWidget}
+                    className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 cursor-pointer transition select-none"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-sky-500/15 text-sky-400 flex items-center justify-center">
+                        <GIconGlobe size={14} />
+                      </div>
+                      <div>
+                        <span className="text-xs font-semibold text-white block">
+                          {isWin ? "Shortcuts Grid" : "Favorites Grid"}
+                        </span>
+                        <span className="text-[11px] text-white/45 block">
+                          Quick links to experience, skills, and projects
+                        </span>
+                      </div>
+                    </div>
+                    {/* Toggle switch */}
+                    <div
+                      className={`w-11 h-6 rounded-full transition-colors p-0.5 relative ${
+                        showFavoritesWidget ? "bg-accent" : "bg-white/20"
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded-full bg-white shadow-md transition-transform ${
+                          showFavoritesWidget ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={handleTogglePrivacyWidget}
+                    className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 cursor-pointer transition select-none"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
+                        <GIconShield size={14} />
+                      </div>
+                      <div>
+                        <span className="text-xs font-semibold text-white block">
+                          {isWin ? "Google Safe Browsing Badge" : "Safari Privacy Report"}
+                        </span>
+                        <span className="text-[11px] text-white/45 block">
+                          Real-time security shield and tracking status
+                        </span>
+                      </div>
+                    </div>
+                    {/* Toggle switch */}
+                    <div
+                      className={`w-11 h-6 rounded-full transition-colors p-0.5 relative ${
+                        showPrivacyWidget ? "bg-accent" : "bg-white/20"
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded-full bg-white shadow-md transition-transform ${
+                          showPrivacyWidget ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleSelectTheme("default");
+                    setShowFavoritesWidget(true);
+                    setShowPrivacyWidget(true);
+                    localStorage.setItem("browser_show_favs", "true");
+                    localStorage.setItem("browser_show_privacy", "true");
+                  }}
+                  className="text-xs text-white/50 hover:text-white underline cursor-pointer transition"
+                >
+                  Reset to Defaults
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomizeModal(false)}
+                  className="px-5 py-2 rounded-xl bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 transition cursor-pointer shadow-md"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
