@@ -70,6 +70,14 @@ const VARIANT_CONFIG: Record<
     label: "NOTICE",
     progressColor: "bg-violet-400",
   },
+  error: {
+    icon: GIconClose,
+    accentColor: "#f43f5e",
+    border: "border-rose-500/35",
+    badgeBg: "bg-rose-500/20 text-rose-300",
+    label: "ERROR",
+    progressColor: "bg-rose-500",
+  },
 };
 
 function ToastCard({
