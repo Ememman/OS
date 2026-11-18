@@ -67,6 +67,18 @@ export default function CustomDropdown<T extends string = string>({
     md: "px-3 py-1.5 text-xs sm:text-sm rounded-xl gap-2",
   }[size];
 
+  const menuMinW = {
+    xs: "min-w-[130px]",
+    sm: "min-w-[160px]",
+    md: "min-w-[180px]",
+  }[size];
+
+  const itemPadding = {
+    xs: "px-2 py-1 text-[11px] rounded-md",
+    sm: "px-2.5 py-1.5 text-xs rounded-lg",
+    md: "px-3 py-1.5 text-xs sm:text-sm rounded-lg",
+  }[size];
+
   return (
     <div
       ref={containerRef}
@@ -122,7 +134,7 @@ export default function CustomDropdown<T extends string = string>({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -4 }}
             transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className={`absolute top-full z-[300] mt-1.5 min-w-[180px] w-max max-w-[calc(100vw-32px)] sm:max-w-[280px] max-h-60 overflow-y-auto thin-scroll p-1 rounded-xl bg-[#0b101c] border border-white/20 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 ${
+            className={`absolute top-full z-[300] mt-1.5 ${menuMinW} w-max max-w-[calc(100vw-32px)] sm:max-w-[280px] max-h-60 overflow-y-auto thin-scroll p-1 rounded-xl bg-[#0b101c] border border-white/20 shadow-2xl backdrop-blur-2xl ring-1 ring-white/10 ${
               align === "right" ? "right-0" : "left-0"
             } ${menuClassName}`}
           >
@@ -135,7 +147,7 @@ export default function CustomDropdown<T extends string = string>({
                   key={opt.value}
                   type="button"
                   onClick={() => handleSelect(opt.value)}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition cursor-pointer select-none text-left ${
+                  className={`w-full flex items-center justify-between ${itemPadding} transition cursor-pointer select-none text-left ${
                     isSelected
                       ? "bg-[#0091ff]/20 text-white font-semibold border border-[#0091ff]/40 shadow-xs"
                       : "text-white/70 hover:text-white hover:bg-white/10"
