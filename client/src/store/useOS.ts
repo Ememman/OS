@@ -121,6 +121,7 @@ interface OSState {
 }
 
 export const DEFAULT_DOCK_APPS = [
+  "browser",
   "terminal",
   "codeplay",
   "notes",
@@ -139,6 +140,7 @@ export const DEFAULT_DOCK_APPS = [
 ];
 
 export const APPS: Record<string, AppMetadata> = {
+  browser: { title: "Safari", w: 940, h: 640 },
   library: { title: "Library", w: 860, h: 580 },
   music: { title: "Music", w: 760, h: 520 },
   terminal: { title: "Terminal", w: 740, h: 480 },

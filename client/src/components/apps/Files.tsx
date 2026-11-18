@@ -25,6 +25,7 @@ import {
   GIconCopy,
   GIconCheck,
   GIconShield,
+  GIconGlobe,
 } from "../icons/GravityIcons";
 import { fileTree, type FolderNode, type FileItem } from "../../data/files";
 import { useOS } from "../../store/useOS";
@@ -57,6 +58,7 @@ const FAVORITES = [
 
 const PROTECTED_SYSTEM_FILENAMES = new Set([
   "about_emman.txt",
+  "about_bron.txt",
   "skills.txt",
   "readme.md",
   "mendozajamesemmanuelcv.pdf",
@@ -71,6 +73,7 @@ const PROTECTED_SYSTEM_FILENAMES = new Set([
   "terminal.sh",
   "notes.app",
   "calculator.app",
+  "browser.app",
 ]);
 
 /**
@@ -149,6 +152,9 @@ function FileIcon({ item, size = 32 }: { item: any; size?: number }) {
   }
   if (name.includes("calculator") || item.app === "calculator") {
     return <GIconCalculator size={size} className="text-cyan-400" />;
+  }
+  if (name.includes("browser") || item.app === "browser") {
+    return <GIconGlobe size={size} className="text-sky-400" />;
   }
   if (item.type === "folder") {
     return <GIconFolder size={size} className="text-sky-300" />;
@@ -362,7 +368,20 @@ export default function Files() {
   }, [localCustomFiles, cloudFiles]);
 
   const node = useMemo(() => resolvePath(path, combinedCustomFiles), [path, combinedCustomFiles]);
-  const allItems = useMemo(() => node.children || [], [node]);
+  const allItems = useMemo(() => {
+    const raw = node.children || [];
+    const seen = new Set<string>();
+    const unique: any[] = [];
+    for (const item of raw) {
+      const key = (item.name || "").toLowerCase().trim();
+      if (!key) continue;
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(item);
+      }
+    }
+    return unique;
+  }, [node]);
 
   // Dynamic grid column calculation based on actual container width
   const gridColsClass = useMemo(() => {
@@ -1047,33 +1066,39 @@ export default function Files() {
             <div
               role="group"
               aria-label="View Mode"
-              className="inline-flex items-center h-8 bg-white/5 border border-white/10 rounded-xl p-0.5 gap-0.5 shrink-0 shadow-xs"
+              className="inline-flex items-center bg-white/[0.06] border border-white/10 rounded-lg p-0.5 gap-0.5 shrink-0 shadow-inner"
             >
               <button
                 type="button"
-                onClick={() => setView("grid")}
+                onClick={() => {
+                  if (systemSounds) soundFx.playClick();
+                  setView("grid");
+                }}
                 title="Grid View"
                 aria-label="Grid View"
-                className={`flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-150 cursor-pointer ${
+                className={`flex items-center justify-center w-7 h-7 rounded-md transition-all duration-150 cursor-pointer ${
                   view === "grid"
-                    ? "bg-white/20 text-white shadow-xs font-semibold"
-                    : "text-white/45 hover:text-white hover:bg-white/5"
+                    ? "bg-white/20 text-white shadow-sm ring-1 ring-white/15"
+                    : "text-white/50 hover:text-white hover:bg-white/10"
                 }`}
               >
-                <GIconLayoutCells size={15} />
+                <GIconLayoutCells size={14} />
               </button>
               <button
                 type="button"
-                onClick={() => setView("list")}
+                onClick={() => {
+                  if (systemSounds) soundFx.playClick();
+                  setView("list");
+                }}
                 title="List View"
                 aria-label="List View"
-                className={`flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-150 cursor-pointer ${
+                className={`flex items-center justify-center w-7 h-7 rounded-md transition-all duration-150 cursor-pointer ${
                   view === "list"
-                    ? "bg-white/20 text-white shadow-xs font-semibold"
-                    : "text-white/45 hover:text-white hover:bg-white/5"
+                    ? "bg-white/20 text-white shadow-sm ring-1 ring-white/15"
+                    : "text-white/50 hover:text-white hover:bg-white/10"
                 }`}
               >
-                <GIconList size={15} />
+                <GIconList size={14} />
               </button>
             </div>
           </div>

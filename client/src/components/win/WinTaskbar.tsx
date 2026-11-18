@@ -20,6 +20,7 @@ import {
   GIconSettings,
   GIconResume,
   GIconFileText,
+  GIconChrome,
   GIconSearch,
   GIconSignal,
   GIconVolume,
@@ -37,6 +38,7 @@ import {
 } from "../icons/GravityIcons";
 
 const TASKBAR_ITEMS = [
+  { app: "browser", label: "Google Chrome", icon: GIconChrome, color: "#4285F4" },
   { app: "terminal", label: "Terminal", icon: GIconTerminal, color: "#22c55e" },
   { app: "codeplay", label: "CodePlay", icon: GIconCode, color: "#38bdf8" },
   { app: "notes", label: "Notes", icon: GIconNotes, color: "#f59e0b" },
@@ -199,9 +201,9 @@ function StartMenu({ onClose }: { onClose: () => void }) {
             </div>
             <div className="grid grid-cols-2 gap-1.5">
               {[
+                { app: "browser", label: "Google Chrome", desc: "Web Browser", color: "#4285F4" },
                 { app: "terminal", label: "Terminal", desc: "Command Line", color: "#22c55e" },
                 { app: "activity", label: "Task Manager", desc: "System Status", color: "#10b981" },
-                { app: "codeplay", label: "CodePlay", desc: "JS / Web Sandbox", color: "#38bdf8" },
                 { app: "settings", label: "Settings", desc: "Theme & Display", color: "#8892A6" },
               ].map((s) => (
                 <button

@@ -16,6 +16,7 @@ import {
   GIconFiles,
   GIconSettings,
   GIconFileText,
+  GIconSafari,
 } from "../components/icons/GravityIcons";
 
 export interface DesktopAppItem {
@@ -72,6 +73,7 @@ export const APP_REGISTRY: Record<string, AppDefinition> = {
   files: { label: "Files", icon: GIconFiles, color: "#E0B84E", desc: "Virtual filesystem explorer" },
   settings: { label: "Settings", icon: GIconSettings, color: "#8892A6", desc: "System preferences & theme" },
   "pdf-viewer": { label: "PDF Viewer", icon: GIconFileText, color: "#f43f5e", desc: "PDF Document Reader" },
+  browser: { label: "Safari", icon: GIconSafari, color: "#0091ff", desc: "Web Browser & Search" },
 };
 
 export const DEFAULT_DESKTOP_ITEMS: DesktopItem[] = [

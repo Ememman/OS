@@ -21,9 +21,11 @@ import {
   GIconBookOpen,
   GIconCode,
   GIconFileText,
+  GIconSafari,
 } from "./icons/GravityIcons";
 
 const ICON_MAP: Record<string, any> = {
+  browser: { icon: GIconSafari, color: "#0091ff" },
   terminal: { icon: GIconTerminal, color: "#22c55e" },
   notes: { icon: GIconNotes, color: "#f59e0b" },
   calculator: { icon: GIconCalculator, color: "#06b6d4" },

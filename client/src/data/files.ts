@@ -55,6 +55,13 @@ export const fileTree: FolderNode = {
       ]
     },
     {
+      name: "Browser.app",
+      type: "app-link",
+      app: "browser",
+      isDefault: true,
+      readOnly: true
+    },
+    {
       name: "CodePlay.app",
       type: "app-link",
       app: "codeplay",
