@@ -55,12 +55,32 @@ const FAVORITES = [
   { label: "Music", path: ["Music"] },
 ];
 
+const PROTECTED_SYSTEM_FILENAMES = new Set([
+  "about_emman.txt",
+  "skills.txt",
+  "readme.md",
+  "mendozajamesemmanuelcv.pdf",
+  "resume.pdf",
+  "system_architecture.md",
+  "os-manifest.json",
+  "projects",
+  "gallery",
+  "games",
+  "music",
+  "codeplay.app",
+  "terminal.sh",
+  "notes.app",
+  "calculator.app",
+]);
+
 /**
  * Checks whether an item is a pre-existing default / system file.
  * Default files cannot be edited, deleted, or renamed.
  */
 function isDefaultFile(item: any): boolean {
+  if (!item) return false;
   if (item.isDefault === true || item.readOnly === true) return true;
+  if (item.name && PROTECTED_SYSTEM_FILENAMES.has(item.name.toLowerCase().trim())) return true;
   if (!item.isCustom) return true;
   return false;
 }
@@ -68,7 +88,7 @@ function isDefaultFile(item: any): boolean {
 function resolvePath(path: string[], customFiles: FileItem[]): FolderNode {
   let node = fileTree;
   for (const seg of path) {
-    const child = node.children.find((c) => c.name === seg);
+    const child = node.children.find((c) => c.name.toLowerCase() === seg.toLowerCase());
     if (!child || child.type !== "folder") return fileTree;
     node = child;
   }
@@ -77,15 +97,16 @@ function resolvePath(path: string[], customFiles: FileItem[]): FolderNode {
   const currentPathStr = "/" + path.join("/");
   const matchingCustom = customFiles.filter((f) => {
     const fPath = (f as any).path || "/";
-    return fPath === currentPathStr || (path.length === 0 && (fPath === "/" || !fPath));
+    return fPath === currentPathStr;
   });
 
-  // Strict deduplication map keyed by filename to prevent doubled files
+  // Strict deduplication map keyed by normalized lowercase filename
   const map = new Map<string, any>();
 
   // 1. Add static folder children
   node.children.forEach((c) => {
-    map.set(c.name, {
+    const key = c.name.toLowerCase().trim();
+    map.set(key, {
       ...c,
       isDefault: true,
       readOnly: true,
@@ -94,16 +115,18 @@ function resolvePath(path: string[], customFiles: FileItem[]): FolderNode {
 
   // 2. Merge matching custom / cloud files without creating duplicates
   matchingCustom.forEach((item) => {
-    const existing = map.get(item.name);
+    const key = item.name.toLowerCase().trim();
+    const existing = map.get(key);
     if (existing) {
-      map.set(item.name, {
+      map.set(key, {
         ...existing,
         ...item,
+        name: existing.name, // Keep official canonical name
         isDefault: existing.isDefault ?? item.isDefault ?? true,
         readOnly: existing.readOnly ?? item.readOnly ?? true,
       });
     } else {
-      map.set(item.name, item);
+      map.set(key, item);
     }
   });
 
@@ -195,15 +218,40 @@ export default function Files() {
   const [storageStats, setStorageStats] = useState<{ totalKb: number; allocatedDriveMb: number; totalFiles: number } | null>(null);
   const [syncingCloud, setSyncingCloud] = useState(false);
 
-  // Local storage for user-created offline files
+  // Local storage for user-created offline files (strips any accidentally saved default duplicates)
   const [localCustomFiles, setLocalCustomFiles] = useState<any[]>(() => {
     try {
       const saved = localStorage.getItem("os_custom_files");
-      return saved ? JSON.parse(saved) : [];
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter(
+        (f: any) => f && f.name && !PROTECTED_SYSTEM_FILENAMES.has(f.name.toLowerCase().trim())
+      );
     } catch {
       return [];
     }
   });
+
+  // Container width observation for flawless container-level responsiveness
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(800);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const updateSize = () => {
+      if (el.clientWidth > 0) {
+        setContainerWidth(el.clientWidth);
+      }
+    };
+    updateSize();
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const isNarrow = containerWidth < 620;
 
   // Sync local files to localStorage whenever updated
   useEffect(() => {
@@ -275,29 +323,39 @@ export default function Files() {
     };
   }, [openText]);
 
-  // Combine local custom files with server cloud files
+  // Combine local custom files with server cloud files with normalized lowercase keys
   const combinedCustomFiles = useMemo(() => {
     const map = new Map<string, any>();
+    const normalizeKey = (name: string) => (name || "").toLowerCase().trim();
+
     localCustomFiles.forEach((f) => {
-      map.set(f.name, {
+      const key = normalizeKey(f.name);
+      if (!key) return;
+      map.set(key, {
         ...f,
+        path: f.path || "/",
         isCustom: true,
         readOnly: false,
       });
     });
 
     cloudFiles.forEach((cf) => {
-      // If cloud file was marked readOnly from server, honor it
-      const isCustomFile = !cf.readOnly;
-      map.set(cf.name, {
+      const key = normalizeKey(cf.name);
+      if (!key) return;
+      const isSystem = PROTECTED_SYSTEM_FILENAMES.has(key);
+      const isCustomFile = !isSystem && !cf.readOnly;
+      const existing = map.get(key);
+      map.set(key, {
+        ...(existing || {}),
         id: cf.id,
-        name: cf.name,
-        type: "text",
+        name: existing?.name || cf.name,
+        type: cf.type === "markdown" || cf.name.endsWith(".md") ? "text" : cf.type || "text",
         content: cf.content,
-        isCustom: isCustomFile,
-        readOnly: cf.readOnly ?? false,
+        isCustom: existing?.isCustom ?? isCustomFile,
+        readOnly: isSystem || (cf.readOnly ?? existing?.readOnly ?? false),
         size: `${Math.max(1, Math.round(((cf.size || cf.content?.length || 20) / 1024) * 10) / 10)} KB`,
         updatedAt: cf.updatedAt,
+        path: cf.path || "/",
       });
     });
     return Array.from(map.values());
@@ -305,6 +363,22 @@ export default function Files() {
 
   const node = useMemo(() => resolvePath(path, combinedCustomFiles), [path, combinedCustomFiles]);
   const allItems = useMemo(() => node.children || [], [node]);
+
+  // Dynamic grid column calculation based on actual container width
+  const gridColsClass = useMemo(() => {
+    if (isNarrow) {
+      if (containerWidth < 360) return "grid-cols-2";
+      if (containerWidth < 500) return "grid-cols-3";
+      return "grid-cols-4";
+    } else {
+      const mainWidth = containerWidth - 176;
+      if (mainWidth < 360) return "grid-cols-2";
+      if (mainWidth < 500) return "grid-cols-3";
+      if (mainWidth < 680) return "grid-cols-4";
+      if (mainWidth < 880) return "grid-cols-5";
+      return "grid-cols-6";
+    }
+  }, [containerWidth, isNarrow]);
 
   // Navigation Helpers (History Back / Forward / Up)
   const navigateTo = (newPath: string[]) => {
@@ -405,7 +479,7 @@ export default function Files() {
     setMobileSidebar(false);
     if (fav.target) {
       const resolved = resolvePath(fav.path, combinedCustomFiles);
-      const target = resolved.children?.find((c) => c.name === fav.target);
+      const target = resolved.children?.find((c) => c.name.toLowerCase() === fav.target.toLowerCase());
       if (target && target.type === "text") {
         const isDefault = isDefaultFile(target);
         setOpenText({
@@ -434,6 +508,12 @@ export default function Files() {
     else if (newFileType === "javascript") extension = ".js";
 
     const formattedName = cleanName.includes(".") ? cleanName : `${cleanName}${extension}`;
+
+    if (PROTECTED_SYSTEM_FILENAMES.has(formattedName.toLowerCase())) {
+      notify("Reserved Name", `"${formattedName}" is reserved for system files. Please use another name.`, "warning");
+      return;
+    }
+
     const initialContent =
       newFileContent ||
       `# ${formattedName}\n\nUser document created in Portfolio OS on ${new Date().toLocaleDateString()}.\n\nThis file is fully editable.`;
@@ -578,6 +658,11 @@ export default function Files() {
       return;
     }
 
+    if (PROTECTED_SYSTEM_FILENAMES.has(newName.toLowerCase())) {
+      notify("Reserved Name", `"${newName}" is reserved for system files. Please choose another name.`, "warning");
+      return;
+    }
+
     setLocalCustomFiles((prev) =>
       prev.map((f) => (f.name === renamingItem.oldName ? { ...f, name: newName } : f))
     );
@@ -693,6 +778,7 @@ export default function Files() {
 
   return (
     <div
+      ref={containerRef}
       className="relative flex h-full bg-[#0a0d14] text-white select-none overflow-hidden"
       onDragOver={(e) => {
         e.preventDefault();
@@ -727,32 +813,39 @@ export default function Files() {
         </div>
       )}
 
-      {/* Mobile Sidebar Overlay */}
-      {mobileSidebar && (
+      {/* Mobile / Narrow Sidebar Overlay Backdrop */}
+      {isNarrow && mobileSidebar && (
         <div
           onClick={() => setMobileSidebar(false)}
-          className="sm:hidden absolute inset-0 z-20 bg-black/60 backdrop-blur-xs transition-opacity"
+          className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs transition-opacity duration-200"
         />
       )}
 
       {/* Sidebar */}
       <div
-        className={`absolute sm:static inset-y-0 left-0 z-30 w-48 sm:w-44 border-r border-white/10 p-2 sm:p-3 shrink-0 flex flex-col justify-between bg-[#0b0f19] sm:bg-white/[0.02] transition-transform duration-200 ${
-          mobileSidebar ? "translate-x-0 shadow-2xl" : "-translate-x-full sm:translate-x-0"
-        }`}
+        className={`${
+          isNarrow
+            ? `absolute inset-y-0 left-0 z-40 w-52 bg-[#0c101c] shadow-2xl transition-transform duration-200 ${
+                mobileSidebar ? "translate-x-0" : "-translate-x-full pointer-events-none"
+              }`
+            : "relative inset-y-0 w-44 bg-white/[0.02]"
+        } border-r border-white/10 p-3 shrink-0 flex flex-col justify-between`}
       >
         <div className="space-y-4">
           <div>
             <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-white/40 mb-2 px-1">
-              <span className="flex items-center gap-1 font-semibold">
+              <span className="flex items-center gap-1.5 font-semibold">
                 <GIconPin size={11} className="text-amber-400" /> Favorites
               </span>
-              <button
-                onClick={() => setMobileSidebar(false)}
-                className="sm:hidden text-white/50 hover:text-white p-0.5 cursor-pointer"
-              >
-                <GIconClose size={12} />
-              </button>
+              {isNarrow && (
+                <button
+                  onClick={() => setMobileSidebar(false)}
+                  className="text-white/50 hover:text-white p-1 rounded-md hover:bg-white/10 cursor-pointer"
+                  title="Close Sidebar"
+                >
+                  <GIconClose size={12} />
+                </button>
+              )}
             </div>
             <div className="space-y-0.5">
               {FAVORITES.map((f) => (
@@ -837,63 +930,70 @@ export default function Files() {
       {/* Main File Browser Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Navigation & Toolbar Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-2.5 sm:px-3 py-2 border-b border-white/10 shrink-0 gap-1.5 sm:gap-2 bg-[#0d111d]/95 backdrop-blur-md">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-2.5 sm:px-3 py-2 border-b border-white/10 shrink-0 gap-2 bg-[#0d111d]/95 backdrop-blur-md">
           {/* Breadcrumbs & Navigation Controls */}
-          <div className="flex items-center gap-1 text-xs text-white/60 min-w-0 flex-1 overflow-hidden">
-            <button
-              onClick={() => setMobileSidebar(true)}
-              className="sm:hidden p-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white/80 shrink-0 cursor-pointer mr-0.5"
-              title="Toggle Favorites"
-            >
-              <GIconPin size={12} />
-            </button>
+          <div className="flex items-center gap-1.5 text-xs text-white/60 min-w-0 flex-1 overflow-hidden">
+            {isNarrow && (
+              <button
+                onClick={() => setMobileSidebar((prev) => !prev)}
+                className="flex items-center justify-center h-8 px-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white/80 hover:text-white shrink-0 cursor-pointer gap-1 transition"
+                title="Toggle Favorites / Sidebar"
+              >
+                <GIconPin size={12} className="text-amber-400" />
+                <span className="hidden xs:inline text-[11px]">Sidebar</span>
+              </button>
+            )}
 
             {/* Back / Forward / Up Buttons */}
-            <div className="flex items-center gap-0.5 mr-1 border-r border-white/10 pr-1 shrink-0">
+            <div className="inline-flex items-center h-8 bg-white/5 border border-white/10 rounded-xl p-0.5 gap-0.5 shrink-0">
               <button
                 onClick={goBack}
                 disabled={historyIdx <= 0}
-                className="p-1 rounded-md hover:bg-white/10 text-white/70 disabled:opacity-25 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                className="flex items-center justify-center w-7 h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-25 disabled:hover:bg-transparent disabled:cursor-not-allowed transition cursor-pointer"
                 title="Back"
+                aria-label="Back"
               >
-                <GIconChevronLeft size={13} />
+                <GIconChevronLeft size={14} />
               </button>
               <button
                 onClick={goForward}
                 disabled={historyIdx >= history.length - 1}
-                className="p-1 rounded-md hover:bg-white/10 text-white/70 disabled:opacity-25 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                className="flex items-center justify-center w-7 h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-25 disabled:hover:bg-transparent disabled:cursor-not-allowed transition cursor-pointer"
                 title="Forward"
+                aria-label="Forward"
               >
-                <GIconChevronRight size={13} />
+                <GIconChevronRight size={14} />
               </button>
               <button
                 onClick={goUp}
                 disabled={path.length === 0}
-                className="p-1 rounded-md hover:bg-white/10 text-white/70 disabled:opacity-25 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                className="flex items-center justify-center w-7 h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 disabled:opacity-25 disabled:hover:bg-transparent disabled:cursor-not-allowed transition cursor-pointer"
                 title="Up Folder"
+                aria-label="Up Folder"
               >
-                <GIconChevronUp size={13} />
+                <GIconChevronUp size={14} />
               </button>
             </div>
 
             {/* Breadcrumb Path Trail */}
-            <div className="flex items-center gap-1 min-w-0 truncate">
+            <div className="flex items-center gap-1 min-w-0 truncate px-1">
               <button
                 onClick={() => navigateTo([])}
-                className={`hover:text-white shrink-0 font-medium cursor-pointer ${
+                className={`hover:text-white shrink-0 font-medium cursor-pointer transition ${
                   path.length === 0 ? "text-white" : "text-white/60"
                 }`}
               >
                 Root
               </button>
               {path.map((seg, i) => (
-                <span key={i} className="flex items-center gap-1 shrink-0">
-                  <GIconChevronRight size={11} className="text-white/30" />
+                <span key={i} className="flex items-center gap-1 min-w-0 shrink truncate">
+                  <GIconChevronRight size={11} className="text-white/30 shrink-0" />
                   <button
                     onClick={() => navigateTo(path.slice(0, i + 1))}
-                    className={`hover:text-white truncate cursor-pointer ${
+                    className={`hover:text-white truncate cursor-pointer transition ${
                       i === path.length - 1 ? "text-white font-medium" : "text-white/60"
                     }`}
+                    title={seg}
                   >
                     {seg}
                   </button>
@@ -903,58 +1003,73 @@ export default function Files() {
           </div>
 
           {/* Search bar, Sort & View Toggles */}
-          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             {/* Filter Search Input */}
-            <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg px-2 py-1 transition-all focus-within:border-accent focus-within:ring-1 focus-within:ring-accent">
-              <GIconSearch size={12} className="text-white/40 shrink-0" />
+            <div className="flex items-center h-8 bg-white/5 border border-white/10 rounded-xl px-2.5 gap-1.5 transition-all focus-within:border-accent focus-within:ring-1 focus-within:ring-accent">
+              <GIconSearch size={13} className="text-white/40 shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Filter..."
-                className="bg-transparent text-xs text-white placeholder:text-white/30 outline-none w-14 xs:w-20 sm:w-28 focus:w-20 xs:focus:w-24 sm:focus:w-32 transition-all"
+                className="bg-transparent text-xs text-white placeholder:text-white/35 outline-none w-14 xs:w-20 sm:w-28 focus:w-20 xs:focus:w-24 sm:focus:w-32 transition-all"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="text-white/40 hover:text-white"
+                  className="text-white/40 hover:text-white cursor-pointer"
+                  title="Clear filter"
                 >
-                  <GIconClose size={10} />
+                  <GIconClose size={11} />
                 </button>
               )}
             </div>
 
-            {/* Sort Selector */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="hidden md:block bg-white/5 border border-white/10 text-[11px] text-white/70 rounded-lg px-2 py-1 outline-none cursor-pointer hover:bg-white/10 transition"
-              title="Sort items"
-            >
-              <option value="name" className="bg-[#121622] text-white">Name (A-Z)</option>
-              <option value="type" className="bg-[#121622] text-white">File Type</option>
-              <option value="size" className="bg-[#121622] text-white">Size</option>
-            </select>
+            {/* Sort Selector (Shown when container is wide enough) */}
+            {containerWidth >= 540 && (
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="h-8 bg-white/5 border border-white/10 text-xs text-white/80 rounded-xl px-2.5 outline-none cursor-pointer hover:bg-white/10 transition"
+                title="Sort items"
+              >
+                <option value="name" className="bg-[#121622] text-white">Name (A-Z)</option>
+                <option value="type" className="bg-[#121622] text-white">File Type</option>
+                <option value="size" className="bg-[#121622] text-white">Size</option>
+              </select>
+            )}
 
-            {/* View Mode Toggle */}
-            <div className="flex gap-0.5 bg-white/5 p-0.5 rounded-lg border border-white/10 shrink-0">
+            {/* View Mode Toggle (Grid vs List) */}
+            <div
+              role="group"
+              aria-label="View Mode"
+              className="inline-flex items-center h-8 bg-white/5 border border-white/10 rounded-xl p-0.5 gap-0.5 shrink-0 shadow-xs"
+            >
               <button
+                type="button"
                 onClick={() => setView("grid")}
                 title="Grid View"
-                className={`p-1 rounded-md transition cursor-pointer ${
-                  view === "grid" ? "bg-white/20 text-white" : "hover:bg-white/8 text-white/50"
+                aria-label="Grid View"
+                className={`flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-150 cursor-pointer ${
+                  view === "grid"
+                    ? "bg-white/20 text-white shadow-xs font-semibold"
+                    : "text-white/45 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <GIconLayoutCells size={13} />
+                <GIconLayoutCells size={15} />
               </button>
               <button
+                type="button"
                 onClick={() => setView("list")}
                 title="List View"
-                className={`p-1 rounded-md transition cursor-pointer ${
-                  view === "list" ? "bg-white/20 text-white" : "hover:bg-white/8 text-white/50"
+                aria-label="List View"
+                className={`flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-150 cursor-pointer ${
+                  view === "list"
+                    ? "bg-white/20 text-white shadow-xs font-semibold"
+                    : "text-white/45 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <GIconList size={13} />
+                <GIconList size={15} />
               </button>
             </div>
           </div>
@@ -975,23 +1090,23 @@ export default function Files() {
             </div>
           ) : view === "grid" ? (
             /* GRID VIEW */
-            <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
+            <div className={`grid ${gridColsClass} gap-2.5`}>
               {filteredItems.map((item: any, i) => {
                 const isDefault = isDefaultFile(item);
                 return (
                   <div
-                    key={i}
+                    key={item.id || item.name || i}
                     onClick={() => openItem(item)}
-                    className="group relative flex flex-col items-center p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.07] border border-white/5 hover:border-white/15 transition-all duration-150 cursor-pointer text-center select-none shadow-xs"
+                    className="group relative flex flex-col justify-between items-center h-[126px] p-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.07] border border-white/5 hover:border-white/15 transition-all duration-150 cursor-pointer text-center select-none shadow-xs"
                   >
-                    {/* Protected / Custom Status Badge */}
-                    <div className="absolute top-2 left-2">
+                    {/* Top row: Badges and Action buttons */}
+                    <div className="w-full flex items-center justify-between shrink-0 h-4">
                       {isDefault ? (
                         <span
                           title="Protected System File (Read-Only)"
-                          className="flex items-center text-amber-400/80 p-0.5 rounded"
+                          className="flex items-center text-amber-400/80"
                         >
-                          <GIconShield size={11} />
+                          <GIconShield size={12} />
                         </span>
                       ) : (
                         <span
@@ -999,56 +1114,68 @@ export default function Files() {
                           className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#10b981]"
                         />
                       )}
-                    </div>
 
-                    {/* Quick Action Buttons for User Files */}
-                    {!isDefault && (
-                      <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity z-10">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setRenamingItem({ id: item.id, oldName: item.name, name: item.name });
-                          }}
-                          title="Rename file"
-                          className="p-1 rounded-md bg-white/15 hover:bg-white/25 text-white/80 hover:text-white transition"
-                        >
-                          <GIconPencil size={11} />
-                        </button>
-                        <button
-                          onClick={(e) => handleDeleteFile(item, e)}
-                          title="Delete file"
-                          className="p-1 rounded-md bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white transition"
-                        >
-                          <GIconTrash size={11} />
-                        </button>
+                      {/* Action buttons (hover) */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {!isDefault && (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRenamingItem({ id: item.id, oldName: item.name, name: item.name });
+                              }}
+                              title="Rename file"
+                              className="p-1 rounded-md bg-white/15 hover:bg-white/25 text-white/80 hover:text-white transition"
+                            >
+                              <GIconPencil size={11} />
+                            </button>
+                            <button
+                              onClick={(e) => handleDeleteFile(item, e)}
+                              title="Delete file"
+                              className="p-1 rounded-md bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white transition"
+                            >
+                              <GIconTrash size={11} />
+                            </button>
+                          </>
+                        )}
+                        {isDefault && item.type === "text" && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDuplicateFile(item);
+                            }}
+                            title="Duplicate & Make Editable Copy"
+                            className="p-1 rounded-md bg-white/15 hover:bg-white/25 text-white/70 hover:text-white transition"
+                          >
+                            <GIconCopy size={11} />
+                          </button>
+                        )}
                       </div>
-                    )}
-
-                    {/* Duplicate button for default files */}
-                    {isDefault && item.type === "text" && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDuplicateFile(item);
-                        }}
-                        title="Duplicate & Make Editable Copy"
-                        className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 p-1 rounded-md bg-white/15 hover:bg-white/25 text-white/70 hover:text-white transition z-10"
-                      >
-                        <GIconCopy size={11} />
-                      </button>
-                    )}
-
-                    <div className="my-2 p-1.5 flex items-center justify-center transform group-hover:scale-105 transition-transform duration-150">
-                      <FileIcon item={item} size={36} />
                     </div>
 
-                    <span className="text-xs text-white/90 truncate max-w-full font-medium leading-tight">
-                      {item.name}
-                    </span>
+                    {/* Centered File Icon */}
+                    <div className="my-auto py-1 flex items-center justify-center transform group-hover:scale-105 transition-transform duration-150">
+                      <FileIcon item={item} size={34} />
+                    </div>
 
-                    <div className="flex items-center gap-1 text-[10px] text-white/40 mt-1">
-                      <span>{item.type === "folder" ? "Folder" : item.size || "System"}</span>
-                      {isDefault && <span className="text-[9px] text-amber-300/70 font-mono">· Locked</span>}
+                    {/* Bottom row: Name & Subtitle */}
+                    <div className="w-full shrink-0 flex flex-col items-center">
+                      <span
+                        className="text-xs text-white/90 truncate w-full font-medium leading-tight"
+                        title={item.name}
+                      >
+                        {item.name}
+                      </span>
+                      <div className="flex items-center justify-center gap-1 text-[10px] text-white/40 mt-0.5 w-full whitespace-nowrap overflow-hidden">
+                        <span className="truncate">
+                          {item.type === "folder" ? "Folder" : item.size || "System"}
+                        </span>
+                        {isDefault && (
+                          <span className="text-[9px] text-amber-300/80 font-mono shrink-0">
+                            · Locked
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -1057,7 +1184,7 @@ export default function Files() {
           ) : (
             /* LIST VIEW */
             <div className="border border-white/10 rounded-xl overflow-hidden bg-white/[0.01]">
-              <div className="grid grid-cols-12 px-3 py-1.5 text-[10px] uppercase font-semibold tracking-wider text-white/40 border-b border-white/10 bg-white/[0.03]">
+              <div className="grid grid-cols-12 px-3 py-2 text-[10px] uppercase font-semibold tracking-wider text-white/40 border-b border-white/10 bg-white/[0.03]">
                 <span className="col-span-6 sm:col-span-6">Name</span>
                 <span className="col-span-3 sm:col-span-2">Type</span>
                 <span className="col-span-3 sm:col-span-2">Size</span>
@@ -1069,13 +1196,15 @@ export default function Files() {
                   const isDefault = isDefaultFile(item);
                   return (
                     <div
-                      key={i}
+                      key={item.id || item.name || i}
                       onClick={() => openItem(item)}
-                      className="group grid grid-cols-12 items-center px-3 py-2 text-xs hover:bg-white/[0.06] transition cursor-pointer"
+                      className="group grid grid-cols-12 items-center px-3 py-2 text-xs hover:bg-white/[0.06] transition cursor-pointer select-none"
                     >
-                      <div className="col-span-6 sm:col-span-6 flex items-center gap-2.5 min-w-0 pr-2">
-                        <FileIcon item={item} size={16} />
-                        <span className="truncate font-medium text-white/90">{item.name}</span>
+                      <div className="col-span-6 sm:col-span-6 flex items-center gap-2 min-w-0 pr-2">
+                        <div className="shrink-0">
+                          <FileIcon item={item} size={16} />
+                        </div>
+                        <span className="truncate font-medium text-white/90" title={item.name}>{item.name}</span>
                       </div>
 
                       <div className="col-span-3 sm:col-span-2 text-[11px] text-white/50 capitalize truncate">
@@ -1083,7 +1212,7 @@ export default function Files() {
                       </div>
 
                       <div className="col-span-3 sm:col-span-2 text-[11px] text-white/40 font-mono truncate">
-                        {item.type === "folder" ? "--" : item.size || "1 KB"}
+                        {item.type === "folder" ? "—" : item.size || "1 KB"}
                       </div>
 
                       <div className="hidden sm:flex sm:col-span-2 items-center justify-end gap-1.5 shrink-0">
