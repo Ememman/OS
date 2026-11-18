@@ -18,6 +18,7 @@ export interface SearchResultItem {
 }
 
 export interface KnowledgePanelData {
+  id?: "developer" | "system";
   title: string;
   subtitle: string;
   description: string;
@@ -27,6 +28,7 @@ export interface KnowledgePanelData {
 }
 
 export const DEVELOPER_KNOWLEDGE_PANEL: KnowledgePanelData = {
+  id: "developer",
   title: "James Emmanuel E. Mendoza",
   subtitle: "Full-Stack Software Developer & Front-End Specialist",
   description:
@@ -62,6 +64,7 @@ export const DEVELOPER_KNOWLEDGE_PANEL: KnowledgePanelData = {
 };
 
 export const SYSTEM_KNOWLEDGE_PANEL: KnowledgePanelData = {
+  id: "system",
   title: "Portfolio OS",
   subtitle: "Interactive Multi-Persona Web Operating System",
   description:
@@ -219,6 +222,33 @@ export const SEARCH_INDEX: SearchResultItem[] = [
       "testing",
     ],
     badge: "Current Position",
+  },
+  {
+    id: "tech-tanstack-query",
+    category: "skills",
+    title: "TanStack Query (React Query) — Enterprise Server-State Architecture",
+    url: "https://mendoza.dev/skills#tanstack-query",
+    displayUrl: "https://tanstack.com › query › v5 › docs",
+    snippet:
+      "Advanced asynchronous state management, declarative caching, background prefetching, and query invalidation. Utilized by James Mendoza in production client web portals at Dowinn Group for resilient data synchronization.",
+    keywords: [
+      "tanstack",
+      "tan stack",
+      "tanstack query",
+      "react query",
+      "query",
+      "tan stack query",
+      "tanstack query react docs",
+      "cache",
+      "server state",
+      "devtools",
+      "fetching",
+    ],
+    badge: "Core Stack",
+    sitelinks: [
+      { title: "Query Devtools & Caching", url: "https://mendoza.dev/skills#tanstack-query" },
+      { title: "Dowinn Group Implementation", url: "https://mendoza.dev/experience#dowinn" },
+    ],
   },
   {
     id: "exp-straive",
@@ -457,15 +487,47 @@ export const SEARCH_INDEX: SearchResultItem[] = [
   },
 ];
 
-export const DEFAULT_RECENT_SEARCHES: string[] = [
-  "tan stack query",
-  "dowinn group front-end developer",
-  "james emmanuel mendoza",
-  "straive ims inventory system",
-  "national teachers college magna cum laude",
-  "portfolio os shortcuts",
-  "working man meme gif",
-  "nba standings",
+export const DEFAULT_EXPLORE_TOPICS: { title: string; query: string; category: string }[] = [
+  {
+    title: "James Emmanuel E. Mendoza — Biography & Experience",
+    query: "James Emmanuel Mendoza",
+    category: "profile",
+  },
+  {
+    title: "Front-End Developer at Dowinn Group",
+    query: "Dowinn Group front-end developer",
+    category: "experience",
+  },
+  {
+    title: "Technical Skills — React 19, Next.js, TypeScript, PHP",
+    query: "Technical Skills React Next.js TypeScript PHP",
+    category: "skills",
+  },
+  {
+    title: "Portfolio OS — System Architecture & Kernel 3.2.0-LTS",
+    query: "Portfolio OS System Architecture",
+    category: "system",
+  },
+  {
+    title: "Straive IMS — Inventory Management System",
+    query: "Straive IMS inventory management system",
+    category: "projects",
+  },
+  {
+    title: "National Teachers College — Magna Cum Laude BSIT",
+    query: "National Teachers College Magna Cum Laude",
+    category: "academics",
+  },
+  {
+    title: "Keyboard Shortcuts & Global Hotkeys (⌘K, F3)",
+    query: "Keyboard Shortcuts Directory",
+    category: "system",
+  },
+  {
+    title: "Curriculum Vitae (PDF Download)",
+    query: "James Mendoza Resume CV",
+    category: "profile",
+  },
 ];
 
 export const AUTOCOMPLETE_KEYWORDS: string[] = [
@@ -475,10 +537,8 @@ export const AUTOCOMPLETE_KEYWORDS: string[] = [
   "tan stack query react docs",
   "tan stack table",
   "tan stack form",
-  "tan staycation cebu",
-  "tan star taiwan",
   "react 19",
-  "react 19 new features",
+  "react 19 concurrent features",
   "react native expo mobile app",
   "react loading skeleton",
   "next.js 15 app router",
@@ -486,17 +546,19 @@ export const AUTOCOMPLETE_KEYWORDS: string[] = [
   "tailwind css v4",
   "shadcn ui components",
 
-  // James Mendoza & Credentials
+  // James Mendoza & Professional Background
   "james emmanuel mendoza",
+  "james emmanuel e. mendoza",
   "james mendoza portfolio",
-  "james mendoza resume pdf",
+  "james mendoza resume cv",
   "james mendoza contact manila",
-  "james mendoza github",
+  "james mendoza github ememman",
+  "james mendoza linkedin",
   "dowinn group",
   "dowinn group front-end developer",
   "dowinn group enterprise portals",
   "dowinn group test automation playwright",
-  "straive ojt it support",
+  "straive ojt it support specialist",
   "straive ims inventory management system",
   "straive 1kosmos bitlocker active directory",
   "national teachers college",
@@ -504,35 +566,27 @@ export const AUTOCOMPLETE_KEYWORDS: string[] = [
   "national teachers college magna cum laude",
   "salon 2026 best in research award",
 
-  // Backend & Databases
+  // Backend, Databases & Testing
   "php mvc framework",
   "php laravel rest api",
   "php codeigniter legacy systems",
-  "postgresql database schemas",
-  "mysql relational architecture",
-  "mongodb nosql pipeline",
-  "socket.io real-time chat room",
+  "postgresql relational database",
+  "mysql database schemas",
+  "mongodb nosql aggregation",
+  "socket.io real-time chat sync",
   "playwright automated e2e testing",
   "selenium and appium mobile testing",
 
-  // Projects & OS Specs
+  // Projects & Portfolio OS Specs
   "sandrealee salon mobile application",
-  "sandrealee salon web portal",
+  "sandrealee salon customer portal",
   "sandrealee salon admin dashboard",
   "portfolio os dual persona",
   "portfolio os kernel 3.2.0-lts",
   "portfolio os window manager snap assist",
   "portfolio os keyboard shortcuts cmd+k",
   "portfolio os dark mode night accents",
-  "portfolio os terminal commands",
-
-  // Popular queries & queries from user screenshot
-  "working man meme gif",
-  "nba standings",
-  "2hrs ₱500 for billiard",
-  "gsw",
-  "lorem ipsum generator",
-  "paul george stats",
-  "tachiyomi extensions",
-  "new orleans pelicans vs golden state warriors match player stats",
+  "portfolio os terminal shell commands",
+  "portfolio os virtual cloud filesystem",
+  "portfolio os sound synthesis web audio",
 ];

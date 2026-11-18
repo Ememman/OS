@@ -20,13 +20,14 @@ import {
   GIconGraduationCap,
   GIconTerminal,
   GIconClock,
+  GIconCompass,
 } from "../icons/GravityIcons";
 import {
   SEARCH_INDEX,
   DEVELOPER_KNOWLEDGE_PANEL,
   SYSTEM_KNOWLEDGE_PANEL,
   BROWSER_FAVORITES,
-  DEFAULT_RECENT_SEARCHES,
+  DEFAULT_EXPLORE_TOPICS,
   AUTOCOMPLETE_KEYWORDS,
 } from "../../data/browserKnowledge";
 import { useOS } from "../../store/useOS";
@@ -41,7 +42,7 @@ interface Tab {
 }
 
 interface SuggestionEntry {
-  type: "search" | "recent" | "keyword" | "site";
+  type: "search" | "recent" | "keyword" | "site" | "explore";
   title: string;
   query: string;
   url?: string;
@@ -81,6 +82,7 @@ interface SuggestionsDropdownProps {
   onSelect: (entry: SuggestionEntry) => void;
   onRemoveRecent: (query: string, e: React.MouseEvent) => void;
   onClearAllRecents: (e: React.MouseEvent) => void;
+  embedded?: boolean;
 }
 
 function SuggestionsDropdown({
@@ -91,106 +93,154 @@ function SuggestionsDropdown({
   onSelect,
   onRemoveRecent,
   onClearAllRecents,
+  embedded = false,
 }: SuggestionsDropdownProps) {
-  const isRecentMode = !currentQuery.trim() || entries.every((e) => e.type === "recent");
-
   if (entries.length === 0) {
     return null;
   }
 
-  return (
-    <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-[#1c2230]/98 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] p-1.5 space-y-0.5 text-left select-none">
-      {isRecentMode && (
-        <div className="flex items-center justify-between px-3 py-1.5 text-[10px] uppercase font-semibold text-white/40 tracking-wider border-b border-white/5 mb-1">
-          <div className="flex items-center gap-1.5">
-            <GIconClock size={11} className="text-white/40" />
-            <span>Recent Searches</span>
-          </div>
-          <button
-            type="button"
-            onMouseDown={onClearAllRecents}
-            className="hover:text-white transition cursor-pointer normal-case text-[11px] font-normal"
-          >
-            Clear all
-          </button>
-        </div>
-      )}
+  const containerClasses = embedded
+    ? "p-2 space-y-0.5 text-left select-none max-h-[380px] overflow-y-auto thin-scroll"
+    : "absolute top-full left-0 right-0 mt-1.5 z-50 bg-[#181d29]/98 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] p-2 space-y-0.5 text-left select-none max-h-[380px] overflow-y-auto thin-scroll";
 
+  return (
+    <div className={containerClasses}>
       {entries.map((entry, idx) => {
         const isSelected = selectedIndex === idx;
+        const isFirstRecent = entry.type === "recent" && (idx === 0 || entries[idx - 1]?.type !== "recent");
+        const isFirstExplore = entry.type === "explore" && (idx === 0 || entries[idx - 1]?.type !== "explore");
 
         return (
-          <div
-            key={`${entry.type}-${entry.query}-${idx}`}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              onSelect(entry);
-            }}
-            className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs sm:text-[13px] transition-all cursor-pointer ${
-              isSelected
-                ? "bg-white/15 text-white font-medium"
-                : "text-white/80 hover:bg-white/10 hover:text-white"
-            }`}
-          >
-            <div className="flex items-center gap-2.5 min-w-0 flex-1 truncate">
-              {/* Left icon per type */}
-              <div className="w-5 flex items-center justify-center shrink-0">
-                {entry.type === "recent" ? (
-                  <GIconClock size={13} className="text-white/40 group-hover:text-white/70" />
-                ) : entry.type === "site" ? (
-                  entry.url?.includes("cv") || entry.url?.includes("pdf") ? (
-                    <GIconFileText size={13} className="text-rose-400" />
-                  ) : entry.url?.includes("os://") ? (
-                    <GIconTerminal size={13} className="text-emerald-400" />
+          <div key={`${entry.type}-${entry.query}-${idx}`}>
+            {isFirstRecent && (
+              <div className="flex items-center justify-between px-3 py-1.5 text-[10px] uppercase font-bold text-white/40 tracking-wider">
+                <div className="flex items-center gap-1.5">
+                  <GIconClock size={11} className="text-white/40" />
+                  <span>Recent Searches</span>
+                </div>
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onClearAllRecents(e);
+                  }}
+                  className="hover:text-white transition cursor-pointer normal-case text-[11px] font-normal text-white/40 hover:underline"
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
+
+            {isFirstExplore && (
+              <div
+                className={`flex items-center justify-between px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider ${
+                  idx > 0 ? "border-t border-white/5 pt-2 mt-1" : ""
+                } text-sky-400/80`}
+              >
+                <div className="flex items-center gap-1.5">
+                  <GIconCompass size={12} className="text-sky-400" />
+                  <span>Explore Portfolio OS & Developer</span>
+                </div>
+                <span className="text-[10px] text-white/30 normal-case font-normal">Suggested</span>
+              </div>
+            )}
+
+            <div
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onSelect(entry);
+              }}
+              className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs sm:text-[13px] transition-all cursor-pointer ${
+                isSelected
+                  ? "bg-white/15 text-white font-medium shadow-xs"
+                  : "text-white/80 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0 flex-1 truncate">
+                {/* Left icon per type */}
+                <div className="w-5 flex items-center justify-center shrink-0">
+                  {entry.type === "recent" ? (
+                    <GIconClock size={13} className="text-white/40 group-hover:text-white/70" />
+                  ) : entry.type === "explore" ? (
+                    entry.subtitle === "system" ? (
+                      <GIconTerminal size={13} className="text-emerald-400" />
+                    ) : entry.subtitle === "skills" ? (
+                      <GIconCode size={13} className="text-purple-400" />
+                    ) : entry.subtitle === "experience" ? (
+                      <GIconBriefcase size={13} className="text-amber-400" />
+                    ) : entry.subtitle === "academics" ? (
+                      <GIconGraduationCap size={13} className="text-indigo-400" />
+                    ) : (
+                      <GIconSearch size={13} className="text-sky-400" />
+                    )
+                  ) : entry.type === "site" ? (
+                    entry.url?.includes("cv") || entry.url?.includes("pdf") ? (
+                      <GIconFileText size={13} className="text-rose-400" />
+                    ) : entry.url?.includes("os://") ? (
+                      <GIconTerminal size={13} className="text-emerald-400" />
+                    ) : (
+                      <GIconGlobe size={13} className="text-sky-400" />
+                    )
                   ) : (
-                    <GIconGlobe size={13} className="text-sky-400" />
-                  )
+                    <GIconSearch size={13} className="text-white/40 group-hover:text-white/70" />
+                  )}
+                </div>
+
+                {/* Text content */}
+                {entry.type === "search" ? (
+                  <div className="flex items-center gap-1.5 truncate font-medium text-white">
+                    <span>{entry.query}</span>
+                    <span className="text-white/40 text-[11px] font-normal">
+                      — {isWin ? "Google Search" : "Safari Search"}
+                    </span>
+                  </div>
+                ) : entry.type === "keyword" || entry.type === "recent" ? (
+                  <div className="truncate">
+                    <HighlightedSuggestion text={entry.title} query={currentQuery} />
+                  </div>
+                ) : entry.type === "explore" ? (
+                  <div className="flex items-center gap-2 truncate min-w-0">
+                    <span className="font-medium text-white truncate">{entry.title}</span>
+                    {entry.subtitle && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/50 border border-white/5 capitalize shrink-0">
+                        {entry.subtitle}
+                      </span>
+                    )}
+                  </div>
                 ) : (
-                  <GIconSearch size={13} className="text-white/40 group-hover:text-white/70" />
+                  /* Site entry */
+                  <div className="flex items-center gap-1.5 truncate min-w-0">
+                    <span className="font-medium text-white truncate">
+                      <HighlightedSuggestion text={entry.title} query={currentQuery} />
+                    </span>
+                    {entry.subtitle && (
+                      <>
+                        <span className="text-white/30 shrink-0">—</span>
+                        <span className="text-[11px] text-white/45 font-mono truncate shrink-0">
+                          {entry.subtitle}
+                        </span>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
 
-              {/* Text content */}
-              {entry.type === "search" ? (
-                <div className="flex items-center gap-1 truncate font-medium text-white">
-                  <span>{entry.query}</span>
-                  <span className="text-white/40 text-[11px] font-normal">
-                    — {isWin ? "Google Search" : "Safari Search"}
-                  </span>
-                </div>
-              ) : entry.type === "keyword" || entry.type === "recent" ? (
-                <div className="truncate">
-                  <HighlightedSuggestion text={entry.title} query={currentQuery} />
-                </div>
-              ) : (
-                /* Site entry */
-                <div className="flex items-center gap-1.5 truncate min-w-0">
-                  <span className="font-medium text-white truncate">
-                    <HighlightedSuggestion text={entry.title} query={currentQuery} />
-                  </span>
-                  {entry.subtitle && (
-                    <>
-                      <span className="text-white/30 shrink-0">—</span>
-                      <span className="text-[11px] text-white/45 font-mono truncate shrink-0">
-                        {entry.subtitle}
-                      </span>
-                    </>
-                  )}
-                </div>
+              {/* Remove item button for recent searches */}
+              {entry.type === "recent" && (
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onRemoveRecent(entry.query, e);
+                  }}
+                  title="Remove from recent searches"
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/15 rounded-md text-white/40 hover:text-white transition shrink-0 ml-2"
+                >
+                  <GIconClose size={11} />
+                </button>
               )}
             </div>
-
-            {/* Remove item button for recent searches */}
-            {entry.type === "recent" && (
-              <button
-                type="button"
-                onMouseDown={(e) => onRemoveRecent(entry.query, e)}
-                title="Remove from recent searches"
-                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/15 rounded-md text-white/40 hover:text-white transition shrink-0 ml-2"
-              >
-                <GIconClose size={11} />
-              </button>
-            )}
           </div>
         );
       })}
@@ -243,16 +293,16 @@ export default function Browser() {
   // Keyboard navigation for suggestions
   const [selectedSuggestionIdx, setSelectedSuggestionIdx] = useState<number>(-1);
 
-  // Recent searches with localStorage persistence
+  // Recent searches with localStorage persistence (starts EMPTY unless user actually searched)
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem("browser_recent_searches");
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch {}
-    return DEFAULT_RECENT_SEARCHES;
+    return [];
   });
 
   useEffect(() => {
@@ -496,17 +546,36 @@ export default function Browser() {
         q.startsWith("google://");
 
       if (isStartOrEmpty) {
-        // Recent searches on focus (Image 1)
-        return recentSearches.slice(0, 8).map((r) => ({
-          type: "recent",
-          title: r,
-          query: r,
-        }));
+        const entries: SuggestionEntry[] = [];
+
+        // 1. If user has actual recent searches, show up to 5
+        if (recentSearches.length > 0) {
+          recentSearches.slice(0, 5).forEach((r) => {
+            entries.push({
+              type: "recent",
+              title: r,
+              query: r,
+            });
+          });
+        }
+
+        // 2. Default Explore topics featuring the most important info about developer & system
+        const exploreCount = recentSearches.length > 0 ? 4 : 8;
+        DEFAULT_EXPLORE_TOPICS.slice(0, exploreCount).forEach((topic) => {
+          entries.push({
+            type: "explore",
+            title: topic.title,
+            query: topic.query,
+            subtitle: topic.category,
+          });
+        });
+
+        return entries;
       }
 
       const entries: SuggestionEntry[] = [];
 
-      // 1. Direct Search suggestion (Image 2 top row)
+      // 1. Direct Search suggestion (matches Google top row)
       entries.push({
         type: "search",
         title: `${rawQuery} - ${isWin ? "Google Search" : "Safari Search"}`,
@@ -525,7 +594,7 @@ export default function Browser() {
           });
         });
 
-      // 3. Keyword Completions (Image 2)
+      // 3. Keyword Completions
       const startsWith = AUTOCOMPLETE_KEYWORDS.filter((kw) =>
         kw.toLowerCase().startsWith(q)
       );
@@ -546,7 +615,7 @@ export default function Browser() {
         });
       });
 
-      // 4. Matching Web Sites & Documentation (Image 2)
+      // 4. Matching Web Sites & Documentation
       const siteMatches = SEARCH_INDEX.filter(
         (item) =>
           item.title.toLowerCase().includes(q) ||
@@ -582,19 +651,52 @@ export default function Browser() {
     return getSuggestions(homeSearchQuery);
   }, [isHomeSearchFocused, homeSearchQuery, getSuggestions]);
 
-  // Filtered search results
+  // Filtered and ranked search results with multi-token relevance scoring
   const searchResults = useMemo(() => {
     if (!currentQuery) return [];
-    const qTokens = currentQuery.toLowerCase().split(/\s+/).filter(Boolean);
+    const q = currentQuery.toLowerCase().trim();
+    const qTokens = q.split(/\s+/).filter(Boolean);
 
-    let list = SEARCH_INDEX.filter((item) => {
-      return qTokens.some(
-        (token) =>
-          item.keywords.some((kw) => kw.includes(token)) ||
-          item.title.toLowerCase().includes(token) ||
-          item.snippet.toLowerCase().includes(token)
-      );
+    const scored = SEARCH_INDEX.map((item) => {
+      let score = 0;
+      const titleLower = item.title.toLowerCase();
+      const snippetLower = item.snippet.toLowerCase();
+      const urlLower = item.url.toLowerCase();
+
+      // 1. Exact match bonuses
+      if (titleLower === q) score += 200;
+      else if (titleLower.includes(q)) score += 100;
+
+      if (item.keywords.some((kw) => kw.toLowerCase() === q)) score += 160;
+      else if (item.keywords.some((kw) => kw.toLowerCase().includes(q))) score += 80;
+
+      // 2. Token matches
+      let matchedTokensCount = 0;
+      for (const token of qTokens) {
+        let tokenScore = 0;
+        if (titleLower.includes(token)) tokenScore += 40;
+        if (item.keywords.some((kw) => kw.includes(token))) tokenScore += 35;
+        if (urlLower.includes(token)) tokenScore += 20;
+        if (snippetLower.includes(token)) tokenScore += 10;
+
+        if (tokenScore > 0) {
+          matchedTokensCount++;
+          score += tokenScore;
+        }
+      }
+
+      // Bonus if all tokens matched
+      if (matchedTokensCount === qTokens.length && qTokens.length > 1) {
+        score += 80;
+      }
+
+      return { item, score };
     });
+
+    let list = scored
+      .filter((s) => s.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map((s) => s.item);
 
     if (searchCategory !== "all") {
       list = list.filter((item) => item.category === searchCategory);
@@ -919,7 +1021,13 @@ export default function Browser() {
             )}
 
             {/* Central Search Bar with Recent Searches & Autocomplete Dropdown */}
-            <div className="relative w-full max-w-2xl mb-6">
+            <div
+              className={`relative w-full max-w-2xl mb-6 transition-all duration-200 ${
+                isHomeSearchFocused && homeSuggestions.length > 0
+                  ? "bg-[#181d29] border border-white/20 rounded-2xl sm:rounded-3xl shadow-2xl backdrop-blur-xl"
+                  : "bg-white/[0.06] hover:bg-white/[0.09] border border-white/15 rounded-full shadow-xl backdrop-blur-md"
+              }`}
+            >
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -929,9 +1037,7 @@ export default function Browser() {
                     executeSearch(homeSearchQuery);
                   }
                 }}
-                className={`w-full bg-white/[0.06] hover:bg-white/[0.09] focus-within:bg-[#1a1f2c] border border-white/15 focus-within:border-accent rounded-full px-4 py-2.5 sm:py-3 shadow-xl backdrop-blur-md flex items-center gap-3 transition-all ${
-                  isHomeSearchFocused && homeSuggestions.length > 0 ? "rounded-b-none border-b-transparent" : ""
-                }`}
+                className="w-full px-4 py-2.5 sm:py-3 flex items-center gap-3"
               >
                 {isWin ? (
                   <span className="font-bold text-sm text-white/90 select-none px-0.5">
@@ -1003,23 +1109,26 @@ export default function Browser() {
 
                 <button
                   type="submit"
-                  className="px-3 py-1 rounded-full bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 cursor-pointer transition shrink-0"
+                  className="px-3.5 py-1.5 rounded-full bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 cursor-pointer transition shrink-0 shadow-sm"
                 >
                   Search
                 </button>
               </form>
 
-              {/* Suggestions Dropdown for Central Search */}
+              {/* Suggestions embedded directly inside the same card with a clean divider */}
               {isHomeSearchFocused && homeSuggestions.length > 0 && (
-                <SuggestionsDropdown
-                  entries={homeSuggestions}
-                  currentQuery={homeSearchQuery}
-                  isWin={isWin}
-                  selectedIndex={selectedSuggestionIdx}
-                  onSelect={handleSelectSuggestion}
-                  onRemoveRecent={removeRecentSearch}
-                  onClearAllRecents={clearAllRecentSearches}
-                />
+                <div className="border-t border-white/10">
+                  <SuggestionsDropdown
+                    entries={homeSuggestions}
+                    currentQuery={homeSearchQuery}
+                    isWin={isWin}
+                    selectedIndex={selectedSuggestionIdx}
+                    onSelect={handleSelectSuggestion}
+                    onRemoveRecent={removeRecentSearch}
+                    onClearAllRecents={clearAllRecentSearches}
+                    embedded={true}
+                  />
+                </div>
               )}
             </div>
 
@@ -1198,21 +1307,32 @@ export default function Browser() {
               {/* Right Column: Google / Safari Knowledge Graph Panel */}
               {activeKnowledgePanel && (
                 <div className="lg:col-span-5 self-start">
-                  <div className="bg-[#151926] border border-white/10 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4 sticky top-4">
-                    {/* Header */}
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase font-bold text-accent tracking-wider">
-                          Knowledge Panel
-                        </span>
-                        <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 font-semibold">
-                          <GIconCheck size={10} /> Verified
-                        </span>
+                  <div className="bg-[#151926] border border-white/10 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+                    {/* Header with Avatar & Title */}
+                    <div className="flex items-start gap-3.5">
+                      {activeKnowledgePanel.id === "system" ? (
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-lg shrink-0">
+                          <GIconTerminal size={24} />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white font-bold text-base shadow-lg shrink-0">
+                          JM
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-[10px] uppercase font-bold text-accent tracking-wider">
+                            Knowledge Graph
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 font-semibold shrink-0">
+                            <GIconCheck size={10} /> Verified
+                          </span>
+                        </div>
+                        <h2 className="text-base sm:text-lg font-bold text-white mt-0.5 leading-snug">
+                          {activeKnowledgePanel.title}
+                        </h2>
+                        <p className="text-xs text-white/50 truncate">{activeKnowledgePanel.subtitle}</p>
                       </div>
-                      <h2 className="text-base sm:text-lg font-bold text-white mt-1">
-                        {activeKnowledgePanel.title}
-                      </h2>
-                      <p className="text-xs text-white/50">{activeKnowledgePanel.subtitle}</p>
                     </div>
 
                     {/* Bio Description */}
@@ -1221,11 +1341,11 @@ export default function Browser() {
                     </p>
 
                     {/* Quick Attributes */}
-                    <div className="space-y-1.5 text-xs border-t border-white/5 pt-3">
+                    <div className="rounded-xl bg-white/[0.02] border border-white/5 divide-y divide-white/5 overflow-hidden text-xs">
                       {activeKnowledgePanel.attributes.map((attr, aIdx) => (
-                        <div key={aIdx} className="flex justify-between items-start gap-2">
-                          <span className="text-white/40 font-medium shrink-0 text-[11px]">{attr.label}:</span>
-                          <span className="text-white/85 text-right text-[11px] font-sans font-medium">
+                        <div key={aIdx} className="flex justify-between items-start gap-3 px-3 py-2">
+                          <span className="text-white/45 font-medium shrink-0 text-[11px]">{attr.label}</span>
+                          <span className="text-white/90 text-right text-[11px] font-medium leading-tight">
                             {attr.value}
                           </span>
                         </div>
@@ -1233,7 +1353,7 @@ export default function Browser() {
                     </div>
 
                     {/* Tag Pills */}
-                    <div className="flex flex-wrap gap-1 border-t border-white/5 pt-3">
+                    <div className="flex flex-wrap gap-1.5 border-t border-white/5 pt-3">
                       {activeKnowledgePanel.tags.map((tag, tIdx) => (
                         <span
                           key={tIdx}
@@ -1245,7 +1365,7 @@ export default function Browser() {
                     </div>
 
                     {/* Action Links */}
-                    <div className="flex items-center gap-2 border-t border-white/5 pt-3">
+                    <div className="flex items-center gap-2 border-t border-white/5 pt-3 flex-wrap sm:flex-nowrap">
                       {activeKnowledgePanel.links.map((link, lIdx) => (
                         <button
                           key={lIdx}
@@ -1254,7 +1374,7 @@ export default function Browser() {
                             else if (link.url.includes("pdf")) openApp("pdf-viewer");
                             else navigateTo(link.url, link.label);
                           }}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 active:scale-95 transition cursor-pointer"
+                          className="flex-1 min-w-[100px] flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 active:scale-95 transition cursor-pointer shadow-sm"
                         >
                           <span>{link.label}</span>
                           <GIconExternalLink size={10} />
