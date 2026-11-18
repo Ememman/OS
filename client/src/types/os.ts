@@ -42,7 +42,7 @@ export interface WeatherLocation {
   lon: number;
 }
 
-export type ToastVariant = "add" | "delete" | "update" | "success" | "info" | "warning";
+export type ToastVariant = "add" | "delete" | "update" | "success" | "info" | "warning" | "error";
 
 export interface SystemNotification {
   id: number | string;
