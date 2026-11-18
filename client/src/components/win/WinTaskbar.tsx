@@ -513,7 +513,6 @@ export default function WinTaskbar() {
     setDropTargetApp(null);
   };
 
-  const openAppIds = new Set(windows.map((w) => w.app));
   const unminimized = windows.filter((w) => !w.minimized);
   const maxZ = unminimized.length > 0 ? Math.max(...unminimized.map((w) => w.z)) : 0;
 
@@ -521,13 +520,8 @@ export default function WinTaskbar() {
     .map((id) => TASKBAR_ITEMS_MAP[id])
     .filter(Boolean);
 
-  // On mobile screens, prioritize active running windows first so the user can easily switch apps
-  const taskbarApps = isMobile
-    ? [
-        ...orderedItems.filter((i) => openAppIds.has(i.app)),
-        ...orderedItems.filter((i) => !openAppIds.has(i.app)),
-      ]
-    : orderedItems;
+  // Stable dock/taskbar application order (active apps display a live active dot indicator)
+  const taskbarApps = orderedItems;
 
   const btnSize = isMobile ? "w-9 h-9" : "w-10 h-10";
   const iconSize = isMobile ? 18 : 19;

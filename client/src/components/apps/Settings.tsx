@@ -16,10 +16,12 @@ import {
   GIconHardDrive,
   GIconMoon,
   GIconSparkles,
+  GIconRotateRight,
 } from "../icons/GravityIcons";
 import { soundFx } from "../../lib/soundFx";
 import { getAssetUrl } from "../../lib/assets";
 import { useIsMobile } from "../../lib/useMediaQuery";
+import { useDesktopStore } from "../../store/useDesktopStore";
 
 // Preview images for the wallpaper selector — resolved with getAssetUrl for subpath compatibility
 const PREVIEW_IMAGES = {
@@ -112,6 +114,9 @@ export default function Settings() {
     setAccent,
     accents,
     harmonizedPalette,
+    resetDockApps,
+    persistDockOrder,
+    setPersistDockOrder,
   } = useOS();
 
   const isMobile = useIsMobile();
@@ -486,6 +491,74 @@ export default function Settings() {
           </div>
         </section>
       )}
+
+      {/* Dock & Desktop Applications Dragging & Positions */}
+      <section className="space-y-3">
+        <div>
+          <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">
+            Dock & Desktop App Positions
+          </h3>
+          <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
+            Drag apps on the Dock to customize their sequence. Reset dragging positions back to original portfolio defaults anytime.
+          </p>
+        </div>
+
+        <div className="p-3 sm:p-4 rounded-2xl border border-white/10 bg-white/5 space-y-3.5">
+          {/* Reset Dock Apps Order Button */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div>
+              <div className="text-xs font-semibold text-white">Redo Dragging Positions (Dock)</div>
+              <div className="text-[11px] text-white/50">
+                Restore all Dock applications back to their default portfolio sequence
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                soundFx.playPop();
+                resetDockApps();
+                notify("Dock Positions Reset", "Restored applications to their original positions.", "update");
+              }}
+              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-accent text-accent-contrast text-xs font-semibold shadow-sm hover:brightness-110 active:scale-95 transition cursor-pointer shrink-0"
+            >
+              <GIconRotateRight size={13} />
+              <span>Reset Dock Positions</span>
+            </button>
+          </div>
+
+          {/* Reset Desktop Icons Layout */}
+          <div className="pt-3 border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div>
+              <div className="text-xs font-medium text-white/90">Reset Desktop Icons Layout</div>
+              <div className="text-[11px] text-white/40">
+                Redo all dragged desktop icons, folders, and widgets back to default coordinates
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                soundFx.playPop();
+                useDesktopStore.getState().resetDesktop();
+                notify("Desktop Reset", "Restored desktop icons back to default positions.", "update");
+              }}
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-xs text-white/80 hover:text-white transition cursor-pointer shrink-0"
+            >
+              <GIconRotateRight size={12} />
+              <span>Reset Desktop</span>
+            </button>
+          </div>
+
+          {/* Toggle: Persist custom dock order across sessions */}
+          <div className="pt-3 border-t border-white/5">
+            <ToggleRow
+              label="Remember custom dock order across browser sessions"
+              checked={persistDockOrder}
+              onToggle={() => setPersistDockOrder(!persistDockOrder)}
+            />
+            <p className="text-[10px] text-white/35 mt-1 ml-1">
+              When turned off, opening the OS in a new session will always restore original default positions.
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* Window Controls Indicators (macOS Only — hidden in Windows Settings) */}
       {osMode === "mac" && (

@@ -109,8 +109,10 @@ interface OSState {
   requestMinimize: (id: string) => void;
   minimizingWindowId: string | null;
   dockApps: string[];
+  persistDockOrder: boolean;
   reorderDockApps: (fromApp: string, toApp: string) => void;
   resetDockApps: () => void;
+  setPersistDockOrder: (persist: boolean) => void;
   toggleMaximize: (id: string) => void;
   toggleShowDesktop: () => void;
   moveWindow: (id: string, x: number, y: number) => void;
@@ -489,9 +491,12 @@ export const useOS = create<OSState>((set, get) => ({
   togglePowerDialog: () => set((s) => ({ powerDialogOpen: !s.powerDialogOpen })),
 
   resetDefaults: () => {
-    ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift", "os_window_indicators"].forEach((k) =>
+    ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift", "os_window_indicators", "os_dock_apps_order", "os_persist_dock_order"].forEach((k) =>
       localStorage.removeItem(k)
     );
+    try {
+      sessionStorage.removeItem("os_dock_apps_order");
+    } catch {}
     window.location.reload();
   },
 
@@ -684,7 +689,30 @@ export const useOS = create<OSState>((set, get) => ({
     }, 220);
   },
 
+  persistDockOrder: typeof window !== "undefined" && localStorage.getItem("os_persist_dock_order") === "true",
+
   dockApps: (() => {
+    if (typeof window === "undefined") return DEFAULT_DOCK_APPS;
+    const shouldPersist = localStorage.getItem("os_persist_dock_order") === "true";
+    if (!shouldPersist) {
+      // By default, do NOT persist dragged dock across browser sessions - always start in default positions!
+      try {
+        localStorage.removeItem("os_dock_apps_order");
+      } catch {}
+      try {
+        const sessionSaved = sessionStorage.getItem("os_dock_apps_order");
+        if (sessionSaved) {
+          const parsed = JSON.parse(sessionSaved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return Array.from(new Set([...parsed, ...DEFAULT_DOCK_APPS])).filter((a) =>
+              DEFAULT_DOCK_APPS.includes(a)
+            );
+          }
+        }
+      } catch {}
+      return DEFAULT_DOCK_APPS;
+    }
+
     const saved = localStorage.getItem("os_dock_apps_order");
     if (saved) {
       try {
@@ -708,13 +736,41 @@ export const useOS = create<OSState>((set, get) => ({
     if (fromIdx === -1 || toIdx === -1) return;
     current.splice(fromIdx, 1);
     current.splice(toIdx, 0, fromApp);
-    localStorage.setItem("os_dock_apps_order", JSON.stringify(current));
+
+    // Save for the current browser session
+    try {
+      sessionStorage.setItem("os_dock_apps_order", JSON.stringify(current));
+    } catch {}
+
+    // Only persist across browser sessions if explicitly enabled in Settings
+    if (get().persistDockOrder) {
+      try {
+        localStorage.setItem("os_dock_apps_order", JSON.stringify(current));
+      } catch {}
+    }
+
     set({ dockApps: current });
   },
 
   resetDockApps: () => {
-    localStorage.removeItem("os_dock_apps_order");
+    try {
+      localStorage.removeItem("os_dock_apps_order");
+      sessionStorage.removeItem("os_dock_apps_order");
+    } catch {}
     set({ dockApps: DEFAULT_DOCK_APPS });
+  },
+
+  setPersistDockOrder: (persist: boolean) => {
+    try {
+      if (persist) {
+        localStorage.setItem("os_persist_dock_order", "true");
+        localStorage.setItem("os_dock_apps_order", JSON.stringify(get().dockApps));
+      } else {
+        localStorage.removeItem("os_persist_dock_order");
+        localStorage.removeItem("os_dock_apps_order");
+      }
+    } catch {}
+    set({ persistDockOrder: persist });
   },
 
   minimizeWindow: (id) => {
