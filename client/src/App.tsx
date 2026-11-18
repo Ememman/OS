@@ -32,6 +32,8 @@ import ClockWidget from "./components/widgets/ClockWidget";
 import AgendaWidget from "./components/widgets/AgendaWidget";
 import NoteWidget from "./components/widgets/NoteWidget";
 import ShortcutTiles from "./components/widgets/ShortcutTiles";
+import { useDesktopStore } from "./store/useDesktopStore";
+import { APP_REGISTRY } from "./types/desktop";
 
 // Lazy-loaded application components for high-speed mobile booting & low memory footprint
 const Library = lazy(() => import("./components/apps/Library"));
@@ -183,6 +185,25 @@ export default function App() {
   return (
     <div
       onContextMenu={handleDesktopContextMenu}
+      onDragOver={(e) => {
+        // Allow dropping dock applications onto the desktop canvas
+        if (
+          e.dataTransfer.types.includes("application/x-dock-app") ||
+          e.dataTransfer.types.includes("text/plain")
+        ) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+        }
+      }}
+      onDrop={(e) => {
+        const app =
+          e.dataTransfer.getData("application/x-dock-app") ||
+          e.dataTransfer.getData("text/plain");
+        if (app && APP_REGISTRY[app]) {
+          e.preventDefault();
+          useDesktopStore.getState().addOrPositionApp(app, e.clientX, e.clientY);
+        }
+      }}
       className={`relative w-screen h-screen h-[100dvh] overflow-hidden ${reduceMotion ? "reduced-motion" : ""}`}
     >
       <Wallpaper />

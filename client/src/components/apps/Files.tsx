@@ -73,19 +73,43 @@ function resolvePath(path: string[], customFiles: FileItem[]): FolderNode {
     node = child;
   }
 
-  // Filter custom user files that belong to this path
+  // Filter custom user files and cloud files that belong to this path
   const currentPathStr = "/" + path.join("/");
   const matchingCustom = customFiles.filter((f) => {
     const fPath = (f as any).path || "/";
     return fPath === currentPathStr || (path.length === 0 && (fPath === "/" || !fPath));
   });
 
+  // Strict deduplication map keyed by filename to prevent doubled files
+  const map = new Map<string, any>();
+
+  // 1. Add static folder children
+  node.children.forEach((c) => {
+    map.set(c.name, {
+      ...c,
+      isDefault: true,
+      readOnly: true,
+    });
+  });
+
+  // 2. Merge matching custom / cloud files without creating duplicates
+  matchingCustom.forEach((item) => {
+    const existing = map.get(item.name);
+    if (existing) {
+      map.set(item.name, {
+        ...existing,
+        ...item,
+        isDefault: existing.isDefault ?? item.isDefault ?? true,
+        readOnly: existing.readOnly ?? item.readOnly ?? true,
+      });
+    } else {
+      map.set(item.name, item);
+    }
+  });
+
   return {
     ...node,
-    children: [
-      ...node.children.map((c) => ({ ...c, isDefault: true, readOnly: true })),
-      ...matchingCustom,
-    ],
+    children: Array.from(map.values()),
   };
 }
 
@@ -107,6 +131,9 @@ function FileIcon({ item, size = 32 }: { item: any; size?: number }) {
     return <GIconFolder size={size} className="text-sky-300" />;
   }
   if (item.type === "app-link") {
+    if (name.endsWith(".pdf") || item.app === "resume") {
+      return <GIconFileText size={size} className="text-rose-400" />;
+    }
     return <GIconExternalLink size={size} className="text-amber-300" />;
   }
   if (name.endsWith(".json")) {

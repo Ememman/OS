@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useOS } from "./../store/useOS";
+import { useDesktopStore } from "../store/useDesktopStore";
 import { useIsMobile } from "../lib/useMediaQuery";
 import { soundFx } from "../lib/soundFx";
 import {
@@ -98,7 +99,8 @@ export default function Dock() {
 
   const handleDragStart = (e: React.DragEvent, app: string) => {
     e.dataTransfer.setData("text/plain", app);
-    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("application/x-dock-app", app);
+    e.dataTransfer.effectAllowed = "copyMove";
     setDraggedApp(app);
     setHoveredApp(null);
   };
@@ -157,15 +159,30 @@ export default function Dock() {
       if (targetApp && targetApp !== dropTargetApp) {
         setDropTargetApp(targetApp);
       }
+    } else {
+      if (dropTargetApp) {
+        setDropTargetApp(null);
+      }
     }
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchDragRef.current) {
       clearTimeout(touchDragRef.current.timeout);
-      if (touchDragRef.current.isDragging && dropTargetApp && touchDragRef.current.app !== dropTargetApp) {
-        reorderDockApps(touchDragRef.current.app, dropTargetApp);
-        if (systemSounds) soundFx.playPop();
+      if (touchDragRef.current.isDragging) {
+        if (dropTargetApp && touchDragRef.current.app !== dropTargetApp) {
+          reorderDockApps(touchDragRef.current.app, dropTargetApp);
+          if (systemSounds) soundFx.playPop();
+        } else {
+          // Touch ended outside dock -> add or position on desktop canvas
+          const touch = e.changedTouches?.[0];
+          if (touch) {
+            const el = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (!el?.closest("[data-dock-app]") && !el?.closest(".glass")) {
+              useDesktopStore.getState().addOrPositionApp(touchDragRef.current.app, touch.clientX, touch.clientY);
+            }
+          }
+        }
       }
     }
     touchDragRef.current = null;
