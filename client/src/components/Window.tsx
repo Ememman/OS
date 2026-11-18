@@ -19,6 +19,9 @@ import {
   GIconFiles,
   GIconSettings,
   GIconResume,
+  GIconFileText,
+  GIconSafari,
+  GIconChrome,
 } from "./icons/GravityIcons";
 import { useOS } from "../store/useOS";
 import { useIsMobile } from "../lib/useMediaQuery";
@@ -39,6 +42,7 @@ const WIN_APP_ICONS: Record<string, { icon: React.ComponentType<any>; color: str
   files: { icon: GIconFiles, color: "#E0B84E" },
   settings: { icon: GIconSettings, color: "#8892A6" },
   resume: { icon: GIconResume, color: "#4B5A73" },
+  "pdf-viewer": { icon: GIconFileText, color: "#f43f5e" },
 };
 
 export default function Window({ win, children }) {
@@ -458,8 +462,21 @@ export default function Window({ win, children }) {
     );
   };
 
-  const appMeta = WIN_APP_ICONS[win.app];
+  const isBrowserApp = win.app === "browser";
+  const appMeta = isBrowserApp
+    ? isWin
+      ? { icon: GIconChrome, color: "#4285F4" }
+      : { icon: GIconSafari, color: "#0091ff" }
+    : WIN_APP_ICONS[win.app];
   const AppIcon = appMeta?.icon;
+
+  const displayTitle = isBrowserApp
+    ? win.title && win.title !== "Safari" && win.title !== "Google Chrome"
+      ? win.title
+      : isWin
+        ? "Google Chrome"
+        : "Safari"
+    : win.title;
 
   return (
     <div
@@ -500,25 +517,25 @@ export default function Window({ win, children }) {
                 className="w-4 h-4 rounded-[3px] flex items-center justify-center shrink-0"
                 style={{ color: appMeta?.color || "#38bdf8" }}
               >
-                <AppIcon size={14} color="currentColor" />
+                <AppIcon size={14} />
               </div>
             )}
             <span className="text-xs text-white/90 font-medium tracking-wide truncate max-w-[calc(100vw-130px)] sm:max-w-[420px]">
-              {win.title}
+              {displayTitle}
             </span>
           </div>
         ) : isMobile ? (
           /* macOS Mobile: traffic lights on left, title on right-side */
           <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-10">
             <span className="text-xs text-white/85 font-medium tracking-wide truncate max-w-[calc(100vw-110px)]">
-              {win.title}
+              {displayTitle}
             </span>
           </div>
         ) : (
           /* macOS Desktop: centered */
           <div className="absolute inset-x-0 mx-auto flex items-center justify-center pointer-events-none px-16 sm:px-24">
             <span className="text-xs text-white/80 font-medium tracking-wide truncate max-w-full">
-              {win.title}
+              {displayTitle}
             </span>
           </div>
         )}

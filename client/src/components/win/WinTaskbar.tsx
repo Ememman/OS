@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { motion } from "framer-motion";
 import { useOS } from "../../store/useOS";
+import { useDesktopStore } from "../../store/useDesktopStore";
 import { useIsMobile } from "../../lib/useMediaQuery";
 import { soundFx } from "../../lib/soundFx";
 import WeatherChip from "./WeatherChip";
@@ -18,6 +19,8 @@ import {
   GIconFiles,
   GIconSettings,
   GIconResume,
+  GIconFileText,
+  GIconChrome,
   GIconSearch,
   GIconSignal,
   GIconVolume,
@@ -35,6 +38,7 @@ import {
 } from "../icons/GravityIcons";
 
 const TASKBAR_ITEMS = [
+  { app: "browser", label: "Google Chrome", icon: GIconChrome, color: "#4285F4" },
   { app: "terminal", label: "Terminal", icon: GIconTerminal, color: "#22c55e" },
   { app: "codeplay", label: "CodePlay", icon: GIconCode, color: "#38bdf8" },
   { app: "notes", label: "Notes", icon: GIconNotes, color: "#f59e0b" },
@@ -50,6 +54,7 @@ const TASKBAR_ITEMS = [
   { app: "files", label: "Files", icon: GIconFiles, color: "#E0B84E" },
   { app: "settings", label: "Settings", icon: GIconSettings, color: "#8892A6" },
   { app: "resume", label: "Resume", icon: GIconResume, color: "#4B5A73" },
+  { app: "pdf-viewer", label: "PDF Viewer", icon: GIconFileText, color: "#f43f5e" },
 ];
 
 const TASKBAR_ITEMS_MAP = Object.fromEntries(TASKBAR_ITEMS.map((item) => [item.app, item]));
@@ -196,9 +201,9 @@ function StartMenu({ onClose }: { onClose: () => void }) {
             </div>
             <div className="grid grid-cols-2 gap-1.5">
               {[
+                { app: "browser", label: "Google Chrome", desc: "Web Browser", color: "#4285F4" },
                 { app: "terminal", label: "Terminal", desc: "Command Line", color: "#22c55e" },
                 { app: "activity", label: "Task Manager", desc: "System Status", color: "#10b981" },
-                { app: "codeplay", label: "CodePlay", desc: "JS / Web Sandbox", color: "#38bdf8" },
                 { app: "settings", label: "Settings", desc: "Theme & Display", color: "#8892A6" },
               ].map((s) => (
                 <button
@@ -439,7 +444,8 @@ export default function WinTaskbar() {
 
   const handleDragStart = (e: React.DragEvent, app: string) => {
     e.dataTransfer.setData("text/plain", app);
-    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("application/x-dock-app", app);
+    e.dataTransfer.effectAllowed = "copyMove";
     setDraggedApp(app);
   };
 
@@ -497,15 +503,30 @@ export default function WinTaskbar() {
       if (targetApp && targetApp !== dropTargetApp) {
         setDropTargetApp(targetApp);
       }
+    } else {
+      if (dropTargetApp) {
+        setDropTargetApp(null);
+      }
     }
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchDragRef.current) {
       clearTimeout(touchDragRef.current.timeout);
-      if (touchDragRef.current.isDragging && dropTargetApp && touchDragRef.current.app !== dropTargetApp) {
-        reorderDockApps(touchDragRef.current.app, dropTargetApp);
-        if (systemSounds) soundFx.playPop();
+      if (touchDragRef.current.isDragging) {
+        if (dropTargetApp && touchDragRef.current.app !== dropTargetApp) {
+          reorderDockApps(touchDragRef.current.app, dropTargetApp);
+          if (systemSounds) soundFx.playPop();
+        } else {
+          // Touch ended outside taskbar -> add or position on desktop
+          const touch = e.changedTouches?.[0];
+          if (touch) {
+            const el = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (!el?.closest("[data-dock-app]")) {
+              useDesktopStore.getState().addOrPositionApp(touchDragRef.current.app, touch.clientX, touch.clientY);
+            }
+          }
+        }
       }
     }
     touchDragRef.current = null;

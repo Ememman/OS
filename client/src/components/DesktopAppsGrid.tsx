@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import { useDesktopStore } from "../store/useDesktopStore";
+import { useDesktopStore, STORAGE_KEY } from "../store/useDesktopStore";
 import { useOS } from "../store/useOS";
 import { APP_REGISTRY, type DesktopItem } from "../types/desktop";
 import DesktopFolderIcon from "./DesktopFolderIcon";
+import { GIconFileText } from "./icons/GravityIcons";
 import { soundFx } from "../lib/soundFx";
 import { useIsMobile, useIsTablet } from "../lib/useMediaQuery";
 
@@ -285,7 +286,7 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
       if (movedCount > 0) {
         useDesktopStore.setState({ items: updated });
         try {
-          localStorage.setItem("portfolio_os_desktop_items_v2", JSON.stringify(updated));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
         } catch {}
         soundFx.playPop();
         notify(
@@ -314,7 +315,7 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
       if (restoredCount > 0) {
         useDesktopStore.setState({ items: updated });
         try {
-          localStorage.setItem("portfolio_os_desktop_items_v2", JSON.stringify(updated));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
         } catch {}
         soundFx.playClick();
       }
@@ -601,6 +602,10 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
   const handleItemClick = (item: DesktopItem) => {
     if (didDragRef.current) return;
     if (item.type === "app") {
+      if (item.label?.toLowerCase().endsWith(".pdf") || item.app === "pdf-viewer") {
+        openApp("pdf-viewer");
+        return;
+      }
       openApp(item.app);
     } else {
       openFolder(item.id);
@@ -613,7 +618,22 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
   // -------------------------------------------------------------
   return (
     <>
-      <div className="relative w-full h-full pointer-events-none select-none overflow-hidden">
+      <div
+        className="relative w-full h-full pointer-events-none select-none overflow-hidden"
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          const app =
+            e.dataTransfer.getData("application/x-dock-app") ||
+            e.dataTransfer.getData("text/plain");
+          if (app && APP_REGISTRY[app]) {
+            useDesktopStore.getState().addOrPositionApp(app, e.clientX, e.clientY);
+          }
+        }}
+      >
         {items.map((item, index) => {
           const isBeingDragged = dragState?.isDragging && dragState.item.id === item.id;
           const isTarget = dragState?.hoverTargetId === item.id;
@@ -701,13 +721,23 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
                   }`}
                   style={color ? { boxShadow: `0 0 16px ${color}33` } : undefined}
                 >
-                  {Icon && (
+                  {label?.toLowerCase().endsWith(".pdf") ? (
+                    <div className="relative flex items-center justify-center">
+                      <GIconFileText
+                        size={23}
+                        className="text-rose-400 group-hover:text-rose-300 transition-colors scale-105"
+                      />
+                      <span className="absolute -bottom-1 -right-1 px-1 py-0.2 rounded bg-rose-600 text-white font-bold text-[7px] leading-tight shadow-xs uppercase">
+                        PDF
+                      </span>
+                    </div>
+                  ) : Icon ? (
                     <Icon
                       size={22}
                       className="text-white/90 group-hover:text-white transition-colors scale-105"
                       color={color}
                     />
-                  )}
+                  ) : null}
 
                   {(() => {
                     const badge = getAppBadge(item.app);

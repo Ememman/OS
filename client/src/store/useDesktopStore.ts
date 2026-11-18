@@ -8,7 +8,7 @@ import {
 } from "../types/desktop";
 import { soundFx } from "../lib/soundFx";
 
-const STORAGE_KEY = "portfolio_os_desktop_items_v2";
+export const STORAGE_KEY = "portfolio_os_desktop_items_v3";
 
 interface DesktopStoreState {
   items: DesktopItem[];
@@ -16,6 +16,7 @@ interface DesktopStoreState {
   namingModal: { isOpen: boolean; folderId: string; initialName: string } | null;
 
   // Actions
+  addOrPositionApp: (appKey: string, x?: number, y?: number) => void;
   moveItem: (
     id: string,
     x: number,
@@ -48,6 +49,12 @@ interface DesktopStoreState {
 const loadStoredItems = (): DesktopItem[] => {
   if (typeof window === "undefined") return DEFAULT_DESKTOP_ITEMS;
   try {
+    // If upgrading from v2, clear older layout so the clean 4 default items take effect
+    if (!localStorage.getItem(STORAGE_KEY) && localStorage.getItem("portfolio_os_desktop_items_v2")) {
+      try {
+        localStorage.removeItem("portfolio_os_desktop_items_v2");
+      } catch {}
+    }
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_DESKTOP_ITEMS;
     const parsed = JSON.parse(raw) as DesktopItem[];
@@ -61,17 +68,24 @@ const loadStoredItems = (): DesktopItem[] => {
               const reg = APP_REGISTRY[a.app];
               return {
                 ...a,
-                label: reg?.label || a.label,
-                color: reg?.color || a.color,
+                label: a.label || reg?.label || a.app,
+                color: a.color || reg?.color || "#38bdf8",
               };
             }),
           };
         }
-        const reg = APP_REGISTRY[item.app];
+        const isPdfItem =
+          item.label?.toLowerCase().endsWith(".pdf") ||
+          (item as any).name?.toLowerCase().endsWith(".pdf") ||
+          item.id === "file-resume-cv" ||
+          item.id === "resume-pdf";
+        const appKey = isPdfItem ? "pdf-viewer" : item.app;
+        const reg = APP_REGISTRY[appKey] || APP_REGISTRY[item.app];
         return {
           ...item,
-          label: reg?.label || item.label,
-          color: reg?.color || item.color,
+          app: appKey,
+          label: item.label || reg?.label || item.app,
+          color: isPdfItem ? "#f43f5e" : item.color || reg?.color || "#38bdf8",
         };
       });
 
@@ -113,6 +127,78 @@ export const useDesktopStore = create<DesktopStoreState>((set, get) => ({
   items: loadStoredItems(),
   activeFolderId: null,
   namingModal: null,
+
+  addOrPositionApp: (appKey: string, x?: number, y?: number) => {
+    const reg = APP_REGISTRY[appKey];
+    if (!reg) return;
+
+    const current = get().items;
+
+    // Calculate clamped coordinates on the desktop canvas
+    let targetX = typeof x === "number" ? Math.round(x - 36) : 48;
+    let targetY = typeof y === "number" ? Math.round(y - 40) : 56;
+
+    if (typeof window !== "undefined") {
+      targetX = Math.max(16, Math.min(window.innerWidth - 92, targetX));
+      targetY = Math.max(36, Math.min(window.innerHeight - 96, targetY));
+    }
+
+    // 1. Check if the app is already on the root desktop -> move it to the new position
+    const existingIdx = current.findIndex(
+      (it) => it.type === "app" && it.app === appKey
+    );
+    if (existingIdx !== -1) {
+      const updated = current.map((it, idx) =>
+        idx === existingIdx
+          ? {
+              ...it,
+              x: targetX,
+              y: targetY,
+              lastSafeX: targetX,
+              lastSafeY: targetY,
+            }
+          : it
+      );
+      persistItems(updated);
+      set({ items: updated });
+      soundFx.playPop();
+      return;
+    }
+
+    // 2. Check if the app is inside a folder -> extract it to desktop at target position
+    for (const item of current) {
+      if (item.type === "folder") {
+        const folder = item as DesktopFolderItem;
+        const appInFolder = folder.apps.find((a) => a.app === appKey);
+        if (appInFolder) {
+          get().extractAppFromFolder(folder.id, appInFolder.id, {
+            x: targetX,
+            y: targetY,
+          });
+          soundFx.playPop();
+          return;
+        }
+      }
+    }
+
+    // 3. App is not on desktop yet -> add new desktop icon at target position
+    const newItem: DesktopAppItem = {
+      id: `app-${appKey}-${Date.now()}`,
+      type: "app",
+      app: appKey,
+      label: reg.label,
+      color: reg.color,
+      x: targetX,
+      y: targetY,
+      lastSafeX: targetX,
+      lastSafeY: targetY,
+    };
+
+    const updated = [...current, newItem];
+    persistItems(updated);
+    set({ items: updated });
+    soundFx.playPop();
+  },
 
   moveItem: (
     id: string,

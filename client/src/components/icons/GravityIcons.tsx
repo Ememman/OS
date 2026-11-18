@@ -220,4 +220,107 @@ export const GIconDatabase = (props: any) => <GravityIcon icon={(GIcons as any).
 export const GIconServer = (props: any) => <GravityIcon icon={(GIcons as any).Server} {...props} />;
 export const GIconShield = (props: any) => <GravityIcon icon={(GIcons as any).Shield || (GIcons as any).ShieldCheck} {...props} />;
 
+export const GIconSafari = ({ size = 20, className = "" }: { size?: number; className?: string }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 100 100"
+    fill="none"
+    className={`shrink-0 ${className}`}
+  >
+    <defs>
+      <linearGradient id="safariGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#29b6f6" />
+        <stop offset="50%" stopColor="#0288d1" />
+        <stop offset="100%" stopColor="#01579b" />
+      </linearGradient>
+      <linearGradient id="needleRedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#ff5252" />
+        <stop offset="100%" stopColor="#d50000" />
+      </linearGradient>
+      <linearGradient id="needleWhiteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#ffffff" />
+        <stop offset="100%" stopColor="#cfd8dc" />
+      </linearGradient>
+    </defs>
+    {/* Blue Bezel */}
+    <circle cx="50" cy="50" r="48" fill="url(#safariGrad)" stroke="#ffffff" strokeWidth="2.5" strokeOpacity="0.4" />
+    {/* Compass Degree Ring */}
+    <circle cx="50" cy="50" r="40" stroke="#ffffff" strokeWidth="1.2" strokeDasharray="1.5 6.35" strokeOpacity="0.8" />
+    <circle cx="50" cy="50" r="44" stroke="#ffffff" strokeWidth="0.8" strokeDasharray="3 9.4" strokeOpacity="0.6" />
+    {/* 4 Cardinal indicators */}
+    <line x1="50" y1="6" x2="50" y2="12" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+    <line x1="50" y1="88" x2="50" y2="94" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+    <line x1="6" y1="50" x2="12" y2="50" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+    <line x1="88" y1="50" x2="94" y2="50" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+    {/* Rotated Compass Needle (angle ~45deg) */}
+    <g transform="rotate(45 50 50)">
+      {/* North / Red Needle Half */}
+      <polygon points="50,14 55,50 50,47" fill="url(#needleRedGrad)" />
+      <polygon points="50,14 45,50 50,47" fill="#ff7961" />
+      {/* South / White Needle Half */}
+      <polygon points="50,86 55,50 50,53" fill="url(#needleWhiteGrad)" />
+      <polygon points="50,86 45,50 50,53" fill="#90a4ae" />
+      {/* Center Pivot */}
+      <circle cx="50" cy="50" r="3.5" fill="#ffffff" stroke="#37474f" strokeWidth="1" />
+    </g>
+  </svg>
+);
+
+export const GIconChrome = ({ size = 20, className = "" }: { size?: number; className?: string }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 100 100"
+    fill="none"
+    className={`shrink-0 ${className}`}
+  >
+    {/* Chrome Outer Disc Background */}
+    <circle cx="50" cy="50" r="48" fill="#ffffff" />
+    {/* Chrome Red Segment */}
+    <path
+      d="M50 4 A46 46 0 0 1 89.8 27 L50 50 Z"
+      fill="#EA4335"
+    />
+    <path
+      d="M50 4 L89.8 27 L69.9 61.5 L30.1 61.5 L50 4 Z"
+      fill="#EA4335"
+    />
+    {/* Chrome Yellow Segment */}
+    <path
+      d="M89.8 27 A46 46 0 0 1 50 96 L50 50 Z"
+      fill="#FBBC05"
+    />
+    <path
+      d="M89.8 27 L50 96 L30.1 61.5 L69.9 61.5 Z"
+      fill="#FBBC05"
+    />
+    {/* Chrome Green Segment */}
+    <path
+      d="M50 96 A46 46 0 0 1 10.2 27 L50 50 Z"
+      fill="#34A853"
+    />
+    <path
+      d="M50 96 L10.2 27 L30.1 61.5 Z"
+      fill="#34A853"
+    />
+    {/* Accurate Pinwheel Boundary Rings */}
+    <path
+      d="M50 4 A46 46 0 0 1 89.8 27 L69.9 61.5 A23 23 0 0 0 30.1 38.5 L10.2 27 A46 46 0 0 1 50 4 Z"
+      fill="#EA4335"
+    />
+    <path
+      d="M89.8 27 A46 46 0 0 1 50 96 L69.9 61.5 A23 23 0 0 0 69.9 38.5 Z"
+      fill="#FBBC05"
+    />
+    <path
+      d="M50 96 A46 46 0 0 1 10.2 27 L30.1 38.5 A23 23 0 0 0 69.9 61.5 Z"
+      fill="#34A853"
+    />
+    {/* Center White Donut Ring & Inner Blue Circle */}
+    <circle cx="50" cy="50" r="23" fill="#ffffff" />
+    <circle cx="50" cy="50" r="18" fill="#4285F4" />
+  </svg>
+);
+
 export default GIcons;
