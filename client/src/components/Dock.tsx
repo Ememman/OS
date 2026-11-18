@@ -23,9 +23,11 @@ import {
   GIconCode,
   GIconLayoutCells,
   GIconFileText,
+  GIconSafari,
 } from "./icons/GravityIcons";
 
 const DOCK_ITEMS = [
+  { app: "browser", label: "Safari", icon: GIconSafari, color: "#0091ff" },
   { app: "terminal", label: "Terminal", icon: GIconTerminal, color: "#22c55e" },
   { app: "codeplay", label: "CodePlay", icon: GIconCode, color: "#38bdf8" },
   { app: "notes", label: "Notes", icon: GIconNotes, color: "#f59e0b" },

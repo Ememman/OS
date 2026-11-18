@@ -46,6 +46,7 @@ const Files = lazy(() => import("./components/apps/Files"));
 const Settings = lazy(() => import("./components/apps/Settings"));
 const Resume = lazy(() => import("./components/apps/Resume"));
 const PdfViewer = lazy(() => import("./components/apps/PdfViewer"));
+const Browser = lazy(() => import("./components/apps/Browser"));
 const Terminal = lazy(() => import("./components/apps/Terminal"));
 const Calculator = lazy(() => import("./components/apps/Calculator"));
 const Notes = lazy(() => import("./components/apps/Notes"));
@@ -65,6 +66,7 @@ const APP_COMPONENTS: Record<string, any> = {
   settings: Settings,
   resume: Resume,
   "pdf-viewer": PdfViewer,
+  browser: Browser,
   terminal: Terminal,
   calculator: Calculator,
   notes: Notes,

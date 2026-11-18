@@ -27,9 +27,12 @@ import {
   GIconClose,
   GIconChevronUp,
   GIconChevronDown,
+  GIconSafari,
+  GIconChrome,
 } from "./icons/GravityIcons";
 
 const APP_META = [
+  { id: "browser", title: "Safari / Google Chrome", desc: "Web browser, search James Mendoza info & system architecture", icon: GIconSafari, color: "#0091ff", category: "Applications" },
   { id: "terminal", title: "Terminal", desc: "Interactive command-line shell & system tools", icon: GIconTerminal, color: "#22c55e", category: "Applications" },
   { id: "notes", title: "Notes", desc: "Markdown scratchpad & document editor", icon: GIconNotes, color: "#f59e0b", category: "Applications" },
   { id: "calculator", title: "Calculator", desc: "Standard & arithmetic math calculator", icon: GIconCalculator, color: "#06b6d4", category: "Applications" },
@@ -52,6 +55,7 @@ export default function SpotlightSearch() {
     spotlightOpen,
     closeSpotlight,
     openApp,
+    osMode,
     setOsMode,
     toggleMotion,
     toggleChatSound,
@@ -135,14 +139,32 @@ export default function SpotlightSearch() {
     [setOsMode, toggleMotion, toggleChatSound, windows, closeWindow, toggleMissionControl]
   );
 
+  const appList = useMemo(() => {
+    return APP_META.map((app) => {
+      if (app.id === "browser") {
+        return {
+          ...app,
+          title: osMode === "win" ? "Google Chrome" : "Safari",
+          desc:
+            osMode === "win"
+              ? "Web browser, Google search & James Mendoza knowledge"
+              : "Web browser, Apple Safari search & system info",
+          icon: osMode === "win" ? GIconChrome : GIconSafari,
+          color: osMode === "win" ? "#4285F4" : "#0091ff",
+        };
+      }
+      return app;
+    });
+  }, [osMode]);
+
   // Filter items
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) {
-      return [...APP_META, ...ACTIONS];
+      return [...appList, ...ACTIONS];
     }
 
-    const apps = APP_META.filter(
+    const apps = appList.filter(
       (a) =>
         a.title.toLowerCase().includes(q) ||
         a.desc.toLowerCase().includes(q) ||
@@ -184,7 +206,7 @@ export default function SpotlightSearch() {
       }));
 
     return [...apps, ...actions, ...projects, ...files];
-  }, [query, ACTIONS, openApp]);
+  }, [query, ACTIONS, openApp, appList]);
 
   // Keep selected index within bounds
   useEffect(() => {
