@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   GIconSafari,
   GIconChrome,
@@ -394,9 +394,50 @@ export default function Browser() {
     }
   };
 
+  const addRecentSearch = (query: string) => {
+    const q = query.trim();
+    if (!q) return;
+    setRecentSearches((prev) => {
+      const filtered = prev.filter((item) => item.toLowerCase() !== q.toLowerCase());
+      return [q, ...filtered].slice(0, 12);
+    });
+  };
+
+  const removeRecentSearch = (queryToRemove: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (systemSounds) soundFx.playClick();
+    setRecentSearches((prev) =>
+      prev.filter((q) => q.toLowerCase() !== queryToRemove.toLowerCase())
+    );
+  };
+
+  const clearAllRecentSearches = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (systemSounds) soundFx.playClick();
+    setRecentSearches([]);
+  };
+
+  const executeSearch = (rawQuery: string) => {
+    const q = rawQuery.trim();
+    if (!q) return;
+    addRecentSearch(q);
+    const searchUrl = isWin
+      ? `google://search?q=${encodeURIComponent(q)}`
+      : `safari://search?q=${encodeURIComponent(q)}`;
+    navigateTo(searchUrl, `${q} - ${isWin ? "Google Search" : "Safari Search"}`);
+    setIsOmniboxFocused(false);
+    setIsHomeSearchFocused(false);
+    setSelectedSuggestionIdx(-1);
+  };
+
   // Address submission / Search
   const handleSubmitUrl = (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedSuggestionIdx >= 0 && selectedSuggestionIdx < omniboxSuggestions.length) {
+      handleSelectSuggestion(omniboxSuggestions[selectedSuggestionIdx]);
+      return;
+    }
+
     const raw = inputUrl.trim();
     if (!raw) return;
 
@@ -405,12 +446,26 @@ export default function Browser() {
     } else if (raw.includes(".") && !raw.includes(" ")) {
       navigateTo(`https://${raw}`);
     } else {
-      // Perform Search
-      const searchUrl = isWin ? `google://search?q=${encodeURIComponent(raw)}` : `safari://search?q=${encodeURIComponent(raw)}`;
-      navigateTo(searchUrl, `${raw} - Search`);
+      executeSearch(raw);
     }
     omniboxRef.current?.blur();
     setIsOmniboxFocused(false);
+  };
+
+  const handleSelectSuggestion = (entry: SuggestionEntry) => {
+    if (entry.type === "site" && entry.url) {
+      if (entry.url === "mendoza.dev/cv.pdf") {
+        openApp("pdf-viewer");
+      } else {
+        navigateTo(entry.url, entry.title);
+      }
+      addRecentSearch(entry.title);
+      setIsOmniboxFocused(false);
+      setIsHomeSearchFocused(false);
+      setSelectedSuggestionIdx(-1);
+    } else {
+      executeSearch(entry.query);
+    }
   };
 
   const handleCopyUrl = () => {
@@ -429,16 +484,103 @@ export default function Browser() {
     return "";
   }, [activeTab.url]);
 
-  // Live autocomplete suggestions when typing in omnibox
-  const predictiveSuggestions = useMemo(() => {
-    const q = inputUrl.toLowerCase().trim();
-    if (!q || q.startsWith("safari://") || q.startsWith("google://")) return [];
-    return SEARCH_INDEX.filter((item) =>
-      item.keywords.some((kw) => kw.includes(q)) ||
-      item.title.toLowerCase().includes(q) ||
-      item.snippet.toLowerCase().includes(q)
-    ).slice(0, 6);
-  }, [inputUrl]);
+  // Unified suggestions builder (matches Google & Safari)
+  const getSuggestions = useCallback(
+    (rawQuery: string): SuggestionEntry[] => {
+      const q = (rawQuery || "").trim().toLowerCase();
+      const isStartOrEmpty =
+        !q ||
+        q === "safari://start" ||
+        q === "google://home" ||
+        q.startsWith("safari://") ||
+        q.startsWith("google://");
+
+      if (isStartOrEmpty) {
+        // Recent searches on focus (Image 1)
+        return recentSearches.slice(0, 8).map((r) => ({
+          type: "recent",
+          title: r,
+          query: r,
+        }));
+      }
+
+      const entries: SuggestionEntry[] = [];
+
+      // 1. Direct Search suggestion (Image 2 top row)
+      entries.push({
+        type: "search",
+        title: `${rawQuery} - ${isWin ? "Google Search" : "Safari Search"}`,
+        query: rawQuery,
+      });
+
+      // 2. Matching Recent Searches
+      recentSearches
+        .filter((r) => r.toLowerCase().includes(q) && r.toLowerCase() !== q)
+        .slice(0, 3)
+        .forEach((r) => {
+          entries.push({
+            type: "recent",
+            title: r,
+            query: r,
+          });
+        });
+
+      // 3. Keyword Completions (Image 2)
+      const startsWith = AUTOCOMPLETE_KEYWORDS.filter((kw) =>
+        kw.toLowerCase().startsWith(q)
+      );
+      const contains = AUTOCOMPLETE_KEYWORDS.filter(
+        (kw) => !kw.toLowerCase().startsWith(q) && kw.toLowerCase().includes(q)
+      );
+      const matchedKeywords = [...startsWith, ...contains].filter(
+        (kw) =>
+          kw.toLowerCase() !== q &&
+          !entries.some((e) => e.query.toLowerCase() === kw.toLowerCase())
+      );
+
+      matchedKeywords.slice(0, 5).forEach((kw) => {
+        entries.push({
+          type: "keyword",
+          title: kw,
+          query: kw,
+        });
+      });
+
+      // 4. Matching Web Sites & Documentation (Image 2)
+      const siteMatches = SEARCH_INDEX.filter(
+        (item) =>
+          item.title.toLowerCase().includes(q) ||
+          item.url.toLowerCase().includes(q) ||
+          item.displayUrl.toLowerCase().includes(q) ||
+          item.keywords.some((k) => k.includes(q))
+      ).slice(0, 4);
+
+      siteMatches.forEach((item) => {
+        entries.push({
+          type: "site",
+          title: item.title,
+          query: item.title,
+          url: item.url,
+          subtitle: item.displayUrl,
+        });
+      });
+
+      return entries;
+    },
+    [recentSearches, isWin]
+  );
+
+  // Top omnibox suggestions
+  const omniboxSuggestions = useMemo(() => {
+    if (!isOmniboxFocused) return [];
+    return getSuggestions(inputUrl);
+  }, [isOmniboxFocused, inputUrl, getSuggestions]);
+
+  // Home search bar suggestions
+  const homeSuggestions = useMemo(() => {
+    if (!isHomeSearchFocused) return [];
+    return getSuggestions(homeSearchQuery);
+  }, [isHomeSearchFocused, homeSearchQuery, getSuggestions]);
 
   // Filtered search results
   const searchResults = useMemo(() => {
@@ -611,9 +753,43 @@ export default function Browser() {
               ref={omniboxRef}
               type="text"
               value={inputUrl}
-              onChange={(e) => setInputUrl(e.target.value)}
-              onFocus={() => setIsOmniboxFocused(true)}
-              onBlur={() => setTimeout(() => setIsOmniboxFocused(false), 200)}
+              onChange={(e) => {
+                setInputUrl(e.target.value);
+                setSelectedSuggestionIdx(-1);
+              }}
+              onFocus={() => {
+                setIsOmniboxFocused(true);
+                setSelectedSuggestionIdx(-1);
+              }}
+              onBlur={() => setTimeout(() => setIsOmniboxFocused(false), 220)}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSelectedSuggestionIdx((prev) =>
+                    omniboxSuggestions.length > 0 ? (prev + 1) % omniboxSuggestions.length : -1
+                  );
+                } else if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setSelectedSuggestionIdx((prev) =>
+                    omniboxSuggestions.length > 0
+                      ? prev <= 0
+                        ? omniboxSuggestions.length - 1
+                        : prev - 1
+                      : -1
+                  );
+                } else if (e.key === "Enter") {
+                  if (
+                    selectedSuggestionIdx >= 0 &&
+                    selectedSuggestionIdx < omniboxSuggestions.length
+                  ) {
+                    e.preventDefault();
+                    handleSelectSuggestion(omniboxSuggestions[selectedSuggestionIdx]);
+                  }
+                } else if (e.key === "Escape") {
+                  setIsOmniboxFocused(false);
+                  setSelectedSuggestionIdx(-1);
+                }
+              }}
               placeholder={isWin ? "Search Google or type a URL..." : "Search or enter website name..."}
               className="w-full bg-transparent text-xs text-white placeholder:text-white/35 outline-none font-mono selection:bg-accent/40"
             />
@@ -622,7 +798,7 @@ export default function Browser() {
               <button
                 type="button"
                 onClick={() => setInputUrl("")}
-                className="text-white/40 hover:text-white p-0.5 shrink-0"
+                className="text-white/40 hover:text-white p-0.5 shrink-0 cursor-pointer"
               >
                 <GIconClose size={10} />
               </button>
@@ -630,30 +806,20 @@ export default function Browser() {
           </form>
 
           {/* Predictive Search Suggestions Dropdown */}
-          {isOmniboxFocused && predictiveSuggestions.length > 0 && (
-            <div className="absolute top-9 left-0 right-0 z-50 bg-[#171b26] border border-white/15 rounded-2xl p-1.5 shadow-2xl backdrop-blur-xl space-y-0.5">
-              <div className="text-[10px] uppercase font-semibold text-white/40 px-2 py-1 tracking-wider">
-                Instant System & Profile Results
-              </div>
-              {predictiveSuggestions.map((item) => (
-                <div
-                  key={item.id}
-                  onMouseDown={() => {
-                    navigateTo(item.url, item.title);
-                    setIsOmniboxFocused(false);
-                  }}
-                  className="flex items-center justify-between p-2 rounded-xl hover:bg-white/10 transition cursor-pointer text-xs"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <GIconSearch size={12} className="text-accent shrink-0" />
-                    <span className="font-medium text-white truncate">{item.title}</span>
-                  </div>
-                  <span className="text-[10px] text-white/40 font-mono shrink-0 ml-2">
-                    {item.displayUrl}
-                  </span>
-                </div>
-              ))}
-            </div>
+          {isOmniboxFocused && omniboxSuggestions.length > 0 && (
+            <SuggestionsDropdown
+              entries={omniboxSuggestions}
+              currentQuery={
+                inputUrl.startsWith("safari://") || inputUrl.startsWith("google://")
+                  ? ""
+                  : inputUrl
+              }
+              isWin={isWin}
+              selectedIndex={selectedSuggestionIdx}
+              onSelect={handleSelectSuggestion}
+              onRemoveRecent={removeRecentSearch}
+              onClearAllRecents={clearAllRecentSearches}
+            />
           )}
         </div>
 
@@ -752,32 +918,110 @@ export default function Browser() {
               </div>
             )}
 
-            {/* Central Search Bar */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const q = inputUrl.trim();
-                if (q) {
-                  navigateTo(isWin ? `google://search?q=${encodeURIComponent(q)}` : `safari://search?q=${encodeURIComponent(q)}`);
-                }
-              }}
-              className="w-full max-w-2xl bg-white/[0.06] hover:bg-white/[0.09] focus-within:bg-[#1a1f2c] border border-white/15 focus-within:border-accent rounded-full px-4 py-2.5 sm:py-3 shadow-xl backdrop-blur-md flex items-center gap-3 transition-all mb-6"
-            >
-              <GIconSearch size={16} className="text-white/40 shrink-0" />
-              <input
-                type="text"
-                autoFocus
-                placeholder="Search James Mendoza, experiences, skills, projects, or system architecture..."
-                className="w-full bg-transparent text-sm text-white placeholder:text-white/35 outline-none font-sans"
-                onChange={(e) => setInputUrl(e.target.value)}
-              />
-              <button
-                type="submit"
-                className="px-3 py-1 rounded-full bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 cursor-pointer transition shrink-0"
+            {/* Central Search Bar with Recent Searches & Autocomplete Dropdown */}
+            <div className="relative w-full max-w-2xl mb-6">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (selectedSuggestionIdx >= 0 && selectedSuggestionIdx < homeSuggestions.length) {
+                    handleSelectSuggestion(homeSuggestions[selectedSuggestionIdx]);
+                  } else {
+                    executeSearch(homeSearchQuery);
+                  }
+                }}
+                className={`w-full bg-white/[0.06] hover:bg-white/[0.09] focus-within:bg-[#1a1f2c] border border-white/15 focus-within:border-accent rounded-full px-4 py-2.5 sm:py-3 shadow-xl backdrop-blur-md flex items-center gap-3 transition-all ${
+                  isHomeSearchFocused && homeSuggestions.length > 0 ? "rounded-b-none border-b-transparent" : ""
+                }`}
               >
-                Search
-              </button>
-            </form>
+                {isWin ? (
+                  <span className="font-bold text-sm text-white/90 select-none px-0.5">
+                    G
+                  </span>
+                ) : (
+                  <GIconSafari size={16} className="text-sky-400 shrink-0" />
+                )}
+
+                <input
+                  type="text"
+                  autoFocus
+                  value={homeSearchQuery}
+                  placeholder={
+                    isWin
+                      ? "Search Google or type a URL..."
+                      : "Search Safari or enter keywords..."
+                  }
+                  className="w-full bg-transparent text-sm text-white placeholder:text-white/35 outline-none font-sans"
+                  onChange={(e) => {
+                    setHomeSearchQuery(e.target.value);
+                    setSelectedSuggestionIdx(-1);
+                  }}
+                  onFocus={() => {
+                    setIsHomeSearchFocused(true);
+                    setSelectedSuggestionIdx(-1);
+                  }}
+                  onBlur={() => setTimeout(() => setIsHomeSearchFocused(false), 220)}
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setSelectedSuggestionIdx((prev) =>
+                        homeSuggestions.length > 0 ? (prev + 1) % homeSuggestions.length : -1
+                      );
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setSelectedSuggestionIdx((prev) =>
+                        homeSuggestions.length > 0
+                          ? prev <= 0
+                            ? homeSuggestions.length - 1
+                            : prev - 1
+                          : -1
+                      );
+                    } else if (e.key === "Enter") {
+                      if (
+                        selectedSuggestionIdx >= 0 &&
+                        selectedSuggestionIdx < homeSuggestions.length
+                      ) {
+                        e.preventDefault();
+                        handleSelectSuggestion(homeSuggestions[selectedSuggestionIdx]);
+                      }
+                    } else if (e.key === "Escape") {
+                      setIsHomeSearchFocused(false);
+                      setSelectedSuggestionIdx(-1);
+                    }
+                  }}
+                />
+
+                {homeSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setHomeSearchQuery("")}
+                    className="text-white/40 hover:text-white p-1 shrink-0 cursor-pointer"
+                    title="Clear query"
+                  >
+                    <GIconClose size={12} />
+                  </button>
+                )}
+
+                <button
+                  type="submit"
+                  className="px-3 py-1 rounded-full bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 cursor-pointer transition shrink-0"
+                >
+                  Search
+                </button>
+              </form>
+
+              {/* Suggestions Dropdown for Central Search */}
+              {isHomeSearchFocused && homeSuggestions.length > 0 && (
+                <SuggestionsDropdown
+                  entries={homeSuggestions}
+                  currentQuery={homeSearchQuery}
+                  isWin={isWin}
+                  selectedIndex={selectedSuggestionIdx}
+                  onSelect={handleSelectSuggestion}
+                  onRemoveRecent={removeRecentSearch}
+                  onClearAllRecents={clearAllRecentSearches}
+                />
+              )}
+            </div>
 
             {/* Quick Favorites Tiles Grid */}
             <div className="w-full max-w-2xl space-y-2">
