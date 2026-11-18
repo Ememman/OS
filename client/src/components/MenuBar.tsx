@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useOS } from "../store/useOS";
+import { soundFx } from "../lib/soundFx";
 import { useOutsideClick as useOutsideClose } from "../lib/useOutsideClick";
 import LiveBadge from "./LiveBadge";
 import CalendarWidget from "./widgets/CalendarWidget";
@@ -30,24 +31,39 @@ interface MenuDropdownProps {
   label: ReactNode;
   isOpen: boolean;
   onToggle: () => void;
-  onClose: () => void;
+  onMouseEnter: () => void;
   children: ReactNode;
+  minWidth?: string;
 }
 
-function MenuDropdown({ label, isOpen, onToggle, onClose, children }: MenuDropdownProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  useOutsideClose(ref, onClose);
+function MenuDropdown({
+  label,
+  isOpen,
+  onToggle,
+  onMouseEnter,
+  children,
+  minWidth = "min-w-[240px]",
+}: MenuDropdownProps) {
   return (
-    <div ref={ref} className="relative">
+    <div className="relative" onMouseEnter={onMouseEnter}>
       <button
         onClick={onToggle}
-        className={`px-3 py-0.5 rounded transition-colors cursor-default text-[14px] ${isOpen ? "bg-white/15 text-white" : "hover:bg-white/10 hover:text-white text-white/90 font-medium"}`}>
+        className={`px-2.5 sm:px-3 py-0.5 rounded-md transition-all cursor-pointer text-[13px] sm:text-[14px] flex items-center gap-1 select-none ${
+          isOpen
+            ? "bg-white/20 text-white font-medium shadow-xs"
+            : "hover:bg-white/10 hover:text-white text-white/90 font-medium"
+        }`}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+      >
         {label}
       </button>
       {isOpen && (
         <div
-          className="absolute top-full left-0 mt-1.5 min-w-[230px] max-w-[calc(100vw-24px)] max-h-[80vh] overflow-y-auto thin-scroll bg-[#0e1320]/95 backdrop-blur-2xl rounded-xl border border-white/12 shadow-[0_20px_60px_rgba(0,0,0,0.65)] p-1 z-[1300] origin-top-left"
-          style={{ animation: "menuOpen 130ms cubic-bezier(.16,1,.3,1) both" }}>
+          className={`absolute top-full left-0 mt-1 ${minWidth} max-w-[calc(100vw-20px)] max-h-[82vh] overflow-y-auto thin-scroll bg-[#0c111d]/98 backdrop-blur-2xl rounded-xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.7),0_0_1px_rgba(255,255,255,0.25)] p-1 z-[1300] origin-top-left select-none`}
+          style={{ animation: "menuOpen 120ms cubic-bezier(.16,1,.3,1) both" }}
+          role="menu"
+        >
           {children}
         </div>
       )}
@@ -61,31 +77,57 @@ interface MenuItemProps {
   disabled?: boolean;
   checked?: boolean;
   shortcut?: string;
+  danger?: boolean;
 }
 
-function MenuItem({ children, onClick, disabled, checked, shortcut }: MenuItemProps) {
+function MenuItem({
+  children,
+  onClick,
+  disabled,
+  checked,
+  shortcut,
+  danger,
+}: MenuItemProps) {
   return (
     <button
-      onClick={disabled ? undefined : onClick}
+      onClick={() => {
+        if (disabled) return;
+        soundFx.playClick();
+        onClick?.();
+      }}
       disabled={disabled}
-      className={`w-full flex items-center gap-2 text-left px-3.5 py-1.5 mx-0.5 rounded-md text-[13px] sm:text-[14px] transition-colors select-none ${
+      role="menuitem"
+      className={`w-full flex items-center gap-2 text-left px-3 py-1.5 mx-0.5 rounded-lg text-[13px] transition-colors select-none group ${
         disabled
-          ? "text-white/25 cursor-default"
-          : "text-white/90 hover:bg-white/12 hover:text-white active:bg-white/18 cursor-default"
-      }`}>
-      <span className="w-4 shrink-0 flex items-center justify-center">
+          ? "text-white/25 cursor-not-allowed"
+          : danger
+            ? "text-rose-400 hover:bg-rose-500/15 hover:text-rose-300 active:bg-rose-500/25 cursor-pointer"
+            : "text-white/90 hover:bg-white/12 hover:text-white active:bg-white/18 cursor-pointer"
+      }`}
+    >
+      <span className="w-4 shrink-0 flex items-center justify-center text-white/80">
         {checked && <GIconCheck size={13} className="text-white" />}
       </span>
       <span className="flex-1 truncate">{children}</span>
       {shortcut && (
-        <span className="text-[11px] font-mono text-white/35 group-hover:text-white/60 ml-2">{shortcut}</span>
+        <span className="text-[11px] font-mono text-white/35 group-hover:text-white/60 ml-2 tracking-wider">
+          {shortcut}
+        </span>
       )}
     </button>
   );
 }
 
+function MenuHeader({ label }: { label: string }) {
+  return (
+    <div className="px-3 pt-1.5 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/40 select-none">
+      {label}
+    </div>
+  );
+}
+
 function MenuSeparator() {
-  return <div className="h-px bg-white/10 my-1 mx-1.5" />;
+  return <div className="h-px bg-white/10 my-1 mx-1.5" role="separator" />;
 }
 
 interface InfoModalProps {
@@ -124,6 +166,12 @@ export default function MenuBar() {
     openApp,
     closeWindow,
     minimizeWindow,
+    restoreWindow,
+    toggleMaximize,
+    snapWindow,
+    closeAllWindows,
+    minimizeAllWindows,
+    toggleShowDesktop,
     focusWindow,
     reduceMotion,
     toggleMotion,
@@ -137,7 +185,19 @@ export default function MenuBar() {
     restart,
     setSleeping,
     openPowerDialog,
+    themeMode,
+    setThemeMode,
+    wallpapers,
+    wallpaper,
+    setWallpaper,
+    widgetsVisible,
+    toggleWidgets,
+    systemSounds,
+    toggleSystemSounds,
+    notify,
+    resetDefaults,
   } = useOS();
+
   const [now, setNow] = useState(new Date());
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [modal, setModal] = useState<"about" | "shortcuts" | null>(null);
@@ -146,10 +206,48 @@ export default function MenuBar() {
   const [wifiOpen, setWifiOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
 
+  const menuNavRef = useRef<HTMLDivElement>(null);
   const wifiRef = useRef<HTMLDivElement>(null);
   const dateRef = useRef<HTMLDivElement>(null);
+
   useOutsideClose(wifiRef, () => setWifiOpen(false));
   useOutsideClose(dateRef, () => setDateOpen(false));
+
+  // Unified outside click and keyboard arrow / escape handler for top menu bar
+  useEffect(() => {
+    if (!openMenu) return;
+
+    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+      if (menuNavRef.current && !menuNavRef.current.contains(e.target as Node)) {
+        setOpenMenu(null);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpenMenu(null);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        const menuOrder = ["apple", "file", "edit", "view", "window", "help"];
+        const idx = menuOrder.indexOf(openMenu);
+        if (idx !== -1) {
+          const nextIdx =
+            e.key === "ArrowRight"
+              ? (idx + 1) % menuOrder.length
+              : (idx - 1 + menuOrder.length) % menuOrder.length;
+          setOpenMenu(menuOrder[nextIdx]);
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openMenu]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -163,13 +261,19 @@ export default function MenuBar() {
   }, []);
 
   const toggleFullscreen = () => {
-    if (document.fullscreenElement) document.exitFullscreen();
-    else document.documentElement.requestFullscreen().catch(() => {});
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
   };
 
-  const focusedId = windows.length
-    ? windows.reduce((a, b) => (a.z > b.z ? a : b)).id
+  // Identify actively focused, non-minimized window
+  const activeWindows = windows.filter((w) => !w.minimized);
+  const focusedWindow = activeWindows.length
+    ? activeWindows.reduce((a, b) => (a.z > b.z ? a : b))
     : null;
+  const focusedId = focusedWindow ? focusedWindow.id : null;
 
   const time = now.toLocaleTimeString([], {
     hour: "numeric",
@@ -181,35 +285,69 @@ export default function MenuBar() {
     day: "numeric",
   });
 
-  const m = (name: string) => ({
-    isOpen: openMenu === name,
-    onToggle: () => setOpenMenu((o) => (o === name ? null : name)),
-    onClose: () => setOpenMenu((o) => (o === name ? null : o)),
-  });
+  const handleMenuToggle = (name: string) => {
+    if (wifiOpen) setWifiOpen(false);
+    if (dateOpen) setDateOpen(false);
+    setOpenMenu((prev) => (prev === name ? null : name));
+  };
+
+  const handleMenuHover = (name: string) => {
+    if (openMenu !== null && openMenu !== name) {
+      setOpenMenu(name);
+    }
+  };
 
   const handleAppleToggle = () => {
     if (typeof window !== "undefined" && window.innerWidth < 640) {
       setMobileSheetOpen((prev) => !prev);
       setOpenMenu(null);
     } else {
-      setOpenMenu((o) => (o === "apple" ? null : "apple"));
+      handleMenuToggle("apple");
+    }
+  };
+
+  // Export system configuration & preferences as JSON
+  const exportBackup = () => {
+    try {
+      const data = {
+        app: "Portfolio OS",
+        version: "2.4",
+        wallpaper: localStorage.getItem("os_wallpaper") || "bg1",
+        accent: localStorage.getItem("os_accent") || "59 130 246",
+        themeMode: localStorage.getItem("os_theme_mode") || "dark",
+        dockPosition: localStorage.getItem("os_dock_position") || "bottom",
+        systemSounds: localStorage.getItem("os_system_sounds") !== "off",
+        timestamp: new Date().toISOString(),
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `portfolio-os-settings-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      notify("System Backup Exported", "Settings & preferences downloaded successfully.", "success", 3000);
+    } catch {
+      notify("Export Failed", "Unable to download backup JSON.", "error", 2500);
     }
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-8 z-[999] glass flex items-center justify-between px-3 sm:px-4 text-[14px] text-white/95 select-none shadow-md">
-      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+    <div className="fixed top-0 left-0 right-0 h-8 z-[999] glass flex items-center justify-between px-3 sm:px-4 text-[14px] text-white/95 select-none shadow-md overflow-visible">
+      {/* Left Menu Items (Apple, File, Edit, View, Window, Help) */}
+      <div ref={menuNavRef} className="flex items-center gap-1 sm:gap-1.5 min-w-0">
         {/* Apple-style OS Logo using Gravity UI */}
         <MenuDropdown
           label={
-            <div className="flex items-center gap-1.5 py-0.5 font-bold tracking-tight text-white hover:text-white transition-opacity">
+            <div className="flex items-center gap-1.5 py-0.5 font-bold tracking-tight text-white transition-opacity">
               <GIconCode size={16} className="text-accent" />
               <span className="hidden xs:inline text-[13px] font-semibold">Portfolio OS</span>
             </div>
           }
           isOpen={openMenu === "apple"}
           onToggle={handleAppleToggle}
-          onClose={() => setOpenMenu(null)}
+          onMouseEnter={() => handleMenuHover("apple")}
+          minWidth="min-w-[245px]"
         >
           <MenuItem
             onClick={() => {
@@ -222,7 +360,8 @@ export default function MenuBar() {
             onClick={() => {
               openApp("settings");
               setOpenMenu(null);
-            }}>
+            }}
+            shortcut="⌘,">
             System Settings…
           </MenuItem>
           <MenuItem
@@ -257,10 +396,12 @@ export default function MenuBar() {
           </MenuItem>
           <MenuSeparator />
           <MenuItem
+            disabled={windows.length === 0}
             onClick={() => {
-              windows.forEach((w) => closeWindow(w.id));
+              closeAllWindows();
               setOpenMenu(null);
-            }}>
+            }}
+            shortcut="⌥⌘Q">
             Force Quit All Windows
           </MenuItem>
           <MenuSeparator />
@@ -269,14 +410,14 @@ export default function MenuBar() {
               setSleeping(true);
               setOpenMenu(null);
             }}>
-            Sleep
+            Sleep Display
           </MenuItem>
           <MenuItem
             onClick={() => {
               restart();
               setOpenMenu(null);
             }}>
-            Restart…
+            Restart System…
           </MenuItem>
           <MenuItem
             onClick={() => {
@@ -294,8 +435,16 @@ export default function MenuBar() {
           </MenuItem>
         </MenuDropdown>
 
+        {/* Desktop Menu Suite */}
         <div className="hidden sm:flex items-center gap-1">
-          <MenuDropdown label="File" {...m("file")}>
+          {/* FILE MENU */}
+          <MenuDropdown
+            label="File"
+            isOpen={openMenu === "file"}
+            onToggle={() => handleMenuToggle("file")}
+            onMouseEnter={() => handleMenuHover("file")}
+            minWidth="min-w-[245px]"
+          >
             <MenuItem
               onClick={() => {
                 openApp("notes");
@@ -310,56 +459,150 @@ export default function MenuBar() {
                 setOpenMenu(null);
               }}
               shortcut="⌘T">
-              New Terminal
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                openApp("calculator");
-                setOpenMenu(null);
-              }}>
-              Calculator
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                openApp("activity");
-                setOpenMenu(null);
-              }}>
-              Activity Monitor
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                openApp("guestbook");
-                setOpenMenu(null);
-              }}>
-              Guestbook & Ledger
+              New Terminal Window
             </MenuItem>
             <MenuItem
               onClick={() => {
                 openApp("files");
                 setOpenMenu(null);
-              }}>
+              }}
+              shortcut="⇧⌘N">
               New Finder Window
+            </MenuItem>
+            <MenuSeparator />
+            <MenuItem
+              onClick={() => {
+                openApp("files");
+                setOpenMenu(null);
+              }}
+              shortcut="⌘O">
+              Open File Browser…
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                exportBackup();
+                setOpenMenu(null);
+              }}
+              shortcut="⌘S">
+              Export System Backup
             </MenuItem>
             <MenuItem
               onClick={() => {
                 openApp("resume");
                 setOpenMenu(null);
-              }}>
-              Open Resume
+                notify("Resume Ready", "Open Resume window to preview or download PDF.", "info", 2400);
+              }}
+              shortcut="⌘P">
+              Download Resume (PDF)
             </MenuItem>
             <MenuSeparator />
             <MenuItem
               disabled={!focusedId}
               onClick={() => {
-                closeWindow(focusedId);
+                if (focusedId) closeWindow(focusedId);
                 setOpenMenu(null);
               }}
               shortcut="⌘W">
               Close Window
             </MenuItem>
+            <MenuItem
+              disabled={windows.length === 0}
+              onClick={() => {
+                closeAllWindows();
+                setOpenMenu(null);
+              }}
+              shortcut="⌥⌘W">
+              Close All Windows
+            </MenuItem>
           </MenuDropdown>
 
-          <MenuDropdown label="Edit" {...m("edit")}>
+          {/* EDIT MENU */}
+          <MenuDropdown
+            label="Edit"
+            isOpen={openMenu === "edit"}
+            onToggle={() => handleMenuToggle("edit")}
+            onMouseEnter={() => handleMenuHover("edit")}
+            minWidth="min-w-[240px]"
+          >
+            <MenuItem
+              onClick={() => {
+                document.execCommand("undo");
+                notify("Undo", "Reverted recent action.", "info", 1800);
+                setOpenMenu(null);
+              }}
+              shortcut="⌘Z">
+              Undo
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                document.execCommand("redo");
+                notify("Redo", "Restored recent action.", "info", 1800);
+                setOpenMenu(null);
+              }}
+              shortcut="⇧⌘Z">
+              Redo
+            </MenuItem>
+            <MenuSeparator />
+            <MenuItem
+              onClick={() => {
+                const sel = window.getSelection()?.toString();
+                if (sel) {
+                  navigator.clipboard?.writeText(sel);
+                  document.execCommand("delete");
+                  notify("Cut", "Selection cut to clipboard.", "info", 1800);
+                } else {
+                  notify("Cut", "Select text inside a document to cut.", "warning", 2000);
+                }
+                setOpenMenu(null);
+              }}
+              shortcut="⌘X">
+              Cut
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                const sel = window.getSelection()?.toString();
+                if (sel) {
+                  navigator.clipboard?.writeText(sel);
+                  notify("Copied", "Selection copied to clipboard.", "info", 1800);
+                } else {
+                  navigator.clipboard?.writeText(window.location.href);
+                  notify("Portfolio Link Copied", "Direct portfolio URL copied to clipboard.", "success", 2400);
+                }
+                setOpenMenu(null);
+              }}
+              shortcut="⌘C">
+              Copy
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                navigator.clipboard?.readText().then((text) => {
+                  if (text) {
+                    document.execCommand("insertText", false, text);
+                    notify("Pasted", "Pasted clipboard content.", "info", 1800);
+                  }
+                }).catch(() => {
+                  notify("Paste", "Press ⌘V / Ctrl+V to paste in active editor.", "info", 2400);
+                });
+                setOpenMenu(null);
+              }}
+              shortcut="⌘V">
+              Paste
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                const activeEl = document.activeElement as HTMLElement | null;
+                if (activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA")) {
+                  (activeEl as HTMLInputElement).select();
+                } else {
+                  window.getSelection()?.selectAllChildren(document.body);
+                }
+                notify("Select All", "Selected all text content.", "info", 1500);
+                setOpenMenu(null);
+              }}
+              shortcut="⌘A">
+              Select All
+            </MenuItem>
+            <MenuSeparator />
             <MenuItem
               onClick={() => {
                 openSpotlight();
@@ -368,18 +611,25 @@ export default function MenuBar() {
               shortcut="⌘K">
               Spotlight Search…
             </MenuItem>
-            <MenuSeparator />
             <MenuItem
               onClick={() => {
                 navigator.clipboard?.writeText(window.location.href);
+                notify("Portfolio Link Copied", "Link copied to clipboard.", "success", 2400);
                 setOpenMenu(null);
               }}
-              shortcut="⌘C">
+              shortcut="⇧⌘C">
               Copy Portfolio Link
             </MenuItem>
           </MenuDropdown>
 
-          <MenuDropdown label="View" {...m("view")}>
+          {/* VIEW MENU */}
+          <MenuDropdown
+            label="View"
+            isOpen={openMenu === "view"}
+            onToggle={() => handleMenuToggle("view")}
+            onMouseEnter={() => handleMenuHover("view")}
+            minWidth="min-w-[250px]"
+          >
             <MenuItem
               onClick={() => {
                 toggleMissionControl();
@@ -388,13 +638,48 @@ export default function MenuBar() {
               shortcut="F3">
               Mission Control
             </MenuItem>
-            <MenuSeparator />
             <MenuItem
               onClick={() => {
                 toggleFullscreen();
                 setOpenMenu(null);
-              }}>
+              }}
+              shortcut="⌃⌘F">
               {fullscreen ? "Exit Full Screen" : "Enter Full Screen"}
+            </MenuItem>
+            <MenuSeparator />
+            <MenuItem
+              onClick={() => {
+                const nextMode = themeMode === "night" ? "dark" : "night";
+                setThemeMode(nextMode);
+                notify(
+                  nextMode === "night" ? "Night Mode Activated" : "Dark Mode Activated",
+                  nextMode === "night" ? "Midnight OLED pitch black glass with zero glare." : "Deep slate glass theme restored.",
+                  "success",
+                  2600
+                );
+                setOpenMenu(null);
+              }}>
+              {themeMode === "night" ? "Switch to Dark Mode (Slate)" : "Switch to Night Mode (OLED)"}
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                const currentIndex = wallpapers.findIndex((w) => w.id === wallpaper);
+                const nextIndex = (currentIndex + 1) % wallpapers.length;
+                const nextWall = wallpapers[nextIndex];
+                setWallpaper(nextWall.id);
+                notify("Wallpaper Changed", `Active backdrop set to "${nextWall.name}".`, "info", 2400);
+                setOpenMenu(null);
+              }}
+              shortcut="⌃⌘W">
+              Cycle Next Wallpaper
+            </MenuItem>
+            <MenuItem
+              checked={widgetsVisible}
+              onClick={() => {
+                toggleWidgets();
+                setOpenMenu(null);
+              }}>
+              Desktop Widgets
             </MenuItem>
             <MenuSeparator />
             <MenuItem
@@ -406,73 +691,212 @@ export default function MenuBar() {
               Reduce Motion
             </MenuItem>
             <MenuItem
-              disabled={!windows.length}
+              checked={systemSounds}
               onClick={() => {
-                windows.forEach((w) => minimizeWindow(w.id));
+                toggleSystemSounds();
                 setOpenMenu(null);
               }}>
+              System Audio Effects
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                toggleShowDesktop();
+                setOpenMenu(null);
+              }}
+              shortcut="⌘D">
               Show Desktop
             </MenuItem>
           </MenuDropdown>
 
-          <MenuDropdown label="Window" {...m("window")}>
-            {windows.length === 0 && (
+          {/* WINDOW MENU */}
+          <MenuDropdown
+            label="Window"
+            isOpen={openMenu === "window"}
+            onToggle={() => handleMenuToggle("window")}
+            onMouseEnter={() => handleMenuHover("window")}
+            minWidth="min-w-[260px]"
+          >
+            <MenuItem
+              disabled={!focusedId}
+              onClick={() => {
+                if (focusedId) minimizeWindow(focusedId);
+                setOpenMenu(null);
+              }}
+              shortcut="⌘M">
+              Minimize Window
+            </MenuItem>
+            <MenuItem
+              disabled={!focusedId}
+              onClick={() => {
+                if (focusedId) toggleMaximize(focusedId);
+                setOpenMenu(null);
+              }}
+              shortcut="⌃⌘M">
+              Zoom / Maximize Window
+            </MenuItem>
+            <MenuItem
+              disabled={!focusedId}
+              onClick={() => {
+                if (focusedId) snapWindow(focusedId, "left");
+                setOpenMenu(null);
+              }}
+              shortcut="⌥⌘←">
+              Tile Window to Left Half
+            </MenuItem>
+            <MenuItem
+              disabled={!focusedId}
+              onClick={() => {
+                if (focusedId) snapWindow(focusedId, "right");
+                setOpenMenu(null);
+              }}
+              shortcut="⌥⌘→">
+              Tile Window to Right Half
+            </MenuItem>
+            <MenuItem
+              disabled={!focusedId}
+              onClick={() => {
+                if (focusedId) snapWindow(focusedId, "center");
+                setOpenMenu(null);
+              }}
+              shortcut="⌥⌘C">
+              Center Window
+            </MenuItem>
+            <MenuSeparator />
+            <MenuItem
+              disabled={windows.length === 0}
+              onClick={() => {
+                windows.forEach((w) => {
+                  if (w.minimized) restoreWindow(w.id);
+                });
+                if (focusedId) focusWindow(focusedId);
+                notify("Brought to Front", "All open windows brought forward.", "info", 1800);
+                setOpenMenu(null);
+              }}>
+              Bring All to Front
+            </MenuItem>
+            <MenuItem
+              disabled={!windows.some((w) => !w.minimized)}
+              onClick={() => {
+                minimizeAllWindows();
+                setOpenMenu(null);
+              }}
+              shortcut="⌥⌘M">
+              Minimize All Windows
+            </MenuItem>
+            <MenuItem
+              disabled={windows.length === 0}
+              onClick={() => {
+                closeAllWindows();
+                setOpenMenu(null);
+              }}
+              shortcut="⌥⌘W">
+              Close All Windows
+            </MenuItem>
+            <MenuSeparator />
+            <MenuHeader label="Active Windows" />
+            {windows.length === 0 ? (
               <MenuItem disabled>No Open Windows</MenuItem>
-            )}
-            {windows.map((w) => (
-              <MenuItem
-                key={w.id}
-                checked={w.id === focusedId}
-                onClick={() => {
-                  focusWindow(w.id);
-                  setOpenMenu(null);
-                }}>
-                {w.title}
-              </MenuItem>
-            ))}
-            {windows.length > 0 && (
-              <>
-                <MenuSeparator />
+            ) : (
+              windows.map((w) => (
                 <MenuItem
+                  key={w.id}
+                  checked={w.id === focusedId && !w.minimized}
                   onClick={() => {
-                    windows.forEach((w) => minimizeWindow(w.id));
+                    if (w.minimized) restoreWindow(w.id);
+                    focusWindow(w.id);
                     setOpenMenu(null);
                   }}>
-                  Minimize All
+                  <div className="flex items-center gap-2">
+                    <span className="truncate">{w.title}</span>
+                    {w.minimized && (
+                      <span className="text-[10px] text-white/40 font-mono italic shrink-0">
+                        (minimized)
+                      </span>
+                    )}
+                  </div>
                 </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    windows.forEach((w) => closeWindow(w.id));
-                    setOpenMenu(null);
-                  }}>
-                  Close All
-                </MenuItem>
-              </>
+              ))
             )}
           </MenuDropdown>
 
-          <MenuDropdown label="Help" {...m("help")}>
+          {/* HELP MENU */}
+          <MenuDropdown
+            label="Help"
+            isOpen={openMenu === "help"}
+            onToggle={() => handleMenuToggle("help")}
+            onMouseEnter={() => handleMenuHover("help")}
+            minWidth="min-w-[250px]"
+          >
+            <MenuItem
+              onClick={() => {
+                openSpotlight();
+                setOpenMenu(null);
+              }}
+              shortcut="⌘?">
+              Search System & Help…
+            </MenuItem>
+            <MenuSeparator />
             <MenuItem
               onClick={() => {
                 setModal("about");
                 setOpenMenu(null);
               }}>
-              About This Portfolio
+              About Portfolio OS
             </MenuItem>
             <MenuItem
               onClick={() => {
                 setModal("shortcuts");
                 setOpenMenu(null);
-              }}>
-              Keyboard Shortcuts
+              }}
+              shortcut="⌘/">
+              Keyboard Shortcuts Reference
             </MenuItem>
-            <MenuSeparator />
+            <MenuItem
+              onClick={() => {
+                openApp("codeplay");
+                setOpenMenu(null);
+              }}>
+              Interactive CodePlay Sandbox
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                openApp("library");
+                setOpenMenu(null);
+              }}>
+              Case Studies & Projects
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                openApp("updates");
+                setOpenMenu(null);
+              }}>
+              System Activity & Updates
+            </MenuItem>
             <MenuItem
               onClick={() => {
                 openApp("chats");
                 setOpenMenu(null);
               }}>
-              Say Hi in Chat
+              Say Hi in Live Guestbook & Chat
+            </MenuItem>
+            <MenuSeparator />
+            <MenuItem
+              onClick={() => {
+                window.open("https://github.com/emman", "_blank");
+                setOpenMenu(null);
+              }}>
+              View Source on GitHub
+            </MenuItem>
+            <MenuItem
+              danger
+              onClick={() => {
+                setOpenMenu(null);
+                if (window.confirm("Reset all desktop settings to defaults? This restores wallpaper, accent, sound, and task preferences.")) {
+                  resetDefaults();
+                  notify("Settings Restored", "Portfolio OS desktop settings reset to factory defaults.", "delete", 3500);
+                }
+              }}>
+              Reset All Desktop Defaults…
             </MenuItem>
           </MenuDropdown>
         </div>
