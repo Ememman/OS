@@ -40,6 +40,7 @@ import {
   GIconChevronUp,
   GIconChevronDown,
   GIconPrinter,
+  GIconUpload,
 } from "../icons/GravityIcons";
 import {
   SEARCH_INDEX,
@@ -121,7 +122,11 @@ type BrowserThemeId =
   | "cyberpunk"
   | "amber"
   | "glass"
-  | "minimal";
+  | "minimal"
+  | "tokyo"
+  | "sonoma"
+  | "bloom"
+  | "custom";
 
 interface BrowserTheme {
   id: BrowserThemeId;
@@ -181,6 +186,33 @@ const BROWSER_THEMES: BrowserTheme[] = [
     bgClass: "bg-gradient-to-tr from-[#131722] via-[#1a2030] to-[#252e45]",
     accentColor: "#38bdf8",
     canvasOverlay: "radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.1), transparent 70%)",
+  },
+  {
+    id: "tokyo",
+    name: "Tokyo Twilight",
+    preview: "linear-gradient(135deg, #180d28, #2e1045, #4a154b)",
+    bgClass: "bg-gradient-to-br from-[#180d28] via-[#2e1045] to-[#4a154b]",
+    accentColor: "#f472b6",
+    canvasOverlay: "radial-gradient(ellipse at 80% 30%, rgba(244, 114, 182, 0.2), transparent 70%)",
+    badge: "Vibrant",
+  },
+  {
+    id: "sonoma",
+    name: "macOS Sonoma",
+    preview: "linear-gradient(135deg, #0f2027, #203a43, #2c5364)",
+    bgClass: "bg-gradient-to-br from-[#0f2027] via-[#203a43] to-[#2c5364]",
+    accentColor: "#38bdf8",
+    canvasOverlay: "radial-gradient(circle at 30% 70%, rgba(56, 189, 248, 0.15), transparent 60%)",
+    badge: "macOS",
+  },
+  {
+    id: "bloom",
+    name: "Windows Bloom",
+    preview: "linear-gradient(135deg, #0d1b2a, #1b263b, #415a77)",
+    bgClass: "bg-gradient-to-br from-[#0d1b2a] via-[#1b263b] to-[#415a77]",
+    accentColor: "#60a5fa",
+    canvasOverlay: "radial-gradient(circle at 70% 30%, rgba(96, 165, 250, 0.18), transparent 65%)",
+    badge: "Win11",
   },
   {
     id: "minimal",
@@ -456,7 +488,7 @@ export default function Browser() {
   const [browserThemeId, setBrowserThemeId] = useState<BrowserThemeId>(() => {
     try {
       const saved = localStorage.getItem("browser_theme");
-      if (saved && BROWSER_THEMES.some((t) => t.id === saved)) {
+      if (saved && (saved === "custom" || BROWSER_THEMES.some((t) => t.id === saved))) {
         return saved as BrowserThemeId;
       }
     } catch {}
@@ -480,16 +512,135 @@ export default function Browser() {
     }
   });
 
-  const activeTheme = useMemo(
-    () => BROWSER_THEMES.find((t) => t.id === browserThemeId) || BROWSER_THEMES[0],
-    [browserThemeId]
-  );
+  // Custom uploaded wallpaper (Data URL stored in localStorage)
+  const [customWallpaper, setCustomWallpaper] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem("browser_custom_wallpaper") || null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Wallpaper dimming overlay percentage (0% to 80%)
+  const [wallpaperDim, setWallpaperDim] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem("browser_wallpaper_dim");
+      return saved !== null ? parseInt(saved, 10) : 30;
+    } catch {
+      return 30;
+    }
+  });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const activeTheme = useMemo(() => {
+    if (browserThemeId === "custom" && customWallpaper) {
+      return {
+        id: "custom" as BrowserThemeId,
+        name: "Custom Uploaded Wallpaper",
+        preview: customWallpaper,
+        bgClass: "bg-cover bg-center bg-no-repeat",
+        accentColor: "#38bdf8",
+        badge: "Custom",
+      };
+    }
+    return BROWSER_THEMES.find((t) => t.id === browserThemeId) || BROWSER_THEMES[0];
+  }, [browserThemeId, customWallpaper]);
 
   const handleSelectTheme = (themeId: BrowserThemeId) => {
     if (systemSounds) soundFx.playPop();
     setBrowserThemeId(themeId);
     try {
       localStorage.setItem("browser_theme", themeId);
+    } catch {}
+  };
+
+  const handleWallpaperUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      notify("Invalid File", "Please select an image file (PNG, JPG, WEBP, GIF).", "error");
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      notify("File Too Large", "Please select an image under 8MB.", "error");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (!result) return;
+
+      // Check size: if larger than 1.5MB, resize via canvas to fit neatly in localStorage
+      if (result.length > 1.5 * 1024 * 1024) {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const maxDim = 1920;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL("image/jpeg", 0.85);
+            setCustomWallpaper(compressed);
+            setBrowserThemeId("custom");
+            try {
+              localStorage.setItem("browser_custom_wallpaper", compressed);
+              localStorage.setItem("browser_theme", "custom");
+            } catch {}
+            if (systemSounds) soundFx.playPop();
+            notify("Wallpaper Set", "Custom wallpaper uploaded & applied to browser.", "success");
+          }
+        };
+        img.src = result;
+      } else {
+        setCustomWallpaper(result);
+        setBrowserThemeId("custom");
+        try {
+          localStorage.setItem("browser_custom_wallpaper", result);
+          localStorage.setItem("browser_theme", "custom");
+        } catch {}
+        if (systemSounds) soundFx.playPop();
+        notify("Wallpaper Set", "Custom wallpaper uploaded & applied to browser.", "success");
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleRemoveCustomWallpaper = () => {
+    if (systemSounds) soundFx.playClose();
+    setCustomWallpaper(null);
+    try {
+      localStorage.removeItem("browser_custom_wallpaper");
+    } catch {}
+    if (browserThemeId === "custom") {
+      handleSelectTheme("default");
+    }
+    notify("Wallpaper Removed", "Reverted to default background theme.", "info");
+  };
+
+  const handleUpdateWallpaperDim = (newDim: number) => {
+    setWallpaperDim(newDim);
+    try {
+      localStorage.setItem("browser_wallpaper_dim", newDim.toString());
     } catch {}
   };
 
@@ -1834,17 +1985,21 @@ export default function Browser() {
             </motion.div>
           )}
 
-          {/* Floating Customize Appearance Button */}
+          {/* Customize Appearance Button */}
           {!isSplit && (
             <motion.button
               type="button"
-              initial={{ opacity: 0, scale: 0.8 }}
+              initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              whileHover={{ scale: 1.06, y: -1 }}
-              whileTap={{ scale: 0.93 }}
-              onClick={() => setShowCustomizeModal(true)}
-              className="absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 z-30 flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-[10.5px] sm:text-xs text-white/90 hover:text-white transition shadow-xl cursor-pointer backdrop-blur-md"
-              title={isWin ? "Customize Google Chrome Appearance" : "Customize Safari Start Page"}
+              whileHover={{ scale: 1.05, y: -1 }}
+              whileTap={{ scale: 0.94 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (systemSounds) soundFx.playPop();
+                setShowCustomizeModal(true);
+              }}
+              className="mt-6 sm:mt-8 self-end flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/20 text-[11px] sm:text-xs text-white/90 hover:text-white transition shadow-xl cursor-pointer backdrop-blur-md z-20"
+              title={isWin ? "Customize Google Chrome Appearance & Wallpaper" : "Customize Safari Start Page & Wallpaper"}
             >
               {isWin ? (
                 <GIconPencil size={12} className="text-[#4285F4]" />
@@ -2885,7 +3040,7 @@ export default function Browser() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#10131c] text-white select-none overflow-hidden font-sans">
+    <div className="relative flex flex-col h-full bg-[#10131c] text-white select-none overflow-hidden font-sans">
       {/* ------------------------------------------------------------- */}
       {/* CHROME TABS STRIP (WINDOWS MODE) */}
       {/* ------------------------------------------------------------- */}
@@ -3877,7 +4032,22 @@ export default function Browser() {
 
         {splitTab ? (
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden divide-y md:divide-y-0 md:divide-x divide-white/10">
-            <div className={`flex-1 flex flex-col min-w-0 overflow-y-auto thin-scroll ${activeTheme.bgClass}`}>
+            <div
+              className={`flex-1 flex flex-col min-w-0 overflow-y-auto thin-scroll relative ${
+                browserThemeId === "custom" && customWallpaper ? "bg-cover bg-center bg-no-repeat" : activeTheme.bgClass
+              }`}
+              style={
+                browserThemeId === "custom" && customWallpaper
+                  ? { backgroundImage: `url(${customWallpaper})` }
+                  : undefined
+              }
+            >
+              {browserThemeId === "custom" && customWallpaper && (
+                <div
+                  className="absolute inset-0 pointer-events-none transition-colors duration-200 z-0"
+                  style={{ backgroundColor: `rgba(0, 0, 0, ${wallpaperDim / 100})` }}
+                />
+              )}
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab.id + "-" + activeTab.url}
@@ -3885,15 +4055,30 @@ export default function Browser() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.15, ease: "easeOut" }}
-                  className="flex-1 flex flex-col w-full min-h-full transition-[zoom] duration-150 origin-top"
+                  className="relative z-[1] flex-1 flex flex-col w-full min-h-full transition-[zoom] duration-150 origin-top"
                   style={{ zoom: zoomLevel === 100 ? undefined : `${zoomLevel}%` }}
                 >
                   {renderTabCanvas(activeTab, false)}
                 </motion.div>
               </AnimatePresence>
             </div>
-            <div className={`flex-1 flex flex-col min-w-0 overflow-y-auto thin-scroll ${activeTheme.bgClass}`}>
-              <div className="flex items-center justify-between px-3 py-1.5 bg-[#141822] border-b border-white/10 text-xs shrink-0">
+            <div
+              className={`flex-1 flex flex-col min-w-0 overflow-y-auto thin-scroll relative ${
+                browserThemeId === "custom" && customWallpaper ? "bg-cover bg-center bg-no-repeat" : activeTheme.bgClass
+              }`}
+              style={
+                browserThemeId === "custom" && customWallpaper
+                  ? { backgroundImage: `url(${customWallpaper})` }
+                  : undefined
+              }
+            >
+              {browserThemeId === "custom" && customWallpaper && (
+                <div
+                  className="absolute inset-0 pointer-events-none transition-colors duration-200 z-0"
+                  style={{ backgroundColor: `rgba(0, 0, 0, ${wallpaperDim / 100})` }}
+                />
+              )}
+              <div className="relative z-[1] flex items-center justify-between px-3 py-1.5 bg-[#141822]/90 backdrop-blur-md border-b border-white/10 text-xs shrink-0">
                 <div className="flex items-center gap-1.5 truncate text-white/80">
                   <GIconLayoutColumns size={13} className="text-sky-400 shrink-0" />
                   <span className="font-semibold truncate">{splitTab.title}</span>
@@ -3908,7 +4093,7 @@ export default function Browser() {
                 </button>
               </div>
               <div
-                className="flex-1 flex flex-col w-full min-h-full transition-[zoom] duration-150 origin-top"
+                className="relative z-[1] flex-1 flex flex-col w-full min-h-full transition-[zoom] duration-150 origin-top"
                 style={{ zoom: zoomLevel === 100 ? undefined : `${zoomLevel}%` }}
               >
                 {renderTabCanvas(splitTab, true)}
@@ -3916,7 +4101,22 @@ export default function Browser() {
             </div>
           </div>
         ) : (
-          <div className={`flex-1 ${activeTheme.bgClass} overflow-y-auto thin-scroll flex flex-col relative`}>
+          <div
+            className={`flex-1 overflow-y-auto thin-scroll flex flex-col relative ${
+              browserThemeId === "custom" && customWallpaper ? "bg-cover bg-center bg-no-repeat" : activeTheme.bgClass
+            }`}
+            style={
+              browserThemeId === "custom" && customWallpaper
+                ? { backgroundImage: `url(${customWallpaper})` }
+                : undefined
+            }
+          >
+            {browserThemeId === "custom" && customWallpaper && (
+              <div
+                className="absolute inset-0 pointer-events-none transition-colors duration-200 z-0"
+                style={{ backgroundColor: `rgba(0, 0, 0, ${wallpaperDim / 100})` }}
+              />
+            )}
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab.id + "-" + activeTab.url}
@@ -3924,7 +4124,7 @@ export default function Browser() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.15, ease: "easeOut" }}
-                className="flex-1 flex flex-col w-full min-h-full transition-[zoom] duration-150 origin-top"
+                className="relative z-[1] flex-1 flex flex-col w-full min-h-full transition-[zoom] duration-150 origin-top"
                 style={{ zoom: zoomLevel === 100 ? undefined : `${zoomLevel}%` }}
               >
                 {renderTabCanvas(activeTab, false)}
@@ -4127,206 +4327,322 @@ export default function Browser() {
       </AnimatePresence>
 
       {/* ------------------------------------------------------------- */}
-      {/* CUSTOMIZE APPEARANCE & THEME MODAL (PORTALED TO BODY)         */}
+      {/* CUSTOMIZE APPEARANCE & THEME MODAL (IN-COMPONENT DIALOG)      */}
       {/* ------------------------------------------------------------- */}
       <AnimatePresence>
-        {showCustomizeModal &&
-          createPortal(
+        {showCustomizeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="absolute inset-0 z-[60] flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-md overflow-hidden"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowCustomizeModal(false);
+              }
+            }}
+          >
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
-              onClick={(e) => {
-                if (e.target === e.currentTarget) {
-                  setShowCustomizeModal(false);
-                }
-              }}
+              initial={{ opacity: 0, scale: 0.94, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 10 }}
+              transition={{ type: "spring", stiffness: 450, damping: 30 }}
+              className="w-full max-w-lg max-h-[92%] overflow-y-auto thin-scroll bg-[#141824] border border-white/20 rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-4 sm:p-6 space-y-4 sm:space-y-5 text-white text-left relative"
+              onClick={(e) => e.stopPropagation()}
             >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.92, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.92, y: 12 }}
-                transition={{ type: "spring", stiffness: 450, damping: 30 }}
-                className="w-full max-w-lg max-h-[90vh] overflow-y-auto thin-scroll bg-[#141824] border border-white/20 rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-4 sm:p-6 space-y-4 sm:space-y-6 text-white text-left relative"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Header */}
-                <div className="flex items-center justify-between border-b border-white/10 pb-3 sm:pb-4">
-                  <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center text-accent shrink-0">
-                      <GIconPalette size={15} />
-                    </div>
-                    <div className="min-w-0">
-                      <h2 className="text-sm sm:text-base font-bold text-white leading-tight truncate">
-                        {isWin ? "Customize Google Chrome" : "Customize Safari"}
-                      </h2>
-                      <p className="text-[11px] sm:text-xs text-white/50 truncate">
-                        Background theme, canvas palette, and start page widgets
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowCustomizeModal(false)}
-                    className="p-1.5 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition cursor-pointer shrink-0 ml-2"
-                    title="Close Customizer"
-                  >
-                    <GIconClose size={13} />
-                  </button>
-                </div>
+              {/* Hidden file input for wallpaper upload */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleWallpaperUpload}
+                className="hidden"
+              />
 
-                {/* Theme Picker Grid */}
-                <div className="space-y-2.5 sm:space-y-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-white/70 uppercase tracking-wider text-[10.5px] sm:text-[11px]">
-                      Background Theme ({BROWSER_THEMES.length})
-                    </span>
-                    <span className="text-[11px] sm:text-xs text-accent font-medium truncate max-w-[150px]">
-                      Current: {activeTheme.name}
-                    </span>
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-3 sm:pb-4">
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-accent/20 border border-accent/40 flex items-center justify-center text-accent shrink-0">
+                    <GIconPalette size={16} />
                   </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5 max-h-48 sm:max-h-56 overflow-y-auto thin-scroll p-1">
-                    {BROWSER_THEMES.map((theme) => {
-                      const isSelected = theme.id === browserThemeId;
-                      return (
-                        <button
-                          key={theme.id}
-                          type="button"
-                          onClick={() => handleSelectTheme(theme.id)}
-                          className={`group relative flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl sm:rounded-2xl border transition-all cursor-pointer text-left ${
-                            isSelected
-                              ? "bg-white/[0.08] border-accent ring-2 ring-accent/30 shadow-lg scale-[1.02]"
-                              : "bg-white/[0.03] hover:bg-white/[0.06] border-white/10 hover:border-white/20"
-                          }`}
-                        >
-                          {/* Theme preview swatch */}
-                          <div
-                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl shadow-inner border border-white/20 flex items-center justify-center transition-transform group-hover:scale-105"
-                            style={{ background: theme.preview }}
-                          >
-                            {isSelected && (
-                              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-accent flex items-center justify-center text-accent-contrast shadow-md">
-                                <GIconCheck size={12} />
-                              </div>
-                            )}
-                          </div>
-                          <div className="text-center w-full">
-                            <span className="text-[11px] sm:text-xs font-semibold text-white block truncate">
-                              {theme.name}
-                            </span>
-                            {theme.badge && (
-                              <span className="text-[9.5px] sm:text-[10px] text-white/40 block">
-                                {theme.badge}
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
+                  <div className="min-w-0">
+                    <h2 className="text-sm sm:text-base font-bold text-white leading-tight truncate">
+                      {isWin ? "Customize Google Chrome" : "Customize Safari"}
+                    </h2>
+                    <p className="text-[11px] sm:text-xs text-white/50 truncate">
+                      Custom wallpaper, preset themes, and start page widgets
+                    </p>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomizeModal(false)}
+                  className="p-1.5 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition cursor-pointer shrink-0 ml-2"
+                  title="Close Customizer"
+                >
+                  <GIconClose size={14} />
+                </button>
+              </div>
 
-                {/* Widget Toggles */}
-                <div className="space-y-2.5 sm:space-y-3 pt-2 border-t border-white/10">
-                  <span className="font-semibold text-white/70 uppercase tracking-wider text-[10.5px] sm:text-[11px] block">
-                    Start Page Widgets
+              {/* SECTION 1: CUSTOM WALLPAPER UPLOAD */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-white/70 uppercase tracking-wider text-[10.5px] sm:text-[11px] flex items-center gap-1.5">
+                    <GIconUpload size={12} className="text-accent" />
+                    Custom Wallpaper
                   </span>
+                  {customWallpaper && browserThemeId === "custom" && (
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-[10px] text-emerald-300 font-medium">
+                      Active
+                    </span>
+                  )}
+                </div>
 
-                  <div className="space-y-2">
-                    <div
-                      onClick={handleToggleFavoritesWidget}
-                      className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 cursor-pointer transition select-none"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-sky-500/15 text-sky-400 flex items-center justify-center">
-                          <GIconGlobe size={14} />
-                        </div>
-                        <div>
-                          <span className="text-xs font-semibold text-white block">
-                            {isWin ? "Shortcuts Grid" : "Favorites Grid"}
-                          </span>
-                          <span className="text-[11px] text-white/45 block">
-                            Quick links to experience, skills, and projects
-                          </span>
-                        </div>
-                      </div>
-                      {/* Toggle switch */}
+                {customWallpaper ? (
+                  <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/15 space-y-3">
+                    <div className="flex items-center gap-3">
                       <div
-                        className={`w-11 h-6 rounded-full transition-colors p-0.5 relative ${
-                          showFavoritesWidget ? "bg-accent" : "bg-white/20"
-                        }`}
+                        className="w-20 h-14 rounded-xl border border-white/20 bg-cover bg-center shrink-0 shadow-md relative overflow-hidden"
+                        style={{ backgroundImage: `url(${customWallpaper})` }}
                       >
                         <div
-                          className={`w-5 h-5 rounded-full bg-white shadow-md transition-transform ${
-                            showFavoritesWidget ? "translate-x-5" : "translate-x-0"
-                          }`}
+                          className="absolute inset-0"
+                          style={{ backgroundColor: `rgba(0,0,0,${wallpaperDim / 100})` }}
                         />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-semibold text-white truncate">Custom Wallpaper Stored</div>
+                        <div className="text-[11px] text-white/50">Stored in browser cache</div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setBrowserThemeId("custom");
+                              try {
+                                localStorage.setItem("browser_theme", "custom");
+                              } catch {}
+                              if (systemSounds) soundFx.playPop();
+                            }}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer flex items-center gap-1 ${
+                              browserThemeId === "custom"
+                                ? "bg-accent text-accent-contrast shadow-sm"
+                                : "bg-white/10 hover:bg-white/15 text-white"
+                            }`}
+                          >
+                            <GIconCheck size={11} />
+                            <span>{browserThemeId === "custom" ? "Applied" : "Apply"}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-white/90 text-[11px] font-medium transition cursor-pointer flex items-center gap-1"
+                          >
+                            <GIconUpload size={11} />
+                            <span>Replace</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleRemoveCustomWallpaper}
+                            className="px-2 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-[11px] font-medium transition cursor-pointer flex items-center gap-1"
+                          >
+                            <GIconTrash size={11} />
+                            <span>Delete</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
 
-                    <div
-                      onClick={handleTogglePrivacyWidget}
-                      className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 cursor-pointer transition select-none"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
-                          <GIconShield size={14} />
-                        </div>
-                        <div>
-                          <span className="text-xs font-semibold text-white block">
-                            {isWin ? "Google Safe Browsing Badge" : "Safari Privacy Report"}
-                          </span>
-                          <span className="text-[11px] text-white/45 block">
-                            Real-time security shield and tracking status
-                          </span>
-                        </div>
+                    {/* Dimming Slider */}
+                    <div className="pt-2 border-t border-white/10 space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-white/70">Background Dimming Overlay</span>
+                        <span className="font-mono text-accent font-semibold">{wallpaperDim}%</span>
                       </div>
-                      {/* Toggle switch */}
-                      <div
-                        className={`w-11 h-6 rounded-full transition-colors p-0.5 relative ${
-                          showPrivacyWidget ? "bg-accent" : "bg-white/20"
-                        }`}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded-full bg-white shadow-md transition-transform ${
-                            showPrivacyWidget ? "translate-x-5" : "translate-x-0"
-                          }`}
-                        />
+                      <input
+                        type="range"
+                        min="0"
+                        max="80"
+                        step="5"
+                        value={wallpaperDim}
+                        onChange={(e) => handleUpdateWallpaperDim(Number(e.target.value))}
+                        className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-accent"
+                      />
+                      <div className="flex justify-between text-[9.5px] text-white/40">
+                        <span>Bright (0%)</span>
+                        <span>Balanced (30-40%)</span>
+                        <span>High Contrast (80%)</span>
                       </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Footer Buttons */}
-                <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                ) : (
                   <button
                     type="button"
-                    onClick={() => {
-                      handleSelectTheme("default");
-                      setShowFavoritesWidget(true);
-                      setShowPrivacyWidget(true);
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-white/20 hover:border-accent/60 bg-white/[0.02] hover:bg-accent/[0.04] transition group cursor-pointer text-center"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-white/[0.06] group-hover:bg-accent/20 flex items-center justify-center text-white/60 group-hover:text-accent transition-colors mb-2">
+                      <GIconUpload size={18} />
+                    </div>
+                    <span className="text-xs font-semibold text-white/90 group-hover:text-white transition-colors">
+                      Upload Custom Wallpaper
+                    </span>
+                    <span className="text-[10.5px] text-white/45 mt-0.5">
+                      Supports JPG, PNG, WEBP (auto-scaled for optimal memory)
+                    </span>
+                  </button>
+                )}
+              </div>
+
+              {/* SECTION 2: PRESET THEMES GRID */}
+              <div className="space-y-2.5 pt-2 border-t border-white/10">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-white/70 uppercase tracking-wider text-[10.5px] sm:text-[11px]">
+                    Preset Color Themes ({BROWSER_THEMES.length})
+                  </span>
+                  <span className="text-[11px] text-accent font-medium truncate max-w-[150px]">
+                    {browserThemeId === "custom" ? "Custom Mode" : activeTheme.name}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-44 sm:max-h-52 overflow-y-auto thin-scroll p-1">
+                  {BROWSER_THEMES.map((theme) => {
+                    const isSelected = browserThemeId === theme.id;
+                    return (
+                      <button
+                        key={theme.id}
+                        type="button"
+                        onClick={() => handleSelectTheme(theme.id)}
+                        className={`group relative flex flex-col items-center gap-1.5 p-2 sm:p-2.5 rounded-xl border transition-all cursor-pointer text-left ${
+                          isSelected
+                            ? "bg-white/[0.08] border-accent ring-2 ring-accent/30 shadow-lg scale-[1.02]"
+                            : "bg-white/[0.03] hover:bg-white/[0.06] border-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        <div
+                          className="w-10 h-10 rounded-xl shadow-inner border border-white/20 flex items-center justify-center transition-transform group-hover:scale-105"
+                          style={{ background: theme.preview }}
+                        >
+                          {isSelected && (
+                            <div className="w-5 h-5 rounded-full bg-accent flex items-center justify-center text-accent-contrast shadow-md">
+                              <GIconCheck size={12} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-center w-full min-w-0">
+                          <span className="text-[11px] font-semibold text-white block truncate">
+                            {theme.name}
+                          </span>
+                          {theme.badge && (
+                            <span className="text-[9.5px] text-white/40 block truncate">
+                              {theme.badge}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* SECTION 3: WIDGET TOGGLES */}
+              <div className="space-y-2 pt-2 border-t border-white/10">
+                <span className="font-semibold text-white/70 uppercase tracking-wider text-[10.5px] sm:text-[11px] block">
+                  Start Page Widgets
+                </span>
+
+                <div className="space-y-2">
+                  <div
+                    onClick={handleToggleFavoritesWidget}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 cursor-pointer transition select-none"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-sky-500/15 text-sky-400 flex items-center justify-center">
+                        <GIconGlobe size={14} />
+                      </div>
+                      <div>
+                        <span className="text-xs font-semibold text-white block">
+                          {isWin ? "Shortcuts Grid" : "Favorites Grid"}
+                        </span>
+                        <span className="text-[10.5px] text-white/45 block">
+                          Quick links to experience, skills, and projects
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      className={`w-11 h-6 rounded-full transition-colors p-0.5 relative ${
+                        showFavoritesWidget ? "bg-accent" : "bg-white/20"
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded-full bg-white shadow-md transition-transform ${
+                          showFavoritesWidget ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={handleTogglePrivacyWidget}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 cursor-pointer transition select-none"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
+                        <GIconShield size={14} />
+                      </div>
+                      <div>
+                        <span className="text-xs font-semibold text-white block">
+                          {isWin ? "Google Safe Browsing Badge" : "Safari Privacy Report"}
+                        </span>
+                        <span className="text-[10.5px] text-white/45 block">
+                          Real-time security shield and tracking status
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      className={`w-11 h-6 rounded-full transition-colors p-0.5 relative ${
+                        showPrivacyWidget ? "bg-accent" : "bg-white/20"
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded-full bg-white shadow-md transition-transform ${
+                          showPrivacyWidget ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleSelectTheme("default");
+                    handleRemoveCustomWallpaper();
+                    setShowFavoritesWidget(true);
+                    setShowPrivacyWidget(true);
+                    try {
                       localStorage.setItem("browser_show_favs", "true");
                       localStorage.setItem("browser_show_privacy", "true");
-                    }}
-                    className="text-xs text-white/50 hover:text-white underline cursor-pointer transition"
-                  >
-                    Reset to Defaults
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowCustomizeModal(false)}
-                    className="px-5 py-2 rounded-xl bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 transition cursor-pointer shadow-md"
-                  >
-                    Done
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>,
-            document.body
-          )}
+                    } catch {}
+                  }}
+                  className="text-xs text-white/50 hover:text-white underline cursor-pointer transition"
+                >
+                  Reset to Defaults
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomizeModal(false)}
+                  className="px-5 py-2 rounded-xl bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 transition cursor-pointer shadow-md"
+                >
+                  Done
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );
