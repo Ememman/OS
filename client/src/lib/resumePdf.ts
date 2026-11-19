@@ -19,14 +19,14 @@ export const RESUME_META = {
 export const RESUME_EXPERIENCES = [
   {
     company: "Dowinn Group",
-    role: "Front-End Developer",
+    role: "Technical Support Engineer",
     period: "September 28, 2026 – Present",
-    tag: "Enterprise Front-End & Automation",
+    tag: "Technical Support, Test Automation & Front-End Development",
     bullets: [
-      "Engineered high-performance enterprise front-end web applications and internal operational portals utilizing Next.js, React, and TypeScript.",
-      "Integrated TanStack Query for advanced asynchronous server-state synchronization, optimistic updates, intelligent query caching, and reduced network roundtrips.",
-      "Automated cross-browser and mobile end-to-end testing pipelines using Playwright, Appium, and Selenium to ensure high software reliability and zero regression escapes.",
-      "Designed clean, WCAG-accessible component architectures with Tailwind CSS and shadcn/ui; streamlined cross-functional development sprints, system documentation, and engineering workflows via Notion and GitHub.",
+      "Served as Technical Support Engineer, diagnosing infrastructure/system issues, maintaining operational uptime, and providing technical support across enterprise internal systems.",
+      "Automated cross-browser and mobile end-to-end testing pipelines using Playwright, Appium, and Cypress to eliminate regression escapes and accelerate QA delivery.",
+      "Transitioned to active front-end engineering by the third week, building and coding operational portals, internal tools, and responsive user interfaces with Next.js, React, and TypeScript.",
+      "Integrated TanStack Query for asynchronous server-state synchronization, optimistic cache updates, and reduced network roundtrips; streamlined technical documentation via Notion and GitHub.",
     ],
   },
   {
@@ -49,7 +49,7 @@ export const RESUME_SKILLS = [
   "Architected responsive component ecosystems using Tailwind CSS and shadcn/ui; implemented TanStack Query for resilient asynchronous state management and real-time Socket.IO synchronization.",
   "Gathered system requirements, organized user feedback, tested basic functionalities • Documented code changes, debugged errors, improved software performance and user experience.",
   "Proficient in programming/coding and problem-solving (identifying root causes, developing technical solutions).",
-  "Automated end-to-end and mobile test suites with Playwright, Appium, and Selenium; provided technical opinions and coding solutions in group discussions.",
+  "Automated end-to-end and mobile test suites with Playwright, Appium, and Cypress; provided technical opinions and coding solutions in group discussions.",
 ];
 
 export const RESUME_ACHIEVEMENTS = [

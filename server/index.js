@@ -672,7 +672,7 @@ app.get("/api/browser/search", (req, res) => {
 
   const searchItems = [
     { id: "about", title: "James Emmanuel Mendoza — Biography & Background", url: "https://mendoza.dev/about", snippet: "Full-stack software developer based in Tondo, Manila. Crafts enterprise React 19 and Next.js applications.", category: "profile" },
-    { id: "exp-dowinn", title: "Front-End Developer at Dowinn Group — Enterprise Portals & Automation", url: "https://mendoza.dev/experience", snippet: "Sept 2026 – Present. Enterprise operational portals with Next.js, React, TypeScript, and TanStack Query.", category: "experience" },
+    { id: "exp-dowinn", title: "Technical Support Engineer at Dowinn Group — Test Automation & Front-End Development", url: "https://mendoza.dev/experience", snippet: "Sept 2026 – Present. Technical support engineering, test automation (Playwright, Appium, Cypress), and front-end coding with Next.js, React, and TypeScript.", category: "experience" },
     { id: "exp-straive", title: "IT Support Specialist & Web Developer at Straive (OJT)", url: "https://mendoza.dev/experience", snippet: "Feb 2026 – Mar 2026. Built Straive IMS (Inventory Management System) in PHP MVC and MySQL.", category: "experience" },
     { id: "skills", title: "Technical Skills Matrix — Modern Full-Stack & Engineering Stack", url: "https://mendoza.dev/skills", snippet: "Comprehensive proficiencies: React 19, Next.js, TypeScript, PHP (Laravel, CodeIgniter), PostgreSQL, MySQL.", category: "skills" },
     { id: "academics", title: "Academic Honors & Degrees — Magna Cum Laude & Best in Research", url: "https://mendoza.dev/academics", snippet: "BS in Information Technology from National Teachers College (2022–2026). Graduated Magna Cum Laude.", category: "academics" },
