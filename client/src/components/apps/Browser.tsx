@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   GIconSafari,
@@ -126,6 +125,9 @@ type BrowserThemeId =
   | "tokyo"
   | "sonoma"
   | "bloom"
+  | "chrome_prism"
+  | "safari_nebula"
+  | "apple_space"
   | "custom";
 
 interface BrowserTheme {
@@ -141,11 +143,39 @@ interface BrowserTheme {
 const BROWSER_THEMES: BrowserTheme[] = [
   {
     id: "default",
-    name: "Obsidian Slate",
-    preview: "#0e111a",
-    bgClass: "bg-[#0e111a]",
+    name: "Modern Studio",
+    preview: "linear-gradient(135deg, #0d121c, #141c2b, #1c273c)",
+    bgClass: "bg-gradient-to-br from-[#0b1018] via-[#121926] to-[#1a2336]",
     accentColor: "#38bdf8",
-    badge: "Default",
+    canvasOverlay: "radial-gradient(ellipse at 50% 0%, rgba(56, 189, 248, 0.12), transparent 70%)",
+    badge: "Gradient",
+  },
+  {
+    id: "chrome_prism",
+    name: "Chrome Prism",
+    preview: "linear-gradient(135deg, #0b1329, #151838, #13274f)",
+    bgClass: "bg-gradient-to-br from-[#0a1024] via-[#131733] to-[#122347]",
+    accentColor: "#4285F4",
+    canvasOverlay: "radial-gradient(ellipse at 80% 20%, rgba(66, 133, 244, 0.18), transparent 65%)",
+    badge: "Chrome",
+  },
+  {
+    id: "safari_nebula",
+    name: "Safari Ventura",
+    preview: "linear-gradient(135deg, #0b1526, #16243b, #253958)",
+    bgClass: "bg-gradient-to-br from-[#091222] via-[#132035] to-[#20324e]",
+    accentColor: "#60a5fa",
+    canvasOverlay: "radial-gradient(circle at 30% 70%, rgba(96, 165, 250, 0.16), transparent 60%)",
+    badge: "Safari",
+  },
+  {
+    id: "apple_space",
+    name: "Midnight Space",
+    preview: "linear-gradient(135deg, #0d0f17, #181926, #261f38)",
+    bgClass: "bg-gradient-to-br from-[#0a0c13] via-[#141520] to-[#201930]",
+    accentColor: "#c084fc",
+    canvasOverlay: "radial-gradient(ellipse at 70% 30%, rgba(192, 132, 252, 0.18), transparent 65%)",
+    badge: "Universal",
   },
   {
     id: "cosmos",
@@ -532,6 +562,7 @@ export default function Browser() {
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const browserContainerRef = useRef<HTMLDivElement>(null);
 
   const activeTheme = useMemo(() => {
     if (browserThemeId === "custom" && customWallpaper) {
@@ -999,6 +1030,20 @@ export default function Browser() {
   });
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
 
+  const openTabContextMenu = (e: React.MouseEvent, tabId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = browserContainerRef.current?.getBoundingClientRect();
+    const x = rect ? e.clientX - rect.left : e.clientX;
+    const y = rect ? e.clientY - rect.top : e.clientY;
+    setTabContextMenu({
+      isOpen: true,
+      x,
+      y,
+      tabId,
+    });
+  };
+
   // Close context menu on outside click or Escape
   useEffect(() => {
     if (!tabContextMenu.isOpen) return;
@@ -1303,6 +1348,59 @@ export default function Browser() {
     }
     if (splitTabId && !newTabs.some((t) => t.id === splitTabId)) {
       setSplitTabId(null);
+    }
+  };
+
+  const handleCloseTabsToLeft = (targetTabId: string) => {
+    if (systemSounds) soundFx.playClose();
+    const idx = tabs.findIndex((t) => t.id === targetTabId);
+    if (idx <= 0) return;
+    const newTabs = tabs.filter((t, i) => i >= idx || t.isPinned);
+    setTabs(newTabs);
+    if (!newTabs.some((t) => t.id === activeTabId)) {
+      setActiveTabId(targetTabId);
+    }
+    if (splitTabId && !newTabs.some((t) => t.id === splitTabId)) {
+      setSplitTabId(null);
+    }
+  };
+
+  const handleBookmarkTab = (targetTabId: string) => {
+    const tab = tabs.find((t) => t.id === targetTabId);
+    if (!tab) return;
+    const already = bookmarks.some((b) => b.url === tab.url);
+    if (already) {
+      notify("Already Bookmarked", `"${tab.title}" is already in your bookmarks bar.`, "info");
+      return;
+    }
+    const newBm: BrowserBookmark = {
+      id: `bm-${Date.now()}`,
+      title: tab.title,
+      url: tab.url,
+      category: "other",
+      color: "#38bdf8",
+      createdAt: Date.now(),
+    };
+    setBookmarks((prev) => [...prev, newBm]);
+    if (systemSounds) soundFx.playPop();
+    notify("Bookmark Saved", `Added "${tab.title}" to bookmarks bar.`, "success");
+  };
+
+  const handleCopyTabUrl = (targetTabId: string) => {
+    const tab = tabs.find((t) => t.id === targetTabId);
+    if (!tab) return;
+    try {
+      navigator.clipboard.writeText(tab.url);
+      if (systemSounds) soundFx.playClick();
+      notify("Link Copied", `Copied URL for "${tab.title}".`, "success");
+    } catch {}
+  };
+
+  const handleMoveTabToNewWindow = (targetTabId: string) => {
+    if (systemSounds) soundFx.playClick();
+    openApp("browser");
+    if (tabs.length > 1) {
+      handleCloseTab(targetTabId);
     }
   };
 
@@ -3040,12 +3138,19 @@ export default function Browser() {
   };
 
   return (
-    <div className="relative flex flex-col h-full bg-[#10131c] text-white select-none overflow-hidden font-sans">
+    <div ref={browserContainerRef} className="relative flex flex-col h-full bg-[#10131c] text-white select-none overflow-hidden font-sans">
       {/* ------------------------------------------------------------- */}
       {/* CHROME TABS STRIP (WINDOWS MODE) */}
       {/* ------------------------------------------------------------- */}
       {isWin && (
-        <div className="flex items-center px-1.5 sm:px-2 pt-1 sm:pt-1.5 bg-[#1b1f2b] border-b border-black/40 gap-1 overflow-x-auto thin-scroll shrink-0">
+        <div
+          onContextMenu={(e) => {
+            if (e.target === e.currentTarget) {
+              openTabContextMenu(e, activeTabId);
+            }
+          }}
+          className="relative z-30 flex items-center px-1.5 sm:px-2 pt-1 sm:pt-1.5 bg-[#1b1f2b] border-b border-black/40 gap-1 overflow-x-auto thin-scroll shrink-0"
+        >
           <div className="flex items-center gap-1 min-w-0 flex-1">
             <AnimatePresence mode="popLayout" initial={false}>
               {tabs.map((tab) => {
@@ -3063,16 +3168,7 @@ export default function Browser() {
                       if (systemSounds) soundFx.playClick();
                       setActiveTabId(tab.id);
                     }}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setTabContextMenu({
-                        isOpen: true,
-                        x: e.clientX,
-                        y: e.clientY,
-                        tabId: tab.id,
-                      });
-                    }}
+                    onContextMenu={(e) => openTabContextMenu(e, tab.id)}
                     title={tab.title}
                     className={`group relative flex items-center gap-1.5 sm:gap-2 h-7 sm:h-8 rounded-t-lg sm:rounded-t-xl text-[10.5px] sm:text-xs transition cursor-pointer select-none ${
                       tab.isPinned
@@ -3166,7 +3262,7 @@ export default function Browser() {
       {/* TOP NAVIGATION & OMNIBOX ROW (CHROME / SAFARI) */}
       {/* ------------------------------------------------------------- */}
       <div
-        className={`flex items-center px-1.5 sm:px-3 py-1 sm:py-1.5 border-b border-white/10 shrink-0 gap-1 sm:gap-2 ${
+        className={`relative z-40 flex items-center px-1.5 sm:px-3 py-1 sm:py-1.5 border-b border-white/10 shrink-0 gap-1 sm:gap-2 ${
           isWin ? "bg-[#282d3c]" : "bg-[#181d28]/95 backdrop-blur-md"
         }`}
       >
@@ -3445,7 +3541,7 @@ export default function Browser() {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -4 }}
                   transition={{ duration: 0.12, ease: "easeOut" }}
-                  className={`absolute top-full right-0 mt-1.5 z-50 w-64 py-1.5 select-none ${
+                  className={`absolute top-full right-0 mt-1.5 z-50 w-64 max-h-[calc(100vh-140px)] overflow-y-auto thin-scroll py-1.5 select-none ${
                     isWin
                       ? "bg-[#202533]/98 backdrop-blur-2xl border border-white/15 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] text-xs text-white"
                       : "bg-[#181d28]/95 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] text-xs text-white"
@@ -3624,7 +3720,7 @@ export default function Browser() {
       {/* BOOKMARKS BAR (CUSTOMIZABLE, PERSISTENT, ONE-CLICK ACCESS)    */}
       {/* ------------------------------------------------------------- */}
       {showBookmarksBar && (
-        <div className="flex items-center px-2 sm:px-3 py-1 bg-[#141824] border-b border-white/5 gap-1.5 overflow-x-auto thin-scroll shrink-0 text-xs text-white/80 select-none">
+        <div className="relative z-30 flex items-center px-2 sm:px-3 py-1 bg-[#141824] border-b border-white/5 gap-1.5 overflow-x-auto thin-scroll shrink-0 text-xs text-white/80 select-none">
           {bookmarks.map((bm) => (
             <div
               key={bm.id}
@@ -3690,8 +3786,15 @@ export default function Browser() {
       {/* ------------------------------------------------------------- */}
       {/* SAFARI TABS BAR (MACOS MODE ONLY) */}
       {/* ------------------------------------------------------------- */}
-      {!isWin && (tabs.length > 1 || tabs.some((t) => t.isPinned)) && (
-        <div className="flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 bg-[#141822] border-b border-white/5 gap-1 overflow-x-auto thin-scroll shrink-0">
+      {!isWin && (
+        <div
+          onContextMenu={(e) => {
+            if (e.target === e.currentTarget) {
+              openTabContextMenu(e, activeTabId);
+            }
+          }}
+          className="relative z-20 flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 bg-[#141822] border-b border-white/5 gap-1 overflow-x-auto thin-scroll shrink-0"
+        >
           <AnimatePresence mode="popLayout" initial={false}>
             {tabs.map((tab) => {
               const isActive = tab.id === activeTabId;
@@ -3708,27 +3811,18 @@ export default function Browser() {
                     if (systemSounds) soundFx.playClick();
                     setActiveTabId(tab.id);
                   }}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setTabContextMenu({
-                      isOpen: true,
-                      x: e.clientX,
-                      y: e.clientY,
-                      tabId: tab.id,
-                    });
-                  }}
+                  onContextMenu={(e) => openTabContextMenu(e, tab.id)}
                   title={tab.title}
                   className={`group flex items-center gap-1.5 rounded-md sm:rounded-lg text-[10.5px] sm:text-xs transition cursor-pointer select-none ${
                     tab.isPinned
                       ? "w-7 sm:w-8 min-w-[28px] sm:min-w-[32px] max-w-[36px] px-1 sm:px-1.5 py-0.5 sm:py-1 justify-center"
-                      : "px-2 sm:px-3 py-0.5 sm:py-1 max-w-[160px] min-w-[68px] sm:min-w-[90px]"
+                      : "px-2 sm:px-3 py-0.5 sm:py-1 max-w-[170px] min-w-[70px] sm:min-w-[96px]"
                   } ${
                     isActive
-                      ? "bg-white/15 text-white font-medium shadow-xs"
+                      ? "bg-white/15 text-white font-medium shadow-xs border border-white/15"
                       : isSplit
                         ? "bg-sky-500/20 text-sky-300 border border-sky-500/30 font-medium"
-                        : "text-white/50 hover:text-white hover:bg-white/5"
+                        : "text-white/60 hover:text-white hover:bg-white/5"
                   }`}
                 >
                   {tab.isPinned ? (
@@ -3769,13 +3863,23 @@ export default function Browser() {
               );
             })}
           </AnimatePresence>
+
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9, rotate: 90 }}
+            onClick={handleNewTab}
+            className="p-1 rounded-md hover:bg-white/10 text-white/60 hover:text-white transition cursor-pointer shrink-0 ml-0.5"
+            title="New Tab (⌘T)"
+          >
+            <GIconPlus size={11} />
+          </motion.button>
         </div>
       )}
 
       {/* ------------------------------------------------------------- */}
       {/* MAIN VIEWPORT / RENDERING CANVAS (SINGLE OR DUAL SPLIT VIEW) */}
       {/* ------------------------------------------------------------- */}
-      <div className="relative flex-1 flex flex-col min-h-0 overflow-hidden">
+      <div className="relative z-0 flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Floating Find in Page Widget */}
         <AnimatePresence>
           {showFindInPage && (
@@ -4166,163 +4270,228 @@ export default function Browser() {
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* TAB CONTEXT MENU (CHROME / SAFARI RIGHT-CLICK MENU VIA PORTAL) */}
+      {/* TAB CONTEXT MENU (CHROME / SAFARI RIGHT-CLICK ("SECOND CLICK") */}
       {/* ------------------------------------------------------------- */}
       <AnimatePresence>
-        {tabContextMenu.isOpen &&
-          createPortal(
+        {tabContextMenu.isOpen && (
+          <div
+            className="absolute inset-0 z-[70] overflow-hidden"
+            onClick={() => setTabContextMenu((p) => ({ ...p, isOpen: false }))}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setTabContextMenu((p) => ({ ...p, isOpen: false }));
+            }}
+          >
             <motion.div
               ref={contextMenuRef}
               initial={{ opacity: 0, scale: 0.95, y: -4 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -4 }}
               transition={{ duration: 0.12, ease: "easeOut" }}
-              className={`fixed z-[99999] min-w-[210px] max-w-[calc(100vw-16px)] py-1.5 select-none ${
+              className={`absolute z-[71] min-w-[220px] max-w-[260px] py-1.5 select-none ${
                 isWin
-                  ? "bg-[#202430]/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl text-xs text-white/90 font-sans"
-                  : "bg-[#1c202d]/90 backdrop-blur-2xl border border-white/15 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] text-xs text-white/90 font-sans"
+                  ? "bg-[#202533]/98 backdrop-blur-2xl border border-white/15 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] text-xs text-white font-sans"
+                  : "bg-[#181d28]/95 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] text-xs text-white font-sans"
               }`}
               style={{
-                top: Math.max(8, Math.min(tabContextMenu.y, window.innerHeight - 340)),
-                left: Math.max(8, Math.min(tabContextMenu.x, window.innerWidth - 240)),
+                top: Math.max(6, Math.min(tabContextMenu.y, (browserContainerRef.current?.clientHeight || 600) - 390)),
+                left: Math.max(6, Math.min(tabContextMenu.x, (browserContainerRef.current?.clientWidth || 800) - 240)),
               }}
-              onContextMenu={(e) => e.preventDefault()}
               onClick={(e) => e.stopPropagation()}
+              onContextMenu={(e) => e.preventDefault()}
             >
-            {(() => {
-              const target = tabs.find((t) => t.id === tabContextMenu.tabId);
-              const isPinned = target?.isPinned ?? false;
-              const isMuted = target?.isMuted ?? false;
-              const isTargetSplit = splitTabId === tabContextMenu.tabId;
+              {(() => {
+                const target = tabs.find((t) => t.id === tabContextMenu.tabId);
+                const isPinned = target?.isPinned ?? false;
+                const isMuted = target?.isMuted ?? false;
+                const isTargetSplit = splitTabId === tabContextMenu.tabId;
+                const targetIdx = tabs.findIndex((t) => t.id === tabContextMenu.tabId);
+                const hasTabsToRight = targetIdx >= 0 && targetIdx < tabs.length - 1;
+                const hasTabsToLeft = targetIdx > 0;
 
-              return (
-                <>
-                  <button
-                    onClick={() => {
-                      handleNewTabToRight(tabContextMenu.tabId);
-                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                    }}
-                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
-                  >
-                    <span className="flex items-center gap-2">
-                      <GIconPlus size={13} className="text-white/60" />
-                      <span>New tab to the right</span>
-                    </span>
-                  </button>
+                return (
+                  <>
+                    <button
+                      onClick={() => {
+                        handleNewTabToRight(tabContextMenu.tabId);
+                        setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                      }}
+                      className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        <GIconPlus size={13} className="text-white/60" />
+                        <span>New tab to the right</span>
+                      </span>
+                    </button>
 
-                  <button
-                    onClick={() => {
-                      handleToggleSplitView(tabContextMenu.tabId);
-                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                    }}
-                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
-                  >
-                    <span className="flex items-center gap-2">
-                      <GIconLayoutColumns size={13} className="text-white/60" />
-                      <span>{isTargetSplit || splitTabId ? "Exit split view" : "Add tab to new split view"}</span>
-                    </span>
-                  </button>
+                    <button
+                      onClick={() => {
+                        handleToggleSplitView(tabContextMenu.tabId);
+                        setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                      }}
+                      className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        <GIconLayoutColumns size={13} className="text-white/60" />
+                        <span>{isTargetSplit || splitTabId ? "Exit split view" : "New split view with current tab"}</span>
+                      </span>
+                    </button>
 
-                  <div className="h-px bg-white/10 my-1 mx-2" />
+                    <button
+                      onClick={() => {
+                        handleMoveTabToNewWindow(tabContextMenu.tabId);
+                        setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                      }}
+                      className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        <GIconExternalLink size={13} className="text-white/60" />
+                        <span>Move tab to another window</span>
+                      </span>
+                    </button>
 
-                  <button
-                    onClick={() => {
-                      handleReloadTab(tabContextMenu.tabId);
-                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                    }}
-                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
-                  >
-                    <span className="flex items-center gap-2">
-                      <GIconRotateRight size={13} className="text-white/60" />
-                      <span>Reload</span>
-                    </span>
-                    <span className="text-[10px] text-white/40 font-mono">{isWin ? "Ctrl+R" : "⌘R"}</span>
-                  </button>
+                    <div className="h-px bg-white/10 my-1 mx-2" />
 
-                  <button
-                    onClick={() => {
-                      handleDuplicateTab(tabContextMenu.tabId);
-                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                    }}
-                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
-                  >
-                    <span className="flex items-center gap-2">
-                      <GIconCopy size={13} className="text-white/60" />
-                      <span>Duplicate</span>
-                    </span>
-                  </button>
+                    <button
+                      onClick={() => {
+                        handleReloadTab(tabContextMenu.tabId);
+                        setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                      }}
+                      className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        <GIconRotateRight size={13} className="text-white/60" />
+                        <span>Reload</span>
+                      </span>
+                      <span className="text-[10px] text-white/40 font-mono">{isWin ? "Ctrl+R" : "⌘R"}</span>
+                    </button>
 
-                  <button
-                    onClick={() => {
-                      handleTogglePinTab(tabContextMenu.tabId);
-                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                    }}
-                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
-                  >
-                    <span className="flex items-center gap-2">
-                      <GIconPin size={13} className="text-white/60" />
-                      <span>{isPinned ? "Unpin tab" : "Pin tab"}</span>
-                    </span>
-                  </button>
+                    <button
+                      onClick={() => {
+                        handleDuplicateTab(tabContextMenu.tabId);
+                        setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                      }}
+                      className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        <GIconCopy size={13} className="text-white/60" />
+                        <span>Duplicate</span>
+                      </span>
+                    </button>
 
-                  <button
-                    onClick={() => {
-                      handleToggleMuteTab(tabContextMenu.tabId);
-                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                    }}
-                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
-                  >
-                    <span className="flex items-center gap-2">
-                      {isMuted ? (
-                        <GIconVolume size={13} className="text-white/60" />
-                      ) : (
-                        <GIconVolumeMute size={13} className="text-white/60" />
-                      )}
-                      <span>{isMuted ? "Unmute site" : "Mute site"}</span>
-                    </span>
-                  </button>
+                    <button
+                      onClick={() => {
+                        handleTogglePinTab(tabContextMenu.tabId);
+                        setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                      }}
+                      className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        <GIconPin size={13} className="text-white/60" />
+                        <span>{isPinned ? "Unpin tab" : "Pin"}</span>
+                      </span>
+                    </button>
 
-                  <div className="h-px bg-white/10 my-1 mx-2" />
+                    <button
+                      onClick={() => {
+                        handleToggleMuteTab(tabContextMenu.tabId);
+                        setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                      }}
+                      className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        {isMuted ? (
+                          <GIconVolume size={13} className="text-white/60" />
+                        ) : (
+                          <GIconVolumeMute size={13} className="text-white/60" />
+                        )}
+                        <span>{isMuted ? "Unmute site" : "Mute site"}</span>
+                      </span>
+                    </button>
 
-                  <button
-                    onClick={() => {
-                      handleCloseTab(tabContextMenu.tabId);
-                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                    }}
-                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-rose-500/20 hover:text-rose-300 text-left cursor-pointer transition-colors"
-                  >
-                    <span className="flex items-center gap-2">
-                      <GIconClose size={13} className="text-rose-400/80" />
-                      <span>Close</span>
-                    </span>
-                    <span className="text-[10px] text-white/40 font-mono">{isWin ? "Ctrl+W" : "⌘W"}</span>
-                  </button>
+                    <div className="h-px bg-white/10 my-1 mx-2" />
 
-                  <button
-                    onClick={() => {
-                      handleCloseOtherTabs(tabContextMenu.tabId);
-                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                    }}
-                    disabled={tabs.length <= 1}
-                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    <span>Close other tabs</span>
-                  </button>
+                    <button
+                      onClick={() => {
+                        handleBookmarkTab(tabContextMenu.tabId);
+                        setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                      }}
+                      className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        <GIconStar size={13} className="text-amber-400/80" />
+                        <span>Add tab to reading list / bookmarks</span>
+                      </span>
+                    </button>
 
-                  <button
-                    onClick={() => {
-                      handleCloseTabsToRight(tabContextMenu.tabId);
-                      setTabContextMenu((p) => ({ ...p, isOpen: false }));
-                    }}
-                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors"
-                  >
-                    <span>Close tabs to the right</span>
-                  </button>
-                </>
-              );
-            })()}
-          </motion.div>,
-          document.body
+                    <button
+                      onClick={() => {
+                        handleCopyTabUrl(tabContextMenu.tabId);
+                        setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                      }}
+                      className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-sky-500/20 hover:text-sky-300 text-left cursor-pointer transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        <GIconCopy size={13} className="text-white/60" />
+                        <span>Share tab / Copy link</span>
+                      </span>
+                    </button>
+
+                    <div className="h-px bg-white/10 my-1 mx-2" />
+
+                    <button
+                      onClick={() => {
+                        handleCloseTab(tabContextMenu.tabId);
+                        setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                      }}
+                      className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-rose-500/20 hover:text-rose-300 text-left cursor-pointer transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        <GIconClose size={13} className="text-rose-400/80" />
+                        <span>Close</span>
+                      </span>
+                      <span className="text-[10px] text-white/40 font-mono">{isWin ? "Ctrl+W" : "⌘W"}</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        handleCloseOtherTabs(tabContextMenu.tabId);
+                        setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                      }}
+                      disabled={tabs.length <= 1}
+                      className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <span>Close other tabs</span>
+                    </button>
+
+                    {hasTabsToRight && (
+                      <button
+                        onClick={() => {
+                          handleCloseTabsToRight(tabContextMenu.tabId);
+                          setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                        }}
+                        className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors"
+                      >
+                        <span>Close tabs to the right</span>
+                      </button>
+                    )}
+
+                    {hasTabsToLeft && (
+                      <button
+                        onClick={() => {
+                          handleCloseTabsToLeft(tabContextMenu.tabId);
+                          setTabContextMenu((p) => ({ ...p, isOpen: false }));
+                        }}
+                        className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors"
+                      >
+                        <span>Close tabs to the left</span>
+                      </button>
+                    )}
+                  </>
+                );
+              })()}
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
