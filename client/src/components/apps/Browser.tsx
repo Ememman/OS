@@ -33,6 +33,13 @@ import {
   GIconMail,
   GIconPhone,
   GIconActivity,
+  GIconStar,
+  GIconDownload,
+  GIconHistory,
+  GIconTrash,
+  GIconChevronUp,
+  GIconChevronDown,
+  GIconPrinter,
 } from "../icons/GravityIcons";
 import {
   SEARCH_INDEX,
@@ -55,6 +62,45 @@ interface Tab {
   isPinned?: boolean;
   isMuted?: boolean;
 }
+
+interface BrowserBookmark {
+  id: string;
+  title: string;
+  url: string;
+  color?: string;
+  category?: string;
+  createdAt: number;
+}
+
+const DEFAULT_BOOKMARKS: BrowserBookmark[] = [
+  { id: "bm-about", title: "About Me", url: "https://mendoza.dev/about", color: "#38bdf8", category: "profile", createdAt: 1 },
+  { id: "bm-experience", title: "Experience", url: "https://mendoza.dev/experience", color: "#10b981", category: "experience", createdAt: 2 },
+  { id: "bm-skills", title: "Skills", url: "https://mendoza.dev/skills", color: "#8b5cf6", category: "skills", createdAt: 3 },
+  { id: "bm-projects", title: "Projects", url: "https://mendoza.dev/projects", color: "#f59e0b", category: "projects", createdAt: 4 },
+  { id: "bm-system", title: "System Info", url: "os://system-info", color: "#06b6d4", category: "system", createdAt: 5 },
+  { id: "bm-shortcuts", title: "Shortcuts", url: "os://shortcuts", color: "#ec4899", category: "system", createdAt: 6 },
+  { id: "bm-github", title: "GitHub (@Ememman)", url: "https://github.com/Ememman", color: "#64748b", category: "external", createdAt: 7 },
+  { id: "bm-cv", title: "Curriculum Vitae", url: "mendoza.dev/cv.pdf", color: "#f43f5e", category: "profile", createdAt: 8 },
+];
+
+interface HistoryEntry {
+  id: string;
+  url: string;
+  title: string;
+  visitedAt: number;
+}
+
+interface DownloadItem {
+  id: string;
+  filename: string;
+  size: string;
+  timestamp: string;
+  status: "completed" | "downloading";
+  url: string;
+  category: "pdf" | "json" | "code" | "doc";
+}
+
+const ZOOM_LEVELS = [75, 90, 100, 110, 125, 150];
 
 const UNRELATED_SEARCH_REGEX =
   /\b(nba|meme|billiard|billiards|gsw|warriors?|pelicans?|paul george|tachiyomi|lorem ipsum)\b/i;
@@ -469,6 +515,231 @@ export default function Browser() {
     });
   };
 
+  // Bookmarks state (with localStorage persistence)
+  const [bookmarks, setBookmarks] = useState<BrowserBookmark[]>(() => {
+    try {
+      const saved = localStorage.getItem("browser_bookmarks_list");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return DEFAULT_BOOKMARKS;
+  });
+  const [showBookmarksBar, setShowBookmarksBar] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("browser_show_bm_bar");
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("browser_bookmarks_list", JSON.stringify(bookmarks));
+    } catch {}
+  }, [bookmarks]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("browser_show_bm_bar", JSON.stringify(showBookmarksBar));
+    } catch {}
+  }, [showBookmarksBar]);
+
+  // History Log state (with localStorage persistence)
+  const [historyLog, setHistoryLog] = useState<HistoryEntry[]>(() => {
+    try {
+      const saved = localStorage.getItem("browser_history_entries");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [
+      { id: "hist-1", url: "https://mendoza.dev/about", title: "About Me — James Mendoza", visitedAt: Date.now() - 1000 * 60 * 15 },
+      { id: "hist-2", url: "https://mendoza.dev/experience", title: "Experience — James Mendoza", visitedAt: Date.now() - 1000 * 60 * 60 },
+      { id: "hist-3", url: "https://mendoza.dev/skills", title: "Technical Skills — James Mendoza", visitedAt: Date.now() - 1000 * 60 * 120 },
+      { id: "hist-4", url: "os://system-info", title: "Portfolio OS Architecture", visitedAt: Date.now() - 1000 * 60 * 180 },
+    ];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("browser_history_entries", JSON.stringify(historyLog));
+    } catch {}
+  }, [historyLog]);
+
+  // Zoom level state
+  const [zoomLevel, setZoomLevel] = useState<number>(100);
+
+  // Find in page state
+  const [showFindInPage, setShowFindInPage] = useState<boolean>(false);
+  const [findQuery, setFindQuery] = useState<string>("");
+  const [findMatchIndex, setFindMatchIndex] = useState<number>(0);
+  const findInputRef = useRef<HTMLInputElement>(null);
+
+  // Browser Menu & Drawer state
+  const [showBrowserMenu, setShowBrowserMenu] = useState<boolean>(false);
+  const [activeDrawer, setActiveDrawer] = useState<"none" | "history" | "downloads" | "bookmarks">("none");
+  const [historyFilter, setHistoryFilter] = useState<string>("");
+  const browserMenuRef = useRef<HTMLDivElement>(null);
+
+  // Downloads state
+  const [downloads] = useState<DownloadItem[]>([
+    {
+      id: "dl-1",
+      filename: "James_Emmanuel_Mendoza_CV.pdf",
+      size: "184 KB",
+      timestamp: "Today at 4:12 PM",
+      status: "completed",
+      url: "mendoza.dev/cv.pdf",
+      category: "pdf",
+    },
+    {
+      id: "dl-2",
+      filename: "Portfolio_OS_Kernel_Telemetry.json",
+      size: "42 KB",
+      timestamp: "Today at 2:45 PM",
+      status: "completed",
+      url: "os://diagnostics",
+      category: "json",
+    },
+    {
+      id: "dl-3",
+      filename: "Portfolio_OS_Shortcuts_Guide.txt",
+      size: "14 KB",
+      timestamp: "Yesterday",
+      status: "completed",
+      url: "os://shortcuts",
+      category: "doc",
+    },
+  ]);
+
+  // Close browser menu on outside click
+  useEffect(() => {
+    if (!showBrowserMenu) return;
+    const handleDown = (e: MouseEvent) => {
+      if (browserMenuRef.current && !browserMenuRef.current.contains(e.target as Node)) {
+        setShowBrowserMenu(false);
+      }
+    };
+    window.addEventListener("mousedown", handleDown);
+    return () => window.removeEventListener("mousedown", handleDown);
+  }, [showBrowserMenu]);
+
+  // Check whether current active tab is bookmarked
+  const isCurrentPageBookmarked = useMemo(() => {
+    const norm = (u: string) => u.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    const currentNorm = norm(activeTab.url);
+    return bookmarks.some((b) => norm(b.url) === currentNorm);
+  }, [bookmarks, activeTab.url]);
+
+  const handleToggleBookmarkCurrent = () => {
+    const norm = (u: string) => u.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    const currentNorm = norm(activeTab.url);
+    const existing = bookmarks.find((b) => norm(b.url) === currentNorm);
+
+    if (existing) {
+      if (systemSounds) soundFx.playClose();
+      setBookmarks((prev) => prev.filter((b) => b.id !== existing.id));
+      notify("Bookmark Removed", `Removed "${existing.title}" from bookmarks.`, "info", 1800);
+    } else {
+      if (systemSounds) soundFx.playPop();
+      const newBm: BrowserBookmark = {
+        id: `bm-${Date.now()}`,
+        title: activeTab.title || formatTabTitle(activeTab.url),
+        url: activeTab.url,
+        color: activeTheme.accentColor || "#38bdf8",
+        category: "custom",
+        createdAt: Date.now(),
+      };
+      setBookmarks((prev) => [newBm, ...prev]);
+      notify("Bookmark Added", `Saved "${newBm.title}" to your bookmarks bar.`, "success", 1800);
+    }
+  };
+
+  // Zoom handlers
+  const handleZoomIn = () => {
+    if (systemSounds) soundFx.playClick();
+    setZoomLevel((prev) => {
+      const idx = ZOOM_LEVELS.indexOf(prev);
+      if (idx !== -1 && idx < ZOOM_LEVELS.length - 1) return ZOOM_LEVELS[idx + 1];
+      if (idx === -1) {
+        const next = ZOOM_LEVELS.find((z) => z > prev);
+        return next || prev;
+      }
+      return prev;
+    });
+  };
+
+  const handleZoomOut = () => {
+    if (systemSounds) soundFx.playClick();
+    setZoomLevel((prev) => {
+      const idx = ZOOM_LEVELS.indexOf(prev);
+      if (idx !== -1 && idx > 0) return ZOOM_LEVELS[idx - 1];
+      if (idx === -1) {
+        const next = [...ZOOM_LEVELS].reverse().find((z) => z < prev);
+        return next || prev;
+      }
+      return prev;
+    });
+  };
+
+  const handleZoomReset = () => {
+    if (systemSounds) soundFx.playClick();
+    setZoomLevel(100);
+  };
+
+  // Find in page calculation
+  const findMatchTotal = useMemo(() => {
+    if (!findQuery.trim()) return 0;
+    const q = findQuery.toLowerCase().trim();
+    let textToSearch = `${activeTab.title} ${activeTab.url} `;
+    const pageIndex = SEARCH_INDEX.find((item) => item.url === activeTab.url);
+    if (pageIndex) {
+      textToSearch += `${pageIndex.snippet} ${pageIndex.keywords.join(" ")} `;
+    }
+    DEVELOPER_KNOWLEDGE_PANEL.attributes.forEach((attr) => {
+      textToSearch += `${attr.label} ${attr.value} `;
+    });
+    const matches = textToSearch.toLowerCase().split(q).length - 1;
+    return Math.max(1, matches);
+  }, [findQuery, activeTab.title, activeTab.url]);
+
+  const handleFindNext = () => {
+    if (findMatchTotal <= 0) return;
+    if (systemSounds) soundFx.playClick();
+    setFindMatchIndex((prev) => (prev + 1) % findMatchTotal);
+  };
+
+  const handleFindPrev = () => {
+    if (findMatchTotal <= 0) return;
+    if (systemSounds) soundFx.playClick();
+    setFindMatchIndex((prev) => (prev <= 0 ? findMatchTotal - 1 : prev - 1));
+  };
+
+  const handlePrintPage = () => {
+    if (systemSounds) soundFx.playPop();
+    notify("Print Document", `Sent "${activeTab.title}" to print spooler.`, "info", 2000);
+    window.print?.();
+  };
+
+  const handleDownloadFile = (item: DownloadItem) => {
+    if (systemSounds) soundFx.playPop();
+    if (item.url === "mendoza.dev/cv.pdf" || item.category === "pdf") {
+      openApp("pdf-viewer");
+      notify("Opening PDF", "Opening executive CV in PDF Viewer...", "info");
+      return;
+    }
+    if (item.category === "json") {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(SYSTEM_KNOWLEDGE_PANEL, null, 2));
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", item.filename);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      notify("Downloaded", `Saved ${item.filename} to local storage.`, "success");
+      return;
+    }
+    notify("Download Complete", `${item.filename} saved.`, "success");
+  };
+
   // Interactive contact form state
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -644,6 +915,24 @@ export default function Browser() {
     setIsLoading(true);
     setTimeout(() => setIsLoading(false), 220);
 
+    const resolvedTitle = title || formatTabTitle(newUrl);
+
+    // Append to browsing history if not internal start pages
+    if (newUrl !== "safari://start" && newUrl !== "google://home") {
+      setHistoryLog((prev) => {
+        const filtered = prev.filter((h) => h.url !== newUrl);
+        return [
+          {
+            id: `hist-${Date.now()}`,
+            url: newUrl,
+            title: resolvedTitle,
+            visitedAt: Date.now(),
+          },
+          ...filtered,
+        ].slice(0, 50);
+      });
+    }
+
     setTabs((prev) =>
       prev.map((tab) => {
         if (tab.id !== tabId) return tab;
@@ -651,7 +940,7 @@ export default function Browser() {
         return {
           ...tab,
           url: newUrl,
-          title: title || formatTabTitle(newUrl),
+          title: resolvedTitle,
           history: newHistory,
           historyIndex: newHistory.length - 1,
         };
@@ -866,11 +1155,16 @@ export default function Browser() {
     }
   };
 
-  // Global Browser Keyboard Shortcuts (Ctrl/Cmd+W, Ctrl/Cmd+R, Ctrl/Cmd+T)
+  // Global Browser Keyboard Shortcuts (Ctrl/Cmd+W, Ctrl/Cmd+R, Ctrl/Cmd+T, Ctrl/Cmd+L, Ctrl/Cmd+D, Ctrl/Cmd+F, etc.)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setShowCustomizeModal(false);
+        setShowFindInPage(false);
+        setShowBrowserMenu(false);
+        setActiveDrawer("none");
+        setIsOmniboxFocused(false);
+        setIsHomeSearchFocused(false);
       }
       const isMod = isWin ? e.ctrlKey : e.metaKey || e.ctrlKey;
       if (isMod && (e.key === "w" || e.key === "W")) {
@@ -882,6 +1176,58 @@ export default function Browser() {
       } else if (isMod && (e.key === "t" || e.key === "T")) {
         e.preventDefault();
         handleNewTab();
+      } else if (isMod && (e.key === "l" || e.key === "L")) {
+        e.preventDefault();
+        omniboxRef.current?.focus();
+        omniboxRef.current?.select();
+      } else if (isMod && (e.key === "d" || e.key === "D")) {
+        e.preventDefault();
+        handleToggleBookmarkCurrent();
+      } else if (isMod && (e.key === "f" || e.key === "F")) {
+        e.preventDefault();
+        setShowFindInPage((prev) => !prev);
+        setTimeout(() => findInputRef.current?.focus(), 50);
+      } else if (isMod && e.shiftKey && (e.key === "b" || e.key === "B")) {
+        e.preventDefault();
+        setShowBookmarksBar((prev) => !prev);
+      } else if (isMod && (e.key === "h" || e.key === "H" || (!isWin && (e.key === "y" || e.key === "Y")))) {
+        e.preventDefault();
+        setActiveDrawer((prev) => (prev === "history" ? "none" : "history"));
+      } else if (isMod && (e.key === "j" || e.key === "J")) {
+        e.preventDefault();
+        setActiveDrawer((prev) => (prev === "downloads" ? "none" : "downloads"));
+      } else if (isMod && (e.key === "=" || e.key === "+")) {
+        e.preventDefault();
+        handleZoomIn();
+      } else if (isMod && e.key === "-") {
+        e.preventDefault();
+        handleZoomOut();
+      } else if (isMod && e.key === "0") {
+        e.preventDefault();
+        handleZoomReset();
+      } else if (isMod && (e.key === "p" || e.key === "P")) {
+        e.preventDefault();
+        handlePrintPage();
+      } else if (isMod && e.key >= "1" && e.key <= "8") {
+        const targetIdx = parseInt(e.key, 10) - 1;
+        if (targetIdx < tabs.length) {
+          e.preventDefault();
+          setActiveTabId(tabs[targetIdx].id);
+        }
+      } else if (isMod && e.key === "9") {
+        if (tabs.length > 0) {
+          e.preventDefault();
+          setActiveTabId(tabs[tabs.length - 1].id);
+        }
+      } else if (e.key === "Tab" && isMod) {
+        e.preventDefault();
+        const currentIdx = tabs.findIndex((t) => t.id === activeTabId);
+        if (currentIdx !== -1) {
+          const nextIdx = e.shiftKey
+            ? (currentIdx - 1 + tabs.length) % tabs.length
+            : (currentIdx + 1) % tabs.length;
+          setActiveTabId(tabs[nextIdx].id);
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -2469,6 +2815,16 @@ export default function Browser() {
                       <GIconCopy size={12} />
                       <span>{copiedUrl ? "Link Copied!" : "Share Link"}</span>
                     </button>
+                    {(currentTab.url.startsWith("http://") || currentTab.url.startsWith("https://")) && (
+                      <button
+                        type="button"
+                        onClick={() => window.open(currentTab.url, "_blank")}
+                        className="px-3.5 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 border border-sky-500/30"
+                      >
+                        <GIconExternalLink size={12} />
+                        <span>Launch in New Tab</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -2661,6 +3017,18 @@ export default function Browser() {
       >
         {/* Navigation Arrows */}
         <div className="flex items-center gap-0.5 shrink-0">
+          {!isWin && (
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setActiveDrawer((prev) => (prev === "bookmarks" ? "none" : "bookmarks"))}
+              className={`hidden sm:flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer mr-0.5 ${
+                activeDrawer === "bookmarks" ? "text-sky-400 bg-sky-500/15" : ""
+              }`}
+              title="Toggle Safari Sidebar & Bookmarks"
+            >
+              <GIconLayoutColumns size={12} />
+            </motion.button>
+          )}
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={handleBack}
@@ -2765,6 +3133,33 @@ export default function Browser() {
               className="w-full bg-transparent text-[11.5px] sm:text-xs text-white placeholder:text-white/35 outline-none font-mono selection:bg-accent/40"
             />
 
+            {/* Zoom Indicator Pill in Omnibox */}
+            {zoomLevel !== 100 && (
+              <button
+                type="button"
+                onClick={handleZoomReset}
+                className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white/10 hover:bg-white/15 text-[10px] text-accent font-mono shrink-0 mr-1 cursor-pointer transition"
+                title="Click to reset zoom to 100%"
+              >
+                <span>{zoomLevel}%</span>
+              </button>
+            )}
+
+            {/* Bookmark Star Button */}
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.85 }}
+              onClick={handleToggleBookmarkCurrent}
+              className={`p-1 rounded-md transition cursor-pointer shrink-0 mr-1 ${
+                isCurrentPageBookmarked
+                  ? "text-[#facc15] hover:text-[#fde047]"
+                  : "text-white/40 hover:text-white"
+              }`}
+              title={isCurrentPageBookmarked ? "Edit bookmark for this page" : "Bookmark this tab (Ctrl+D / ⌘D)"}
+            >
+              <GIconStar size={12} fill={isCurrentPageBookmarked ? "currentColor" : "none"} />
+            </motion.button>
+
             {inputUrl && (
               <button
                 type="button"
@@ -2796,6 +3191,22 @@ export default function Browser() {
 
         {/* Action icons right */}
         <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => {
+              setShowFindInPage((prev) => !prev);
+              if (!showFindInPage) {
+                setTimeout(() => findInputRef.current?.focus(), 50);
+              }
+            }}
+            className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${
+              showFindInPage ? "text-accent bg-white/15 ring-1 ring-white/20" : ""
+            }`}
+            title="Find in Page (Ctrl+F / ⌘F)"
+          >
+            <GIconSearch size={12} />
+          </motion.button>
+
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => setShowCustomizeModal((prev) => !prev)}
@@ -2848,8 +3259,278 @@ export default function Browser() {
               </motion.button>
             </div>
           )}
+
+          {/* Browser Menu Button (Chrome 3-Dot or Safari Action) */}
+          <div className="relative">
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setShowBrowserMenu((prev) => !prev)}
+              className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${
+                showBrowserMenu ? "text-accent bg-white/15 ring-1 ring-white/20" : ""
+              }`}
+              title={isWin ? "Customize and control Google Chrome" : "Safari Actions & Tools"}
+            >
+              {isWin ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="5" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="12" cy="19" r="2" />
+                </svg>
+              ) : (
+                <GIconSliders size={13} />
+              )}
+            </motion.button>
+
+            {/* Dropdown Menu */}
+            <AnimatePresence>
+              {showBrowserMenu && (
+                <motion.div
+                  ref={browserMenuRef}
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  transition={{ duration: 0.12, ease: "easeOut" }}
+                  className={`absolute top-full right-0 mt-1.5 z-50 w-64 py-1.5 select-none ${
+                    isWin
+                      ? "bg-[#202533]/98 backdrop-blur-2xl border border-white/15 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] text-xs text-white"
+                      : "bg-[#181d28]/95 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] text-xs text-white"
+                  }`}
+                >
+                  <button
+                    onClick={() => {
+                      handleNewTab();
+                      setShowBrowserMenu(false);
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GIconPlus size={13} className="text-white/60" />
+                      <span>New Tab</span>
+                    </span>
+                    <span className="text-[10px] text-white/40 font-mono">{isWin ? "Ctrl+T" : "⌘T"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      openApp("browser");
+                      setShowBrowserMenu(false);
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GIconGlobe size={13} className="text-white/60" />
+                      <span>New Window</span>
+                    </span>
+                  </button>
+
+                  <div className="h-px bg-white/10 my-1 mx-2" />
+
+                  <button
+                    onClick={() => {
+                      setActiveDrawer("history");
+                      setShowBrowserMenu(false);
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GIconHistory size={13} className="text-white/60" />
+                      <span>History</span>
+                    </span>
+                    <span className="text-[10px] text-white/40 font-mono">{isWin ? "Ctrl+H" : "⌘Y"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setActiveDrawer("downloads");
+                      setShowBrowserMenu(false);
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GIconDownload size={13} className="text-white/60" />
+                      <span>Downloads</span>
+                    </span>
+                    <span className="text-[10px] text-white/40 font-mono">{isWin ? "Ctrl+J" : "⌥⌘L"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowBookmarksBar((prev) => !prev);
+                      setShowBrowserMenu(false);
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GIconStar size={13} className="text-white/60" />
+                      <span>{showBookmarksBar ? "Hide Bookmarks Bar" : "Show Bookmarks Bar"}</span>
+                    </span>
+                    <span className="text-[10px] text-white/40 font-mono">{isWin ? "Ctrl+Shift+B" : "⌘Shift+B"}</span>
+                  </button>
+
+                  <div className="h-px bg-white/10 my-1 mx-2" />
+
+                  {/* Zoom controls in menu */}
+                  <div className="flex items-center justify-between px-3.5 py-1.5 text-xs">
+                    <span className="text-white/70">Zoom</span>
+                    <div className="flex items-center gap-1.5 bg-black/40 rounded-lg p-0.5 border border-white/10">
+                      <button
+                        onClick={handleZoomOut}
+                        className="w-5 h-5 flex items-center justify-center hover:bg-white/15 rounded text-white/70 hover:text-white cursor-pointer font-bold"
+                        title="Zoom Out (Ctrl -)"
+                      >
+                        -
+                      </button>
+                      <button
+                        onClick={handleZoomReset}
+                        className="px-1.5 text-[10.5px] font-mono text-accent hover:underline cursor-pointer"
+                        title="Reset Zoom (Ctrl 0)"
+                      >
+                        {zoomLevel}%
+                      </button>
+                      <button
+                        onClick={handleZoomIn}
+                        className="w-5 h-5 flex items-center justify-center hover:bg-white/15 rounded text-white/70 hover:text-white cursor-pointer font-bold"
+                        title="Zoom In (Ctrl +)"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setShowFindInPage(true);
+                      setShowBrowserMenu(false);
+                      setTimeout(() => findInputRef.current?.focus(), 50);
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GIconSearch size={13} className="text-white/60" />
+                      <span>Find in page...</span>
+                    </span>
+                    <span className="text-[10px] text-white/40 font-mono">{isWin ? "Ctrl+F" : "⌘F"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handlePrintPage();
+                      setShowBrowserMenu(false);
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GIconPrinter size={13} className="text-white/60" />
+                      <span>Print / Export...</span>
+                    </span>
+                    <span className="text-[10px] text-white/40 font-mono">{isWin ? "Ctrl+P" : "⌘P"}</span>
+                  </button>
+
+                  <div className="h-px bg-white/10 my-1 mx-2" />
+
+                  <button
+                    onClick={() => {
+                      setShowCustomizeModal(true);
+                      setShowBrowserMenu(false);
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-white/10 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GIconPalette size={13} className="text-accent" />
+                      <span>{isWin ? "Customize Chrome" : "Customize Safari"}</span>
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      clearAllRecentSearches();
+                      setHistoryLog([]);
+                      try {
+                        localStorage.removeItem("browser_history_entries");
+                      } catch {}
+                      notify("Data Cleared", "Browsing history and search cache cleared.", "update", 1800);
+                      setShowBrowserMenu(false);
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-1.5 hover:bg-rose-500/15 text-rose-300 text-left cursor-pointer transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GIconTrash size={13} />
+                      <span>Clear Browsing Data</span>
+                    </span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
+
+      {/* ------------------------------------------------------------- */}
+      {/* BOOKMARKS BAR (CUSTOMIZABLE, PERSISTENT, ONE-CLICK ACCESS)    */}
+      {/* ------------------------------------------------------------- */}
+      {showBookmarksBar && (
+        <div className="flex items-center px-2 sm:px-3 py-1 bg-[#141824] border-b border-white/5 gap-1.5 overflow-x-auto thin-scroll shrink-0 text-xs text-white/80 select-none">
+          {bookmarks.map((bm) => (
+            <div
+              key={bm.id}
+              onClick={() => {
+                if (bm.url === "mendoza.dev/cv.pdf") {
+                  openApp("pdf-viewer");
+                } else if (bm.url.startsWith("https://github") || bm.url.startsWith("https://linkedin")) {
+                  window.open(bm.url, "_blank");
+                } else {
+                  navigateTabTo(activeTabId, bm.url, bm.title);
+                }
+              }}
+              className="group flex items-center gap-1.5 px-2 py-0.5 rounded-md hover:bg-white/10 text-white/75 hover:text-white transition cursor-pointer shrink-0 text-[11px] max-w-[170px]"
+              title={`${bm.title} (${bm.url})`}
+            >
+              <div className="w-3.5 h-3.5 flex items-center justify-center shrink-0" style={{ color: bm.color || "#38bdf8" }}>
+                {bm.category === "profile" ? (
+                  <GIconFileText size={11} />
+                ) : bm.category === "experience" ? (
+                  <GIconBriefcase size={11} />
+                ) : bm.category === "skills" ? (
+                  <GIconCode size={11} />
+                ) : bm.category === "system" ? (
+                  <GIconTerminal size={11} />
+                ) : (
+                  <GIconGlobe size={11} />
+                )}
+              </div>
+              <span className="truncate">{bm.title}</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (systemSounds) soundFx.playClose();
+                  setBookmarks((prev) => prev.filter((b) => b.id !== bm.id));
+                }}
+                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/20 rounded text-white/40 hover:text-white shrink-0 transition"
+                title="Delete bookmark"
+              >
+                <GIconClose size={9} />
+              </button>
+            </div>
+          ))}
+
+          <div className="flex-1" />
+
+          {/* Quick add current tab bookmark & shortcut hint */}
+          <div className="flex items-center gap-1.5 shrink-0 text-[10px] text-white/40 font-mono">
+            <button
+              type="button"
+              onClick={handleToggleBookmarkCurrent}
+              className="px-1.5 py-0.5 hover:bg-white/10 rounded text-white/60 hover:text-white transition cursor-pointer flex items-center gap-1 text-[10.5px]"
+              title="Bookmark current tab"
+            >
+              <GIconPlus size={10} />
+              <span className="hidden sm:inline">Add Bookmark</span>
+            </button>
+            <span className="hidden md:inline">• {isWin ? "Ctrl+Shift+B" : "⌘Shift+B"}</span>
+          </div>
+        </div>
+      )}
 
       {/* ------------------------------------------------------------- */}
       {/* SAFARI TABS BAR (MACOS MODE ONLY) */}
@@ -2939,9 +3620,303 @@ export default function Browser() {
       {/* ------------------------------------------------------------- */}
       {/* MAIN VIEWPORT / RENDERING CANVAS (SINGLE OR DUAL SPLIT VIEW) */}
       {/* ------------------------------------------------------------- */}
-      {splitTab ? (
-        <div className="flex-1 flex flex-col md:flex-row overflow-hidden divide-y md:divide-y-0 md:divide-x divide-white/10">
-          <div className={`flex-1 flex flex-col min-w-0 overflow-y-auto thin-scroll ${activeTheme.bgClass}`}>
+      <div className="relative flex-1 flex flex-col min-h-0 overflow-hidden">
+        {/* Floating Find in Page Widget */}
+        <AnimatePresence>
+          {showFindInPage && (
+            <motion.div
+              initial={{ opacity: 0, y: -16, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -16, scale: 0.94 }}
+              transition={{ duration: 0.14, ease: "easeOut" }}
+              className="absolute top-2 right-2 sm:right-4 z-40 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1a1f2c]/95 backdrop-blur-xl border border-white/20 shadow-2xl text-xs text-white"
+            >
+              <GIconSearch size={13} className="text-white/40 shrink-0" />
+              <input
+                ref={findInputRef}
+                type="text"
+                value={findQuery}
+                onChange={(e) => {
+                  setFindQuery(e.target.value);
+                  setFindMatchIndex(0);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    if (e.shiftKey) handleFindPrev();
+                    else handleFindNext();
+                  } else if (e.key === "Escape") {
+                    setShowFindInPage(false);
+                  }
+                }}
+                placeholder="Find in page..."
+                className="w-32 sm:w-44 bg-transparent text-xs text-white placeholder:text-white/30 outline-none font-sans"
+              />
+              <span className="text-[10.5px] font-mono text-white/50 shrink-0 px-1 border-r border-white/10">
+                {findQuery.trim() ? (findMatchTotal > 0 ? `${findMatchIndex + 1}/${findMatchTotal}` : "0/0") : ""}
+              </span>
+              <button
+                type="button"
+                onClick={handleFindPrev}
+                disabled={findMatchTotal <= 0}
+                className="p-1 hover:bg-white/10 rounded disabled:opacity-30 cursor-pointer text-white/70 hover:text-white"
+                title="Previous match (Shift+Enter)"
+              >
+                <GIconChevronUp size={12} />
+              </button>
+              <button
+                type="button"
+                onClick={handleFindNext}
+                disabled={findMatchTotal <= 0}
+                className="p-1 hover:bg-white/10 rounded disabled:opacity-30 cursor-pointer text-white/70 hover:text-white"
+                title="Next match (Enter)"
+              >
+                <GIconChevronDown size={12} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowFindInPage(false)}
+                className="p-1 hover:bg-white/10 rounded cursor-pointer text-white/50 hover:text-white ml-0.5"
+                title="Close (Esc)"
+              >
+                <GIconClose size={11} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Side Drawers (History / Downloads / Bookmarks) */}
+        <AnimatePresence>
+          {activeDrawer !== "none" && (
+            <motion.div
+              initial={{ opacity: 0, x: 280 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 280 }}
+              transition={{ type: "spring", stiffness: 450, damping: 32 }}
+              className="absolute top-0 right-0 bottom-0 z-40 w-72 sm:w-80 bg-[#141824]/98 backdrop-blur-2xl border-l border-white/15 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col select-none"
+            >
+              {/* Drawer Header */}
+              <div className="p-3.5 border-b border-white/10 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {activeDrawer === "history" ? (
+                    <GIconHistory size={15} className="text-sky-400" />
+                  ) : activeDrawer === "downloads" ? (
+                    <GIconDownload size={15} className="text-emerald-400" />
+                  ) : (
+                    <GIconStar size={15} className="text-amber-400" />
+                  )}
+                  <span className="text-sm font-bold text-white capitalize">
+                    {activeDrawer === "history" ? "Browsing History" : activeDrawer === "downloads" ? "Downloads" : "Bookmarks"}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setActiveDrawer("none")}
+                  className="p-1 hover:bg-white/10 rounded-md text-white/50 hover:text-white transition cursor-pointer"
+                  title="Close drawer (Esc)"
+                >
+                  <GIconClose size={13} />
+                </button>
+              </div>
+
+              {/* Drawer Content */}
+              {activeDrawer === "history" && (
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="p-2.5 border-b border-white/5">
+                    <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white/[0.04] border border-white/10 text-xs">
+                      <GIconSearch size={12} className="text-white/40" />
+                      <input
+                        type="text"
+                        value={historyFilter}
+                        onChange={(e) => setHistoryFilter(e.target.value)}
+                        placeholder="Search history..."
+                        className="w-full bg-transparent text-xs text-white placeholder:text-white/30 outline-none"
+                      />
+                      {historyFilter && (
+                        <button onClick={() => setHistoryFilter("")} className="text-white/40 hover:text-white">
+                          <GIconClose size={10} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto thin-scroll p-2 space-y-1">
+                    {historyLog
+                      .filter(
+                        (h) =>
+                          !historyFilter ||
+                          h.title.toLowerCase().includes(historyFilter.toLowerCase()) ||
+                          h.url.toLowerCase().includes(historyFilter.toLowerCase())
+                      )
+                      .map((item) => (
+                        <div
+                          key={item.id}
+                          onClick={() => {
+                            navigateTabTo(activeTabId, item.url, item.title);
+                            setActiveDrawer("none");
+                          }}
+                          className="group flex items-start justify-between p-2 rounded-xl hover:bg-white/[0.08] transition cursor-pointer text-xs"
+                        >
+                          <div className="min-w-0 flex-1 pr-2">
+                            <span className="font-semibold text-white truncate block group-hover:text-accent">
+                              {item.title}
+                            </span>
+                            <span className="text-[10.5px] text-white/40 font-mono truncate block">
+                              {item.url}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setHistoryLog((prev) => prev.filter((h) => h.id !== item.id));
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/20 rounded text-white/40 hover:text-white transition shrink-0"
+                            title="Remove from history"
+                          >
+                            <GIconClose size={10} />
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+
+                  <div className="p-2.5 border-t border-white/10 flex items-center justify-between text-xs">
+                    <span className="text-[11px] text-white/40">{historyLog.length} items</span>
+                    <button
+                      onClick={() => {
+                        setHistoryLog([]);
+                        try {
+                          localStorage.removeItem("browser_history_entries");
+                        } catch {}
+                        notify("History Cleared", "All browsing history removed.", "info");
+                      }}
+                      className="text-rose-400 hover:text-rose-300 hover:underline cursor-pointer text-[11px]"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {activeDrawer === "downloads" && (
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="flex-1 overflow-y-auto thin-scroll p-2.5 space-y-2">
+                    {downloads.map((dl) => (
+                      <div
+                        key={dl.id}
+                        className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition space-y-1.5 text-xs"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <GIconFileText size={14} className="text-sky-400 shrink-0" />
+                            <span className="font-semibold text-white truncate">{dl.filename}</span>
+                          </div>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-semibold shrink-0">
+                            {dl.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-white/45">
+                          <span>{dl.size} • {dl.timestamp}</span>
+                          <button
+                            onClick={() => handleDownloadFile(dl)}
+                            className="text-accent hover:underline font-semibold cursor-pointer"
+                          >
+                            {dl.category === "pdf" ? "Open PDF" : "Save File"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeDrawer === "bookmarks" && (
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="flex-1 overflow-y-auto thin-scroll p-2 space-y-1">
+                    {bookmarks.map((bm) => (
+                      <div
+                        key={bm.id}
+                        onClick={() => {
+                          if (bm.url === "mendoza.dev/cv.pdf") {
+                            openApp("pdf-viewer");
+                          } else if (bm.url.startsWith("https://github") || bm.url.startsWith("https://linkedin")) {
+                            window.open(bm.url, "_blank");
+                          } else {
+                            navigateTabTo(activeTabId, bm.url, bm.title);
+                          }
+                          setActiveDrawer("none");
+                        }}
+                        className="group flex items-center justify-between p-2 rounded-xl hover:bg-white/[0.08] transition cursor-pointer text-xs"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-4 h-4 flex items-center justify-center shrink-0" style={{ color: bm.color || "#38bdf8" }}>
+                            <GIconStar size={12} fill="currentColor" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="font-semibold text-white truncate block group-hover:text-accent">{bm.title}</span>
+                            <span className="text-[10.5px] text-white/40 font-mono truncate block">{bm.url}</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setBookmarks((prev) => prev.filter((b) => b.id !== bm.id));
+                          }}
+                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/20 rounded text-white/40 hover:text-white transition shrink-0"
+                          title="Remove bookmark"
+                        >
+                          <GIconClose size={10} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {splitTab ? (
+          <div className="flex-1 flex flex-col md:flex-row overflow-hidden divide-y md:divide-y-0 md:divide-x divide-white/10">
+            <div className={`flex-1 flex flex-col min-w-0 overflow-y-auto thin-scroll ${activeTheme.bgClass}`}>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab.id + "-" + activeTab.url}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                  className="flex-1 flex flex-col w-full min-h-full transition-[zoom] duration-150 origin-top"
+                  style={{ zoom: zoomLevel === 100 ? undefined : `${zoomLevel}%` }}
+                >
+                  {renderTabCanvas(activeTab, false)}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            <div className={`flex-1 flex flex-col min-w-0 overflow-y-auto thin-scroll ${activeTheme.bgClass}`}>
+              <div className="flex items-center justify-between px-3 py-1.5 bg-[#141822] border-b border-white/10 text-xs shrink-0">
+                <div className="flex items-center gap-1.5 truncate text-white/80">
+                  <GIconLayoutColumns size={13} className="text-sky-400 shrink-0" />
+                  <span className="font-semibold truncate">{splitTab.title}</span>
+                  <span className="text-[10px] text-white/40 font-mono hidden sm:inline">— Split View</span>
+                </div>
+                <button
+                  onClick={() => setSplitTabId(null)}
+                  className="p-1 hover:bg-white/10 rounded-md text-white/50 hover:text-white transition cursor-pointer"
+                  title="Exit split view"
+                >
+                  <GIconClose size={12} />
+                </button>
+              </div>
+              <div
+                className="flex-1 flex flex-col w-full min-h-full transition-[zoom] duration-150 origin-top"
+                style={{ zoom: zoomLevel === 100 ? undefined : `${zoomLevel}%` }}
+              >
+                {renderTabCanvas(splitTab, true)}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className={`flex-1 ${activeTheme.bgClass} overflow-y-auto thin-scroll flex flex-col relative`}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab.id + "-" + activeTab.url}
@@ -2949,46 +3924,15 @@ export default function Browser() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.15, ease: "easeOut" }}
-                className="flex-1 flex flex-col w-full min-h-full"
+                className="flex-1 flex flex-col w-full min-h-full transition-[zoom] duration-150 origin-top"
+                style={{ zoom: zoomLevel === 100 ? undefined : `${zoomLevel}%` }}
               >
                 {renderTabCanvas(activeTab, false)}
               </motion.div>
             </AnimatePresence>
           </div>
-          <div className={`flex-1 flex flex-col min-w-0 overflow-y-auto thin-scroll ${activeTheme.bgClass}`}>
-            <div className="flex items-center justify-between px-3 py-1.5 bg-[#141822] border-b border-white/10 text-xs shrink-0">
-              <div className="flex items-center gap-1.5 truncate text-white/80">
-                <GIconLayoutColumns size={13} className="text-sky-400 shrink-0" />
-                <span className="font-semibold truncate">{splitTab.title}</span>
-                <span className="text-[10px] text-white/40 font-mono hidden sm:inline">— Split View</span>
-              </div>
-              <button
-                onClick={() => setSplitTabId(null)}
-                className="p-1 hover:bg-white/10 rounded-md text-white/50 hover:text-white transition cursor-pointer"
-                title="Exit split view"
-              >
-                <GIconClose size={12} />
-              </button>
-            </div>
-            {renderTabCanvas(splitTab, true)}
-          </div>
-        </div>
-      ) : (
-        <div className={`flex-1 ${activeTheme.bgClass} overflow-y-auto thin-scroll flex flex-col relative`}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab.id + "-" + activeTab.url}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
-              className="flex-1 flex flex-col w-full min-h-full"
-            >
-              {renderTabCanvas(activeTab, false)}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* ------------------------------------------------------------- */}
       {/* BOTTOM STATUS BAR */}
@@ -2998,9 +3942,17 @@ export default function Browser() {
           <span className="truncate">{isWin ? "Google Chrome" : "Safari"} 128.0</span>
           <span>•</span>
           <span className="text-emerald-400 shrink-0">Online & Secure</span>
+          {zoomLevel !== 100 && (
+            <>
+              <span>•</span>
+              <button onClick={handleZoomReset} className="text-accent hover:underline cursor-pointer">
+                Zoom: {zoomLevel}%
+              </button>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 font-mono shrink-0 ml-2">
-          <span>{tabs.length} tabs open</span>
+          <span>{tabs.length} {tabs.length === 1 ? "tab" : "tabs"} open</span>
           <span className="hidden sm:inline">•</span>
           <span className="hidden sm:inline">WebKit/Blink Engine</span>
         </div>
