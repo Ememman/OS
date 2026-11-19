@@ -934,7 +934,7 @@ const DEFAULT_ENDPOINTS: ApiEndpointInfo[] = [
       total: 3,
       category: "all",
       results: [
-        { id: "exp-dowinn", title: "Front-End Developer at Dowinn Group", url: "https://mendoza.dev/experience" }
+        { id: "exp-dowinn", title: "Technical Support Engineer at Dowinn Group", url: "https://mendoza.dev/experience" }
       ]
     }
   },

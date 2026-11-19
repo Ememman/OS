@@ -1830,7 +1830,7 @@ export default function Browser() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
               <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
                 <span className="text-[10px] text-white/40 uppercase font-bold tracking-wider">Current Role</span>
-                <div className="text-sm font-semibold text-white">Front-End Developer</div>
+                <div className="text-sm font-semibold text-white">Technical Support Engineer</div>
                 <div className="text-xs text-white/60">Dowinn Group (Enterprise)</div>
               </div>
               <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
@@ -1859,15 +1859,15 @@ export default function Browser() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <div>
                   <h2 className="text-base font-bold text-white">Dowinn Group</h2>
-                  <span className="text-xs text-accent font-semibold">Front-End Developer · Enterprise Portals</span>
+                  <span className="text-xs text-accent font-semibold">Technical Support Engineer · Test Automation &amp; Front-End</span>
                 </div>
                 <span className="text-xs text-white/40 font-mono">Sept 28, 2026 – Present</span>
               </div>
               <ul className="space-y-1.5 text-xs text-white/75 list-disc pl-4 leading-relaxed">
-                <li>Engineered enterprise operational portals with Next.js, React, and TypeScript.</li>
-                <li>Implemented TanStack Query for advanced server-state caching, optimistic updates, and reduced roundtrips.</li>
-                <li>Automated mobile & web test pipelines with Playwright, Appium, and Selenium.</li>
-                <li>Standardized WCAG accessibility with Tailwind CSS and shadcn/ui design tokens.</li>
+                <li>Served as Technical Support Engineer, providing system diagnostics, infrastructure troubleshooting, and maintaining operational uptime.</li>
+                <li>Automated cross-browser and mobile end-to-end testing pipelines using Playwright, Appium, and Cypress to eliminate regression escapes.</li>
+                <li>Transitioned to active front-end engineering by the third week, building and coding operational portals and responsive interfaces with Next.js, React, and TypeScript.</li>
+                <li>Implemented TanStack Query for advanced server-state caching, optimistic updates, and reduced network roundtrips.</li>
               </ul>
             </div>
 
@@ -2015,14 +2015,14 @@ export default function Browser() {
             <div className="p-6 rounded-2xl bg-[#141824] border border-white/10 space-y-4 text-xs text-white/80 leading-relaxed font-sans max-w-2xl mx-auto shadow-xl">
               <div className="border-b border-white/10 pb-3">
                 <h1 className="text-lg font-bold text-white">James Emmanuel E. Mendoza</h1>
-                <p className="text-xs text-accent">Front-End Developer · Magna Cum Laude BSIT</p>
+                <p className="text-xs text-accent">Technical Support Engineer · Magna Cum Laude BSIT</p>
                 <p className="text-[11px] text-white/45">Tondo, Manila · 0992 543 3570 · mendozajamesemmanuel@gmail.com</p>
               </div>
 
               <div>
                 <h3 className="font-bold uppercase text-[10px] tracking-wider text-white/50 mb-1">Professional Experience</h3>
-                <p className="font-semibold text-white">Dowinn Group — Front-End Developer (2026–Present)</p>
-                <p className="text-white/70">Engineered enterprise operational portals with Next.js, React, and TypeScript. Implemented TanStack Query for caching and automated test suites with Playwright.</p>
+                <p className="font-semibold text-white">Dowinn Group — Technical Support Engineer (2026–Present)</p>
+                <p className="text-white/70">Technical support, automated test suites with Playwright, Appium, and Cypress, and front-end development with Next.js, React, and TypeScript.</p>
               </div>
 
               <div className="border-t border-white/5 pt-3">

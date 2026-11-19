@@ -39,20 +39,20 @@ const LINKEDIN_URL = "https://www.linkedin.com/in/james-emmanuel-mendoza-46b3773
 
 const EXPERIENCE = [
   {
-    role: "Front-End Developer",
+    role: "Technical Support Engineer",
     company: "Dowinn Group",
     logo: dowinnLogo,
     period: "September 28, 2026 — Present",
-    tag: "Enterprise Front-End & Automation",
+    tag: "Technical Support, Test Automation & Front-End Development",
     location: "12F Aseana Tower 3, Asean Ave. cor. Diosdado Macapagal Blvd. Aseana City, Parañaque",
     points: [
-      "Engineered high-performance enterprise front-end web applications and internal operational portals utilizing Next.js, React, and TypeScript.",
-      "Integrated TanStack Query for advanced asynchronous server-state synchronization, optimistic updates, intelligent query caching, and reduced network roundtrips.",
-      "Automated cross-browser and mobile end-to-end testing pipelines using Playwright, Appium, and Selenium to ensure high software reliability and zero regression escapes.",
-      "Designed clean, WCAG-accessible component architectures with Tailwind CSS and shadcn/ui; streamlined cross-functional development sprints, system documentation, and engineering workflows via Notion and GitHub."
+      "Served as Technical Support Engineer, diagnosing infrastructure/system issues, maintaining operational uptime, and providing technical support across enterprise internal systems.",
+      "Automated cross-browser and mobile end-to-end testing pipelines using Playwright, Appium, and Cypress to eliminate regression escapes and accelerate QA delivery.",
+      "Transitioned to active front-end engineering by the third week, building and coding operational portals, internal tools, and responsive user interfaces with Next.js, React, and TypeScript.",
+      "Integrated TanStack Query for asynchronous server-state synchronization, optimistic cache updates, and reduced network roundtrips; streamlined technical documentation via Notion and GitHub."
     ],
-    highlights: ["Next.js & TypeScript", "TanStack Query State Sync", "Playwright, Appium & Selenium", "Tailwind CSS & shadcn/ui"],
-    stack: ["Next.js", "React", "TypeScript", "TanStack Query", "shadcn/ui", "Tailwind CSS", "Playwright", "Appium", "Selenium", "Notion", "GitHub"]
+    highlights: ["Technical Support & QA", "Playwright, Appium & Cypress", "Front-End Coding (Next.js/React)", "TanStack Query & TypeScript"],
+    stack: ["Technical Support", "Playwright", "Appium", "Cypress", "Next.js", "React", "TypeScript", "TanStack Query", "Tailwind CSS", "GitHub", "Notion"]
   },
   {
     role: "IT Support Specialist & Web Developer (On the Job Training)",
@@ -102,7 +102,7 @@ const PROFESSIONAL_COMPETENCIES = [
   },
   {
     title: "Requirements Gathering & Testing Automation",
-    desc: "Gathered system requirements, organized user feedback, and tested core functionalities. Automated end-to-end and mobile test suites with Playwright, Appium, and Selenium.",
+    desc: "Gathered system requirements, organized user feedback, and tested core functionalities. Automated end-to-end and mobile test suites with Playwright, Appium, and Cypress.",
     badge: "SDLC & QA",
   },
   {
@@ -191,7 +191,7 @@ const SKILL_CATEGORIES: SkillCategory[] = [
     description: "Cross-browser test suites, mobile test harnesses, enterprise identity, and agile version control",
     skills: [
       { name: "Playwright E2E Testing", level: 94, tier: "Core Stack", category: "Testing", experience: "Automated Cross-Browser Sprints" },
-      { name: "Appium & Selenium", level: 90, tier: "Production", category: "Testing", experience: "Mobile & Browser Automation Suites" },
+      { name: "Appium & Cypress", level: 90, tier: "Production", category: "Testing", experience: "Mobile & Browser Automation Suites" },
       { name: "1Kosmos MFA & Active Directory", level: 88, tier: "Applied", category: "Security", experience: "Enterprise Access & Identity Config" },
       { name: "Git, GitHub & Notion", level: 95, tier: "Core Stack", category: "Tooling", experience: "Agile Sprints, PRs & Documentation" },
     ]
@@ -298,7 +298,7 @@ const TECH_STACK: TechStackItem[] = [
     ),
   },
   {
-    name: "Appium / Selenium",
+    name: "Appium / Cypress",
     category: "Tooling",
     badgeColor: "text-[#66C0F4] bg-[#66C0F4]/10 border-[#66C0F4]/30",
     glowClass: "hover:border-[#66C0F4]/50 hover:shadow-[0_0_20px_rgba(102,192,244,0.22)] hover:bg-[#66C0F4]/8",
@@ -600,7 +600,7 @@ export default function Resume() {
             <div className="flex flex-wrap items-center gap-2 pt-1.5">
               <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30 shadow-[0_0_12px_rgba(56,189,248,0.2)] whitespace-nowrap">
                 <img src={dowinnLogo} alt="Dowinn Group" className="w-3.5 h-3.5 rounded-sm object-contain shrink-0" />
-                Front-End Developer at Dowinn Group
+                Technical Support Engineer at Dowinn Group
               </span>
               <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30 whitespace-nowrap">
                 <GIconTrophy size={11} className="text-amber-300" />
@@ -661,7 +661,7 @@ export default function Resume() {
 
         {/* Bio Paragraph: Full Width */}
         <p className="text-xs sm:text-sm text-white/75 font-medium leading-relaxed max-w-4xl">
-          Front-End Developer at Dowinn Group &amp; Full-Stack Engineer · Next.js, React, TypeScript, TanStack Query, Node.js, MongoDB, PHP, Figma, Canva &amp; Automated Testing (Playwright, Appium, Selenium).
+          Technical Support Engineer at Dowinn Group &amp; Full-Stack Developer · Test Automation (Playwright, Appium, Cypress) &amp; Front-End Development (Next.js, React, TypeScript, TanStack Query, Tailwind CSS).
         </p>
 
         {/* Quick Contact & Profile Pills: Full Width Horizontal Row */}
@@ -1466,14 +1466,14 @@ export default function Resume() {
         {/* Dowinn Group (Current Experience) */}
         <div className="mb-2.5">
           <div className="flex justify-between items-baseline text-xs font-bold text-black mb-1">
-            <span>Dowinn Group | Front-End Developer</span>
+            <span>Dowinn Group | Technical Support Engineer</span>
             <span>September 28, 2026 – Present</span>
           </div>
           <ul className="list-disc list-outside pl-5 text-[11px] text-gray-900 space-y-1">
-            <li>Engineered high-performance enterprise front-end web applications and internal operational portals utilizing Next.js, React, and TypeScript.</li>
-            <li>Integrated TanStack Query for advanced asynchronous server-state synchronization, optimistic updates, intelligent query caching, and reduced network roundtrips.</li>
-            <li>Automated cross-browser and mobile end-to-end testing pipelines using Playwright, Appium, and Selenium to ensure high software reliability and zero regression escapes.</li>
-            <li>Designed clean, WCAG-accessible component architectures with Tailwind CSS and shadcn/ui; streamlined cross-functional development sprints, system documentation, and engineering workflows via Notion and GitHub.</li>
+            <li>Served as Technical Support Engineer, diagnosing infrastructure/system issues, maintaining operational uptime, and providing technical support across enterprise internal systems.</li>
+            <li>Automated cross-browser and mobile end-to-end testing pipelines using Playwright, Appium, and Cypress to eliminate regression escapes and accelerate QA delivery.</li>
+            <li>Transitioned to active front-end engineering by the third week, building and coding operational portals, internal tools, and responsive user interfaces with Next.js, React, and TypeScript.</li>
+            <li>Integrated TanStack Query for asynchronous server-state synchronization, optimistic cache updates, and reduced network roundtrips; streamlined technical documentation via Notion and GitHub.</li>
           </ul>
         </div>
 
@@ -1504,7 +1504,7 @@ export default function Resume() {
           <li>Architected responsive component ecosystems using Tailwind CSS and shadcn/ui; implemented TanStack Query for resilient asynchronous state management and real-time Socket.IO synchronization.</li>
           <li>Gathered system requirements, organized user feedback, tested basic functionalities • Documented code changes, debugged errors, improved software performance and user experience.</li>
           <li>Proficient in programming/coding and problem-solving (identifying root causes, developing technical solutions).</li>
-          <li>Automated end-to-end and mobile test suites with Playwright, Appium, and Selenium; provided technical opinions and coding solutions in group discussions.</li>
+          <li>Automated end-to-end and mobile test suites with Playwright, Appium, and Cypress; provided technical opinions and coding solutions in group discussions.</li>
         </ul>
       </div>
 
