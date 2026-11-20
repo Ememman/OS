@@ -84,9 +84,7 @@ function useGameAudio(enabled: boolean) {
     if (!enabled || typeof window === "undefined") return null;
     if (!ctxRef.current) {
       try {
-        const AudioContextClass =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
         ctxRef.current = new AudioContextClass();
       } catch {
         return null;
@@ -96,14 +94,7 @@ function useGameAudio(enabled: boolean) {
     return ctxRef.current;
   };
 
-  const tone = (
-    freq: number,
-    dur: number,
-    type: OscillatorType = "sine",
-    startGain = 0.08,
-    delay = 0,
-    endFreq?: number
-  ) => {
+  const tone = (freq: number, dur: number, type: OscillatorType = "sine", startGain = 0.08, delay = 0) => {
     const ctx = getCtx();
     if (!ctx) return;
     try {
@@ -112,9 +103,6 @@ function useGameAudio(enabled: boolean) {
       osc.type = type;
       const t0 = ctx.currentTime + delay;
       osc.frequency.setValueAtTime(freq, t0);
-      if (endFreq !== undefined && endFreq > 0) {
-        osc.frequency.exponentialRampToValueAtTime(Math.max(20, endFreq), t0 + dur);
-      }
       gain.gain.setValueAtTime(startGain, t0);
       gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
       osc.connect(gain);
@@ -126,101 +114,33 @@ function useGameAudio(enabled: boolean) {
           osc.disconnect();
           gain.disconnect();
         } catch {}
-      }, (delay + dur) * 1000 + 60);
-    } catch {}
-  };
-
-  // Noise burst for explosive line blasts and block pops
-  const noiseBlast = (dur = 0.16, startGain = 0.15, filterStart = 3200, filterEnd = 400) => {
-    const ctx = getCtx();
-    if (!ctx) return;
-    try {
-      const bufferSize = Math.floor(ctx.sampleRate * dur);
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-      }
-      const noise = ctx.createBufferSource();
-      noise.buffer = buffer;
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.Q.setValueAtTime(2.5, ctx.currentTime);
-      filter.frequency.setValueAtTime(filterStart, ctx.currentTime);
-      filter.frequency.exponentialRampToValueAtTime(Math.max(80, filterEnd), ctx.currentTime + dur);
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(startGain, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
-
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-
-      noise.start(ctx.currentTime);
-      noise.stop(ctx.currentTime + dur);
-      setTimeout(() => {
-        try {
-          noise.disconnect();
-          filter.disconnect();
-          gain.disconnect();
-        } catch {}
-      }, dur * 1000 + 50);
+      }, (delay + dur) * 1000 + 50);
     } catch {}
   };
 
   return {
     pick: () => {
-      // Tactile upward chirp
-      tone(440, 0.045, "sine", 0.06, 0, 680);
-      tone(680, 0.05, "sine", 0.03, 0.02);
+      tone(440, 0.05, "sine", 0.04);
+      tone(554.37, 0.07, "sine", 0.05, 0.015);
     },
     place: () => {
-      // Juicy punchy bubble pop / wooden snap
-      tone(480, 0.065, "triangle", 0.14, 0, 130);
-      tone(120, 0.08, "sine", 0.1, 0.005, 45);
-      // Brief click transient
-      tone(1800, 0.015, "triangle", 0.04, 0, 600);
+      tone(360, 0.08, "triangle", 0.08);
+      tone(190, 0.1, "sine", 0.06, 0.02);
     },
-    clear: (combo = 0, lineCount = 1) => {
-      // 1. Explosive line blast noise pop
-      noiseBlast(0.18, 0.18 + Math.min(lineCount * 0.04, 0.12), 3400, 360);
-
-      // 2. Heavy tactile bass impact
-      tone(95, 0.22, "sine", 0.18, 0, 32);
-
-      // 3. Shimmering pentatonic chord chime
-      const baseFreq = 523.25 * Math.pow(1.05946, Math.min(combo * 2, 10)); // C5 stepped up per combo
-      const notes = [
-        baseFreq,
-        baseFreq * 1.25, // E
-        baseFreq * 1.5, // G
-        baseFreq * 1.875, // B
-        baseFreq * 2.0, // C6
-      ];
-
+    clear: (combo = 0) => {
+      const base = 520 + Math.min(combo * 60, 320);
+      const notes = [base, base * 1.25, base * 1.5, base * 2];
       notes.forEach((freq, i) => {
-        tone(freq, 0.24, "triangle", 0.09, i * 0.035, freq * 1.02);
-        tone(freq * 2, 0.16, "sine", 0.035, i * 0.035 + 0.01);
+        tone(freq, 0.2, "sine", 0.08, i * 0.045);
       });
-
-      // 4. Multi-line bonus fanfare (2+ lines cleared at once)
-      if (lineCount >= 2) {
-        setTimeout(() => {
-          tone(baseFreq * 2.5, 0.28, "sine", 0.08, 0);
-          tone(baseFreq * 3.0, 0.32, "sine", 0.07, 0.04);
-        }, 120);
-      }
     },
     snapBack: () => {
-      tone(220, 0.05, "sine", 0.05, 0, 110);
+      tone(280, 0.06, "sine", 0.03);
     },
     gameOver: () => {
-      const sadNotes = [349.23, 311.13, 261.63, 196.0];
-      sadNotes.forEach((freq, i) => {
-        tone(freq, 0.3, "sawtooth", 0.06, i * 0.12, freq * 0.92);
-      });
+      tone(320, 0.22, "sawtooth", 0.07);
+      tone(240, 0.26, "sawtooth", 0.07, 0.1);
+      tone(180, 0.4, "sawtooth", 0.08, 0.2);
     },
   };
 }
@@ -266,17 +186,6 @@ export default function BlockBlast() {
   const boardRef = useRef<HTMLDivElement | null>(null);
   const ghostRef = useRef<HTMLDivElement | null>(null);
 
-  // Synchronous refs to prevent stale closure race conditions
-  const trayRef = useRef(tray);
-  useEffect(() => {
-    trayRef.current = tray;
-  }, [tray]);
-
-  const gridRef = useRef(grid);
-  useEffect(() => {
-    gridRef.current = grid;
-  }, [grid]);
-
   // Refs for drag tracking without triggering re-renders on every pixel
   const dragInfoRef = useRef<DragInfo | null>(null);
   const hoverTargetRef = useRef<{ r: number; c: number; isValid: boolean } | null>(null);
@@ -307,27 +216,11 @@ export default function BlockBlast() {
 
   // Execute placement of a piece at grid coordinate (r, c)
   const placePieceAt = useCallback((pieceIndex: number, r: number, c: number) => {
-    const currentTray = trayRef.current;
-    const currentGrid = gridRef.current;
-    const piece = currentTray[pieceIndex];
+    const piece = tray[pieceIndex];
     if (!piece || gameOver || isClearingRef.current) return false;
-    if (!canPlace(currentGrid, piece.shape, r, c)) return false;
+    if (!canPlace(grid, piece.shape, r, c)) return false;
 
-    // Immediately remove piece from tray and sync ref to prevent stuck piece in dock
-    const nextTray = [...currentTray];
-    nextTray[pieceIndex] = null;
-    const finalTray = refillIfNeeded(nextTray);
-    trayRef.current = finalTray;
-    setTray(finalTray);
-
-    // Reset drag and selection immediately
-    setSelected(null);
-    setActiveDragPiece(null);
-    setHoverTarget(null);
-    hoverTargetRef.current = null;
-    dragInfoRef.current = null;
-
-    const next = currentGrid.map((row) => [...row]);
+    const next = grid.map((row) => [...row]);
     const justDropped = new Set<string>();
     piece.shape.forEach(([dr, dc]) => {
       next[r + dr][c + dc] = piece.color;
@@ -336,7 +229,7 @@ export default function BlockBlast() {
 
     sfx.place();
     if (typeof navigator !== "undefined" && navigator.vibrate) {
-      navigator.vibrate(14);
+      navigator.vibrate(12);
     }
     setDropCells(justDropped);
     setTimeout(() => setDropCells(new Set()), 200);
@@ -350,22 +243,29 @@ export default function BlockBlast() {
     }
     const cleared = fullRows.length + fullCols.length;
 
+    let newTray = [...tray];
+    newTray[pieceIndex] = null;
+    newTray = refillIfNeeded(newTray);
+    setTray(newTray);
+    setSelected(null);
+    setHoverTarget(null);
+    hoverTargetRef.current = null;
+
     if (cleared > 0) {
       isClearingRef.current = true;
       const newCombo = comboCount + 1;
       setComboCount(newCombo);
 
-      const comboMultiplier = newCombo > 1 ? newCombo * 12 : 0;
-      const gained = piece.shape.length * 4 + cleared * 28 + comboMultiplier;
+      const comboMultiplier = newCombo > 1 ? newCombo * 10 : 0;
+      const gained = piece.shape.length * 4 + cleared * 24 + comboMultiplier;
 
       const clearSet = new Set<string>();
       fullRows.forEach((r2) => { for (let c2 = 0; c2 < SIZE; c2++) clearSet.add(`${r2}-${c2}`); });
       fullCols.forEach((c2) => { for (let r2 = 0; r2 < SIZE; r2++) clearSet.add(`${r2}-${c2}`); });
 
-      gridRef.current = next;
       setGrid(next);
       setClearingCells(clearSet);
-      sfx.clear(newCombo, cleared);
+      sfx.clear(newCombo);
       setShake(true);
       setTimeout(() => setShake(false), 200);
 
@@ -381,13 +281,12 @@ export default function BlockBlast() {
         const finalGrid = next.map((row) => [...row]);
         fullRows.forEach((r2) => { for (let c2 = 0; c2 < SIZE; c2++) finalGrid[r2][c2] = null; });
         fullCols.forEach((c2) => { for (let r2 = 0; r2 < SIZE; r2++) finalGrid[r2][c2] = null; });
-        gridRef.current = finalGrid;
         setGrid(finalGrid);
         setClearingCells(new Set());
         isClearingRef.current = false;
 
         // Check game over ONLY on the final cleared board
-        if (checkGameOverCondition(finalGrid, finalTray)) {
+        if (checkGameOverCondition(finalGrid, newTray)) {
           setGameOver(true);
           sfx.gameOver();
           if (typeof navigator !== "undefined" && navigator.vibrate) {
@@ -400,14 +299,13 @@ export default function BlockBlast() {
       setScore(newScore);
       if (newScore > best) {
         setBest(newScore);
-        try { localStorage.setItem("blockblast_best", String(newScore)); } catch {}
+        localStorage.setItem("blockblast_best", String(newScore));
       }
 
       const id = popupId.current++;
       setPopups((p) => [...p, { id, text: `+${gained}`, r, c, big: true }]);
       setTimeout(() => setPopups((p) => p.filter((x) => x.id !== id)), 650);
     } else {
-      gridRef.current = next;
       setGrid(next);
       setComboCount(0);
       const gained = piece.shape.length * 4;
@@ -415,7 +313,7 @@ export default function BlockBlast() {
       setScore(newScore);
       if (newScore > best) {
         setBest(newScore);
-        try { localStorage.setItem("blockblast_best", String(newScore)); } catch {}
+        localStorage.setItem("blockblast_best", String(newScore));
       }
 
       const id = popupId.current++;
@@ -423,7 +321,7 @@ export default function BlockBlast() {
       setTimeout(() => setPopups((p) => p.filter((x) => x.id !== id)), 650);
 
       // Check game over on next grid
-      if (checkGameOverCondition(next, finalTray)) {
+      if (checkGameOverCondition(next, newTray)) {
         setGameOver(true);
         sfx.gameOver();
         if (typeof navigator !== "undefined" && navigator.vibrate) {
@@ -433,7 +331,7 @@ export default function BlockBlast() {
     }
 
     return true;
-  }, [gameOver, comboCount, score, best, refillIfNeeded, sfx, checkGameOverCondition]);
+  }, [tray, grid, gameOver, comboCount, score, best, refillIfNeeded, sfx, checkGameOverCondition]);
 
   // Precise Target Calculation
   // Computes the grid origin (r, c) with exact inner-board measurement and symmetric cell centering
@@ -495,24 +393,16 @@ export default function BlockBlast() {
       return { r: targetR, c: targetC, isValid: false };
     }
 
-    const currentGrid = gridRef.current || grid;
-    const isValid = canPlace(currentGrid, shape, targetR, targetC);
+    const isValid = canPlace(grid, shape, targetR, targetC);
     return { r: targetR, c: targetC, isValid };
   }, [grid]);
 
   // Pointer Down on Piece Tray Item
   const handlePiecePointerDown = (e: React.PointerEvent, pieceIndex: number) => {
-    const currentTray = trayRef.current;
-    const piece = currentTray[pieceIndex];
+    const piece = tray[pieceIndex];
     if (!piece || gameOver || isClearingRef.current) return;
 
     e.preventDefault();
-    const targetEl = e.currentTarget as HTMLElement;
-    const pointerId = e.pointerId;
-    try {
-      targetEl.setPointerCapture(pointerId);
-    } catch {}
-
     const isTouch = e.pointerType === "touch";
     const startX = e.clientX;
     const startY = e.clientY;
@@ -559,19 +449,6 @@ export default function BlockBlast() {
       }
     };
 
-    const cleanupListeners = () => {
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId);
-        rafId = null;
-      }
-      try {
-        targetEl.releasePointerCapture(pointerId);
-      } catch {}
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
-      window.removeEventListener("pointercancel", handlePointerCancel);
-    };
-
     const handlePointerMove = (moveEvent: PointerEvent) => {
       moveEvent.preventDefault();
       const current = dragInfoRef.current;
@@ -605,18 +482,14 @@ export default function BlockBlast() {
       }
     };
 
-    const handlePointerCancel = () => {
-      cleanupListeners();
-      dragInfoRef.current = null;
-      setActiveDragPiece(null);
-      setSelected(null);
-      setHoverTarget(null);
-      hoverTargetRef.current = null;
-      sfx.snapBack();
-    };
-
     const handlePointerUp = (upEvent: PointerEvent) => {
-      cleanupListeners();
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
 
       const current = dragInfoRef.current;
       dragInfoRef.current = null;
@@ -631,34 +504,26 @@ export default function BlockBlast() {
         return;
       }
 
-      try {
-        let finalTarget = calculateGridTarget(upEvent.clientX, upEvent.clientY, current?.piece.shape || [], isTouch);
-        // Fallback to the currently highlighted hover target if pointer release slightly shifted
-        if ((finalTarget.r === null || finalTarget.c === null || !finalTarget.isValid) && hoverTargetRef.current?.isValid) {
-          finalTarget = hoverTargetRef.current;
-        }
-
-        if (current && finalTarget.r !== null && finalTarget.c !== null && finalTarget.isValid) {
-          const placed = placePieceAt(current.index, finalTarget.r, finalTarget.c);
-          if (!placed) {
-            sfx.snapBack();
-          }
-        } else {
-          sfx.snapBack();
-        }
-      } catch {
-        sfx.snapBack();
-      } finally {
-        setActiveDragPiece(null);
-        setSelected(null);
-        setHoverTarget(null);
-        hoverTargetRef.current = null;
+      let finalTarget = calculateGridTarget(upEvent.clientX, upEvent.clientY, current?.piece.shape || [], isTouch);
+      // Fallback to the currently highlighted hover target if pointer release slightly shifted
+      if ((finalTarget.r === null || finalTarget.c === null || !finalTarget.isValid) && hoverTargetRef.current?.isValid) {
+        finalTarget = hoverTargetRef.current;
       }
+
+      if (current && finalTarget.r !== null && finalTarget.c !== null && finalTarget.isValid) {
+        placePieceAt(current.index, finalTarget.r, finalTarget.c);
+      } else {
+        sfx.snapBack();
+      }
+
+      setActiveDragPiece(null);
+      setHoverTarget(null);
+      hoverTargetRef.current = null;
     };
 
     window.addEventListener("pointermove", handlePointerMove, { passive: false });
     window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("pointercancel", handlePointerCancel);
+    window.addEventListener("pointercancel", handlePointerUp);
   };
 
   // Click on a grid cell when a piece is selected via tap
@@ -838,9 +703,9 @@ export default function BlockBlast() {
                 key={key}
                 onMouseEnter={() => {
                   if (selected !== null && !activeDragPiece) {
-                    const piece = trayRef.current[selected];
+                    const piece = tray[selected];
                     if (piece) {
-                      const valid = canPlace(gridRef.current, piece.shape, r, c);
+                      const valid = canPlace(grid, piece.shape, r, c);
                       setHoverTarget({ r, c, isValid: valid });
                     }
                   }
@@ -848,7 +713,7 @@ export default function BlockBlast() {
                 onClick={() => handleCellClick(r, c)}
                 className={`rounded-[5px] relative overflow-hidden select-none ${
                   isDropping ? "bb-drop" : ""
-                } ${isClearing ? "bb-clear" : ""}`}
+                } ${isClearing ? "bb-clear scale-90 opacity-60" : ""}`}
                 style={{
                   background: bg,
                   boxShadow:
@@ -897,13 +762,11 @@ export default function BlockBlast() {
             if (!p) {
               return (
                 <div
-                  key={`empty-${i}`}
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-dashed border-white/5 bg-white/[0.02] flex items-center justify-center shrink-0 transition-opacity duration-150"
+                  key={i}
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-dashed border-white/5 bg-white/[0.02] flex items-center justify-center shrink-0"
                 />
               );
             }
-
-            const fits = pieceFitsSomewhere(grid, p.shape);
 
             return (
               <div
@@ -911,12 +774,10 @@ export default function BlockBlast() {
                 onPointerDown={(e) => handlePiecePointerDown(e, i)}
                 className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 flex items-center justify-center transition-all duration-150 cursor-grab active:cursor-grabbing touch-none select-none shrink-0 ${
                   isDraggingThis
-                    ? "opacity-20 scale-90 border-accent/40 bg-accent/5 pointer-events-none"
+                    ? "opacity-25 scale-90 border-accent/40 bg-accent/5"
                     : isSelectedThis
                     ? "border-accent bg-accent/20 ring-2 ring-accent/60 scale-105 shadow-lg shadow-accent/25"
-                    : !fits
-                    ? "border-white/5 bg-white/[0.02] opacity-40 hover:opacity-75"
-                    : "border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/[0.08] active:scale-95 shadow-md shadow-black/20"
+                    : "border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/[0.08] active:scale-95"
                 }`}
                 title="Drag onto board or click to select"
               >

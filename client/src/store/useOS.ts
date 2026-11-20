@@ -58,6 +58,14 @@ interface OSState {
   restart: () => void;
   isSleeping: boolean;
   setSleeping: (sleep: boolean) => void;
+  liveShowEnabled: boolean;
+  setLiveShowEnabled: (enabled: boolean) => void;
+  liveShowTimeout: number;
+  setLiveShowTimeout: (minutes: number) => void;
+  isLiveShowActive: boolean;
+  setLiveShowActive: (active: boolean) => void;
+  startLiveShow: () => void;
+  stopLiveShow: () => void;
   particlesEnabled: boolean;
   toggleParticles: () => void;
   widgetsVisible: boolean;
@@ -178,7 +186,8 @@ const WALLPAPERS = [
   { id: "bg1", name: "Balloon Sunset" },
   { id: "bg2", name: "Cyborg Dark" },
   { id: "bg3", name: "Balloon Night" },
-  // Existing wallpapers
+  // Nature and artistic aesthetics
+  { id: "nature", name: "Dark Nature Aesthetic" },
   { id: "ocean", name: "Night Ocean & Balloon" },
   { id: "galaxy", name: "Deep Galaxy" },
   { id: "aurora", name: "Aurora Coast" },
@@ -393,6 +402,22 @@ export const useOS = create<OSState>((set, get) => ({
   },
   setSleeping: (sleep: boolean) => set({ isSleeping: sleep }),
 
+  // Dark Nature Live Show Wallpaper & Screensaver
+  liveShowEnabled: typeof window !== "undefined" ? localStorage.getItem("os_liveshow_enabled") !== "off" : true,
+  setLiveShowEnabled: (enabled: boolean) => {
+    localStorage.setItem("os_liveshow_enabled", enabled ? "on" : "off");
+    set({ liveShowEnabled: enabled });
+  },
+  liveShowTimeout: typeof window !== "undefined" ? (Number(localStorage.getItem("os_liveshow_timeout")) || 5) : 5,
+  setLiveShowTimeout: (minutes: number) => {
+    localStorage.setItem("os_liveshow_timeout", String(minutes));
+    set({ liveShowTimeout: minutes });
+  },
+  isLiveShowActive: false,
+  setLiveShowActive: (active: boolean) => set({ isLiveShowActive: active }),
+  startLiveShow: () => set({ isLiveShowActive: true }),
+  stopLiveShow: () => set({ isLiveShowActive: false }),
+
   // Desktop celestial starfield & particles animation
   particlesEnabled: localStorage.getItem("os_particles") !== "off",
   toggleParticles: () => {
@@ -494,7 +519,7 @@ export const useOS = create<OSState>((set, get) => ({
   togglePowerDialog: () => set((s) => ({ powerDialogOpen: !s.powerDialogOpen })),
 
   resetDefaults: () => {
-    ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift", "os_window_indicators", "os_dock_apps_order", "os_persist_dock_order"].forEach((k) =>
+    ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift", "os_window_indicators", "os_dock_apps_order", "os_persist_dock_order", "os_liveshow_enabled", "os_liveshow_timeout"].forEach((k) =>
       localStorage.removeItem(k)
     );
     try {

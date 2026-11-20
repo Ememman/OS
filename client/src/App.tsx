@@ -23,6 +23,7 @@ import SpotlightSearch from "./components/SpotlightSearch";
 import ControlCenter from "./components/ControlCenter";
 import NotificationToast from "./components/NotificationToast";
 import DesktopContextMenu from "./components/DesktopContextMenu";
+import LiveShowWallpaper from "./components/LiveShowWallpaper";
 import { touchChatActivity } from "./lib/chatSession";
 import { API_URL } from "./lib/config";
 import { getSocket } from "./lib/socket";
@@ -94,6 +95,11 @@ export default function App() {
     isSleeping,
     powerDialogOpen,
     closePowerDialog,
+    liveShowEnabled,
+    liveShowTimeout,
+    isLiveShowActive,
+    startLiveShow,
+    stopLiveShow,
   } = useOS();
 
   const isWin = osMode === "win";
@@ -180,6 +186,54 @@ export default function App() {
     checkRealUpdates();
   }, []);
 
+  // Dark Nature Live Show Inactivity Screensaver (5-minute default)
+  useEffect(() => {
+    if (!booted || !osChosen || isPoweredOff || isSleeping || !liveShowEnabled || liveShowTimeout <= 0) {
+      return;
+    }
+
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const timeoutMs = Math.max(0.5, liveShowTimeout) * 60 * 1000;
+
+    const resetTimer = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        startLiveShow();
+      }, timeoutMs);
+    };
+
+    let lastInteraction = Date.now();
+    const handleUserActivity = () => {
+      if (useOS.getState().isLiveShowActive) {
+        useOS.getState().stopLiveShow();
+      }
+      const now = Date.now();
+      if (now - lastInteraction > 500) {
+        lastInteraction = now;
+        resetTimer();
+      }
+    };
+
+    resetTimer();
+
+    const events = ["pointermove", "pointerdown", "keydown", "wheel", "touchstart"] as const;
+    events.forEach((evt) => window.addEventListener(evt, handleUserActivity, { passive: true }));
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      events.forEach((evt) => window.removeEventListener(evt, handleUserActivity));
+    };
+  }, [
+    booted,
+    osChosen,
+    isPoweredOff,
+    isSleeping,
+    liveShowEnabled,
+    liveShowTimeout,
+    startLiveShow,
+    stopLiveShow,
+  ]);
+
   if (isPoweredOff) return <PowerOffScreen />;
   if (!booted) return <BootScreen />;
   if (!osChosen) return <OsPicker />;
@@ -212,96 +266,107 @@ export default function App() {
     >
       <Wallpaper />
       <GlobalAudioPlayer />
-      {!isWin && (!isMobile || !hasActiveWindow) && <MenuBar />}
 
-      {/* Desktop Content & Widgets */}
-      {isTablet ? (
-        /* Mobile & Tablet: Fullscreen freeform desktop with scrollable widget stack */
-        <>
-          {/* Applications on desktop — draggable to any position on desktop canvas, avoiding widgets when active */}
-          <div
-            className="absolute inset-0 z-10 pointer-events-none reveal overflow-hidden"
-            style={{ animationDelay: "50ms" }}
-          >
-            <DesktopAppsGrid isMobile={true} />
-          </div>
+      {/* Dark Nature Live Show Screensaver Overlay */}
+      {isLiveShowActive && <LiveShowWallpaper onClose={stopLiveShow} />}
 
-          {/* Widget stack below icons — macOS style only */}
-          {!isWin && widgetsVisible && (
+      {/* Desktop Layer: hides widgets, applications, and dock when live show is active */}
+      <div
+        className={`transition-opacity duration-700 ease-in-out ${
+          isLiveShowActive ? "opacity-0 pointer-events-none invisible" : "opacity-100"
+        }`}
+      >
+        {!isWin && (!isMobile || !hasActiveWindow) && <MenuBar />}
+
+        {/* Desktop Content & Widgets */}
+        {isTablet ? (
+          /* Mobile & Tablet: Fullscreen freeform desktop with scrollable widget stack */
+          <>
+            {/* Applications on desktop — draggable to any position on desktop canvas, avoiding widgets when active */}
             <div
-              data-widget-area="true"
-              className={`absolute ${
-                !isWin ? "top-60 sm:top-68" : "top-56"
-              } left-0 right-0 bottom-0 overflow-y-auto overscroll-contain thin-scroll px-3 pt-2 pb-28 flex flex-col items-center gap-4 z-20 pointer-events-auto`}
-              style={{ touchAction: "pan-y" }}
+              className="absolute inset-0 z-10 pointer-events-none reveal overflow-hidden"
+              style={{ animationDelay: "50ms" }}
             >
-              <div className="reveal w-full flex justify-center" style={{ animationDelay: "120ms" }}><PhotoWidget /></div>
-              <div className="reveal w-full flex justify-center" style={{ animationDelay: "150ms" }}><WeatherWidget /></div>
-              <div className="reveal w-full flex justify-center" style={{ animationDelay: "180ms" }}><ClockWidget /></div>
-              <div className="reveal w-full flex justify-center" style={{ animationDelay: "210ms" }}><AgendaWidget /></div>
-              <div className="reveal w-full flex justify-center" style={{ animationDelay: "240ms" }}><NoteWidget /></div>
-              <div className="reveal w-full flex justify-center" style={{ animationDelay: "270ms" }}><ShortcutTiles /></div>
-              <div className="h-20 shrink-0 w-full" aria-hidden="true" />
+              <DesktopAppsGrid isMobile={true} />
             </div>
-          )}
-        </>
-      ) : (
-        /* Desktop: Spacious multi-column layout with scrollable widget columns so lower widgets are never cut off */
-        <>
-          {/* Desktop application icons — draggable to any position on desktop, avoiding widgets, and combinable into folders */}
-          <div
-            className="absolute inset-0 z-10 pointer-events-none reveal overflow-hidden"
-            style={{ animationDelay: "50ms" }}
-          >
-            <DesktopAppsGrid isMobile={false} />
-          </div>
 
-          {/* Widget columns with scrollability — lower part is always accessible */}
-          {!isWin && widgetsVisible && (
-            <>
-              {/* Left column: photo, shortcuts below it, then note */}
+            {/* Widget stack below icons — macOS style only */}
+            {!isWin && widgetsVisible && (
               <div
                 data-widget-area="true"
-                data-widget-column="left"
-                className={`absolute top-36 ${macDockLeft ? "left-24" : "left-6"} flex flex-col gap-4 max-h-[calc(100vh-160px)] overflow-y-auto overscroll-contain thin-scroll pr-1 pb-20 pointer-events-auto z-20`}
+                className={`absolute ${
+                  !isWin ? "top-60 sm:top-68" : "top-56"
+                } left-0 right-0 bottom-0 overflow-y-auto overscroll-contain thin-scroll px-3 pt-2 pb-28 flex flex-col items-center gap-4 z-20 pointer-events-auto`}
+                style={{ touchAction: "pan-y" }}
               >
-                <div className="reveal" style={{ animationDelay: "140ms" }}><PhotoWidget /></div>
-                <div className="reveal" style={{ animationDelay: "190ms" }}><ShortcutTiles /></div>
-                <div className="reveal" style={{ animationDelay: "240ms" }}><NoteWidget /></div>
+                <div className="reveal w-full flex justify-center" style={{ animationDelay: "120ms" }}><PhotoWidget /></div>
+                <div className="reveal w-full flex justify-center" style={{ animationDelay: "150ms" }}><WeatherWidget /></div>
+                <div className="reveal w-full flex justify-center" style={{ animationDelay: "180ms" }}><ClockWidget /></div>
+                <div className="reveal w-full flex justify-center" style={{ animationDelay: "210ms" }}><AgendaWidget /></div>
+                <div className="reveal w-full flex justify-center" style={{ animationDelay: "240ms" }}><NoteWidget /></div>
+                <div className="reveal w-full flex justify-center" style={{ animationDelay: "270ms" }}><ShortcutTiles /></div>
+                <div className="h-20 shrink-0 w-full" aria-hidden="true" />
               </div>
+            )}
+          </>
+        ) : (
+          /* Desktop: Spacious multi-column layout with scrollable widget columns so lower widgets are never cut off */
+          <>
+            {/* Desktop application icons — draggable to any position on desktop, avoiding widgets, and combinable into folders */}
+            <div
+              className="absolute inset-0 z-10 pointer-events-none reveal overflow-hidden"
+              style={{ animationDelay: "50ms" }}
+            >
+              <DesktopAppsGrid isMobile={false} />
+            </div>
 
-              {/* Right column: weather, clock, calendar */}
-              <div
-                data-widget-area="true"
-                data-widget-column="right"
-                className={`absolute top-12 ${macDockRight ? "right-24" : "right-6"} flex flex-col gap-4 items-end max-h-[calc(100vh-100px)] overflow-y-auto overscroll-contain thin-scroll pl-1 pb-20 pointer-events-auto z-20`}
-              >
-                <div className="reveal" style={{ animationDelay: "170ms" }}><WeatherWidget /></div>
-                <div className="reveal" style={{ animationDelay: "220ms" }}><ClockWidget /></div>
-                <div className="reveal" style={{ animationDelay: "270ms" }}><AgendaWidget /></div>
-              </div>
-            </>
-          )}
-        </>
-      )}
+            {/* Widget columns with scrollability — lower part is always accessible */}
+            {!isWin && widgetsVisible && (
+              <>
+                {/* Left column: photo, shortcuts below it, then note */}
+                <div
+                  data-widget-area="true"
+                  data-widget-column="left"
+                  className={`absolute top-36 ${macDockLeft ? "left-24" : "left-6"} flex flex-col gap-4 max-h-[calc(100vh-160px)] overflow-y-auto overscroll-contain thin-scroll pr-1 pb-20 pointer-events-auto z-20`}
+                >
+                  <div className="reveal" style={{ animationDelay: "140ms" }}><PhotoWidget /></div>
+                  <div className="reveal" style={{ animationDelay: "190ms" }}><ShortcutTiles /></div>
+                  <div className="reveal" style={{ animationDelay: "240ms" }}><NoteWidget /></div>
+                </div>
 
-      {/* Windows */}
-      {windows.map((win) => {
-        const Comp = APP_COMPONENTS[win.app];
-        if (!Comp) return null;
-        return (
-          <Window key={win.id} win={win}>
-            <ErrorBoundary fallbackTitle={win.title} onClose={() => closeWindow(win.id)}>
-              <Suspense fallback={<WindowAppSkeleton title={win.title} />}>
-                <Comp />
-              </Suspense>
-            </ErrorBoundary>
-          </Window>
-        );
-      })}
+                {/* Right column: weather, clock, calendar */}
+                <div
+                  data-widget-area="true"
+                  data-widget-column="right"
+                  className={`absolute top-12 ${macDockRight ? "right-24" : "right-6"} flex flex-col gap-4 items-end max-h-[calc(100vh-100px)] overflow-y-auto overscroll-contain thin-scroll pl-1 pb-20 pointer-events-auto z-20`}
+                >
+                  <div className="reveal" style={{ animationDelay: "170ms" }}><WeatherWidget /></div>
+                  <div className="reveal" style={{ animationDelay: "220ms" }}><ClockWidget /></div>
+                  <div className="reveal" style={{ animationDelay: "270ms" }}><AgendaWidget /></div>
+                </div>
+              </>
+            )}
+          </>
+        )}
 
-      {(!isMobile || !hasActiveWindow) && (isWin ? <WinTaskbar /> : <Dock />)}
-      <MiniPlayer />
+        {/* Windows */}
+        {windows.map((win) => {
+          const Comp = APP_COMPONENTS[win.app];
+          if (!Comp) return null;
+          return (
+            <Window key={win.id} win={win}>
+              <ErrorBoundary fallbackTitle={win.title} onClose={() => closeWindow(win.id)}>
+                <Suspense fallback={<WindowAppSkeleton title={win.title} />}>
+                  <Comp />
+                </Suspense>
+              </ErrorBoundary>
+            </Window>
+          );
+        })}
+
+        {(!isMobile || !hasActiveWindow) && (isWin ? <WinTaskbar /> : <Dock />)}
+        <MiniPlayer />
+      </div>
       <SpotlightSearch />
       <MissionControl />
       <ControlCenter />
