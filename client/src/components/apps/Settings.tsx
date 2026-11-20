@@ -168,6 +168,9 @@ export default function Settings() {
     prevLiveWallpaperScene,
     liveWallpaperAutoCycle,
     setLiveWallpaperAutoCycle,
+    lockScreenLiveShow,
+    setLockScreenLiveShow,
+    setSleeping,
   } = useOS();
 
   const isMobile = useIsMobile();
@@ -1331,12 +1334,55 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* Actions: Set as Desktop Wallpaper & Play Fullscreen */}
+            {/* Lock Screen Live Show Toggle */}
+            <div className="flex items-center justify-between pt-2 border-t border-white/5">
+              <div>
+                <span className="text-xs sm:text-sm font-semibold text-white/95">
+                  Lock Screen Live Show
+                </span>
+                <p className="text-[10px] sm:text-[11px] text-white/45">
+                  Play dynamic dark nature aesthetic scenes and floating fireflies on the lock screen
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  soundFx.playClick();
+                  setLockScreenLiveShow(!lockScreenLiveShow);
+                }}
+                className={`w-11 sm:w-12 h-6.5 rounded-full relative transition-all duration-300 shrink-0 cursor-pointer ${
+                  lockScreenLiveShow
+                    ? "bg-accent shadow-[0_0_12px_rgba(var(--accent),0.4)]"
+                    : "bg-white/20 hover:bg-white/25"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.75 w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-300 ${
+                    lockScreenLiveShow ? "left-[22px] sm:left-6" : "left-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Actions: Set as Desktop Wallpaper, Lock Screen & Play Fullscreen */}
             <div className="pt-2 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2.5">
               <div className="text-[10px] text-white/40">
                 Move mouse or press any key anytime to wake back to your desktop.
               </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFx.playClick();
+                    setSleeping(true);
+                  }}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-white/15 bg-white/5 text-white/80 hover:text-white hover:bg-white/10 text-xs font-semibold active:scale-95 transition cursor-pointer"
+                  title="Test Lock Screen"
+                >
+                  <GIconMoon size={13} className="text-emerald-400" />
+                  <span>Lock Screen Now</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => {

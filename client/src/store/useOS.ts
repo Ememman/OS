@@ -73,6 +73,8 @@ interface OSState {
   prevLiveWallpaperScene: () => void;
   liveWallpaperAutoCycle: boolean;
   setLiveWallpaperAutoCycle: (enabled: boolean) => void;
+  lockScreenLiveShow: boolean;
+  setLockScreenLiveShow: (enabled: boolean) => void;
   particlesEnabled: boolean;
   toggleParticles: () => void;
   widgetsVisible: boolean;
@@ -456,6 +458,13 @@ export const useOS = create<OSState>((set, get) => ({
     set({ liveWallpaperAutoCycle: enabled });
   },
 
+  // Lock Screen Live Show Wallpaper
+  lockScreenLiveShow: typeof window !== "undefined" ? localStorage.getItem("os_lockscreen_liveshow") !== "off" : true,
+  setLockScreenLiveShow: (enabled: boolean) => {
+    localStorage.setItem("os_lockscreen_liveshow", enabled ? "on" : "off");
+    set({ lockScreenLiveShow: enabled });
+  },
+
   // Desktop celestial starfield & particles animation
   particlesEnabled: localStorage.getItem("os_particles") !== "off",
   toggleParticles: () => {
@@ -557,7 +566,7 @@ export const useOS = create<OSState>((set, get) => ({
   togglePowerDialog: () => set((s) => ({ powerDialogOpen: !s.powerDialogOpen })),
 
   resetDefaults: () => {
-    ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift", "os_window_indicators", "os_dock_apps_order", "os_persist_dock_order", "os_liveshow_enabled", "os_liveshow_timeout", "os_live_wallpaper_scene", "os_live_wallpaper_autocycle"].forEach((k) =>
+    ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift", "os_window_indicators", "os_dock_apps_order", "os_persist_dock_order", "os_liveshow_enabled", "os_liveshow_timeout", "os_live_wallpaper_scene", "os_live_wallpaper_autocycle", "os_lockscreen_liveshow"].forEach((k) =>
       localStorage.removeItem(k)
     );
     try {
