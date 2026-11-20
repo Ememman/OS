@@ -171,7 +171,7 @@ export const APPS: Record<string, AppMetadata> = {
   gallery: { title: "Gallery", w: 880, h: 600 },
   games: { title: "Games", w: 880, h: 700 },
   files: { title: "Files", w: 780, h: 540 },
-  settings: { title: "Settings", w: 640, h: 520 },
+  settings: { title: "Settings", w: 780, h: 560 },
   resume: { title: "Resume", w: 820, h: 740 },
   "pdf-viewer": { title: "MendozaJamesEmmanuelCV.pdf", w: 840, h: 760 },
 };

@@ -199,7 +199,7 @@ export default function Settings() {
     return () => ro.disconnect();
   }, []);
 
-  const isNarrow = containerWidth < 680;
+  const isNarrow = containerWidth < 540;
 
   const matchesFilter = (category: string | string[], keywords: string[] = []) => {
     const cats = Array.isArray(category) ? category : [category];
@@ -405,8 +405,8 @@ export default function Settings() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-[#0a0a0f]">
         {/* Top Header Bar */}
-        <div className="p-3 sm:p-4 border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-md shrink-0 flex items-center justify-between gap-2.5 z-10 shadow-sm">
-          <div className="flex items-center gap-2.5 min-w-0">
+        <div className="p-2.5 sm:p-4 border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-md shrink-0 flex items-center justify-between gap-2 z-10 shadow-sm">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             {isNarrow && (
               <button
                 type="button"
@@ -415,32 +415,32 @@ export default function Settings() {
                 title="Toggle Categories Sidebar"
               >
                 <GIconLayoutCells size={13} className="text-accent" />
-                <span className="text-[11px] font-medium">Categories</span>
+                <span className="text-[11px] font-medium hidden xs:inline">Sidebar</span>
               </button>
             )}
-            <div className="min-w-0">
-              <h1 className="font-display text-sm sm:text-base font-semibold text-white truncate flex items-center gap-1.5">
-                <span className="text-white/40 font-normal">Settings</span>
-                <span className="text-white/30">/</span>
-                <span className="text-white">
+            <div className="min-w-0 flex-1">
+              <h1 className="font-display text-xs sm:text-base font-semibold text-white truncate flex items-center gap-1 sm:gap-1.5">
+                <span className="text-white/40 font-normal hidden sm:inline">Settings</span>
+                <span className="text-white/30 hidden sm:inline">/</span>
+                <span className="text-white truncate">
                   {SETTINGS_CATEGORIES.find((c) => c.id === activeCategory)?.label || "All Settings"}
                 </span>
               </h1>
-              <p className="text-[10px] text-white/45 hidden sm:block truncate">
+              <p className="text-[10px] text-white/45 hidden md:block truncate">
                 Personalize wallpaper, accents, and system preferences.
               </p>
             </div>
           </div>
 
           {/* Search Filter */}
-          <div className="relative shrink-0">
-            <GIconSearch size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+          <div className="relative shrink-0 max-w-[140px] xs:max-w-[180px] sm:max-w-xs">
+            <GIconSearch size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
             <input
               type="text"
-              placeholder="Filter settings…"
+              placeholder="Search…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-32 xs:w-40 sm:w-52 pl-7 pr-7 py-1 text-xs bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:border-accent focus:bg-white/10 outline-none transition"
+              className="w-24 xs:w-36 sm:w-48 pl-7 pr-6 py-1 text-xs bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:border-accent focus:bg-white/10 outline-none transition"
             />
             {searchQuery && (
               <button
@@ -454,6 +454,34 @@ export default function Settings() {
             )}
           </div>
         </div>
+
+        {/* Horizontal Category Quick-Chips for Mobile & Narrow Containers */}
+        {isNarrow && (
+          <div className="flex items-center gap-1.5 px-3 py-2 border-b border-white/10 bg-[#0c101c]/90 overflow-x-auto no-scrollbar shrink-0 shadow-inner">
+            {SETTINGS_CATEGORIES.map((cat) => {
+              const Icon = cat.icon;
+              const isSelected = activeCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => {
+                    soundFx.playClick();
+                    setActiveCategory(cat.id);
+                  }}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs shrink-0 transition cursor-pointer ${
+                    isSelected
+                      ? "bg-accent text-accent-contrast font-semibold shadow-xs"
+                      : "bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10"
+                  }`}
+                >
+                  <Icon size={12} className={isSelected ? "text-accent-contrast" : "text-white/50"} />
+                  <span className="text-[11px] whitespace-nowrap">{cat.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Scrollable Content Pane */}
         <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
@@ -628,7 +656,7 @@ export default function Settings() {
           </p>
 
         {/* Preset Swatches Grid */}
-        <div className="grid grid-cols-3 xs:grid-cols-5 sm:grid-cols-9 gap-2">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(58px,1fr))] sm:grid-cols-9 gap-2">
           {accents.map((a) => {
             const isSelected = accent === a.value;
             return (
@@ -1013,7 +1041,7 @@ export default function Settings() {
             Choose a preset background or upload your own custom wallpaper for your desktop.
           </p>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 min-[380px]:grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-4">
             {wallpapers.map((w) => {
               const info = getWallpaperInfo(w.id);
               const isSelected = wallpaper === w.id;
@@ -1114,7 +1142,7 @@ export default function Settings() {
                 <span className="text-[10px] uppercase font-mono tracking-wider text-white/40">
                   Switch Wallpaper Scene
                 </span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 min-[360px]:grid-cols-2 sm:grid-cols-3 gap-2">
                   {DARK_NATURE_SCENES.map((scene, idx) => (
                     <button
                       key={scene.id}
@@ -1217,7 +1245,7 @@ export default function Settings() {
                     setCustomWallUrl("");
                   }
                 }}
-                className="flex-1 px-3 py-1.5 bg-black/40 border border-white/15 rounded-xl text-white text-xs outline-none focus:border-accent transition placeholder:text-white/25"
+                className="flex-1 min-w-0 px-3 py-1.5 bg-black/40 border border-white/15 rounded-xl text-white text-xs outline-none focus:border-accent transition placeholder:text-white/25"
               />
               <button
                 type="button"
@@ -1306,9 +1334,9 @@ export default function Settings() {
               </div>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                 {[
-                  { value: 1, label: "1 min (Test)" },
+                  { value: 1, label: "1 min", tag: "Test" },
                   { value: 2, label: "2 mins" },
-                  { value: 5, label: "5 mins (Default)" },
+                  { value: 5, label: "5 mins", tag: "Default" },
                   { value: 10, label: "10 mins" },
                   { value: 15, label: "15 mins" },
                   { value: 0, label: "Never" },
@@ -1322,13 +1350,18 @@ export default function Settings() {
                       if (opt.value === 0) setLiveShowEnabled(false);
                       else setLiveShowEnabled(true);
                     }}
-                    className={`px-2 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer text-center ${
+                    className={`px-1.5 sm:px-2 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer text-center flex flex-col items-center justify-center leading-tight ${
                       liveShowTimeout === opt.value
                         ? "border-accent bg-accent/20 text-white shadow-sm"
                         : "border-white/10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10"
                     }`}
                   >
-                    {opt.label}
+                    <span>{opt.label}</span>
+                    {opt.tag && (
+                      <span className="text-[9px] opacity-70 mt-0.5 font-normal tracking-wide">
+                        ({opt.tag})
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -1365,11 +1398,11 @@ export default function Settings() {
             </div>
 
             {/* Actions: Set as Desktop Wallpaper, Lock Screen & Play Fullscreen */}
-            <div className="pt-2 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2.5">
-              <div className="text-[10px] text-white/40">
+            <div className="pt-2 border-t border-white/5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+              <div className="text-[10px] text-white/40 leading-relaxed">
                 Move mouse or press any key anytime to wake back to your desktop.
               </div>
-              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <div className="flex flex-col min-[420px]:flex-row items-stretch min-[420px]:items-center gap-2 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => {
@@ -1397,7 +1430,7 @@ export default function Settings() {
                   }`}
                 >
                   <GIconCheck size={13} className={wallpaper === "liveshow" ? "text-emerald-400" : "text-white/40"} />
-                  <span>{wallpaper === "liveshow" ? "Active Desktop Wallpaper" : "Set as Desktop Wallpaper"}</span>
+                  <span className="truncate">{wallpaper === "liveshow" ? "Active Desktop Wallpaper" : "Set as Desktop"}</span>
                 </button>
 
                 <button
@@ -1555,7 +1588,7 @@ export default function Settings() {
                 onChange={(e) => setCityDraft(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && lookupCity()}
                 placeholder="City name…"
-                className="flex-1 bg-white/5 rounded-lg px-3 py-2 text-xs text-white outline-none border border-white/10 focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all placeholder:text-white/20"
+                className="flex-1 min-w-0 bg-white/5 rounded-lg px-3 py-2 text-xs text-white outline-none border border-white/10 focus:border-[#0091ff] focus:ring-2 focus:ring-[#0091ff]/40 focus:shadow-[0_0_14px_rgba(0,145,255,0.28)] transition-all placeholder:text-white/20"
               />
               <button onClick={lookupCity} className="text-xs px-3 py-2 rounded-lg bg-accent shrink-0 hover:brightness-110 active:scale-95 transition cursor-pointer">Set</button>
             </div>
@@ -1753,13 +1786,13 @@ export default function Settings() {
         </div>
 
         {/* Bottom Status Footer (matching Files app status bar) */}
-        <div className="px-3.5 py-1.5 border-t border-white/5 bg-black/30 text-[10px] text-white/40 flex items-center justify-between shrink-0 font-mono">
-          <div className="flex items-center gap-2 truncate">
-            <span>Adaptive Contrast: <span className="text-emerald-400">WCAG {harmonizedPalette?.wcagContrast || "7.2:1"}</span></span>
+        <div className="px-3.5 py-1.5 border-t border-white/5 bg-black/30 text-[10px] text-white/40 flex items-center justify-between shrink-0 font-mono overflow-hidden">
+          <div className="flex items-center gap-2 min-w-0 truncate">
+            <span className="truncate">Adaptive Contrast: <span className="text-emerald-400">WCAG {harmonizedPalette?.wcagContrast || "7.2:1"}</span></span>
             <span className="hidden sm:inline text-white/20">•</span>
-            <span className="hidden sm:inline text-white/35">Mode: {themeMode === "night" ? "OLED Pitch Black" : "Balanced Slate"}</span>
+            <span className="hidden sm:inline text-white/35 truncate">Mode: {themeMode === "night" ? "OLED Pitch Black" : "Balanced Slate"}</span>
           </div>
-          <span className="text-white/30 shrink-0">Portfolio OS Settings</span>
+          <span className="text-white/30 shrink-0 ml-2">Settings v2.0</span>
         </div>
       </div>
     </div>
