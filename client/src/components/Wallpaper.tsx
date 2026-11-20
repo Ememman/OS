@@ -83,6 +83,17 @@ export default function Wallpaper() {
     scene = <GalaxyScene />;
   } else if (wallpaper === "aurora") {
     scene = <AuroraScene />;
+  } else if (wallpaper.startsWith("data:") || wallpaper.startsWith("http") || wallpaper.startsWith("blob:")) {
+    scene = (
+      <div className="absolute inset-0 w-full h-full overflow-hidden select-none bg-[#080c16]">
+        <img
+          src={wallpaper}
+          alt=""
+          className="w-full h-full object-cover object-center select-none transform scale-[1.01] transition-transform duration-700"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/35 to-black/50 sm:bg-black/40 pointer-events-none" />
+      </div>
+    );
   }
 
   return (
