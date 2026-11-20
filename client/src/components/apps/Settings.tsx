@@ -22,12 +22,15 @@ import {
   GIconPin,
   GIconClose,
   GIconLayoutCells,
+  GIconChevronLeft,
+  GIconChevronRight,
 } from "../icons/GravityIcons";
 import { soundFx } from "../../lib/soundFx";
 import { getAssetUrl } from "../../lib/assets";
 import { useIsMobile } from "../../lib/useMediaQuery";
 import { useDesktopStore } from "../../store/useDesktopStore";
 import LiveShowWallpaper from "../LiveShowWallpaper";
+import { DARK_NATURE_SCENES } from "../../data/darkNatureScenes";
 
 // Preview images for the wallpaper selector — resolved with getAssetUrl for subpath compatibility
 const PREVIEW_IMAGES: Record<string, string> = {
@@ -38,6 +41,7 @@ const PREVIEW_IMAGES: Record<string, string> = {
 
 // Fallback gradients if images don't load
 const PREVIEW_FALLBACK: Record<string, string> = {
+  liveshow: "radial-gradient(ellipse at 50% 90%, #0d2818 0%, #071a10 40%, #030d07 70%, #010402 100%)",
   bg1: "linear-gradient(135deg, #1a1a2e, #16213e)",
   bg2: "linear-gradient(135deg, #0f0c29, #302b63)",
   bg3: "linear-gradient(135deg, #1a1a2e, #2d2b4a)",
@@ -158,6 +162,12 @@ export default function Settings() {
     liveShowTimeout,
     setLiveShowTimeout,
     startLiveShow,
+    liveWallpaperSceneIndex,
+    setLiveWallpaperSceneIndex,
+    nextLiveWallpaperScene,
+    prevLiveWallpaperScene,
+    liveWallpaperAutoCycle,
+    setLiveWallpaperAutoCycle,
   } = useOS();
 
   const isMobile = useIsMobile();
@@ -236,6 +246,7 @@ export default function Settings() {
 
   const getWallpaperInfo = (id: string) => {
     const info: Record<string, { name: string; desc: string }> = {
+      liveshow: { name: "Dark Nature Live Show", desc: "Dynamic rotating scenes with animated forest fireflies" },
       bg1: { name: "Balloon Sunset", desc: "Hot air balloons at dusk" },
       bg2: { name: "Cyborg Dark", desc: "Dark cyborg portrait" },
       bg3: { name: "Balloon Night", desc: "Balloon over moonlit water" },
@@ -1028,6 +1039,12 @@ export default function Settings() {
                         isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-60"
                       }`}
                     />
+                    {w.id === "liveshow" && (
+                      <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-mono uppercase bg-emerald-500/90 text-black font-bold tracking-wider z-10 shadow-sm flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                        <span>LIVE</span>
+                      </span>
+                    )}
                     {isSelected && (
                       <span className="absolute top-1.5 right-1.5 w-5 h-5 aspect-square shrink-0 rounded-full bg-accent flex items-center justify-center shadow-lg shadow-accent/40 z-10">
                         <GIconCheck size={11} className="text-accent-contrast" />
@@ -1042,6 +1059,110 @@ export default function Settings() {
               );
             })}
           </div>
+
+          {/* Dedicated Live Wallpaper Scene Switcher & Auto-Cycle Controls (when Live Show is chosen) */}
+          {wallpaper === "liveshow" && (
+            <div className="p-3.5 sm:p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 backdrop-blur-md space-y-3 shadow-lg">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs sm:text-sm font-semibold text-emerald-300">
+                      Active Scene: {DARK_NATURE_SCENES[liveWallpaperSceneIndex]?.title}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      {liveWallpaperSceneIndex + 1} of {DARK_NATURE_SCENES.length}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-white/50">
+                    {DARK_NATURE_SCENES[liveWallpaperSceneIndex]?.subtitle}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFx.playClick();
+                      prevLiveWallpaperScene();
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-xs text-white/90 font-medium transition active:scale-95 cursor-pointer"
+                    title="Previous Scene"
+                  >
+                    <GIconChevronLeft size={13} />
+                    <span>Prev</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFx.playClick();
+                      nextLiveWallpaperScene();
+                    }}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-accent text-accent-contrast text-xs font-semibold shadow-md shadow-accent/25 hover:brightness-110 transition active:scale-95 cursor-pointer"
+                    title="Next Scene"
+                  >
+                    <span>Next Wallpaper</span>
+                    <GIconChevronRight size={13} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Scene Selector Grid: click any scene to immediately change the wallpaper */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] uppercase font-mono tracking-wider text-white/40">
+                  Switch Wallpaper Scene
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {DARK_NATURE_SCENES.map((scene, idx) => (
+                    <button
+                      key={scene.id}
+                      type="button"
+                      onClick={() => {
+                        soundFx.playClick();
+                        setLiveWallpaperSceneIndex(idx);
+                        notify("Live Wallpaper Changed", scene.title, "update", 2200);
+                      }}
+                      className={`p-2 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden ${
+                        liveWallpaperSceneIndex === idx
+                          ? "border-emerald-400 bg-emerald-500/20 shadow-md ring-1 ring-emerald-400/40 text-white"
+                          : "border-white/10 bg-black/40 hover:border-white/20 hover:bg-white/5 text-white/70 hover:text-white"
+                      }`}
+                    >
+                      <div className="text-[11px] font-semibold truncate">
+                        {scene.title}
+                      </div>
+                      <div className="text-[9px] text-white/40 truncate">
+                        {scene.subtitle}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Auto-cycle toggle */}
+              <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                <div>
+                  <span className="text-xs text-white/90 font-medium">Automatic Scene Rotation</span>
+                  <p className="text-[10px] text-white/40">Automatically transitions to the next wallpaper scene every 16 seconds</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFx.playClick();
+                    setLiveWallpaperAutoCycle(!liveWallpaperAutoCycle);
+                  }}
+                  className={`w-10 sm:w-11 h-6 rounded-full relative transition-all duration-300 shrink-0 cursor-pointer ${
+                    liveWallpaperAutoCycle ? "bg-accent" : "bg-white/20"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-300 ${
+                      liveWallpaperAutoCycle ? "left-[18px] sm:left-5.5" : "left-0.5"
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Custom Wallpaper Upload & URL Input */}
           <div className="p-3 sm:p-4 rounded-2xl border border-white/10 bg-white/5 space-y-3">
@@ -1140,10 +1261,6 @@ export default function Settings() {
             {/* Live Interactive Mini-Preview inside Settings */}
             <div className="relative aspect-video rounded-xl overflow-hidden border border-white/15 shadow-inner">
               <LiveShowWallpaper isMini={true} />
-              <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[9px] font-mono text-emerald-300">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>LIVE PREVIEW</span>
-              </div>
             </div>
 
             {/* Toggle Row */}
@@ -1214,22 +1331,41 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* Start Live Show Fullscreen Button */}
+            {/* Actions: Set as Desktop Wallpaper & Play Fullscreen */}
             <div className="pt-2 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2.5">
               <div className="text-[10px] text-white/40">
                 Move mouse or press any key anytime to wake back to your desktop.
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  soundFx.playClick();
-                  startLiveShow();
-                }}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-accent text-accent-contrast text-xs font-semibold shadow-md shadow-accent/20 hover:brightness-110 active:scale-95 transition cursor-pointer"
-              >
-                <GIconSparkles size={13} />
-                <span>Play Live Show Fullscreen</span>
-              </button>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFx.playClick();
+                    setWallpaper("liveshow");
+                    notify("Live Wallpaper Set", "Dark Nature Live Show is now your desktop wallpaper.", "success", 2600);
+                  }}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer active:scale-95 ${
+                    wallpaper === "liveshow"
+                      ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
+                      : "border-white/15 bg-white/5 text-white/80 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  <GIconCheck size={13} className={wallpaper === "liveshow" ? "text-emerald-400" : "text-white/40"} />
+                  <span>{wallpaper === "liveshow" ? "Active Desktop Wallpaper" : "Set as Desktop Wallpaper"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFx.playClick();
+                    startLiveShow();
+                  }}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-accent text-accent-contrast text-xs font-semibold shadow-md shadow-accent/20 hover:brightness-110 active:scale-95 transition cursor-pointer"
+                >
+                  <GIconSparkles size={13} />
+                  <span>Play Fullscreen</span>
+                </button>
+              </div>
             </div>
           </div>
         </section>

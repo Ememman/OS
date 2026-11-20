@@ -18,6 +18,7 @@ import {
   applyHarmonizedPaletteToDoc,
   type HarmonizedPalette,
 } from "../lib/colorHarmonizer";
+import { DARK_NATURE_SCENES } from "../data/darkNatureScenes";
 
 interface OSState {
   windows: WindowState[];
@@ -66,6 +67,12 @@ interface OSState {
   setLiveShowActive: (active: boolean) => void;
   startLiveShow: () => void;
   stopLiveShow: () => void;
+  liveWallpaperSceneIndex: number;
+  setLiveWallpaperSceneIndex: (idx: number) => void;
+  nextLiveWallpaperScene: () => void;
+  prevLiveWallpaperScene: () => void;
+  liveWallpaperAutoCycle: boolean;
+  setLiveWallpaperAutoCycle: (enabled: boolean) => void;
   particlesEnabled: boolean;
   toggleParticles: () => void;
   widgetsVisible: boolean;
@@ -182,6 +189,8 @@ const ACCENTS: AccentColor[] = [
 ];
 
 const WALLPAPERS = [
+  // Live dynamic rotating show
+  { id: "liveshow", name: "Dark Nature Live Show" },
   // Your custom images
   { id: "bg1", name: "Balloon Sunset" },
   { id: "bg2", name: "Cyborg Dark" },
@@ -418,6 +427,35 @@ export const useOS = create<OSState>((set, get) => ({
   startLiveShow: () => set({ isLiveShowActive: true }),
   stopLiveShow: () => set({ isLiveShowActive: false }),
 
+  // Dark Nature Live Desktop Wallpaper Scene Navigation
+  liveWallpaperSceneIndex: typeof window !== "undefined" ? (Number(localStorage.getItem("os_live_wallpaper_scene")) || 0) : 0,
+  setLiveWallpaperSceneIndex: (idx: number) => {
+    const clean = ((idx % DARK_NATURE_SCENES.length) + DARK_NATURE_SCENES.length) % DARK_NATURE_SCENES.length;
+    localStorage.setItem("os_live_wallpaper_scene", String(clean));
+    set({ liveWallpaperSceneIndex: clean });
+  },
+  nextLiveWallpaperScene: () => {
+    const current = get().liveWallpaperSceneIndex;
+    const next = (current + 1) % DARK_NATURE_SCENES.length;
+    get().setLiveWallpaperSceneIndex(next);
+    const scene = DARK_NATURE_SCENES[next];
+    if (get().systemSounds) soundFx.playPop();
+    get().notify("Live Wallpaper Scene", scene.title, "update", 2200);
+  },
+  prevLiveWallpaperScene: () => {
+    const current = get().liveWallpaperSceneIndex;
+    const prev = ((current - 1) + DARK_NATURE_SCENES.length) % DARK_NATURE_SCENES.length;
+    get().setLiveWallpaperSceneIndex(prev);
+    const scene = DARK_NATURE_SCENES[prev];
+    if (get().systemSounds) soundFx.playPop();
+    get().notify("Live Wallpaper Scene", scene.title, "update", 2200);
+  },
+  liveWallpaperAutoCycle: typeof window !== "undefined" ? localStorage.getItem("os_live_wallpaper_autocycle") !== "off" : true,
+  setLiveWallpaperAutoCycle: (enabled: boolean) => {
+    localStorage.setItem("os_live_wallpaper_autocycle", enabled ? "on" : "off");
+    set({ liveWallpaperAutoCycle: enabled });
+  },
+
   // Desktop celestial starfield & particles animation
   particlesEnabled: localStorage.getItem("os_particles") !== "off",
   toggleParticles: () => {
@@ -519,7 +557,7 @@ export const useOS = create<OSState>((set, get) => ({
   togglePowerDialog: () => set((s) => ({ powerDialogOpen: !s.powerDialogOpen })),
 
   resetDefaults: () => {
-    ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift", "os_window_indicators", "os_dock_apps_order", "os_persist_dock_order", "os_liveshow_enabled", "os_liveshow_timeout"].forEach((k) =>
+    ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift", "os_window_indicators", "os_dock_apps_order", "os_persist_dock_order", "os_liveshow_enabled", "os_liveshow_timeout", "os_live_wallpaper_scene", "os_live_wallpaper_autocycle"].forEach((k) =>
       localStorage.removeItem(k)
     );
     try {

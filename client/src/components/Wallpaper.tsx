@@ -1,6 +1,7 @@
 import { useOS } from "../store/useOS";
 import StarfieldCanvas from "./StarfieldCanvas";
 import { getAssetUrl } from "../lib/assets";
+import LiveShowWallpaper from "./LiveShowWallpaper";
 
 // Custom image wallpapers, resolved with getAssetUrl so they work
 // identically in local dev and subpath production deployments (GitHub Pages).
@@ -120,7 +121,9 @@ export default function Wallpaper() {
   const themeMode = useOS((s) => s.themeMode);
 
   let scene = <OceanScene />;
-  if (wallpaper === "bg1" || wallpaper === "bg2" || wallpaper === "bg3") {
+  if (wallpaper === "liveshow") {
+    scene = <LiveShowWallpaper isDesktopWallpaper={true} />;
+  } else if (wallpaper === "bg1" || wallpaper === "bg2" || wallpaper === "bg3") {
     scene = <ImageScene id={wallpaper} />;
   } else if (wallpaper === "nature" || wallpaper === "dark-nature") {
     scene = <DarkNatureScene />;

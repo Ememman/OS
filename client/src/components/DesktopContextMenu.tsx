@@ -15,6 +15,7 @@ import {
   GIconBookOpen,
   GIconCode,
   GIconFolder,
+  GIconSparkles,
 } from "./icons/GravityIcons";
 
 interface ContextMenuProps {
@@ -36,6 +37,9 @@ export default function DesktopContextMenu({ x, y, onClose, widgetsVisible }: Co
     closeAllWindows,
     minimizeAllWindows,
     toggleMissionControl,
+    wallpaper,
+    setWallpaper,
+    nextLiveWallpaperScene,
   } = useOS();
 
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -212,6 +216,31 @@ export default function DesktopContextMenu({ x, y, onClose, widgetsVisible }: Co
           {particlesEnabled ? "Hide Starfield" : "Show Starfield"}
         </span>
       </button>
+
+      {wallpaper === "liveshow" ? (
+        <button
+          onClick={() => {
+            nextLiveWallpaperScene();
+            onClose();
+          }}
+          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/15 transition-colors text-left"
+        >
+          <GIconSparkles size={14} className="text-emerald-400" />
+          <span className="flex-1 font-medium">Change Live Wallpaper</span>
+          <span className="text-[10px] text-emerald-400/70 font-mono">Next</span>
+        </button>
+      ) : (
+        <button
+          onClick={() => {
+            setWallpaper("liveshow");
+            onClose();
+          }}
+          className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors text-left"
+        >
+          <GIconSparkles size={14} className="text-emerald-400" />
+          <span className="flex-1 font-medium">Dark Nature Live Show</span>
+        </button>
+      )}
 
       <button
         onClick={() => {
