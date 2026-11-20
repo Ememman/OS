@@ -484,7 +484,7 @@ export default function Settings() {
         )}
 
         {/* Scrollable Content Pane */}
-        <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-3.5 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
 
       {/* ============ APPEARANCE ============ */}
       {matchesFilter("appearance", ["appearance", "desktop style", "macos", "windows"]) && (
@@ -700,12 +700,12 @@ export default function Settings() {
         {/* Custom Hex / Color Picker & Live Adaptive Readability Preview */}
         <div className="p-3.5 sm:p-4 rounded-2xl border border-white/10 bg-white/5 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-            <div>
+            <div className="min-w-0">
               <span className="text-xs font-semibold text-white/90">Custom Accent & Live Readability Preview</span>
               <p className="text-[10px] text-white/45">Pick any shade — text contrast & UI borders adapt automatically</p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {/* Native Color Dropper Button */}
               <label
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-white/15 bg-white/10 hover:bg-white/15 cursor-pointer text-xs transition active:scale-95 shrink-0"
@@ -831,7 +831,7 @@ export default function Settings() {
           <div className="p-3 sm:p-4 rounded-2xl border border-white/10 bg-white/5 space-y-3.5">
             {/* Reset Dock Apps Order Button */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              <div>
+              <div className="min-w-0">
                 <div className="text-xs font-semibold text-white">Redo Dragging Positions (Dock)</div>
                 <div className="text-[11px] text-white/50">
                   Restore all Dock applications back to their default portfolio sequence
@@ -852,7 +852,7 @@ export default function Settings() {
 
             {/* Reset Desktop Icons Layout */}
             <div className="pt-3 border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              <div>
+              <div className="min-w-0">
                 <div className="text-xs font-medium text-white/90">Reset Desktop Icons Layout</div>
                 <div className="text-[11px] text-white/40">
                   Redo all dragged desktop icons, folders, and widgets back to default coordinates
@@ -1026,7 +1026,7 @@ export default function Settings() {
       )}
 
       {/* ============ WALLPAPER ============ */}
-      {matchesFilter(["appearance", "wallpaper"], ["wallpaper", "background", "desktop background", "image", "upload"]) && (
+      {matchesFilter("wallpaper", ["wallpaper", "background", "desktop background", "image", "upload"]) && (
         <section className="space-y-3">
           <GroupHeader
             icon={GIconSparkles}
@@ -1095,16 +1095,16 @@ export default function Settings() {
           {wallpaper === "liveshow" && (
             <div className="p-3.5 sm:p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 backdrop-blur-md space-y-3 shadow-lg">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs sm:text-sm font-semibold text-emerald-300">
                       Active Scene: {DARK_NATURE_SCENES[liveWallpaperSceneIndex]?.title}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
                       {liveWallpaperSceneIndex + 1} of {DARK_NATURE_SCENES.length}
                     </span>
                   </div>
-                  <p className="text-[10px] text-white/50">
+                  <p className="text-[10px] text-white/50 truncate">
                     {DARK_NATURE_SCENES[liveWallpaperSceneIndex]?.subtitle}
                   </p>
                 </div>
@@ -1198,7 +1198,7 @@ export default function Settings() {
           {/* Custom Wallpaper Upload & URL Input */}
           <div className="p-3 sm:p-4 rounded-2xl border border-white/10 bg-white/5 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              <div>
+              <div className="min-w-0">
                 <span className="text-xs font-semibold text-white/90">Custom Desktop Wallpaper</span>
                 <p className="text-[10px] text-white/45">Upload a local image or paste a web wallpaper URL</p>
               </div>
@@ -1267,7 +1267,7 @@ export default function Settings() {
       )}
 
       {/* ============ LIVE SHOW WALLPAPER (DARK NATURE) ============ */}
-      {matchesFilter(["appearance", "wallpaper"], ["liveshow", "live show", "screensaver", "dark nature", "inactivity"]) && (
+      {matchesFilter("wallpaper", ["liveshow", "live show", "screensaver", "dark nature", "inactivity"]) && (
         <section className="space-y-3">
           <GroupHeader
             icon={GIconSparkles}
@@ -1294,9 +1294,9 @@ export default function Settings() {
               <LiveShowWallpaper isMini={true} />
             </div>
 
-            {/* Toggle Row */}
+            {/* Inactivity Live Show Toggle */}
             <div className="flex items-center justify-between pt-1">
-              <div>
+              <div className="space-y-0.5 min-w-0 pr-3">
                 <span className="text-xs sm:text-sm font-semibold text-white/95">
                   Inactivity Live Show
                 </span>
@@ -1325,14 +1325,14 @@ export default function Settings() {
             </div>
 
             {/* Inactivity Duration Selector */}
-            <div className="pt-2 border-t border-white/5 space-y-1.5">
+            <div className="pt-2.5 border-t border-white/5 space-y-2">
               <div className="flex items-center justify-between text-xs text-white/80">
                 <span className="text-[11px] font-medium text-white/70">Inactivity Timeout:</span>
                 <span className="text-[11px] font-mono text-accent font-semibold">
                   {liveShowTimeout === 0 ? "Never" : `${liveShowTimeout} Minutes`}
                 </span>
               </div>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+              <div className="grid grid-cols-3 min-[500px]:grid-cols-6 gap-1.5">
                 {[
                   { value: 1, label: "1 min", tag: "Test" },
                   { value: 2, label: "2 mins" },
@@ -1350,15 +1350,15 @@ export default function Settings() {
                       if (opt.value === 0) setLiveShowEnabled(false);
                       else setLiveShowEnabled(true);
                     }}
-                    className={`px-1.5 sm:px-2 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer text-center flex flex-col items-center justify-center leading-tight ${
+                    className={`px-1.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer text-center flex flex-col items-center justify-center leading-tight min-w-0 ${
                       liveShowTimeout === opt.value
                         ? "border-accent bg-accent/20 text-white shadow-sm"
                         : "border-white/10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10"
                     }`}
                   >
-                    <span>{opt.label}</span>
+                    <span className="truncate w-full">{opt.label}</span>
                     {opt.tag && (
-                      <span className="text-[9px] opacity-70 mt-0.5 font-normal tracking-wide">
+                      <span className="text-[9px] opacity-70 font-normal tracking-wide">
                         ({opt.tag})
                       </span>
                     )}
@@ -1368,8 +1368,8 @@ export default function Settings() {
             </div>
 
             {/* Lock Screen Live Show Toggle */}
-            <div className="flex items-center justify-between pt-2 border-t border-white/5">
-              <div>
+            <div className="flex items-center justify-between pt-2.5 border-t border-white/5">
+              <div className="space-y-0.5 min-w-0 pr-3">
                 <span className="text-xs sm:text-sm font-semibold text-white/95">
                   Lock Screen Live Show
                 </span>
@@ -1397,23 +1397,20 @@ export default function Settings() {
               </button>
             </div>
 
-            {/* Actions: Set as Desktop Wallpaper, Lock Screen & Play Fullscreen */}
-            <div className="pt-2 border-t border-white/5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-              <div className="text-[10px] text-white/40 leading-relaxed">
-                Move mouse or press any key anytime to wake back to your desktop.
-              </div>
-              <div className="flex flex-col min-[420px]:flex-row items-stretch min-[420px]:items-center gap-2 w-full sm:w-auto">
+            {/* Actions: Lock Screen, Set as Desktop, Play Fullscreen */}
+            <div className="pt-3 border-t border-white/5 space-y-2">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => {
                     soundFx.playClick();
                     setSleeping(true);
                   }}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-white/15 bg-white/5 text-white/80 hover:text-white hover:bg-white/10 text-xs font-semibold active:scale-95 transition cursor-pointer"
+                  className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl border border-white/15 bg-white/5 text-white/80 hover:text-white hover:bg-white/10 text-xs font-semibold active:scale-95 transition cursor-pointer min-w-0"
                   title="Test Lock Screen"
                 >
-                  <GIconMoon size={13} className="text-emerald-400" />
-                  <span>Lock Screen Now</span>
+                  <GIconMoon size={13} className="text-emerald-400 shrink-0" />
+                  <span className="truncate">Lock Screen</span>
                 </button>
 
                 <button
@@ -1423,14 +1420,15 @@ export default function Settings() {
                     setWallpaper("liveshow");
                     notify("Live Wallpaper Set", "Dark Nature Live Show is now your desktop wallpaper.", "success", 2600);
                   }}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer active:scale-95 ${
+                  className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer active:scale-95 min-w-0 ${
                     wallpaper === "liveshow"
                       ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
                       : "border-white/15 bg-white/5 text-white/80 hover:text-white hover:bg-white/10"
                   }`}
+                  title={wallpaper === "liveshow" ? "Currently active desktop wallpaper" : "Set as active desktop wallpaper"}
                 >
-                  <GIconCheck size={13} className={wallpaper === "liveshow" ? "text-emerald-400" : "text-white/40"} />
-                  <span className="truncate">{wallpaper === "liveshow" ? "Active Desktop Wallpaper" : "Set as Desktop"}</span>
+                  <GIconCheck size={13} className={`shrink-0 ${wallpaper === "liveshow" ? "text-emerald-400" : "text-white/40"}`} />
+                  <span className="truncate">{wallpaper === "liveshow" ? "Active Desktop" : "Set as Desktop"}</span>
                 </button>
 
                 <button
@@ -1439,19 +1437,24 @@ export default function Settings() {
                     soundFx.playClick();
                     startLiveShow();
                   }}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-accent text-accent-contrast text-xs font-semibold shadow-md shadow-accent/20 hover:brightness-110 active:scale-95 transition cursor-pointer"
+                  className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-accent text-accent-contrast text-xs font-semibold shadow-md shadow-accent/20 hover:brightness-110 active:scale-95 transition cursor-pointer min-w-0"
+                  title="Play screensaver in fullscreen"
                 >
-                  <GIconSparkles size={13} />
-                  <span>Play Fullscreen</span>
+                  <GIconSparkles size={13} className="shrink-0" />
+                  <span className="truncate">Play Fullscreen</span>
                 </button>
               </div>
+
+              <p className="text-[10px] text-white/40 text-center leading-normal">
+                Move mouse or press any key anytime to wake back to your desktop.
+              </p>
             </div>
           </div>
         </section>
       )}
 
       {/* ============ GLASS INTENSITY ============ */}
-      {matchesFilter(["appearance", "wallpaper"], ["glass", "intensity", "transparency", "alpha", "blur"]) && (
+      {matchesFilter("wallpaper", ["glass", "intensity", "transparency", "alpha", "blur"]) && (
         <section className="space-y-2">
           <GroupHeader
             icon={GIconSliders}
@@ -1486,73 +1489,73 @@ export default function Settings() {
         <section className="space-y-3">
           <GroupHeader icon={GIconCpu} label="Next-Gen Features & Gravity UI" />
           <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
                   <GIconTerminal size={16} />
                 </div>
-                <div>
-                  <h4 className="text-xs font-semibold text-white">Interactive Terminal Shell</h4>
-                  <p className="text-[10px] text-white/45">Full CLI with neofetch, matrix rain, and app launcher</p>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-semibold text-white truncate">Interactive Terminal Shell</h4>
+                  <p className="text-[10px] text-white/45 truncate">Full CLI with neofetch, matrix rain, and app launcher</p>
                 </div>
               </div>
               <button
                 onClick={() => openApp("terminal")}
-                className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-emerald-500 hover:text-black font-medium transition-colors text-white cursor-pointer"
+                className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-emerald-500 hover:text-black font-medium transition-colors text-white cursor-pointer shrink-0"
               >
                 Launch
               </button>
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-white/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center text-accent">
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center text-accent shrink-0">
                   <GIconSearch size={16} />
                 </div>
-                <div>
-                  <h4 className="text-xs font-semibold text-white">System Spotlight Search</h4>
-                  <p className="text-[10px] text-white/45">Instant search across apps, files & actions (⌘K / Ctrl+K)</p>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-semibold text-white truncate">System Spotlight Search</h4>
+                  <p className="text-[10px] text-white/45 truncate">Instant search across apps, files & actions (⌘K / Ctrl+K)</p>
                 </div>
               </div>
               <button
                 onClick={openSpotlight}
-                className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium transition-colors cursor-pointer"
+                className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium transition-colors cursor-pointer shrink-0"
               >
                 Open
               </button>
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-white/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
                   <GIconNotes size={16} />
                 </div>
-                <div>
-                  <h4 className="text-xs font-semibold text-white">Notes & Scratchpad</h4>
-                  <p className="text-[10px] text-white/45">Markdown editor with auto-save & word counts</p>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-semibold text-white truncate">Notes & Scratchpad</h4>
+                  <p className="text-[10px] text-white/45 truncate">Markdown editor with auto-save & word counts</p>
                 </div>
               </div>
               <button
                 onClick={() => openApp("notes")}
-                className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-amber-500 hover:text-black font-medium transition-colors text-white cursor-pointer"
+                className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-amber-500 hover:text-black font-medium transition-colors text-white cursor-pointer shrink-0"
               >
                 Open
               </button>
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-white/10">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
                   <GIconCalculator size={16} />
                 </div>
-                <div>
-                  <h4 className="text-xs font-semibold text-white">Interactive Calculator</h4>
-                  <p className="text-[10px] text-white/45">Standard & formula history with keyboard typing</p>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-semibold text-white truncate">Interactive Calculator</h4>
+                  <p className="text-[10px] text-white/45 truncate">Standard & formula history with keyboard typing</p>
                 </div>
               </div>
               <button
                 onClick={() => openApp("calculator")}
-                className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-cyan-500 hover:text-black font-medium transition-colors text-white cursor-pointer"
+                className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-cyan-500 hover:text-black font-medium transition-colors text-white cursor-pointer shrink-0"
               >
                 Open
               </button>
@@ -1750,7 +1753,7 @@ export default function Settings() {
       )}
 
       {/* Preview */}
-      {matchesFilter(["appearance", "wallpaper"], ["preview", "wallpaper", "desktop"]) && (
+      {matchesFilter("wallpaper", ["preview", "wallpaper", "desktop"]) && (
         <section className="space-y-2">
           <div className="flex items-center justify-between">
             <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Desktop Live Preview</h3>
