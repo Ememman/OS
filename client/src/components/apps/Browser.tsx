@@ -1993,8 +1993,8 @@ export default function Browser() {
 
           {/* Quick Favorites / Shortcuts Tiles Grid */}
           {showFavoritesWidget && (
-            <div className="w-full max-w-2xl px-3 sm:px-5 py-3 sm:py-4 rounded-3xl bg-black/35 hover:bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.4)] transition-all my-2 sm:my-3">
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-2.5 sm:mb-3 px-1">
+            <div className="w-full max-w-2xl px-2.5 sm:px-5 py-2.5 sm:py-4 rounded-2xl sm:rounded-3xl bg-black/35 hover:bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.4)] transition-all my-2 sm:my-3">
+              <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-2 sm:mb-3 px-1">
                 <div className="flex items-center gap-1.5">
                   {isWin ? (
                     <GIconGlobe size={13} className="text-[#4285F4]" />
@@ -2005,7 +2005,7 @@ export default function Browser() {
                     {isWin ? "Shortcuts" : "Favorites"}
                   </span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full bg-white/10 text-white/60 text-[10px] font-mono">
+                <span className="px-2 py-0.5 rounded-full bg-white/10 text-white/60 text-[9.5px] sm:text-[10px] font-mono">
                   {BROWSER_FAVORITES.length} portals
                 </span>
               </div>
@@ -2013,7 +2013,7 @@ export default function Browser() {
               <div
                 className={`grid ${
                   isSplit ? "grid-cols-2 xs:grid-cols-4" : "grid-cols-4 sm:grid-cols-4"
-                } gap-2.5 sm:gap-3.5 justify-items-center`}
+                } gap-1.5 sm:gap-3.5 justify-items-center`}
               >
                 {BROWSER_FAVORITES.map((fav, i) => (
                   <motion.div
@@ -2034,13 +2034,13 @@ export default function Browser() {
                         navigateTabTo(currentTab.id, fav.url, fav.title);
                       }
                     }}
-                    className="group flex flex-col items-center gap-1.5 p-1.5 sm:p-2 rounded-2xl hover:bg-white/[0.08] transition-all duration-150 cursor-pointer text-center select-none w-full max-w-[95px] sm:max-w-[130px]"
+                    className="group flex flex-col items-center gap-1 sm:gap-1.5 p-1 sm:p-2 rounded-xl sm:rounded-2xl hover:bg-white/[0.08] transition-all duration-150 cursor-pointer text-center select-none w-full max-w-[80px] xs:max-w-[95px] sm:max-w-[130px]"
                   >
                     <div
                       className={`${
                         isWin
-                          ? "w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-[#1e2330]/90 group-hover:bg-[#282f42] border border-white/15"
-                          : "w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-white/10 group-hover:bg-white/20 backdrop-blur-md border border-white/20"
+                          ? "w-10 h-10 sm:w-13 sm:h-13 rounded-full bg-[#1e2330]/90 group-hover:bg-[#282f42] border border-white/15"
+                          : "w-10 h-10 sm:w-13 sm:h-13 rounded-2xl bg-white/10 group-hover:bg-white/20 backdrop-blur-md border border-white/20"
                       } flex items-center justify-center shadow-lg transition-all duration-200 group-hover:scale-108 group-hover:shadow-[0_4px_16px_rgba(0,0,0,0.5)]`}
                       style={
                         isWin
@@ -2053,20 +2053,20 @@ export default function Browser() {
                       }
                     >
                       {fav.category === "profile" ? (
-                        <GIconFileText size={18} style={{ color: fav.color }} />
+                        <GIconFileText size={17} style={{ color: fav.color }} />
                       ) : fav.category === "experience" ? (
-                        <GIconBriefcase size={18} style={{ color: fav.color }} />
+                        <GIconBriefcase size={17} style={{ color: fav.color }} />
                       ) : fav.category === "skills" ? (
-                        <GIconCode size={18} style={{ color: fav.color }} />
+                        <GIconCode size={17} style={{ color: fav.color }} />
                       ) : fav.category === "projects" ? (
-                        <GIconGlobe size={18} style={{ color: fav.color }} />
+                        <GIconGlobe size={17} style={{ color: fav.color }} />
                       ) : fav.category === "system" ? (
-                        <GIconTerminal size={18} style={{ color: fav.color }} />
+                        <GIconTerminal size={17} style={{ color: fav.color }} />
                       ) : (
-                        <GIconExternalLink size={18} style={{ color: fav.color }} />
+                        <GIconExternalLink size={17} style={{ color: fav.color }} />
                       )}
                     </div>
-                    <span className="text-[10.5px] sm:text-xs font-medium text-white/90 group-hover:text-white line-clamp-2 leading-tight text-center w-full px-0.5 break-words drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+                    <span className="text-[10px] sm:text-xs font-medium text-white/90 group-hover:text-white line-clamp-2 leading-tight text-center w-full px-0.5 break-words drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                       {fav.title}
                     </span>
                   </motion.div>
@@ -3477,7 +3477,7 @@ export default function Browser() {
                 setTimeout(() => findInputRef.current?.focus(), 50);
               }
             }}
-            className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${
+            className={`hidden xs:flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer ${
               showFindInPage ? "text-accent bg-white/15 ring-1 ring-white/20" : ""
             }`}
             title="Find in Page (Ctrl+F / ⌘F)"
@@ -3499,7 +3499,7 @@ export default function Browser() {
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={handleCopyUrl}
-            className="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
+            className="hidden xs:flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
             title="Copy Page URL"
           >
             {copiedUrl ? <GIconCheck size={11} className="text-emerald-400" /> : <GIconCopy size={11} />}
@@ -4167,51 +4167,56 @@ export default function Browser() {
 
         {splitTab ? (
           <div className="flex-1 flex flex-col md:flex-row overflow-hidden divide-y md:divide-y-0 md:divide-x divide-white/10">
-            <div
-              className={`flex-1 flex flex-col min-w-0 overflow-y-auto thin-scroll relative ${
-                browserThemeId === "custom" && customWallpaper ? "bg-cover bg-center bg-no-repeat" : activeTheme.bgClass
-              }`}
-              style={
-                browserThemeId === "custom" && customWallpaper
-                  ? { backgroundImage: `url(${customWallpaper})` }
-                  : undefined
-              }
-            >
-              {browserThemeId === "custom" && customWallpaper && (
-                <div
-                  className="absolute inset-0 pointer-events-none transition-colors duration-200 z-0"
-                  style={{ backgroundColor: `rgba(0, 0, 0, ${wallpaperDim / 100})` }}
-                />
+            {/* Split Tab 1 Pane */}
+            <div className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
+              {/* Fixed Wallpaper & Dimming Overlay: never scrolls away, remains 100% visible across full height */}
+              {browserThemeId === "custom" && customWallpaper ? (
+                <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+                  <div
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                    style={{ backgroundImage: `url(${customWallpaper})` }}
+                  />
+                  <div
+                    className="absolute inset-0 transition-colors duration-200"
+                    style={{ backgroundColor: `rgba(0, 0, 0, ${wallpaperDim / 100})` }}
+                  />
+                </div>
+              ) : (
+                <div className={`absolute inset-0 pointer-events-none z-0 ${activeTheme.bgClass}`} />
               )}
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab.id + "-" + activeTab.url}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15, ease: "easeOut" }}
-                  className="relative z-[1] flex-1 flex flex-col w-full min-h-full transition-[zoom] duration-150 origin-top"
-                  style={{ zoom: zoomLevel === 100 ? undefined : `${zoomLevel}%` }}
-                >
-                  {renderTabCanvas(activeTab, false)}
-                </motion.div>
-              </AnimatePresence>
+              <div className="relative z-[1] flex-1 overflow-y-auto thin-scroll flex flex-col bg-transparent">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab.id + "-" + activeTab.url}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="relative flex-1 flex flex-col w-full min-h-full transition-[zoom] duration-150 origin-top"
+                    style={{ zoom: zoomLevel === 100 ? undefined : `${zoomLevel}%` }}
+                  >
+                    {renderTabCanvas(activeTab, false)}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </div>
-            <div
-              className={`flex-1 flex flex-col min-w-0 overflow-y-auto thin-scroll relative ${
-                browserThemeId === "custom" && customWallpaper ? "bg-cover bg-center bg-no-repeat" : activeTheme.bgClass
-              }`}
-              style={
-                browserThemeId === "custom" && customWallpaper
-                  ? { backgroundImage: `url(${customWallpaper})` }
-                  : undefined
-              }
-            >
-              {browserThemeId === "custom" && customWallpaper && (
-                <div
-                  className="absolute inset-0 pointer-events-none transition-colors duration-200 z-0"
-                  style={{ backgroundColor: `rgba(0, 0, 0, ${wallpaperDim / 100})` }}
-                />
+
+            {/* Split Tab 2 Pane */}
+            <div className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
+              {/* Fixed Wallpaper & Dimming Overlay */}
+              {browserThemeId === "custom" && customWallpaper ? (
+                <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+                  <div
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                    style={{ backgroundImage: `url(${customWallpaper})` }}
+                  />
+                  <div
+                    className="absolute inset-0 transition-colors duration-200"
+                    style={{ backgroundColor: `rgba(0, 0, 0, ${wallpaperDim / 100})` }}
+                  />
+                </div>
+              ) : (
+                <div className={`absolute inset-0 pointer-events-none z-0 ${activeTheme.bgClass}`} />
               )}
               <div className="relative z-[1] flex items-center justify-between px-3 py-1.5 bg-[#141822]/90 backdrop-blur-md border-b border-white/10 text-xs shrink-0">
                 <div className="flex items-center gap-1.5 truncate text-white/80">
@@ -4227,52 +4232,58 @@ export default function Browser() {
                   <GIconClose size={12} />
                 </button>
               </div>
-              <div
-                className="relative z-[1] flex-1 flex flex-col w-full min-h-full transition-[zoom] duration-150 origin-top"
-                style={{ zoom: zoomLevel === 100 ? undefined : `${zoomLevel}%` }}
-              >
-                {renderTabCanvas(splitTab, true)}
+              <div className="relative z-[1] flex-1 overflow-y-auto thin-scroll flex flex-col bg-transparent">
+                <div
+                  className="relative flex-1 flex flex-col w-full min-h-full transition-[zoom] duration-150 origin-top"
+                  style={{ zoom: zoomLevel === 100 ? undefined : `${zoomLevel}%` }}
+                >
+                  {renderTabCanvas(splitTab, true)}
+                </div>
               </div>
             </div>
           </div>
         ) : (
-          <div
-            className={`flex-1 overflow-y-auto thin-scroll flex flex-col relative ${
-              browserThemeId === "custom" && customWallpaper ? "bg-cover bg-center bg-no-repeat" : activeTheme.bgClass
-            }`}
-            style={
-              browserThemeId === "custom" && customWallpaper
-                ? { backgroundImage: `url(${customWallpaper})` }
-                : undefined
-            }
-          >
-            {browserThemeId === "custom" && customWallpaper && (
-              <div
-                className="absolute inset-0 pointer-events-none transition-colors duration-200 z-0"
-                style={{ backgroundColor: `rgba(0, 0, 0, ${wallpaperDim / 100})` }}
-              />
+          <div className="flex-1 flex flex-col min-w-0 relative overflow-hidden">
+            {/* Fixed Wallpaper & Dimming Overlay: stays 100% visible across the entire viewport even when scrolling down to the footer */}
+            {browserThemeId === "custom" && customWallpaper ? (
+              <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+                <div
+                  className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url(${customWallpaper})` }}
+                />
+                <div
+                  className="absolute inset-0 transition-colors duration-200"
+                  style={{ backgroundColor: `rgba(0, 0, 0, ${wallpaperDim / 100})` }}
+                />
+              </div>
+            ) : (
+              <div className={`absolute inset-0 pointer-events-none z-0 ${activeTheme.bgClass}`} />
             )}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab.id + "-" + activeTab.url}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
-                className="relative z-[1] flex-1 flex flex-col w-full min-h-full transition-[zoom] duration-150 origin-top"
-                style={{ zoom: zoomLevel === 100 ? undefined : `${zoomLevel}%` }}
-              >
-                {renderTabCanvas(activeTab, false)}
-              </motion.div>
-            </AnimatePresence>
+
+            {/* Scrollable Tab Canvas */}
+            <div className="relative z-[1] flex-1 overflow-y-auto thin-scroll flex flex-col bg-transparent">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab.id + "-" + activeTab.url}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                  className="relative flex-1 flex flex-col w-full min-h-full transition-[zoom] duration-150 origin-top"
+                  style={{ zoom: zoomLevel === 100 ? undefined : `${zoomLevel}%` }}
+                >
+                  {renderTabCanvas(activeTab, false)}
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
         )}
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* BOTTOM STATUS BAR */}
+      {/* BOTTOM STATUS BAR (FOOTER) */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex items-center justify-between px-2.5 sm:px-3 py-0.5 sm:py-1 border-t border-white/5 bg-black/40 text-[10px] sm:text-[10.5px] text-white/40 shrink-0">
+      <div className="relative z-10 flex items-center justify-between px-2.5 sm:px-3 py-0.5 sm:py-1 border-t border-white/10 bg-[#0d1017]/90 backdrop-blur-md text-[10px] sm:text-[10.5px] text-white/50 shrink-0">
         <div className="flex items-center gap-1.5 sm:gap-2 truncate">
           <span className="truncate">{isWin ? "Google Chrome" : "Safari"} 128.0</span>
           <span>•</span>
@@ -4536,7 +4547,7 @@ export default function Browser() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="absolute inset-0 z-[60] flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-md overflow-hidden"
+            className="absolute inset-0 z-[60] flex items-center justify-center p-2.5 sm:p-5 bg-black/75 backdrop-blur-md overflow-hidden"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 setShowCustomizeModal(false);
@@ -4548,7 +4559,7 @@ export default function Browser() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.94, y: 10 }}
               transition={{ type: "spring", stiffness: 450, damping: 30 }}
-              className="w-full max-w-lg max-h-[92%] overflow-y-auto thin-scroll bg-[#141824] border border-white/20 rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-4 sm:p-6 space-y-4 sm:space-y-5 text-white text-left relative"
+              className="w-full max-w-lg max-h-[88vh] sm:max-h-[92%] overflow-y-auto thin-scroll bg-[#141824] border border-white/20 rounded-2xl sm:rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-3.5 sm:p-6 space-y-3.5 sm:space-y-5 text-white text-left relative"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Hidden file input for wallpaper upload */}
@@ -4570,8 +4581,8 @@ export default function Browser() {
                     <h2 className="text-sm sm:text-base font-bold text-white leading-tight truncate">
                       {isWin ? "Customize Google Chrome" : "Customize Safari"}
                     </h2>
-                    <p className="text-[11px] sm:text-xs text-white/50 truncate">
-                      Custom wallpaper, preset themes, and start page widgets
+                    <p className="text-[10.5px] sm:text-xs text-white/55 leading-tight truncate">
+                      Personalize wallpapers, themes & widgets
                     </p>
                   </div>
                 </div>
@@ -4586,7 +4597,7 @@ export default function Browser() {
               </div>
 
               {/* SECTION 1: CUSTOM WALLPAPER UPLOAD */}
-              <div className="space-y-2.5">
+              <div className="space-y-2 sm:space-y-2.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-white/70 uppercase tracking-wider text-[10.5px] sm:text-[11px] flex items-center gap-1.5">
                     <GIconUpload size={12} className="text-accent" />
@@ -4600,10 +4611,10 @@ export default function Browser() {
                 </div>
 
                 {customWallpaper ? (
-                  <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/15 space-y-3">
+                  <div className="p-3 sm:p-3.5 rounded-2xl bg-white/[0.04] border border-white/15 space-y-3">
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-20 h-14 rounded-xl border border-white/20 bg-cover bg-center shrink-0 shadow-md relative overflow-hidden"
+                        className="w-16 h-12 sm:w-20 sm:h-14 rounded-xl border border-white/20 bg-cover bg-center shrink-0 shadow-md relative overflow-hidden"
                         style={{ backgroundImage: `url(${customWallpaper})` }}
                       >
                         <div
@@ -4612,45 +4623,50 @@ export default function Browser() {
                         />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="text-xs font-semibold text-white truncate">Custom Wallpaper Stored</div>
-                        <div className="text-[11px] text-white/50">Stored in browser cache</div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setBrowserThemeId("custom");
-                              try {
-                                localStorage.setItem("browser_theme", "custom");
-                              } catch {}
-                              if (systemSounds) soundFx.playPop();
-                            }}
-                            className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer flex items-center gap-1 ${
-                              browserThemeId === "custom"
-                                ? "bg-accent text-accent-contrast shadow-sm"
-                                : "bg-white/10 hover:bg-white/15 text-white"
-                            }`}
-                          >
-                            <GIconCheck size={11} />
-                            <span>{browserThemeId === "custom" ? "Applied" : "Apply"}</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-white/90 text-[11px] font-medium transition cursor-pointer flex items-center gap-1"
-                          >
-                            <GIconUpload size={11} />
-                            <span>Replace</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleRemoveCustomWallpaper}
-                            className="px-2 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-[11px] font-medium transition cursor-pointer flex items-center gap-1"
-                          >
-                            <GIconTrash size={11} />
-                            <span>Delete</span>
-                          </button>
-                        </div>
+                        <div className="text-xs sm:text-sm font-semibold text-white truncate">Custom Wallpaper Stored</div>
+                        <div className="text-[10.5px] sm:text-[11px] text-white/50 truncate">Stored in browser cache</div>
                       </div>
+                    </div>
+
+                    {/* Responsive 3-button grid spanning full card width without horizontal overflow */}
+                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBrowserThemeId("custom");
+                          try {
+                            localStorage.setItem("browser_theme", "custom");
+                          } catch {}
+                          if (systemSounds) soundFx.playPop();
+                        }}
+                        className={`px-2 py-1.5 rounded-xl text-[11px] font-medium transition cursor-pointer flex items-center justify-center gap-1 truncate ${
+                          browserThemeId === "custom"
+                            ? "bg-accent text-accent-contrast shadow-sm"
+                            : "bg-white/10 hover:bg-white/15 text-white"
+                        }`}
+                        title={browserThemeId === "custom" ? "Custom wallpaper applied" : "Apply custom wallpaper"}
+                      >
+                        <GIconCheck size={11} className="shrink-0" />
+                        <span className="truncate">{browserThemeId === "custom" ? "Applied" : "Apply"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-2 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white/90 text-[11px] font-medium transition cursor-pointer flex items-center justify-center gap-1 truncate"
+                        title="Upload new wallpaper image"
+                      >
+                        <GIconUpload size={11} className="shrink-0" />
+                        <span className="truncate">Replace</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRemoveCustomWallpaper}
+                        className="px-2 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-[11px] font-medium transition cursor-pointer flex items-center justify-center gap-1 truncate"
+                        title="Delete custom wallpaper"
+                      >
+                        <GIconTrash size={11} className="shrink-0" />
+                        <span className="truncate">Delete</span>
+                      </button>
                     </div>
 
                     {/* Dimming Slider */}
@@ -4666,7 +4682,7 @@ export default function Browser() {
                         step="5"
                         value={wallpaperDim}
                         onChange={(e) => handleUpdateWallpaperDim(Number(e.target.value))}
-                        className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-accent"
+                        className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-accent touch-none"
                       />
                       <div className="flex justify-between text-[9.5px] text-white/40">
                         <span>Bright (0%)</span>
@@ -4754,23 +4770,23 @@ export default function Browser() {
                 <div className="space-y-2">
                   <div
                     onClick={handleToggleFavoritesWidget}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 cursor-pointer transition select-none"
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 cursor-pointer transition select-none gap-2"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-sky-500/15 text-sky-400 flex items-center justify-center">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="w-7 h-7 rounded-lg bg-sky-500/15 text-sky-400 flex items-center justify-center shrink-0">
                         <GIconGlobe size={14} />
                       </div>
-                      <div>
-                        <span className="text-xs font-semibold text-white block">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs font-semibold text-white block truncate">
                           {isWin ? "Shortcuts Grid" : "Favorites Grid"}
                         </span>
-                        <span className="text-[10.5px] text-white/45 block">
+                        <span className="text-[10px] sm:text-[10.5px] text-white/45 block truncate sm:whitespace-normal">
                           Quick links to experience, skills, and projects
                         </span>
                       </div>
                     </div>
                     <div
-                      className={`w-11 h-6 rounded-full transition-colors p-0.5 relative ${
+                      className={`w-11 h-6 rounded-full transition-colors p-0.5 relative shrink-0 ${
                         showFavoritesWidget ? "bg-accent" : "bg-white/20"
                       }`}
                     >
@@ -4784,23 +4800,23 @@ export default function Browser() {
 
                   <div
                     onClick={handleTogglePrivacyWidget}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 cursor-pointer transition select-none"
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 cursor-pointer transition select-none gap-2"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
                         <GIconShield size={14} />
                       </div>
-                      <div>
-                        <span className="text-xs font-semibold text-white block">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs font-semibold text-white block truncate">
                           {isWin ? "Google Safe Browsing Badge" : "Safari Privacy Report"}
                         </span>
-                        <span className="text-[10.5px] text-white/45 block">
+                        <span className="text-[10px] sm:text-[10.5px] text-white/45 block truncate sm:whitespace-normal">
                           Real-time security shield and tracking status
                         </span>
                       </div>
                     </div>
                     <div
-                      className={`w-11 h-6 rounded-full transition-colors p-0.5 relative ${
+                      className={`w-11 h-6 rounded-full transition-colors p-0.5 relative shrink-0 ${
                         showPrivacyWidget ? "bg-accent" : "bg-white/20"
                       }`}
                     >
