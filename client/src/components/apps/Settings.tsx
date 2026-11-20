@@ -27,6 +27,7 @@ import { soundFx } from "../../lib/soundFx";
 import { getAssetUrl } from "../../lib/assets";
 import { useIsMobile } from "../../lib/useMediaQuery";
 import { useDesktopStore } from "../../store/useDesktopStore";
+import LiveShowWallpaper from "../LiveShowWallpaper";
 
 // Preview images for the wallpaper selector — resolved with getAssetUrl for subpath compatibility
 const PREVIEW_IMAGES: Record<string, string> = {
@@ -40,6 +41,7 @@ const PREVIEW_FALLBACK: Record<string, string> = {
   bg1: "linear-gradient(135deg, #1a1a2e, #16213e)",
   bg2: "linear-gradient(135deg, #0f0c29, #302b63)",
   bg3: "linear-gradient(135deg, #1a1a2e, #2d2b4a)",
+  nature: "radial-gradient(ellipse at 50% 90%, #0d2818 0%, #071a10 40%, #030d07 70%, #010402 100%)",
   ocean: "linear-gradient(180deg,#0A1220,#1b2740)",
   galaxy: "radial-gradient(ellipse at 30% 20%,#3a2a70,#0a0818)",
   aurora: "linear-gradient(120deg,#0a1a1f,#123027,#0a1a1f)",
@@ -151,6 +153,11 @@ export default function Settings() {
     resetDockApps,
     persistDockOrder,
     setPersistDockOrder,
+    liveShowEnabled,
+    setLiveShowEnabled,
+    liveShowTimeout,
+    setLiveShowTimeout,
+    startLiveShow,
   } = useOS();
 
   const isMobile = useIsMobile();
@@ -232,9 +239,10 @@ export default function Settings() {
       bg1: { name: "Balloon Sunset", desc: "Hot air balloons at dusk" },
       bg2: { name: "Cyborg Dark", desc: "Dark cyborg portrait" },
       bg3: { name: "Balloon Night", desc: "Balloon over moonlit water" },
+      nature: { name: "Dark Nature Aesthetic", desc: "Deep emerald forest mist & botanical canopy gradient" },
       ocean: { name: "Ocean Night", desc: "Calm ocean under stars" },
       galaxy: { name: "Galaxy", desc: "Deep space nebula" },
-      aurora: { name: "Aurora", desc: "Northern lights display" },
+      aurora: { name: "Aurora Coast", desc: "Northern lights display" },
     };
     if (info[id]) return info[id];
     if (id?.startsWith("data:") || id?.startsWith("http") || id?.startsWith("blob:")) {
@@ -1100,6 +1108,127 @@ export default function Settings() {
                 className="px-3 py-1.5 rounded-xl bg-accent text-accent-contrast text-xs font-semibold hover:brightness-110 active:scale-95 transition cursor-pointer shrink-0"
               >
                 Apply
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ============ LIVE SHOW WALLPAPER (DARK NATURE) ============ */}
+      {matchesFilter(["appearance", "wallpaper"], ["liveshow", "live show", "screensaver", "dark nature", "inactivity"]) && (
+        <section className="space-y-3">
+          <GroupHeader
+            icon={GIconSparkles}
+            label="Live Show Wallpaper (Dark Nature)"
+            rightElement={
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full font-medium border transition-colors ${
+                  liveShowEnabled
+                    ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                    : "bg-white/5 text-white/40 border-white/10"
+                }`}
+              >
+                {liveShowEnabled ? `Active after ${liveShowTimeout}m` : "Disabled"}
+              </span>
+            }
+          />
+          <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
+            When inactive for {liveShowTimeout} minutes, plays a cinematic dark nature aesthetic live show with floating forest fireflies, hiding all widgets and applications.
+          </p>
+
+          <div className="p-3.5 sm:p-4.5 rounded-2xl border border-white/10 bg-white/5 space-y-3.5">
+            {/* Live Interactive Mini-Preview inside Settings */}
+            <div className="relative aspect-video rounded-xl overflow-hidden border border-white/15 shadow-inner">
+              <LiveShowWallpaper isMini={true} />
+              <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-[9px] font-mono text-emerald-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>LIVE PREVIEW</span>
+              </div>
+            </div>
+
+            {/* Toggle Row */}
+            <div className="flex items-center justify-between pt-1">
+              <div>
+                <span className="text-xs sm:text-sm font-semibold text-white/95">
+                  Inactivity Live Show
+                </span>
+                <p className="text-[10px] sm:text-[11px] text-white/45">
+                  Auto-fade into dark nature aesthetic after period of inactivity
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  soundFx.playClick();
+                  setLiveShowEnabled(!liveShowEnabled);
+                }}
+                className={`w-11 sm:w-12 h-6.5 rounded-full relative transition-all duration-300 shrink-0 cursor-pointer ${
+                  liveShowEnabled
+                    ? "bg-accent shadow-[0_0_12px_rgba(var(--accent),0.4)]"
+                    : "bg-white/20 hover:bg-white/25"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.75 w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-300 ${
+                    liveShowEnabled ? "left-[22px] sm:left-6" : "left-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Inactivity Duration Selector */}
+            <div className="pt-2 border-t border-white/5 space-y-1.5">
+              <div className="flex items-center justify-between text-xs text-white/80">
+                <span className="text-[11px] font-medium text-white/70">Inactivity Timeout:</span>
+                <span className="text-[11px] font-mono text-accent font-semibold">
+                  {liveShowTimeout === 0 ? "Never" : `${liveShowTimeout} Minutes`}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                {[
+                  { value: 1, label: "1 min (Test)" },
+                  { value: 2, label: "2 mins" },
+                  { value: 5, label: "5 mins (Default)" },
+                  { value: 10, label: "10 mins" },
+                  { value: 15, label: "15 mins" },
+                  { value: 0, label: "Never" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => {
+                      soundFx.playClick();
+                      setLiveShowTimeout(opt.value);
+                      if (opt.value === 0) setLiveShowEnabled(false);
+                      else setLiveShowEnabled(true);
+                    }}
+                    className={`px-2 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer text-center ${
+                      liveShowTimeout === opt.value
+                        ? "border-accent bg-accent/20 text-white shadow-sm"
+                        : "border-white/10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Start Live Show Fullscreen Button */}
+            <div className="pt-2 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+              <div className="text-[10px] text-white/40">
+                Move mouse or press any key anytime to wake back to your desktop.
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  soundFx.playClick();
+                  startLiveShow();
+                }}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-accent text-accent-contrast text-xs font-semibold shadow-md shadow-accent/20 hover:brightness-110 active:scale-95 transition cursor-pointer"
+              >
+                <GIconSparkles size={13} />
+                <span>Play Live Show Fullscreen</span>
               </button>
             </div>
           </div>
