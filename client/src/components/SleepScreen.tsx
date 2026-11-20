@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useOS } from "../store/useOS";
-import { GIconPower, GIconMoon, GIconChevronLeft, GIconChevronRight } from "./icons/GravityIcons";
+import { GIconPower, GIconMoon } from "./icons/GravityIcons";
 import { soundFx } from "../lib/soundFx";
 import LiveShowWallpaper from "./LiveShowWallpaper";
 import { DARK_NATURE_SCENES } from "../data/darkNatureScenes";
@@ -93,7 +93,7 @@ export default function SleepScreen() {
         </div>
       </div>
 
-      {/* Center Clock & Live Nature Scene Switchers */}
+      {/* Center Clock */}
       <div className="relative z-10 text-center space-y-2.5 my-auto flex flex-col items-center justify-center">
         <h1 className="font-display text-5xl sm:text-7xl md:text-8xl font-extralight tracking-tight text-white drop-shadow-[0_8px_32px_rgba(0,0,0,0.85)]">
           {time}
@@ -101,49 +101,13 @@ export default function SleepScreen() {
         <p className="text-base sm:text-xl text-white/85 font-light drop-shadow-md tracking-wide">
           {date}
         </p>
-
-        {/* Scene Navigation on Lock Screen */}
-        <div className="pt-2 flex items-center justify-center gap-2">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              prevLiveWallpaperScene();
-            }}
-            className="w-7 h-7 rounded-full bg-black/50 hover:bg-emerald-500/25 text-white/60 hover:text-white border border-white/10 flex items-center justify-center transition-all cursor-pointer shadow-md"
-            title="Previous Wallpaper (Left Arrow)"
-          >
-            <GIconChevronLeft size={14} />
-          </button>
-
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/45 backdrop-blur-md border border-white/10 text-emerald-300 text-xs font-mono tracking-wide shadow-lg">
-            <span>{currentScene.title}</span>
-            <span className="text-white/30">•</span>
-            <span className="text-white/60 text-[11px]">{currentScene.subtitle}</span>
-          </div>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              nextLiveWallpaperScene();
-            }}
-            className="w-7 h-7 rounded-full bg-black/50 hover:bg-emerald-500/25 text-white/60 hover:text-white border border-white/10 flex items-center justify-center transition-all cursor-pointer shadow-md"
-            title="Next Wallpaper (Right Arrow)"
-          >
-            <GIconChevronRight size={14} />
-          </button>
-        </div>
       </div>
 
-      {/* Footer Wake / Unlock Prompt */}
-      <div className="relative z-10 pb-6 text-center space-y-2">
-        <div className="w-9 h-9 rounded-full bg-emerald-500/15 backdrop-blur-md border border-emerald-500/30 flex items-center justify-center mx-auto mb-1.5 text-emerald-300 animate-pulse shadow-lg">
+      {/* Footer Power Icon */}
+      <div className="relative z-10 pb-6 text-center">
+        <div className="w-9 h-9 rounded-full bg-emerald-500/15 backdrop-blur-md border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-300 animate-pulse shadow-lg">
           <GIconPower size={18} />
         </div>
-        <p className="text-xs text-white/70 tracking-wider font-medium drop-shadow-sm">
-          Use arrows to change wallpaper · Click anywhere or press any key to unlock
-        </p>
       </div>
     </div>
   );
