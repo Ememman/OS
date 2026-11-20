@@ -1,68 +1,47 @@
-import { useState, useEffect, useRef } from "react";
-import { GIconSparkles, GIconMoon, GIconPower } from "./icons/GravityIcons";
-
-interface DarkNatureSceneItem {
-  title: string;
-  subtitle: string;
-  url: string;
-  fallbackGradient: string;
-}
-
-const DARK_NATURE_SCENES: DarkNatureSceneItem[] = [
-  {
-    title: "Misty Alpine Forest",
-    subtitle: "Deep Evergreen Canopy & Mountain Mist",
-    url: "https://images.unsplash.com/photo-1511497584788-87676104235f?q=80&w=1920&auto=format&fit=crop",
-    fallbackGradient: "radial-gradient(ellipse at 50% 90%, #0d2818 0%, #071a10 40%, #030d07 70%, #010402 100%)",
-  },
-  {
-    title: "Moody Foggy Woods",
-    subtitle: "Nocturnal Birch & Ethereal Haze",
-    url: "https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=1920&auto=format&fit=crop",
-    fallbackGradient: "radial-gradient(ellipse at 40% 70%, #082316 0%, #05140d 45%, #020704 100%)",
-  },
-  {
-    title: "Deep Redwood Evergreen Mist",
-    subtitle: "Ancient Giants & Bioluminescent Moss",
-    url: "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?q=80&w=1920&auto=format&fit=crop",
-    fallbackGradient: "radial-gradient(ellipse at 60% 80%, #0b331f 0%, #061e12 50%, #020805 100%)",
-  },
-  {
-    title: "Midnight Mountain Lake",
-    subtitle: "Still Waters Under Starlit Pines",
-    url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1920&auto=format&fit=crop",
-    fallbackGradient: "radial-gradient(ellipse at 50% 100%, #0e291f 0%, #081a13 45%, #020705 100%)",
-  },
-  {
-    title: "Mystic Wilderness Glade",
-    subtitle: "Emerald Canopy & Floating Fireflies",
-    url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=1920&auto=format&fit=crop",
-    fallbackGradient: "radial-gradient(ellipse at 30% 60%, #103824 0%, #071910 50%, #010503 100%)",
-  },
-  {
-    title: "Dark Alpine Pine Ridge",
-    subtitle: "Highland Conifers & Twilight Mist",
-    url: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?q=80&w=1920&auto=format&fit=crop",
-    fallbackGradient: "radial-gradient(ellipse at 50% 85%, #0d301c 0%, #06170d 50%, #010402 100%)",
-  },
-];
+import { useState, useEffect, useRef, useCallback } from "react";
+import { GIconMoon, GIconPower, GIconChevronLeft, GIconChevronRight } from "./icons/GravityIcons";
+import { DARK_NATURE_SCENES } from "../data/darkNatureScenes";
+import { useOS } from "../store/useOS";
 
 interface LiveShowWallpaperProps {
   isMini?: boolean;
+  isDesktopWallpaper?: boolean;
   onClose?: () => void;
 }
 
-export default function LiveShowWallpaper({ isMini = false, onClose }: LiveShowWallpaperProps) {
-  const [sceneIndex, setSceneIndex] = useState(0);
-  const [nextSceneIndex, setNextSceneIndex] = useState(1);
+export default function LiveShowWallpaper({
+  isMini = false,
+  isDesktopWallpaper = false,
+  onClose,
+}: LiveShowWallpaperProps) {
+  const storeSceneIndex = useOS((s) => s.liveWallpaperSceneIndex);
+  const autoCycle = useOS((s) => s.liveWallpaperAutoCycle);
+  const setStoreSceneIndex = useOS((s) => s.setLiveWallpaperSceneIndex);
+
+  const [sceneIndex, setSceneIndex] = useState(isDesktopWallpaper ? storeSceneIndex : 0);
+  const [nextSceneIndex, setNextSceneIndex] = useState((sceneIndex + 1) % DARK_NATURE_SCENES.length);
   const [isCrossFading, setIsCrossFading] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState<Record<number, boolean>>({});
   const [time, setTime] = useState("");
   const [date, setDate] = useState("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Live Clock Update
+  // Sync external store scene index changes when used as desktop wallpaper
   useEffect(() => {
+    if (isDesktopWallpaper && storeSceneIndex !== sceneIndex) {
+      setNextSceneIndex(storeSceneIndex);
+      setIsCrossFading(true);
+      const timeout = setTimeout(() => {
+        setSceneIndex(storeSceneIndex);
+        setIsCrossFading(false);
+      }, 1400);
+      return () => clearTimeout(timeout);
+    }
+  }, [isDesktopWallpaper, storeSceneIndex, sceneIndex]);
+
+  // Live Clock Update (only needed for mini or fullscreen screensaver mode)
+  useEffect(() => {
+    if (isDesktopWallpaper) return;
     const updateTime = () => {
       const now = new Date();
       setTime(now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }));
@@ -71,10 +50,28 @@ export default function LiveShowWallpaper({ isMini = false, onClose }: LiveShowW
     updateTime();
     const timer = setInterval(updateTime, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [isDesktopWallpaper]);
 
-  // Automatic Scene Transition Every 12 Seconds
+  // Manual Scene Change Handler
+  const changeScene = useCallback((targetIndex: number) => {
+    const next = ((targetIndex % DARK_NATURE_SCENES.length) + DARK_NATURE_SCENES.length) % DARK_NATURE_SCENES.length;
+    if (next === sceneIndex) return;
+    setNextSceneIndex(next);
+    setIsCrossFading(true);
+    setTimeout(() => {
+      setSceneIndex(next);
+      setIsCrossFading(false);
+      if (isDesktopWallpaper) {
+        setStoreSceneIndex(next);
+      }
+    }, 1400);
+  }, [sceneIndex, isDesktopWallpaper, setStoreSceneIndex]);
+
+  // Automatic Scene Transition
   useEffect(() => {
+    if (isDesktopWallpaper && !autoCycle) return;
+
+    const intervalMs = isDesktopWallpaper ? 16000 : 12000;
     const interval = setInterval(() => {
       const next = (sceneIndex + 1) % DARK_NATURE_SCENES.length;
       setNextSceneIndex(next);
@@ -83,26 +80,46 @@ export default function LiveShowWallpaper({ isMini = false, onClose }: LiveShowW
       const timeout = setTimeout(() => {
         setSceneIndex(next);
         setIsCrossFading(false);
-      }, 1600);
+        if (isDesktopWallpaper) {
+          setStoreSceneIndex(next);
+        }
+      }, 1400);
 
       return () => clearTimeout(timeout);
-    }, 12000);
+    }, intervalMs);
 
     return () => clearInterval(interval);
-  }, [sceneIndex]);
+  }, [sceneIndex, isDesktopWallpaper, autoCycle, setStoreSceneIndex]);
 
-  // Fullscreen Wake Listener on keydown or click
+  // Fullscreen Screensaver Wake Listener (with keyboard arrow scene switching)
   useEffect(() => {
-    if (isMini || !onClose) return;
+    if (isMini || isDesktopWallpaper || !onClose) return;
 
-    const handleWake = () => onClose();
-    window.addEventListener("keydown", handleWake);
-    window.addEventListener("pointerdown", handleWake);
-    return () => {
-      window.removeEventListener("keydown", handleWake);
-      window.removeEventListener("pointerdown", handleWake);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        changeScene(sceneIndex - 1);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        changeScene(sceneIndex + 1);
+      } else {
+        onClose();
+      }
     };
-  }, [isMini, onClose]);
+
+    const handlePointerWake = (e: PointerEvent) => {
+      // Don't close if clicking specifically on scene navigation buttons
+      if ((e.target as HTMLElement).closest("button")) return;
+      onClose();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("pointerdown", handlePointerWake);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("pointerdown", handlePointerWake);
+    };
+  }, [isMini, isDesktopWallpaper, onClose, sceneIndex, changeScene]);
 
   // Animated Bioluminescent Fireflies / Forest Spores Canvas
   useEffect(() => {
@@ -123,11 +140,11 @@ export default function LiveShowWallpaper({ isMini = false, onClose }: LiveShowW
     window.addEventListener("resize", handleResize);
 
     // Generate Firefly particles
-    const particleCount = isMini ? 18 : 42;
+    const particleCount = isMini ? 16 : isDesktopWallpaper ? 28 : 42;
     const particles = Array.from({ length: particleCount }).map(() => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      r: Math.random() * (isMini ? 1.8 : 2.8) + 1,
+      r: Math.random() * (isMini ? 1.8 : 2.6) + 1,
       speedY: -(Math.random() * 0.45 + 0.15),
       swaySpeed: Math.random() * 0.02 + 0.01,
       swayOffset: Math.random() * Math.PI * 2,
@@ -145,7 +162,6 @@ export default function LiveShowWallpaper({ isMini = false, onClose }: LiveShowW
         p.y += p.speedY;
         p.x += Math.sin(frame * p.swaySpeed + p.swayOffset) * 0.6;
 
-        // Wrap around top to bottom
         if (p.y < -20) {
           p.y = height + 10;
           p.x = Math.random() * width;
@@ -187,11 +203,58 @@ export default function LiveShowWallpaper({ isMini = false, onClose }: LiveShowW
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", handleResize);
     };
-  }, [isMini]);
+  }, [isMini, isDesktopWallpaper]);
 
   const currentScene = DARK_NATURE_SCENES[sceneIndex];
   const nextScene = DARK_NATURE_SCENES[nextSceneIndex];
 
+  // 1. Desktop Wallpaper Background Mode (runs seamlessly underneath desktop icons, widgets, and windows)
+  if (isDesktopWallpaper) {
+    return (
+      <div className="absolute inset-0 w-full h-full overflow-hidden select-none pointer-events-none">
+        {/* Current Scene Layer */}
+        <div
+          className="absolute inset-0 w-full h-full overflow-hidden select-none transition-transform duration-[16000ms] ease-out scale-105"
+          style={{ background: currentScene.fallbackGradient }}
+        >
+          <img
+            src={currentScene.url}
+            alt=""
+            onLoad={() => setImagesLoaded((prev) => ({ ...prev, [sceneIndex]: true }))}
+            className={`w-full h-full object-cover object-center filter brightness-[0.48] contrast-[1.12] transition-opacity duration-1000 pointer-events-none ${
+              imagesLoaded[sceneIndex] ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        </div>
+
+        {/* Crossfading Next Scene Layer */}
+        <div
+          className={`absolute inset-0 w-full h-full overflow-hidden select-none transition-opacity duration-[1400ms] ease-in-out ${
+            isCrossFading ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+          style={{ background: nextScene.fallbackGradient }}
+        >
+          <img
+            src={nextScene.url}
+            alt=""
+            onLoad={() => setImagesLoaded((prev) => ({ ...prev, [nextSceneIndex]: true }))}
+            className={`w-full h-full object-cover object-center filter brightness-[0.48] contrast-[1.12] pointer-events-none ${
+              imagesLoaded[nextSceneIndex] ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        </div>
+
+        {/* Layered Organic Nature Dark Vignette & Mist */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#010402]/92 via-transparent to-[#020804]/70 pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_25%,_rgba(2,8,4,0.72)_100%)] pointer-events-none" />
+
+        {/* Animated Bioluminescent Fireflies Canvas */}
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-10" />
+      </div>
+    );
+  }
+
+  // 2. Mini Preview Mode (for Settings) or Fullscreen Screensaver Mode
   return (
     <div
       onClick={isMini ? undefined : onClose}
@@ -218,7 +281,7 @@ export default function LiveShowWallpaper({ isMini = false, onClose }: LiveShowW
 
       {/* Crossfading Next Scene Layer */}
       <div
-        className={`absolute inset-0 w-full h-full overflow-hidden select-none transition-opacity duration-[1600ms] ease-in-out ${
+        className={`absolute inset-0 w-full h-full overflow-hidden select-none transition-opacity duration-[1400ms] ease-in-out ${
           isCrossFading ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         style={{ background: nextScene.fallbackGradient }}
@@ -268,7 +331,7 @@ export default function LiveShowWallpaper({ isMini = false, onClose }: LiveShowW
             </div>
           </div>
 
-          {/* Center Digital Clock & Nature Caption */}
+          {/* Center Digital Clock & Nature Caption with Scene Switchers */}
           <div className="relative z-20 text-center space-y-3 my-auto flex flex-col items-center justify-center">
             <h1 className="font-display text-5xl sm:text-7xl md:text-8xl font-extralight tracking-tight text-white drop-shadow-[0_8px_32px_rgba(0,0,0,0.85)]">
               {time}
@@ -276,11 +339,38 @@ export default function LiveShowWallpaper({ isMini = false, onClose }: LiveShowW
             <p className="text-base sm:text-xl text-white/85 font-light drop-shadow-md tracking-wide">
               {date}
             </p>
-            <div className="pt-2 flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-emerald-300 text-xs font-mono tracking-wide shadow-lg">
-              <GIconSparkles size={12} className="text-emerald-400" />
-              <span>{currentScene.title}</span>
-              <span className="text-white/30">•</span>
-              <span className="text-white/60 text-[11px]">{currentScene.subtitle}</span>
+
+            {/* Scene Selector Pill (Star icon removed beside Misty; previous/next controls added to change wallpaper) */}
+            <div className="pt-2 flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  changeScene(sceneIndex - 1);
+                }}
+                className="w-7 h-7 rounded-full bg-black/50 hover:bg-emerald-500/25 text-white/60 hover:text-white border border-white/10 flex items-center justify-center transition-all cursor-pointer shadow-md"
+                title="Previous Wallpaper (Left Arrow)"
+              >
+                <GIconChevronLeft size={14} />
+              </button>
+
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/45 backdrop-blur-md border border-white/10 text-emerald-300 text-xs font-mono tracking-wide shadow-lg">
+                <span>{currentScene.title}</span>
+                <span className="text-white/30">•</span>
+                <span className="text-white/60 text-[11px]">{currentScene.subtitle}</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  changeScene(sceneIndex + 1);
+                }}
+                className="w-7 h-7 rounded-full bg-black/50 hover:bg-emerald-500/25 text-white/60 hover:text-white border border-white/10 flex items-center justify-center transition-all cursor-pointer shadow-md"
+                title="Next Wallpaper (Right Arrow)"
+              >
+                <GIconChevronRight size={14} />
+              </button>
             </div>
           </div>
 
@@ -290,7 +380,7 @@ export default function LiveShowWallpaper({ isMini = false, onClose }: LiveShowW
               <GIconPower size={17} />
             </div>
             <p className="text-xs text-white/70 tracking-wider font-medium drop-shadow-sm">
-              Move mouse, tap anywhere, or press any key to wake
+              Use arrow keys or click arrows to change scene · Move mouse or press any key to wake
             </p>
           </div>
         </>

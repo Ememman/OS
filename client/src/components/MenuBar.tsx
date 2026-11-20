@@ -409,8 +409,9 @@ export default function MenuBar() {
             onClick={() => {
               setSleeping(true);
               setOpenMenu(null);
-            }}>
-            Sleep Display
+            }}
+            shortcut="⌃⌘Q">
+            Lock Screen (Sleep)
           </MenuItem>
           <MenuItem
             onClick={() => {
