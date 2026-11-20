@@ -26,6 +26,15 @@ export default function LiveShowWallpaper({
   const [date, setDate] = useState("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Preload all high-res dark aesthetic nature scenes for instantaneous crossfading
+  useEffect(() => {
+    DARK_NATURE_SCENES.forEach((scene, idx) => {
+      const img = new Image();
+      img.src = scene.url;
+      img.onload = () => setImagesLoaded((prev) => ({ ...prev, [idx]: true }));
+    });
+  }, []);
+
   // Sync external store scene index changes when used as desktop wallpaper
   useEffect(() => {
     if (isDesktopWallpaper && storeSceneIndex !== sceneIndex) {
@@ -121,7 +130,35 @@ export default function LiveShowWallpaper({
     };
   }, [isMini, isDesktopWallpaper, onClose, sceneIndex, changeScene]);
 
-  // Animated Bioluminescent Fireflies / Forest Spores Canvas
+  // Touch Swipe Gesture Listener (Swipe Left / Right to switch scenes on mobile & tablets)
+  useEffect(() => {
+    if (isMini || isDesktopWallpaper) return;
+    let startX = 0;
+    let startY = 0;
+
+    const onTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      const dx = e.changedTouches[0].clientX - startX;
+      const dy = e.changedTouches[0].clientY - startY;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+        if (dx > 0) changeScene(sceneIndex - 1);
+        else changeScene(sceneIndex + 1);
+      }
+    };
+
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [isMini, isDesktopWallpaper, sceneIndex, changeScene]);
+
+  // Enhanced Bioluminescent Fireflies & Forest Spores Canvas Simulation
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -139,19 +176,25 @@ export default function LiveShowWallpaper({
     };
     window.addEventListener("resize", handleResize);
 
-    // Generate Firefly particles
-    const particleCount = isMini ? 16 : isDesktopWallpaper ? 28 : 42;
-    const particles = Array.from({ length: particleCount }).map(() => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      r: Math.random() * (isMini ? 1.8 : 2.6) + 1,
-      speedY: -(Math.random() * 0.45 + 0.15),
-      swaySpeed: Math.random() * 0.02 + 0.01,
-      swayOffset: Math.random() * Math.PI * 2,
-      baseAlpha: Math.random() * 0.6 + 0.35,
-      pulseSpeed: Math.random() * 0.03 + 0.015,
-      hue: Math.random() > 0.4 ? 155 : 45, // Emerald green or warm amber firefly glow
-    }));
+    // Multi-tier Bioluminescent Particles: foreground fireflies + background ethereal spores
+    const particleCount = isMini ? 20 : isDesktopWallpaper ? 36 : 56;
+    const particles = Array.from({ length: particleCount }).map((_, i) => {
+      const isFirefly = i % 3 === 0;
+      return {
+        x: Math.random() * width,
+        y: Math.random() * height,
+        r: isFirefly
+          ? Math.random() * (isMini ? 2.0 : 3.0) + 1.2
+          : Math.random() * 1.5 + 0.6,
+        speedY: -(Math.random() * 0.4 + 0.12),
+        swaySpeed: Math.random() * 0.02 + 0.01,
+        swayOffset: Math.random() * Math.PI * 2,
+        baseAlpha: isFirefly ? Math.random() * 0.5 + 0.45 : Math.random() * 0.3 + 0.2,
+        pulseSpeed: Math.random() * 0.035 + 0.015,
+        // 3 organic hues: Emerald Green, Deep Bioluminescent Teal, and Golden Amber
+        palette: i % 3 === 0 ? "emerald" : i % 3 === 1 ? "teal" : "amber",
+      };
+    });
 
     let frame = 0;
     const render = () => {
@@ -160,35 +203,45 @@ export default function LiveShowWallpaper({
 
       particles.forEach((p) => {
         p.y += p.speedY;
-        p.x += Math.sin(frame * p.swaySpeed + p.swayOffset) * 0.6;
+        p.x += Math.sin(frame * p.swaySpeed + p.swayOffset) * 0.55;
 
         if (p.y < -20) {
           p.y = height + 10;
           p.x = Math.random() * width;
         }
 
-        const alpha = p.baseAlpha + Math.sin(frame * p.pulseSpeed) * 0.25;
+        const alpha = Math.max(0.08, Math.min(1, p.baseAlpha + Math.sin(frame * p.pulseSpeed) * 0.28));
         const radius = p.r * (1 + Math.sin(frame * p.pulseSpeed) * 0.2);
 
-        // Soft radial glow around firefly
-        const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius * 3.5);
-        if (p.hue === 155) {
-          glow.addColorStop(0, `rgba(52, 211, 153, ${Math.min(1, alpha * 0.9)})`);
-          glow.addColorStop(0.5, `rgba(16, 185, 129, ${alpha * 0.4})`);
+        // Soft radial bioluminescent halo
+        const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius * 3.8);
+        if (p.palette === "emerald") {
+          glow.addColorStop(0, `rgba(52, 211, 153, ${Math.min(1, alpha * 0.95)})`);
+          glow.addColorStop(0.5, `rgba(16, 185, 129, ${alpha * 0.45})`);
           glow.addColorStop(1, "rgba(5, 150, 105, 0)");
+        } else if (p.palette === "teal") {
+          glow.addColorStop(0, `rgba(45, 212, 191, ${Math.min(1, alpha * 0.95)})`);
+          glow.addColorStop(0.5, `rgba(20, 184, 166, ${alpha * 0.45})`);
+          glow.addColorStop(1, "rgba(13, 148, 136, 0)");
         } else {
-          glow.addColorStop(0, `rgba(250, 204, 21, ${Math.min(1, alpha * 0.9)})`);
-          glow.addColorStop(0.5, `rgba(245, 158, 11, ${alpha * 0.4})`);
+          glow.addColorStop(0, `rgba(251, 191, 36, ${Math.min(1, alpha * 0.95)})`);
+          glow.addColorStop(0.5, `rgba(245, 158, 11, ${alpha * 0.45})`);
           glow.addColorStop(1, "rgba(217, 119, 6, 0)");
         }
 
         ctx.fillStyle = glow;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, radius * 3.5, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, radius * 3.8, 0, Math.PI * 2);
         ctx.fill();
 
-        // Core bright center
-        ctx.fillStyle = p.hue === 155 ? `rgba(209, 250, 229, ${alpha})` : `rgba(254, 240, 138, ${alpha})`;
+        // Brilliant glowing core
+        if (p.palette === "emerald") {
+          ctx.fillStyle = `rgba(209, 250, 229, ${alpha})`;
+        } else if (p.palette === "teal") {
+          ctx.fillStyle = `rgba(204, 251, 241, ${alpha})`;
+        } else {
+          ctx.fillStyle = `rgba(254, 243, 199, ${alpha})`;
+        }
         ctx.beginPath();
         ctx.arc(p.x, p.y, radius * 0.8, 0, Math.PI * 2);
         ctx.fill();
