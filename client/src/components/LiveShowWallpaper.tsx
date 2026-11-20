@@ -341,14 +341,11 @@ export default function LiveShowWallpaper({
             </p>
           </div>
 
-          {/* Footer Interactive Wake Tip */}
-          <div className="relative z-20 pb-4 text-center space-y-2">
-            <div className="w-9 h-9 rounded-full bg-emerald-500/15 backdrop-blur-md border border-emerald-500/30 flex items-center justify-center mx-auto mb-1.5 text-emerald-300 animate-pulse shadow-lg">
+          {/* Footer Power Icon */}
+          <div className="relative z-20 pb-4 text-center">
+            <div className="w-9 h-9 rounded-full bg-emerald-500/15 backdrop-blur-md border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-300 animate-pulse shadow-lg">
               <GIconPower size={17} />
             </div>
-            <p className="text-xs text-white/70 tracking-wider font-medium drop-shadow-sm">
-              Use arrow keys to change scene · Move mouse or press any key to wake
-            </p>
           </div>
         </>
       )}
