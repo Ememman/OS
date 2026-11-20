@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useOS } from "../../store/useOS";
 import type { DockPosition, OSMode } from "../../types/os";
 import {
@@ -19,6 +19,9 @@ import {
   GIconRotateRight,
   GIconPalette,
   GIconUpload,
+  GIconPin,
+  GIconClose,
+  GIconLayoutCells,
 } from "../icons/GravityIcons";
 import { soundFx } from "../../lib/soundFx";
 import { getAssetUrl } from "../../lib/assets";
@@ -54,12 +57,13 @@ const DOCK_POSITION_OPTIONS: { id: DockPosition; label: string }[] = [
 ];
 
 const SETTINGS_CATEGORIES = [
-  { id: "all", label: "All" },
-  { id: "appearance", label: "Appearance" },
-  { id: "features", label: "Gravity UI" },
-  { id: "widgets", label: "Widgets" },
-  { id: "sound", label: "Sound & Motion" },
-  { id: "backup", label: "Storage & Backup" },
+  { id: "all", label: "All Settings", icon: GIconSliders },
+  { id: "appearance", label: "Appearance", icon: GIconPalette },
+  { id: "wallpaper", label: "Wallpaper & Glass", icon: GIconSparkles },
+  { id: "features", label: "Gravity UI", icon: GIconCpu },
+  { id: "widgets", label: "Widgets", icon: GIconLayoutHeader },
+  { id: "sound", label: "Sound & Motion", icon: GIconVolume },
+  { id: "backup", label: "Storage & Backup", icon: GIconHardDrive },
 ];
 
 function GroupHeader({
@@ -151,6 +155,10 @@ export default function Settings() {
 
   const isMobile = useIsMobile();
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(800);
+  const [mobileSidebar, setMobileSidebar] = useState(false);
+
   const [cityDraft, setCityDraft] = useState(weatherLoc.name);
   const [geoStatus, setGeoStatus] = useState("");
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
@@ -159,11 +167,26 @@ export default function Settings() {
   const [searchQuery, setSearchQuery] = useState("");
   const [customWallUrl, setCustomWallUrl] = useState("");
 
-  const matchesFilter = (category: string, keywords: string[] = []) => {
-    if (activeCategory !== "all" && activeCategory !== category) return false;
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const updateSize = () => {
+      if (el.clientWidth > 0) setContainerWidth(el.clientWidth);
+    };
+    updateSize();
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const isNarrow = containerWidth < 680;
+
+  const matchesFilter = (category: string | string[], keywords: string[] = []) => {
+    const cats = Array.isArray(category) ? category : [category];
+    if (activeCategory !== "all" && !cats.includes(activeCategory)) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase().trim();
-    return keywords.some((k) => k.toLowerCase().includes(q)) || category.toLowerCase().includes(q);
+    return keywords.some((k) => k.toLowerCase().includes(q)) || cats.some((c) => c.toLowerCase().includes(q));
   };
 
   const lookupCity = async () => {
@@ -223,49 +246,195 @@ export default function Settings() {
   const handleImageError = (id: string) => setImageErrors((prev) => ({ ...prev, [id]: true }));
 
   return (
-    <div className="min-h-full bg-[#0a0a0f] text-white select-none">
-      {/* Sticky Header */}
-      <div className="p-3 sm:p-4 border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-md sticky top-0 z-20 shrink-0 shadow-sm space-y-2.5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+    <div
+      ref={containerRef}
+      className="relative flex h-full w-full bg-[#0a0a0f] text-white select-none overflow-hidden"
+    >
+      {/* Mobile / Narrow Sidebar Overlay Backdrop */}
+      {isNarrow && mobileSidebar && (
+        <div
+          onClick={() => setMobileSidebar(false)}
+          className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs transition-opacity duration-200"
+        />
+      )}
+
+      {/* Left Sidebar (Files-style category sidebar) */}
+      <div
+        className={`${
+          isNarrow
+            ? `absolute inset-y-0 left-0 z-40 w-56 bg-[#0c101c] shadow-2xl transition-transform duration-200 ${
+                mobileSidebar ? "translate-x-0" : "-translate-x-full pointer-events-none"
+              }`
+            : "relative inset-y-0 w-48 sm:w-56 bg-white/[0.02]"
+        } border-r border-white/10 p-3 shrink-0 flex flex-col justify-between overflow-y-auto no-scrollbar`}
+      >
+        <div className="space-y-4">
           <div>
-            <h1 className="font-display text-base sm:text-lg font-semibold text-white">Settings</h1>
-            <p className="text-[11px] text-white/50">Personalize wallpaper, accents, and system preferences.</p>
+            <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-white/40 mb-2 px-1">
+              <span className="flex items-center gap-1.5 font-semibold">
+                <GIconPin size={11} className="text-amber-400" /> Preferences
+              </span>
+              {isNarrow && (
+                <button
+                  onClick={() => setMobileSidebar(false)}
+                  className="text-white/50 hover:text-white p-1 rounded-md hover:bg-white/10 cursor-pointer"
+                  title="Close Sidebar"
+                >
+                  <GIconClose size={12} />
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-0.5">
+              {SETTINGS_CATEGORIES.map((cat) => {
+                const Icon = cat.icon;
+                const isSelected = activeCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      soundFx.playClick();
+                      setActiveCategory(cat.id);
+                      if (isNarrow) setMobileSidebar(false);
+                    }}
+                    className={`w-full flex items-center gap-2 text-left text-xs px-2.5 py-2 rounded-xl transition cursor-pointer ${
+                      isSelected
+                        ? "bg-accent/20 text-accent font-semibold border border-accent/30 shadow-xs"
+                        : "hover:bg-white/8 text-white/70 hover:text-white"
+                    }`}
+                  >
+                    <Icon size={14} className={isSelected ? "text-accent" : "text-white/40 shrink-0"} />
+                    <span className="truncate">{cat.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          {/* Quick Search */}
-          <div className="relative">
-            <GIconSearch size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search settings…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-44 pl-7 pr-2.5 py-1 text-xs bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:border-accent focus:bg-white/10 outline-none transition"
-            />
+
+          {/* Quick Controls Section in Sidebar */}
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-white/40 mb-2 px-1 font-semibold">
+              Quick Modes
+            </div>
+            <div className="space-y-1">
+              {/* Theme Quick Switcher */}
+              <button
+                type="button"
+                onClick={() => {
+                  soundFx.playClick();
+                  const next = themeMode === "night" ? "dark" : "night";
+                  setThemeMode(next);
+                  notify(
+                    next === "night" ? "Night Mode Activated" : "Dark Mode Activated",
+                    next === "night" ? "Pitch black OLED enabled." : "Luminous slate glass enabled.",
+                    "success",
+                    2200
+                  );
+                }}
+                className="w-full flex items-center justify-between text-left text-xs px-2.5 py-1.5 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 transition cursor-pointer"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <GIconMoon size={12} className="text-accent shrink-0" />
+                  <span className="text-white/80 truncate text-[11px]">Theme</span>
+                </div>
+                <span className="text-[10px] font-mono text-accent font-semibold">
+                  {themeMode === "night" ? "OLED" : "Slate"}
+                </span>
+              </button>
+
+              {/* OS Style Quick Switcher */}
+              <button
+                type="button"
+                onClick={() => {
+                  soundFx.playClick();
+                  const next = osMode === "mac" ? "win" : "mac";
+                  setOsMode(next);
+                }}
+                className="w-full flex items-center justify-between text-left text-xs px-2.5 py-1.5 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 transition cursor-pointer"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <GIconSliders size={12} className="text-accent shrink-0" />
+                  <span className="text-white/80 truncate text-[11px]">Desktop</span>
+                </div>
+                <span className="text-[10px] font-mono text-white/60 font-semibold">
+                  {osMode === "mac" ? "macOS" : "Win 11"}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Categories Bar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-[11px]">
-          {SETTINGS_CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => {
-                soundFx.playClick();
-                setActiveCategory(cat.id);
-              }}
-              className={`px-2.5 py-1 rounded-lg transition-all shrink-0 cursor-pointer font-medium ${
-                activeCategory === cat.id
-                  ? "bg-accent text-accent-contrast shadow-sm shadow-accent/20"
-                  : "bg-white/5 hover:bg-white/10 text-white/60 hover:text-white border border-white/5"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+        {/* Sidebar Footer Info */}
+        <div className="pt-2 border-t border-white/5 space-y-1">
+          <div className="flex items-center justify-between px-1 text-[10px] text-white/40 font-mono">
+            <span>Portfolio OS</span>
+            <span>v2.0</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-1 text-[10px] text-white/30 truncate">
+            <span
+              className="w-2 h-2 rounded-full shrink-0"
+              style={{ backgroundColor: `rgb(${accent})` }}
+            />
+            <span className="truncate">{harmonizedPalette?.hex || "#3b82f6"}</span>
+          </div>
         </div>
       </div>
 
-      <div className="p-3 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-[#0a0a0f]">
+        {/* Top Header Bar */}
+        <div className="p-3 sm:p-4 border-b border-white/10 bg-[#0a0a0f]/95 backdrop-blur-md shrink-0 flex items-center justify-between gap-2.5 z-10 shadow-sm">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {isNarrow && (
+              <button
+                type="button"
+                onClick={() => setMobileSidebar((prev) => !prev)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white text-xs cursor-pointer shrink-0 transition"
+                title="Toggle Categories Sidebar"
+              >
+                <GIconLayoutCells size={13} className="text-accent" />
+                <span className="text-[11px] font-medium">Categories</span>
+              </button>
+            )}
+            <div className="min-w-0">
+              <h1 className="font-display text-sm sm:text-base font-semibold text-white truncate flex items-center gap-1.5">
+                <span className="text-white/40 font-normal">Settings</span>
+                <span className="text-white/30">/</span>
+                <span className="text-white">
+                  {SETTINGS_CATEGORIES.find((c) => c.id === activeCategory)?.label || "All Settings"}
+                </span>
+              </h1>
+              <p className="text-[10px] text-white/45 hidden sm:block truncate">
+                Personalize wallpaper, accents, and system preferences.
+              </p>
+            </div>
+          </div>
+
+          {/* Search Filter */}
+          <div className="relative shrink-0">
+            <GIconSearch size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Filter settings…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-32 xs:w-40 sm:w-52 pl-7 pr-7 py-1 text-xs bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/30 focus:border-accent focus:bg-white/10 outline-none transition"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 hover:text-white cursor-pointer"
+                title="Clear filter"
+              >
+                <GIconClose size={11} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Scrollable Content Pane */}
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
 
       {/* ============ APPEARANCE ============ */}
       {matchesFilter("appearance", ["appearance", "desktop style", "macos", "windows"]) && (
@@ -807,7 +976,7 @@ export default function Settings() {
       )}
 
       {/* ============ WALLPAPER ============ */}
-      {matchesFilter("appearance", ["wallpaper", "background", "desktop background", "image", "upload"]) && (
+      {matchesFilter(["appearance", "wallpaper"], ["wallpaper", "background", "desktop background", "image", "upload"]) && (
         <section className="space-y-3">
           <GroupHeader
             icon={GIconSparkles}
@@ -938,7 +1107,7 @@ export default function Settings() {
       )}
 
       {/* ============ GLASS INTENSITY ============ */}
-      {matchesFilter("appearance", ["glass", "intensity", "transparency", "alpha", "blur"]) && (
+      {matchesFilter(["appearance", "wallpaper"], ["glass", "intensity", "transparency", "alpha", "blur"]) && (
         <section className="space-y-2">
           <GroupHeader
             icon={GIconSliders}
@@ -1237,7 +1406,7 @@ export default function Settings() {
       )}
 
       {/* Preview */}
-      {matchesFilter("appearance", ["preview", "wallpaper", "desktop"]) && (
+      {matchesFilter(["appearance", "wallpaper"], ["preview", "wallpaper", "desktop"]) && (
         <section className="space-y-2">
           <div className="flex items-center justify-between">
             <h3 className="text-[10px] sm:text-xs uppercase tracking-wide text-white/40 font-medium">Desktop Live Preview</h3>
@@ -1270,6 +1439,17 @@ export default function Settings() {
           </p>
         </section>
       )}
+        </div>
+
+        {/* Bottom Status Footer (matching Files app status bar) */}
+        <div className="px-3.5 py-1.5 border-t border-white/5 bg-black/30 text-[10px] text-white/40 flex items-center justify-between shrink-0 font-mono">
+          <div className="flex items-center gap-2 truncate">
+            <span>Adaptive Contrast: <span className="text-emerald-400">WCAG {harmonizedPalette?.wcagContrast || "7.2:1"}</span></span>
+            <span className="hidden sm:inline text-white/20">•</span>
+            <span className="hidden sm:inline text-white/35">Mode: {themeMode === "night" ? "OLED Pitch Black" : "Balanced Slate"}</span>
+          </div>
+          <span className="text-white/30 shrink-0">Portfolio OS Settings</span>
+        </div>
       </div>
     </div>
   );
