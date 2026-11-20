@@ -186,6 +186,17 @@ export default function BlockBlast() {
   const boardRef = useRef<HTMLDivElement | null>(null);
   const ghostRef = useRef<HTMLDivElement | null>(null);
 
+  // Synchronous refs to prevent stale closure race conditions
+  const trayRef = useRef(tray);
+  useEffect(() => {
+    trayRef.current = tray;
+  }, [tray]);
+
+  const gridRef = useRef(grid);
+  useEffect(() => {
+    gridRef.current = grid;
+  }, [grid]);
+
   // Refs for drag tracking without triggering re-renders on every pixel
   const dragInfoRef = useRef<DragInfo | null>(null);
   const hoverTargetRef = useRef<{ r: number; c: number; isValid: boolean } | null>(null);
@@ -196,14 +207,15 @@ export default function BlockBlast() {
   }, [soundOn]);
 
   const refillIfNeeded = useCallback((newTray: (Piece | null)[]) => {
-    if (newTray.every((p) => p === null)) {
+    const trimmed: (Piece | null)[] = [newTray[0] ?? null, newTray[1] ?? null, newTray[2] ?? null];
+    if (trimmed.every((p) => p === null)) {
       return [
         randomPiece(nextId.current++),
         randomPiece(nextId.current++),
         randomPiece(nextId.current++),
       ];
     }
-    return newTray;
+    return trimmed;
   }, []);
 
   // Safe game-over checker: verifies against current tray and grid
@@ -216,11 +228,27 @@ export default function BlockBlast() {
 
   // Execute placement of a piece at grid coordinate (r, c)
   const placePieceAt = useCallback((pieceIndex: number, r: number, c: number) => {
-    const piece = tray[pieceIndex];
+    const currentTray = trayRef.current;
+    const currentGrid = gridRef.current;
+    const piece = currentTray[pieceIndex];
     if (!piece || gameOver || isClearingRef.current) return false;
-    if (!canPlace(grid, piece.shape, r, c)) return false;
+    if (!canPlace(currentGrid, piece.shape, r, c)) return false;
 
-    const next = grid.map((row) => [...row]);
+    // Immediately remove piece from tray and sync ref atomically to prevent stuck piece in dock
+    const nextTray: (Piece | null)[] = [currentTray[0] ?? null, currentTray[1] ?? null, currentTray[2] ?? null];
+    nextTray[pieceIndex] = null;
+    const finalTray = refillIfNeeded(nextTray);
+    trayRef.current = finalTray;
+    setTray(finalTray);
+
+    // Reset drag and selection immediately
+    setSelected(null);
+    setActiveDragPiece(null);
+    setHoverTarget(null);
+    hoverTargetRef.current = null;
+    dragInfoRef.current = null;
+
+    const next = currentGrid.map((row) => [...row]);
     const justDropped = new Set<string>();
     piece.shape.forEach(([dr, dc]) => {
       next[r + dr][c + dc] = piece.color;
@@ -229,7 +257,7 @@ export default function BlockBlast() {
 
     sfx.place();
     if (typeof navigator !== "undefined" && navigator.vibrate) {
-      navigator.vibrate(12);
+      navigator.vibrate(14);
     }
     setDropCells(justDropped);
     setTimeout(() => setDropCells(new Set()), 200);
@@ -243,26 +271,19 @@ export default function BlockBlast() {
     }
     const cleared = fullRows.length + fullCols.length;
 
-    let newTray = [...tray];
-    newTray[pieceIndex] = null;
-    newTray = refillIfNeeded(newTray);
-    setTray(newTray);
-    setSelected(null);
-    setHoverTarget(null);
-    hoverTargetRef.current = null;
-
     if (cleared > 0) {
       isClearingRef.current = true;
       const newCombo = comboCount + 1;
       setComboCount(newCombo);
 
-      const comboMultiplier = newCombo > 1 ? newCombo * 10 : 0;
-      const gained = piece.shape.length * 4 + cleared * 24 + comboMultiplier;
+      const comboMultiplier = newCombo > 1 ? newCombo * 12 : 0;
+      const gained = piece.shape.length * 4 + cleared * 28 + comboMultiplier;
 
       const clearSet = new Set<string>();
       fullRows.forEach((r2) => { for (let c2 = 0; c2 < SIZE; c2++) clearSet.add(`${r2}-${c2}`); });
       fullCols.forEach((c2) => { for (let r2 = 0; r2 < SIZE; r2++) clearSet.add(`${r2}-${c2}`); });
 
+      gridRef.current = next;
       setGrid(next);
       setClearingCells(clearSet);
       sfx.clear(newCombo);
@@ -281,12 +302,13 @@ export default function BlockBlast() {
         const finalGrid = next.map((row) => [...row]);
         fullRows.forEach((r2) => { for (let c2 = 0; c2 < SIZE; c2++) finalGrid[r2][c2] = null; });
         fullCols.forEach((c2) => { for (let r2 = 0; r2 < SIZE; r2++) finalGrid[r2][c2] = null; });
+        gridRef.current = finalGrid;
         setGrid(finalGrid);
         setClearingCells(new Set());
         isClearingRef.current = false;
 
         // Check game over ONLY on the final cleared board
-        if (checkGameOverCondition(finalGrid, newTray)) {
+        if (checkGameOverCondition(finalGrid, finalTray)) {
           setGameOver(true);
           sfx.gameOver();
           if (typeof navigator !== "undefined" && navigator.vibrate) {
@@ -299,13 +321,14 @@ export default function BlockBlast() {
       setScore(newScore);
       if (newScore > best) {
         setBest(newScore);
-        localStorage.setItem("blockblast_best", String(newScore));
+        try { localStorage.setItem("blockblast_best", String(newScore)); } catch {}
       }
 
       const id = popupId.current++;
       setPopups((p) => [...p, { id, text: `+${gained}`, r, c, big: true }]);
       setTimeout(() => setPopups((p) => p.filter((x) => x.id !== id)), 650);
     } else {
+      gridRef.current = next;
       setGrid(next);
       setComboCount(0);
       const gained = piece.shape.length * 4;
@@ -313,7 +336,7 @@ export default function BlockBlast() {
       setScore(newScore);
       if (newScore > best) {
         setBest(newScore);
-        localStorage.setItem("blockblast_best", String(newScore));
+        try { localStorage.setItem("blockblast_best", String(newScore)); } catch {}
       }
 
       const id = popupId.current++;
@@ -321,7 +344,7 @@ export default function BlockBlast() {
       setTimeout(() => setPopups((p) => p.filter((x) => x.id !== id)), 650);
 
       // Check game over on next grid
-      if (checkGameOverCondition(next, newTray)) {
+      if (checkGameOverCondition(next, finalTray)) {
         setGameOver(true);
         sfx.gameOver();
         if (typeof navigator !== "undefined" && navigator.vibrate) {
@@ -331,7 +354,7 @@ export default function BlockBlast() {
     }
 
     return true;
-  }, [tray, grid, gameOver, comboCount, score, best, refillIfNeeded, sfx, checkGameOverCondition]);
+  }, [gameOver, comboCount, score, best, refillIfNeeded, sfx, checkGameOverCondition]);
 
   // Precise Target Calculation
   // Computes the grid origin (r, c) with exact inner-board measurement and symmetric cell centering
@@ -393,16 +416,24 @@ export default function BlockBlast() {
       return { r: targetR, c: targetC, isValid: false };
     }
 
-    const isValid = canPlace(grid, shape, targetR, targetC);
+    const currentGrid = gridRef.current || grid;
+    const isValid = canPlace(currentGrid, shape, targetR, targetC);
     return { r: targetR, c: targetC, isValid };
   }, [grid]);
 
   // Pointer Down on Piece Tray Item
   const handlePiecePointerDown = (e: React.PointerEvent, pieceIndex: number) => {
-    const piece = tray[pieceIndex];
+    const currentTray = trayRef.current;
+    const piece = currentTray[pieceIndex];
     if (!piece || gameOver || isClearingRef.current) return;
 
     e.preventDefault();
+    const targetEl = e.currentTarget as HTMLElement;
+    const pointerId = e.pointerId;
+    try {
+      targetEl.setPointerCapture(pointerId);
+    } catch {}
+
     const isTouch = e.pointerType === "touch";
     const startX = e.clientX;
     const startY = e.clientY;
@@ -449,6 +480,19 @@ export default function BlockBlast() {
       }
     };
 
+    const cleanupListeners = () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      try {
+        targetEl.releasePointerCapture(pointerId);
+      } catch {}
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerCancel);
+    };
+
     const handlePointerMove = (moveEvent: PointerEvent) => {
       moveEvent.preventDefault();
       const current = dragInfoRef.current;
@@ -482,14 +526,18 @@ export default function BlockBlast() {
       }
     };
 
+    const handlePointerCancel = () => {
+      cleanupListeners();
+      dragInfoRef.current = null;
+      setActiveDragPiece(null);
+      setSelected(null);
+      setHoverTarget(null);
+      hoverTargetRef.current = null;
+      sfx.snapBack();
+    };
+
     const handlePointerUp = (upEvent: PointerEvent) => {
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId);
-        rafId = null;
-      }
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
-      window.removeEventListener("pointercancel", handlePointerUp);
+      cleanupListeners();
 
       const current = dragInfoRef.current;
       dragInfoRef.current = null;
@@ -504,26 +552,34 @@ export default function BlockBlast() {
         return;
       }
 
-      let finalTarget = calculateGridTarget(upEvent.clientX, upEvent.clientY, current?.piece.shape || [], isTouch);
-      // Fallback to the currently highlighted hover target if pointer release slightly shifted
-      if ((finalTarget.r === null || finalTarget.c === null || !finalTarget.isValid) && hoverTargetRef.current?.isValid) {
-        finalTarget = hoverTargetRef.current;
-      }
+      try {
+        let finalTarget = calculateGridTarget(upEvent.clientX, upEvent.clientY, current?.piece.shape || [], isTouch);
+        // Fallback to the currently highlighted hover target if pointer release slightly shifted
+        if ((finalTarget.r === null || finalTarget.c === null || !finalTarget.isValid) && hoverTargetRef.current?.isValid) {
+          finalTarget = hoverTargetRef.current;
+        }
 
-      if (current && finalTarget.r !== null && finalTarget.c !== null && finalTarget.isValid) {
-        placePieceAt(current.index, finalTarget.r, finalTarget.c);
-      } else {
+        if (current && finalTarget.r !== null && finalTarget.c !== null && finalTarget.isValid) {
+          const placed = placePieceAt(current.index, finalTarget.r, finalTarget.c);
+          if (!placed) {
+            sfx.snapBack();
+          }
+        } else {
+          sfx.snapBack();
+        }
+      } catch {
         sfx.snapBack();
+      } finally {
+        setActiveDragPiece(null);
+        setSelected(null);
+        setHoverTarget(null);
+        hoverTargetRef.current = null;
       }
-
-      setActiveDragPiece(null);
-      setHoverTarget(null);
-      hoverTargetRef.current = null;
     };
 
     window.addEventListener("pointermove", handlePointerMove, { passive: false });
     window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("pointercancel", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerCancel);
   };
 
   // Click on a grid cell when a piece is selected via tap
@@ -577,8 +633,12 @@ export default function BlockBlast() {
 
   const reset = () => {
     if (score > 0) syncScoreToBackend(score);
-    setGrid(emptyGrid());
-    setTray([randomPiece(nextId.current++), randomPiece(nextId.current++), randomPiece(nextId.current++)]);
+    const initialGrid = emptyGrid();
+    const initialTray = [randomPiece(nextId.current++), randomPiece(nextId.current++), randomPiece(nextId.current++)];
+    gridRef.current = initialGrid;
+    trayRef.current = initialTray;
+    setGrid(initialGrid);
+    setTray(initialTray);
     setSelected(null);
     setHoverTarget(null);
     hoverTargetRef.current = null;
@@ -703,9 +763,9 @@ export default function BlockBlast() {
                 key={key}
                 onMouseEnter={() => {
                   if (selected !== null && !activeDragPiece) {
-                    const piece = tray[selected];
+                    const piece = trayRef.current[selected];
                     if (piece) {
-                      const valid = canPlace(grid, piece.shape, r, c);
+                      const valid = canPlace(gridRef.current, piece.shape, r, c);
                       setHoverTarget({ r, c, isValid: valid });
                     }
                   }
@@ -755,33 +815,32 @@ export default function BlockBlast() {
       {/* Piece Tray with Drag & Drop Handles */}
       <div className="w-full max-w-[min(92vw,360px,46vh)] flex flex-col items-center gap-1.5 shrink-0">
         <div className="flex justify-center items-center gap-2.5 sm:gap-3.5 w-full">
-          {tray.map((p, i) => {
+          {tray.slice(0, 3).map((p, i) => {
             const isDraggingThis = activeDragPiece?.index === i;
             const isSelectedThis = selected === i;
 
-            if (!p) {
-              return (
-                <div
-                  key={i}
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-dashed border-white/5 bg-white/[0.02] flex items-center justify-center shrink-0"
-                />
-              );
-            }
-
             return (
               <div
-                key={p.id}
-                onPointerDown={(e) => handlePiecePointerDown(e, i)}
-                className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 flex items-center justify-center transition-all duration-150 cursor-grab active:cursor-grabbing touch-none select-none shrink-0 ${
-                  isDraggingThis
-                    ? "opacity-25 scale-90 border-accent/40 bg-accent/5"
-                    : isSelectedThis
-                    ? "border-accent bg-accent/20 ring-2 ring-accent/60 scale-105 shadow-lg shadow-accent/25"
-                    : "border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/[0.08] active:scale-95"
-                }`}
-                title="Drag onto board or click to select"
+                key={`tray-slot-${i}`}
+                className="w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center shrink-0"
               >
-                <MiniShape shape={p.shape} color={p.color} cellSize={14} />
+                {!p ? (
+                  <div className="w-full h-full rounded-2xl border-2 border-dashed border-white/5 bg-white/[0.02] flex items-center justify-center transition-opacity duration-150" />
+                ) : (
+                  <div
+                    onPointerDown={(e) => handlePiecePointerDown(e, i)}
+                    className={`relative w-full h-full rounded-2xl border-2 flex items-center justify-center transition-all duration-150 cursor-grab active:cursor-grabbing touch-none select-none ${
+                      isDraggingThis
+                        ? "opacity-20 scale-90 border-accent/40 bg-accent/5 pointer-events-none"
+                        : isSelectedThis
+                        ? "border-accent bg-accent/20 ring-2 ring-accent/60 scale-105 shadow-lg shadow-accent/25"
+                        : "border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/[0.08] active:scale-95 shadow-md shadow-black/20"
+                    }`}
+                    title="Drag onto board or click to select"
+                  >
+                    <MiniShape shape={p.shape} color={p.color} cellSize={14} />
+                  </div>
+                )}
               </div>
             );
           })}
