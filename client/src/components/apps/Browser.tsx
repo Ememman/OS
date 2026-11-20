@@ -1788,7 +1788,7 @@ export default function Browser() {
     if (isStartPage) {
       return (
         <div
-          className={`flex-1 flex flex-col items-center justify-center p-3 sm:p-6 lg:p-8 max-w-4xl mx-auto w-full my-auto relative`}
+          className="flex-1 min-h-full flex flex-col items-center justify-start p-3 sm:p-6 lg:p-8 max-w-4xl mx-auto w-full relative z-[1]"
         >
           {/* Ambient Lighting Overlay from Active Theme */}
           {activeTheme.canvasOverlay && (
@@ -1798,15 +1798,18 @@ export default function Browser() {
             />
           )}
 
+          {/* Flexible top breathing spacer: shrinks to 8px on small screens, expands on tall screens to prevent any top cutoff */}
+          <div className="flex-1 min-h-[8px] max-h-12 sm:max-h-16 shrink" />
+
           {/* Header Brand */}
           {isWin ? (
             <motion.div
               initial={{ opacity: 0, y: -12, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ type: "spring", stiffness: 420, damping: 28 }}
-              className="flex flex-col items-center mb-4 sm:mb-6 space-y-1 sm:space-y-2"
+              className="flex flex-col items-center mb-4 sm:mb-6 space-y-2 select-none"
             >
-              <div className="text-3xl sm:text-5xl font-bold tracking-tight font-sans flex items-center select-none">
+              <div className="text-4xl sm:text-6xl font-bold tracking-tight font-sans flex items-center select-none drop-shadow-[0_4px_18px_rgba(0,0,0,0.85)]">
                 <span className="text-[#4285F4]">G</span>
                 <span className="text-[#EA4335]">o</span>
                 <span className="text-[#FBBC05]">o</span>
@@ -1814,8 +1817,8 @@ export default function Browser() {
                 <span className="text-[#34A853]">l</span>
                 <span className="text-[#EA4335]">e</span>
               </div>
-              <p className="text-[11px] sm:text-xs text-white/50 text-center px-2">
-                Search everything about James Mendoza & Portfolio OS
+              <p className="text-[11px] sm:text-xs text-white/80 text-center px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 shadow-lg drop-shadow-md">
+                Search developer biography, tech stack & Portfolio OS kernel
               </p>
             </motion.div>
           ) : (
@@ -1823,18 +1826,20 @@ export default function Browser() {
               initial={{ opacity: 0, y: -12, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ type: "spring", stiffness: 420, damping: 28 }}
-              className="flex flex-col items-center mb-4 sm:mb-6 space-y-1 sm:space-y-2"
+              className="flex flex-col items-center mb-4 sm:mb-6 space-y-2 select-none"
             >
               <motion.div
                 whileHover={{ scale: 1.08, rotate: 6 }}
                 transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-[#0288d1] to-[#29b6f6] flex items-center justify-center shadow-lg shadow-sky-500/30 p-2 cursor-pointer"
+                className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-[#0288d1] to-[#29b6f6] flex items-center justify-center shadow-[0_8px_25px_rgba(2,136,209,0.45)] border border-white/20 p-2 cursor-pointer"
               >
-                <GIconSafari size={34} />
+                <GIconSafari size={36} className="text-white drop-shadow" />
               </motion.div>
-              <h1 className="text-lg sm:text-2xl font-bold text-white tracking-tight">Safari Start Page</h1>
-              <p className="text-[11px] sm:text-xs text-white/50 text-center px-2">
-                Explore developer biography, tech stack, and OS kernel specs
+              <h1 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight drop-shadow-[0_4px_18px_rgba(0,0,0,0.85)]">
+                Safari Start Page
+              </h1>
+              <p className="text-[11px] sm:text-xs text-white/80 text-center px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 shadow-lg drop-shadow-md">
+                Explore developer biography, tech stack & Portfolio OS kernel
               </p>
             </motion.div>
           )}
@@ -1845,10 +1850,10 @@ export default function Browser() {
               initial={{ opacity: 0, y: 8, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ delay: 0.06, type: "spring", stiffness: 450, damping: 30 }}
-              className={`relative w-full max-w-2xl mb-4 sm:mb-6 rounded-2xl sm:rounded-3xl transition-[background-color,border-color,box-shadow] duration-150 ${
+              className={`relative w-full max-w-2xl mb-3 sm:mb-5 rounded-2xl sm:rounded-full transition-[background-color,border-color,box-shadow] duration-150 ${
                 isHomeSearchFocused && homeSuggestions.length > 0
-                  ? "bg-[#181d29] border border-white/25 shadow-2xl backdrop-blur-xl ring-1 ring-white/10"
-                  : "bg-white/[0.06] hover:bg-white/[0.09] border border-white/15 shadow-xl backdrop-blur-md"
+                  ? "bg-[#181d29]/95 border border-white/30 shadow-[0_16px_45px_rgba(0,0,0,0.7)] backdrop-blur-2xl ring-1 ring-white/15 rounded-2xl sm:rounded-3xl"
+                  : "bg-[#161a25]/85 hover:bg-[#1c2231]/90 border border-white/20 shadow-[0_10px_35px_rgba(0,0,0,0.5)] backdrop-blur-xl"
               }`}
             >
               <form
@@ -1860,12 +1865,12 @@ export default function Browser() {
                     executeSearch(homeSearchQuery);
                   }
                 }}
-                className="w-full px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-2 sm:gap-3"
+                className="w-full px-3.5 sm:px-4 py-2 sm:py-2.5 flex items-center gap-2.5 sm:gap-3"
               >
                 {isWin ? (
-                  <span className="font-bold text-xs sm:text-sm text-white/90 select-none px-0.5">G</span>
+                  <GoogleColorIcon size={16} />
                 ) : (
-                  <GIconSafari size={15} className="text-sky-400 shrink-0" />
+                  <GIconSafari size={16} className="text-sky-400 shrink-0" />
                 )}
 
                 <input
@@ -1874,7 +1879,7 @@ export default function Browser() {
                   placeholder={
                     isWin ? "Search Google or type a URL..." : "Search Safari or enter keywords..."
                   }
-                  className="w-full bg-transparent text-xs sm:text-sm text-white placeholder:text-white/35 outline-none font-sans"
+                  className="w-full bg-transparent text-xs sm:text-sm text-white placeholder:text-white/40 outline-none font-sans"
                   onChange={(e) => {
                     setHomeSearchQuery(e.target.value);
                     setSelectedSuggestionIdx(-1);
@@ -1929,7 +1934,11 @@ export default function Browser() {
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.94 }}
                   type="submit"
-                  className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-accent text-accent-contrast text-[11px] sm:text-xs font-semibold hover:brightness-110 cursor-pointer transition shrink-0 shadow-sm"
+                  className={`px-3 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold cursor-pointer transition shrink-0 shadow-md ${
+                    isWin
+                      ? "bg-[#4285F4] hover:bg-[#3367D6] text-white"
+                      : "bg-accent text-accent-contrast hover:brightness-110"
+                  }`}
                 >
                   Search
                 </motion.button>
@@ -1963,7 +1972,7 @@ export default function Browser() {
                     executeSearch(inputEl.value);
                   }
                 }}
-                className="w-full bg-white/[0.06] hover:bg-white/[0.09] border border-white/15 rounded-2xl px-3 py-2 flex items-center gap-2.5 shadow-md"
+                className="w-full bg-[#161a25]/85 hover:bg-[#1c2231]/90 border border-white/20 rounded-2xl px-3 py-2 flex items-center gap-2.5 shadow-md backdrop-blur-xl"
               >
                 <GIconSearch size={14} className="text-white/40 shrink-0" />
                 <input
@@ -1984,16 +1993,27 @@ export default function Browser() {
 
           {/* Quick Favorites / Shortcuts Tiles Grid */}
           {showFavoritesWidget && (
-            <div className="w-full max-w-2xl px-1 sm:px-2 my-2">
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2.5 sm:mb-3 px-1">
-                <span>{isWin ? "Shortcuts" : "Favorites"}</span>
-                <span>{BROWSER_FAVORITES.length} portals</span>
+            <div className="w-full max-w-2xl px-3 sm:px-5 py-3 sm:py-4 rounded-3xl bg-black/35 hover:bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.4)] transition-all my-2 sm:my-3">
+              <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-semibold text-white/50 uppercase tracking-wider mb-2.5 sm:mb-3 px-1">
+                <div className="flex items-center gap-1.5">
+                  {isWin ? (
+                    <GIconGlobe size={13} className="text-[#4285F4]" />
+                  ) : (
+                    <GIconSafari size={13} className="text-sky-400" />
+                  )}
+                  <span className="text-white/80 font-bold tracking-wider">
+                    {isWin ? "Shortcuts" : "Favorites"}
+                  </span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-white/10 text-white/60 text-[10px] font-mono">
+                  {BROWSER_FAVORITES.length} portals
+                </span>
               </div>
 
               <div
                 className={`grid ${
                   isSplit ? "grid-cols-2 xs:grid-cols-4" : "grid-cols-4 sm:grid-cols-4"
-                } gap-2 sm:gap-4 justify-items-center`}
+                } gap-2.5 sm:gap-3.5 justify-items-center`}
               >
                 {BROWSER_FAVORITES.map((fav, i) => (
                   <motion.div
@@ -2001,7 +2021,7 @@ export default function Browser() {
                     initial={{ opacity: 0, y: 10, scale: 0.9 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ delay: 0.1 + i * 0.03, type: "spring", stiffness: 450, damping: 28 }}
-                    whileHover={{ y: -3, scale: 1.06 }}
+                    whileHover={{ y: -3, scale: 1.05 }}
                     whileTap={{ scale: 0.94 }}
                     onMouseEnter={() => setHoveredLink(fav.url)}
                     onMouseLeave={() => setHoveredLink(null)}
@@ -2014,39 +2034,39 @@ export default function Browser() {
                         navigateTabTo(currentTab.id, fav.url, fav.title);
                       }
                     }}
-                    className="group flex flex-col items-center gap-1 sm:gap-1.5 p-1.5 sm:p-2 rounded-2xl hover:bg-white/[0.06] transition-colors duration-150 cursor-pointer text-center select-none w-full max-w-[80px] sm:max-w-[120px]"
+                    className="group flex flex-col items-center gap-1.5 p-1.5 sm:p-2 rounded-2xl hover:bg-white/[0.08] transition-all duration-150 cursor-pointer text-center select-none w-full max-w-[95px] sm:max-w-[130px]"
                   >
                     <div
                       className={`${
                         isWin
-                          ? "w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#242938] border border-white/10"
-                          : "w-10 h-10 sm:w-13 sm:h-13 rounded-2xl"
-                      } flex items-center justify-center shadow-lg transition-transform duration-150 group-hover:scale-105`}
+                          ? "w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-[#1e2330]/90 group-hover:bg-[#282f42] border border-white/15"
+                          : "w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-white/10 group-hover:bg-white/20 backdrop-blur-md border border-white/20"
+                      } flex items-center justify-center shadow-lg transition-all duration-200 group-hover:scale-108 group-hover:shadow-[0_4px_16px_rgba(0,0,0,0.5)]`}
                       style={
                         isWin
-                          ? { borderColor: `${fav.color}40`, boxShadow: `0 4px 12px ${fav.color}15` }
+                          ? { borderColor: `${fav.color}50`, boxShadow: `0 4px 14px ${fav.color}20` }
                           : {
-                              background: `linear-gradient(135deg, ${fav.color}28, ${fav.color}10)`,
-                              border: `1px solid ${fav.color}45`,
-                              boxShadow: `0 4px 12px ${fav.color}18`,
+                              background: `linear-gradient(135deg, ${fav.color}25, ${fav.color}08)`,
+                              borderColor: `${fav.color}50`,
+                              boxShadow: `0 4px 14px ${fav.color}20`,
                             }
                       }
                     >
                       {fav.category === "profile" ? (
-                        <GIconFileText size={17} style={{ color: fav.color }} />
+                        <GIconFileText size={18} style={{ color: fav.color }} />
                       ) : fav.category === "experience" ? (
-                        <GIconBriefcase size={17} style={{ color: fav.color }} />
+                        <GIconBriefcase size={18} style={{ color: fav.color }} />
                       ) : fav.category === "skills" ? (
-                        <GIconCode size={17} style={{ color: fav.color }} />
+                        <GIconCode size={18} style={{ color: fav.color }} />
                       ) : fav.category === "projects" ? (
-                        <GIconGlobe size={17} style={{ color: fav.color }} />
+                        <GIconGlobe size={18} style={{ color: fav.color }} />
                       ) : fav.category === "system" ? (
-                        <GIconTerminal size={17} style={{ color: fav.color }} />
+                        <GIconTerminal size={18} style={{ color: fav.color }} />
                       ) : (
-                        <GIconExternalLink size={17} style={{ color: fav.color }} />
+                        <GIconExternalLink size={18} style={{ color: fav.color }} />
                       )}
                     </div>
-                    <span className="text-[10px] sm:text-xs font-medium text-white/85 group-hover:text-white truncate w-full text-center max-w-[70px] sm:max-w-[110px]">
+                    <span className="text-[10.5px] sm:text-xs font-medium text-white/90 group-hover:text-white line-clamp-2 leading-tight text-center w-full px-0.5 break-words drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                       {fav.title}
                     </span>
                   </motion.div>
@@ -2058,54 +2078,61 @@ export default function Browser() {
           {/* Privacy Report (Safari) / Google Safe Browsing (Chrome) */}
           {showPrivacyWidget && !isSplit && (
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.32, type: "spring", stiffness: 400, damping: 30 }}
-              whileHover={{ scale: 1.01 }}
-              className="mt-4 sm:mt-6 w-full max-w-2xl p-2.5 sm:p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs text-white/60"
+              transition={{ delay: 0.28, type: "spring", stiffness: 400, damping: 30 }}
+              className="mt-2.5 sm:mt-3 flex items-center justify-center w-full max-w-2xl"
             >
-              <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-                <GIconShield size={16} className={isWin ? "text-[#34A853] shrink-0" : "text-emerald-400 shrink-0"} />
-                <div className="min-w-0">
-                  <span className="font-semibold text-white block text-[11px] sm:text-xs">
-                    {isWin ? "Google Safe Browsing" : "Privacy Report"}
-                  </span>
-                  <p className="text-[10px] sm:text-[11px] text-white/45 truncate">
-                    {isWin
-                      ? "Standard protection is active across all browsing sessions."
-                      : "Safari has blocked tracking attempts on your session."}
-                  </p>
-                </div>
+              <div className="inline-flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-4 py-1.5 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-xl border border-white/10 shadow-lg text-[11px] sm:text-xs text-white/75 transition-all select-none">
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                <GIconShield size={13} className={isWin ? "text-[#34A853] shrink-0" : "text-emerald-400 shrink-0"} />
+                <span className="font-semibold text-white/95">
+                  {isWin ? "Google Safe Browsing" : "Privacy Protection"}
+                </span>
+                <span className="text-white/30 hidden xs:inline">•</span>
+                <span className="text-white/60 text-[10.5px] sm:text-[11px] hidden xs:inline">
+                  {isWin
+                    ? "Standard protection is active across sessions"
+                    : "Tracking attempts blocked on this session"}
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9.5px] sm:text-[10px] font-mono font-semibold ml-1 shrink-0">
+                  {isWin ? "Active & Safe" : "Protected"}
+                </span>
               </div>
-              <span className="text-[10px] sm:text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-medium shrink-0 ml-2">
-                {isWin ? "Active & Safe" : "Protected"}
-              </span>
             </motion.div>
           )}
 
+          {/* Flexible bottom breathing spacer */}
+          <div className="flex-1 min-h-[16px] max-h-16 shrink" />
+
           {/* Customize Appearance Button */}
           {!isSplit && (
-            <motion.button
-              type="button"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              whileHover={{ scale: 1.05, y: -1 }}
-              whileTap={{ scale: 0.94 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (systemSounds) soundFx.playPop();
-                setShowCustomizeModal(true);
-              }}
-              className="mt-6 sm:mt-8 self-end flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/10 hover:bg-white/15 border border-white/20 text-[11px] sm:text-xs text-white/90 hover:text-white transition shadow-xl cursor-pointer backdrop-blur-md z-20"
-              title={isWin ? "Customize Google Chrome Appearance & Wallpaper" : "Customize Safari Start Page & Wallpaper"}
-            >
-              {isWin ? (
-                <GIconPencil size={12} className="text-[#4285F4]" />
-              ) : (
-                <GIconSliders size={12} className="text-sky-400" />
-              )}
-              <span>{isWin ? "Customize Chrome" : "Customize Safari"}</span>
-            </motion.button>
+            <div className="w-full max-w-2xl flex justify-end mt-2 sm:mt-3">
+              <motion.button
+                type="button"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.05, y: -1 }}
+                whileTap={{ scale: 0.94 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (systemSounds) soundFx.playPop();
+                  setShowCustomizeModal(true);
+                }}
+                className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-black/50 hover:bg-black/70 border border-white/20 text-[11px] sm:text-xs text-white/90 hover:text-white transition shadow-xl cursor-pointer backdrop-blur-xl z-20"
+                title={isWin ? "Customize Google Chrome Appearance & Wallpaper" : "Customize Safari Start Page & Wallpaper"}
+              >
+                {isWin ? (
+                  <GIconPencil size={12} className="text-[#4285F4]" />
+                ) : (
+                  <GIconSliders size={12} className="text-sky-400" />
+                )}
+                <span>{isWin ? "Customize Chrome" : "Customize Safari"}</span>
+              </motion.button>
+            </div>
           )}
         </div>
       );
@@ -3720,7 +3747,11 @@ export default function Browser() {
       {/* BOOKMARKS BAR (CUSTOMIZABLE, PERSISTENT, ONE-CLICK ACCESS)    */}
       {/* ------------------------------------------------------------- */}
       {showBookmarksBar && (
-        <div className="relative z-30 flex items-center px-2 sm:px-3 py-1 bg-[#141824] border-b border-white/5 gap-1.5 overflow-x-auto thin-scroll shrink-0 text-xs text-white/80 select-none">
+        <div
+          className={`relative z-30 flex items-center px-2 sm:px-3 py-1 gap-1.5 overflow-x-auto thin-scroll shrink-0 text-xs text-white/80 select-none ${
+            isWin ? "bg-[#232736] border-b border-black/40" : "bg-[#141822]/95 backdrop-blur-md border-b border-white/5"
+          }`}
+        >
           {bookmarks.map((bm) => (
             <div
               key={bm.id}
