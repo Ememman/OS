@@ -105,6 +105,7 @@ export default function DynamicIsland() {
     unreadChatCount,
     clearUnreadChat,
     notify,
+    dismissNotification,
   } = useOS();
 
   const {
@@ -214,16 +215,27 @@ export default function DynamicIsland() {
     };
   }, []);
 
-  // Catch system notifications and flash the Island
+  // Catch system notifications and flash the Island, strictly clearing within 5 seconds
   useEffect(() => {
-    if (notification) {
-      setRecentNotification(notification);
-      const timer = setTimeout(() => {
-        setRecentNotification(null);
-      }, notification.durationMs || 3500);
-      return () => clearTimeout(timer);
+    if (!notification) {
+      setRecentNotification(null);
+      return;
     }
-  }, [notification]);
+
+    setRecentNotification(notification);
+
+    // Guaranteed to be gone within 5 seconds (5000ms max)
+    const duration = Math.min(5000, Math.max(1500, notification.durationMs || 4000));
+
+    const timer = setTimeout(() => {
+      setRecentNotification(null);
+      if (notification.id) {
+        dismissNotification(notification.id);
+      }
+    }, duration);
+
+    return () => clearTimeout(timer);
+  }, [notification, dismissNotification]);
 
   // Countdown timer logic
   useEffect(() => {
@@ -298,6 +310,15 @@ export default function DynamicIsland() {
     if (systemSounds) soundFx.playPop();
     setIsPinned((prev) => !prev);
     setIsHovered(true);
+  };
+
+  const handleDismissNotification = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (systemSounds) soundFx.playPop();
+    if (recentNotification?.id) {
+      dismissNotification(recentNotification.id);
+    }
+    setRecentNotification(null);
   };
 
   // Send quick reply directly from Dynamic Island
@@ -400,9 +421,13 @@ export default function DynamicIsland() {
               transition={{ duration: 0.15 }}
               className="flex items-center justify-between w-full h-full gap-2 sm:gap-2.5"
             >
-              {/* 1. Live Notification Banner */}
+              {/* 1. Live Notification Banner (Auto-dismisses within 5s or on click) */}
               {recentNotification ? (
-                <div className="flex items-center gap-1.5 min-w-0 max-w-[130px] sm:max-w-[260px]">
+                <div
+                  onClick={handleDismissNotification}
+                  className="flex items-center gap-1.5 min-w-0 max-w-[140px] sm:max-w-[280px] cursor-pointer group relative"
+                  title="Click to dismiss notification"
+                >
                   <div className="w-3.5 h-3.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
                     <GIconCheck size={9} />
                   </div>
@@ -412,6 +437,23 @@ export default function DynamicIsland() {
                   <span className="text-[10px] text-white/50 truncate hidden sm:inline">
                     {recentNotification.message}
                   </span>
+                  <button
+                    type="button"
+                    onClick={handleDismissNotification}
+                    className="p-0.5 rounded text-white/30 hover:text-white/80 transition-colors ml-0.5 shrink-0"
+                    title="Dismiss notification"
+                  >
+                    <GIconClose size={9} />
+                  </button>
+                  {/* Subtle 5-second countdown progress bar */}
+                  <div className="absolute -bottom-1 left-0 right-0 h-[1.5px] bg-white/10 rounded-full overflow-hidden pointer-events-none">
+                    <div
+                      className="h-full bg-emerald-400 opacity-80"
+                      style={{
+                        animation: `shrinkWidth ${Math.min(5000, Math.max(1500, recentNotification.durationMs || 4000))}ms linear forwards`,
+                      }}
+                    />
+                  </div>
                 </div>
               ) : recentChatMessage ? (
                 /* 2. Incoming Live Chat Pop (Pops for 4s on message arrival) */

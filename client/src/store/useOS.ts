@@ -305,8 +305,10 @@ export const useOS = create<OSState>((set, get) => ({
     notification: null,
   notifications: [],
   notify: (title, message, variant = "info", durationMs = 3800) => {
+    // Notifications automatically dismiss within at most 5 seconds (5000ms max)
+    const effectiveDuration = Math.min(5000, Math.max(1500, durationMs));
     const id = Date.now() + Math.floor(Math.random() * 1000);
-    const item: SystemNotification = { id, title, message, variant, durationMs };
+    const item: SystemNotification = { id, title, message, variant, durationMs: effectiveDuration };
 
     if (get().systemSounds) {
       if (variant === "delete") soundFx.playClose();
@@ -324,7 +326,7 @@ export const useOS = create<OSState>((set, get) => ({
         notifications: state.notifications.filter((n) => n.id !== id),
         notification: state.notification?.id === id ? state.notifications.find((n) => n.id !== id) || null : state.notification,
       }));
-    }, durationMs);
+    }, effectiveDuration);
   },
   dismissNotification: (id) => {
     if (id !== undefined) {
