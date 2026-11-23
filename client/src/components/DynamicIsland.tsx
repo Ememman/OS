@@ -37,9 +37,50 @@ import {
 interface ChatSnippet {
   id: string;
   name: string;
+  senderId?: string;
   text: string;
   ts: number;
+  removed?: boolean;
   reactions?: Record<string, number>;
+}
+
+const KEY_TO_UNICODE: Record<string, string> = {
+  heart: "❤️",
+  thumbsup: "👍",
+  smile: "😂",
+  flame: "🔥",
+  rocket: "🚀",
+  zap: "🎉",
+};
+
+const UNICODE_TO_KEY: Record<string, string> = {
+  "❤️": "heart",
+  "👍": "thumbsup",
+  "😂": "smile",
+  "😆": "smile",
+  "🔥": "flame",
+  "🚀": "rocket",
+  "🎉": "zap",
+  "⚡": "zap",
+  heart: "heart",
+  thumbsup: "thumbsup",
+  smile: "smile",
+  flame: "flame",
+  rocket: "rocket",
+  zap: "zap",
+};
+
+function normalizeReactions(raw: Record<string, number> | undefined): Record<string, number> {
+  if (!raw || typeof raw !== "object") return {};
+  const normalized: Record<string, number> = {};
+  for (const [k, count] of Object.entries(raw)) {
+    const key = UNICODE_TO_KEY[k] || k;
+    const num = Number(count || 0);
+    if (num > 0) {
+      normalized[key] = (normalized[key] || 0) + num;
+    }
+  }
+  return normalized;
 }
 
 interface UpdateSnippet {
@@ -141,9 +182,33 @@ export default function DynamicIsland() {
   const [chatMessages, setChatMessages] = useState<ChatSnippet[]>([]);
   const [quickChatInput, setQuickChatInput] = useState("");
   const [onlineCount, setOnlineCount] = useState(2);
+  const chatPopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // User's own active reactions (msgId -> reaction canonical key)
+  const [userReactions, setUserReactions] = useState<Record<string, string>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("os_chat_user_reactions") || "{}");
+    } catch {
+      return {};
+    }
+  });
+
+  // Sync userReactions with storage events across tabs/windows
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "os_chat_user_reactions" && e.newValue) {
+        try {
+          setUserReactions(JSON.parse(e.newValue));
+        } catch {}
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   // Queue peek in Media Tab
-  const [showQueuePeek, setShowQueuePeek] = useState(false);
+  const showQueuePeekState = useState(false);
+  const [showQueuePeek, setShowQueuePeek] = showQueuePeekState;
 
   // Updates state
   const [updateFilter, setUpdateFilter] = useState<"all" | "feature" | "fix">("all");
@@ -176,24 +241,7 @@ export default function DynamicIsland() {
   const containerRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load initial chat snippets from cache if available
-  useEffect(() => {
-    const cached = getCachedChatInit();
-    if (cached) {
-      if (typeof cached.online === "number") setOnlineCount(Math.max(1, cached.online));
-      if (Array.isArray(cached.history) && cached.history.length > 0) {
-        const lastSlice = cached.history.slice(-6).map((m: any) => ({
-          id: m.id || String(m.ts || Math.random()),
-          name: m.name || "Guest",
-          text: m.text || "",
-          ts: m.ts || Date.now(),
-        }));
-        setChatMessages(lastSlice);
-      }
-    }
-  }, []);
-
-  // Socket listener for real-time chat messages & presence in the Dynamic Island
+  // Socket listener for real-time chat messages, reactions, removal & presence in the Dynamic Island
   useEffect(() => {
     let socket: any = null;
     try {
@@ -202,30 +250,182 @@ export default function DynamicIsland() {
       return;
     }
 
+    const syncHistory = (history: any[], online?: number) => {
+      if (typeof online === "number") setOnlineCount(Math.max(1, online));
+      if (!Array.isArray(history) || history.length === 0) return;
+
+      const curSession = getChatSession();
+
+      // Sync userReactions from history
+      setUserReactions((prev) => {
+        const merged = { ...prev };
+        for (const h of history) {
+          if (h.userReactions && h.userReactions[curSession.clientId]) {
+            merged[h.id] = h.userReactions[curSession.clientId];
+          }
+        }
+        try {
+          localStorage.setItem("os_chat_user_reactions", JSON.stringify(merged));
+        } catch {}
+        return merged;
+      });
+
+      const formatted: ChatSnippet[] = history.slice(-8).map((h: any) => {
+        const isFromMe = Boolean(
+          (h?.senderId && h.senderId === curSession.clientId) ||
+          (curSession.name && h?.name && h.name.toLowerCase() === curSession.name.toLowerCase())
+        );
+        const isRemoved = Boolean(
+          h.removed ||
+          h.text === "You unsent a message" ||
+          h.text === "Message removed" ||
+          (h.text && h.text.includes("removed a message"))
+        );
+        return {
+          id: h.id || String(h.ts || Math.random()),
+          name: isFromMe ? (curSession.name || "You") : (h.name || "Guest"),
+          senderId: h.senderId,
+          text: isRemoved
+            ? (isFromMe ? "You removed a message" : `${h.name || "A user"} removed a message`)
+            : (h.text || ""),
+          removed: isRemoved,
+          ts: h.ts || Date.now(),
+          reactions: normalizeReactions(h.reactions),
+        };
+      });
+      setChatMessages(formatted);
+    };
+
+    // If cache already has data, load it immediately
+    const cached = getCachedChatInit();
+    if (cached) {
+      syncHistory(cached.history, cached.online);
+    }
+
+    const onInit = (data: any) => {
+      if (data) {
+        syncHistory(data.history, data.online);
+      }
+    };
+
     const onMessage = (msg: any) => {
       const curSession = getChatSession();
       const isFromMe = Boolean(
         (msg?.senderId && msg.senderId === curSession.clientId) ||
         (curSession.name && msg?.name && msg.name.toLowerCase() === curSession.name.toLowerCase())
       );
+      const isRemoved = Boolean(
+        msg.removed ||
+        msg.text === "You unsent a message" ||
+        msg.text === "Message removed" ||
+        (msg.text && msg.text.includes("removed a message"))
+      );
 
       const snippet: ChatSnippet = {
         id: msg.id || String(Date.now()),
-        name: msg.name || "Guest",
-        text: msg.text || "",
+        name: isFromMe ? (curSession.name || "You") : (msg.name || "Guest"),
+        senderId: msg.senderId,
+        text: isRemoved
+          ? (isFromMe ? "You removed a message" : `${msg.name || "A user"} removed a message`)
+          : (msg.text || ""),
+        removed: isRemoved,
         ts: msg.ts || Date.now(),
+        reactions: normalizeReactions(msg.reactions),
       };
 
-      setChatMessages((prev) => [...prev.slice(-6), snippet]);
+      setChatMessages((prev) => {
+        // If an optimistic temp message exists, replace it
+        const tempIdx = prev.findIndex(
+          (m) =>
+            (msg.tempId && m.id === msg.tempId) ||
+            (isFromMe && m.text === snippet.text && Math.abs(m.ts - snippet.ts) < 10000)
+        );
+        if (tempIdx !== -1) {
+          const copy = [...prev];
+          copy[tempIdx] = snippet;
+          return copy;
+        }
 
-      // Pop the Island with the incoming message if not from current user
-      if (!isFromMe) {
+        // If message already exists by id, replace it
+        const existingIdx = prev.findIndex((m) => m.id === snippet.id);
+        if (existingIdx !== -1) {
+          const copy = [...prev];
+          copy[existingIdx] = snippet;
+          return copy;
+        }
+
+        // Otherwise append and keep latest 8
+        return [...prev.slice(-7), snippet];
+      });
+
+      // Pop the Island with the incoming message if not from current user and not removed
+      if (!isFromMe && !isRemoved) {
         setRecentChatMessage({ sender: snippet.name, text: snippet.text });
-        const timer = setTimeout(() => {
+        if (chatPopTimerRef.current) clearTimeout(chatPopTimerRef.current);
+        chatPopTimerRef.current = setTimeout(() => {
           setRecentChatMessage(null);
         }, 4500);
-        return () => clearTimeout(timer);
       }
+    };
+
+    const onReacted = ({ id, emoji, reactions, senderId, removed }: any) => {
+      const canonicalKey = UNICODE_TO_KEY[emoji] || emoji || "heart";
+      const curSession = getChatSession();
+      const isFromMe = Boolean(senderId && senderId === curSession.clientId);
+
+      if (isFromMe) {
+        setUserReactions((prev) => {
+          const next = { ...prev };
+          if (removed) {
+            delete next[id];
+          } else {
+            next[id] = canonicalKey;
+          }
+          try {
+            localStorage.setItem("os_chat_user_reactions", JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+      }
+
+      setChatMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== id) return m;
+          let nextReactions: Record<string, number>;
+          if (reactions) {
+            nextReactions = normalizeReactions(reactions);
+          } else {
+            nextReactions = normalizeReactions(m.reactions);
+            if (removed) {
+              if (nextReactions[canonicalKey]) {
+                nextReactions[canonicalKey] = Math.max(0, nextReactions[canonicalKey] - 1);
+                if (nextReactions[canonicalKey] === 0) delete nextReactions[canonicalKey];
+              }
+            } else {
+              nextReactions[canonicalKey] = (nextReactions[canonicalKey] || 0) + 1;
+            }
+          }
+          return { ...m, reactions: nextReactions };
+        })
+      );
+    };
+
+    const onMessageRemoved = ({ id, name, senderId }: { id: string; name?: string; senderId?: string }) => {
+      const curSession = getChatSession();
+      const isFromMe = Boolean(
+        (senderId && senderId === curSession.clientId) ||
+        (curSession.name && name && name.toLowerCase() === curSession.name.toLowerCase())
+      );
+      setChatMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== id) return m;
+          return {
+            ...m,
+            removed: true,
+            text: isFromMe ? "You removed a message" : `${name || m.name || "A user"} removed a message`,
+          };
+        })
+      );
     };
 
     const onPresence = (data: any) => {
@@ -234,12 +434,19 @@ export default function DynamicIsland() {
       }
     };
 
+    socket.on("chat:init", onInit);
     socket.on("chat:message", onMessage);
+    socket.on("chat:reacted", onReacted);
+    socket.on("chat:message_removed", onMessageRemoved);
     socket.on("chat:presence", onPresence);
 
     return () => {
+      socket.off("chat:init", onInit);
       socket.off("chat:message", onMessage);
+      socket.off("chat:reacted", onReacted);
+      socket.off("chat:message_removed", onMessageRemoved);
       socket.off("chat:presence", onPresence);
+      if (chatPopTimerRef.current) clearTimeout(chatPopTimerRef.current);
     };
   }, []);
 
@@ -446,44 +653,165 @@ export default function DynamicIsland() {
     try {
       const curSession = getChatSession();
       const socket = getSocket();
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       const payload = {
         text: quickChatInput.trim(),
         name: curSession.name || "Guest",
         senderId: curSession.clientId,
+        tempId,
       };
 
-      socket.emit("chat:message", payload);
       setChatMessages((prev) => [
-        ...prev.slice(-6),
+        ...prev.slice(-7),
         {
-          id: String(Date.now()),
+          id: tempId,
           name: curSession.name || "You",
+          senderId: curSession.clientId,
           text: quickChatInput.trim(),
           ts: Date.now(),
+          reactions: {},
         },
       ]);
       setQuickChatInput("");
       soundFx.playPop();
+
+      socket.emit("chat:message", payload, (res: any) => {
+        if (res?.ok && res.message) {
+          setChatMessages((prev) =>
+            prev.map((m) =>
+              m.id === tempId
+                ? {
+                    id: res.message.id,
+                    name: curSession.name || "You",
+                    senderId: curSession.clientId,
+                    text: res.message.text,
+                    ts: res.message.ts,
+                    reactions: normalizeReactions(res.message.reactions),
+                  }
+                : m
+            )
+          );
+        }
+      });
     } catch {
       notify("Chat Offline", "Could not broadcast message.", "error", 2200);
     }
   };
 
   // Quick emoji react to chat message
-  const handleQuickReact = (msgId: string, emoji: string) => {
-    if (systemSounds) soundFx.playClick();
-    setChatMessages((prev) =>
-      prev.map((m) =>
-        m.id === msgId
-          ? {
-              ...m,
-              reactions: {
-                ...(m.reactions || {}),
-                [emoji]: ((m.reactions?.[emoji] as number) || 0) + 1,
-              },
+  const handleQuickReact = (msgId: string, rawKey: string) => {
+    if (systemSounds) soundFx.playPop();
+    const canonicalKey = UNICODE_TO_KEY[rawKey] || rawKey;
+    const currentReaction = userReactions[msgId];
+    const unicodeEmoji = KEY_TO_UNICODE[canonicalKey] || rawKey;
+    const curSession = getChatSession();
+
+    if (currentReaction) {
+      if (currentReaction === canonicalKey) {
+        // Toggle off existing reaction
+        setUserReactions((prev) => {
+          const next = { ...prev };
+          delete next[msgId];
+          try {
+            localStorage.setItem("os_chat_user_reactions", JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+
+        try {
+          getSocket().emit("chat:react", {
+            id: msgId,
+            emoji: unicodeEmoji,
+            key: canonicalKey,
+            senderId: curSession.clientId,
+            action: "remove",
+          });
+        } catch {}
+
+        setChatMessages((prev) =>
+          prev.map((m) => {
+            if (m.id !== msgId) return m;
+            const norm = normalizeReactions(m.reactions);
+            if (norm[canonicalKey]) {
+              norm[canonicalKey] = Math.max(0, norm[canonicalKey] - 1);
+              if (norm[canonicalKey] === 0) delete norm[canonicalKey];
             }
-          : m
-      )
+            return { ...m, reactions: norm };
+          })
+        );
+        return;
+      } else {
+        // Switching reaction: remove old, then add new
+        const oldKey = currentReaction;
+        const oldUnicode = KEY_TO_UNICODE[oldKey] || oldKey;
+        try {
+          const s = getSocket();
+          s.emit("chat:react", {
+            id: msgId,
+            emoji: oldUnicode,
+            key: oldKey,
+            senderId: curSession.clientId,
+            action: "remove",
+          });
+          s.emit("chat:react", {
+            id: msgId,
+            emoji: unicodeEmoji,
+            key: canonicalKey,
+            senderId: curSession.clientId,
+            action: "add",
+          });
+        } catch {}
+
+        setUserReactions((prev) => {
+          const next = { ...prev, [msgId]: canonicalKey };
+          try {
+            localStorage.setItem("os_chat_user_reactions", JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+
+        setChatMessages((prev) =>
+          prev.map((m) => {
+            if (m.id !== msgId) return m;
+            const norm = normalizeReactions(m.reactions);
+            if (norm[oldKey]) {
+              norm[oldKey] = Math.max(0, norm[oldKey] - 1);
+              if (norm[oldKey] === 0) delete norm[oldKey];
+            }
+            norm[canonicalKey] = (norm[canonicalKey] || 0) + 1;
+            return { ...m, reactions: norm };
+          })
+        );
+        return;
+      }
+    }
+
+    // New reaction
+    setUserReactions((prev) => {
+      const next = { ...prev, [msgId]: canonicalKey };
+      try {
+        localStorage.setItem("os_chat_user_reactions", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    try {
+      getSocket().emit("chat:react", {
+        id: msgId,
+        emoji: unicodeEmoji,
+        key: canonicalKey,
+        senderId: curSession.clientId,
+        action: "add",
+      });
+    } catch {}
+
+    setChatMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== msgId) return m;
+        const norm = normalizeReactions(m.reactions);
+        norm[canonicalKey] = (norm[canonicalKey] || 0) + 1;
+        return { ...m, reactions: norm };
+      })
     );
   };
 
@@ -1000,45 +1328,112 @@ export default function DynamicIsland() {
                   </div>
 
                   {/* Recent Messages Stream with reactions */}
-                  <div className="space-y-1.5 max-h-[175px] overflow-y-auto thin-scroll pr-1">
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto thin-scroll pr-1">
                     {chatMessages.length > 0 ? (
-                      chatMessages.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className="p-2.5 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition flex items-start gap-2.5 text-xs group"
-                        >
-                          <div className="w-6 h-6 rounded-xl bg-gradient-to-tr from-accent/40 to-accent/10 text-accent font-bold text-[10px] flex items-center justify-center shrink-0 border border-accent/25 shadow-xs">
-                            {msg.name.slice(0, 1).toUpperCase()}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="font-semibold text-white/90 text-[11px] truncate">
-                                {msg.name}
-                              </span>
-                              <span className="text-[9px] text-white/35 font-mono shrink-0">
-                                {new Date(msg.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-white/80 leading-relaxed break-words mt-0.5">
-                              {msg.text}
-                            </p>
+                      chatMessages.map((msg) => {
+                        const curSession = getChatSession();
+                        const isFromMe = Boolean(
+                          (msg.senderId && msg.senderId === curSession.clientId) ||
+                          (curSession.name && msg.name.toLowerCase() === curSession.name.toLowerCase()) ||
+                          msg.name === "You"
+                        );
+                        const activeReaction = userReactions[msg.id];
+                        const normReactions = normalizeReactions(msg.reactions);
+                        const reactionEntries = Object.entries(normReactions).filter(([, count]) => count > 0);
 
-                            {/* Quick Emoji Reaction Action Bar */}
-                            <div className="flex items-center gap-1 mt-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                              {["❤️", "🔥", "🚀", "👍"].map((emoji) => (
-                                <button
-                                  key={emoji}
-                                  type="button"
-                                  onClick={() => handleQuickReact(msg.id, emoji)}
-                                  className="text-[10px] hover:scale-125 active:scale-95 transition-transform p-0.5 cursor-pointer"
-                                >
-                                  {emoji} {msg.reactions?.[emoji] ? `(${msg.reactions[emoji]})` : ""}
-                                </button>
-                              ))}
+                        return (
+                          <div
+                            key={msg.id}
+                            className={`p-2.5 rounded-2xl border transition flex items-start gap-2.5 text-xs group ${
+                              isFromMe
+                                ? "bg-accent/[0.08] border-accent/25 hover:border-accent/40"
+                                : "bg-white/5 border-white/10 hover:border-white/20"
+                            }`}
+                          >
+                            <div
+                              className={`w-6 h-6 rounded-xl font-bold text-[10px] flex items-center justify-center shrink-0 shadow-xs ${
+                                isFromMe
+                                  ? "bg-accent text-accent-contrast"
+                                  : "bg-gradient-to-tr from-white/20 to-white/5 text-white/90 border border-white/10"
+                              }`}
+                            >
+                              {msg.name.slice(0, 1).toUpperCase()}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className={`font-semibold text-[11px] truncate ${isFromMe ? "text-accent" : "text-white/90"}`}>
+                                  {isFromMe ? (curSession.name || "You") : msg.name}
+                                </span>
+                                <span className="text-[9px] text-white/35 font-mono shrink-0">
+                                  {new Date(msg.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                </span>
+                              </div>
+                              <p className={`text-[11px] leading-relaxed break-words mt-0.5 ${
+                                msg.removed ? "italic text-white/40 select-none" : "text-white/85"
+                              }`}>
+                                {msg.text}
+                              </p>
+
+                              {/* Live Reactions Summary Badges */}
+                              {reactionEntries.length > 0 && (
+                                <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                                  {reactionEntries.map(([key, count]) => {
+                                    const emo = KEY_TO_UNICODE[key] || key;
+                                    const isMine = activeReaction === key;
+                                    return (
+                                      <button
+                                        key={key}
+                                        type="button"
+                                        onClick={() => handleQuickReact(msg.id, key)}
+                                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition cursor-pointer border ${
+                                          isMine
+                                            ? "bg-accent/25 border-accent text-white font-bold shadow-xs scale-105 ring-1 ring-accent/30"
+                                            : "bg-white/10 border-white/15 text-white/80 hover:bg-white/20"
+                                        }`}
+                                        title={isMine ? "Remove your reaction" : `React with ${emo}`}
+                                      >
+                                        <span>{emo}</span>
+                                        <span className="font-mono text-[9px]">{count}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {/* Quick Emoji Reaction Action Bar */}
+                              {!msg.removed && (
+                                <div className="flex items-center gap-1 mt-1.5 pt-1 border-t border-white/5 opacity-60 group-hover:opacity-100 transition-opacity">
+                                  <span className="text-[9px] text-white/35 font-medium mr-0.5">React:</span>
+                                  {[
+                                    { key: "heart", emo: "❤️" },
+                                    { key: "flame", emo: "🔥" },
+                                    { key: "rocket", emo: "🚀" },
+                                    { key: "thumbsup", emo: "👍" },
+                                    { key: "smile", emo: "😂" },
+                                  ].map(({ key, emo }) => {
+                                    const isSelected = activeReaction === key;
+                                    return (
+                                      <button
+                                        key={key}
+                                        type="button"
+                                        onClick={() => handleQuickReact(msg.id, key)}
+                                        className={`text-[11px] hover:scale-130 active:scale-95 transition-all p-0.5 rounded cursor-pointer ${
+                                          isSelected
+                                            ? "scale-115 bg-white/20 ring-1 ring-accent"
+                                            : "hover:bg-white/10"
+                                        }`}
+                                        title={isSelected ? `Remove ${emo}` : `React with ${emo}`}
+                                      >
+                                        {emo}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     ) : (
                       <div className="py-6 text-center text-white/40 text-xs">
                         No recent messages yet. Say hello below!
