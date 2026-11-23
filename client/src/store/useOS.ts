@@ -20,6 +20,8 @@ import {
 } from "../lib/colorHarmonizer";
 import { DARK_NATURE_SCENES } from "../data/darkNatureScenes";
 
+export type LiveShowParticleMode = "fireflies" | "stars" | "embers" | "off";
+
 interface OSState {
   windows: WindowState[];
   accent: string;
@@ -63,6 +65,9 @@ interface OSState {
   setLiveShowEnabled: (enabled: boolean) => void;
   liveShowTimeout: number;
   setLiveShowTimeout: (minutes: number) => void;
+  liveShowParticleMode: LiveShowParticleMode;
+  setLiveShowParticleMode: (mode: LiveShowParticleMode) => void;
+  cycleLiveShowParticleMode: () => void;
   isLiveShowActive: boolean;
   setLiveShowActive: (active: boolean) => void;
   startLiveShow: () => void;
@@ -423,6 +428,19 @@ export const useOS = create<OSState>((set, get) => ({
   setLiveShowTimeout: (minutes: number) => {
     localStorage.setItem("os_liveshow_timeout", String(minutes));
     set({ liveShowTimeout: minutes });
+  },
+  liveShowParticleMode: typeof window !== "undefined"
+    ? ((localStorage.getItem("os_liveshow_particle_mode") as LiveShowParticleMode) || "fireflies")
+    : "fireflies",
+  setLiveShowParticleMode: (mode: LiveShowParticleMode) => {
+    localStorage.setItem("os_liveshow_particle_mode", mode);
+    set({ liveShowParticleMode: mode });
+  },
+  cycleLiveShowParticleMode: () => {
+    const modes: LiveShowParticleMode[] = ["fireflies", "stars", "embers", "off"];
+    const current = get().liveShowParticleMode;
+    const next = modes[(modes.indexOf(current) + 1) % modes.length];
+    get().setLiveShowParticleMode(next);
   },
   isLiveShowActive: false,
   setLiveShowActive: (active: boolean) => set({ isLiveShowActive: active }),
