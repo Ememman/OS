@@ -84,6 +84,9 @@ interface OSState {
   toggleParticles: () => void;
   widgetsVisible: boolean;
   toggleWidgets: () => void;
+  dynamicIslandEnabled: boolean;
+  setDynamicIslandEnabled: (enabled: boolean) => void;
+  toggleDynamicIsland: () => void;
   nightShift: boolean;
   toggleNightShift: () => void;
   controlCenterOpen: boolean;
@@ -495,6 +498,17 @@ export const useOS = create<OSState>((set, get) => ({
     const next = !get().widgetsVisible;
     localStorage.setItem("os_widgets", next ? "on" : "off");
     set({ widgetsVisible: next });
+  },
+
+  // Dynamic Island (iPhone Style for macOS & Windows)
+  dynamicIslandEnabled: typeof window !== "undefined" ? localStorage.getItem("os_dynamic_island") !== "off" : true,
+  setDynamicIslandEnabled: (enabled: boolean) => {
+    localStorage.setItem("os_dynamic_island", enabled ? "on" : "off");
+    set({ dynamicIslandEnabled: enabled });
+  },
+  toggleDynamicIsland: () => {
+    const next = !get().dynamicIslandEnabled;
+    get().setDynamicIslandEnabled(next);
   },
 
   // Night Shift Mode (disabled/removed)
