@@ -197,33 +197,46 @@ liveUpdates.forEach((u) => {
   };
 });
 
-// Real-time GitHub synchronizer for EmanExe/OS Pull Requests
+// Real-time GitHub synchronizer for Ememman/OS Pull Requests
 let lastGithubSync = 0;
+let repoStats = { total: 280, merged: 280, open: 0, closed: 280 };
+
 async function syncGithubUpdates() {
   if (Date.now() - lastGithubSync < 45000) return; // 45s rate-limit guard
   lastGithubSync = Date.now();
   try {
-    const res = await fetch("https://api.github.com/repos/EmanExe/OS/pulls?state=all&per_page=30", {
+    const res = await fetch("https://api.github.com/repos/Ememman/OS/pulls?state=all&per_page=100", {
       headers: { "User-Agent": "PortfolioOS-Server", Accept: "application/vnd.github.v3+json" }
     });
     if (!res.ok) return;
     const pulls = await res.json();
     if (!Array.isArray(pulls)) return;
 
+    // Track highest PR number and calculate true repo metrics
+    let maxNumber = repoStats.total;
+    let openCount = 0;
+    let closedCount = 0;
+
     for (const pr of pulls) {
       const prNumber = pr.number;
+      if (typeof prNumber === "number" && prNumber > maxNumber) {
+        maxNumber = prNumber;
+      }
+      if (pr.state === "open") openCount++;
+      else closedCount++;
+
       const id = `pr-${prNumber}`;
       if (liveUpdates.some((u) => u.id === id)) continue;
 
       const title = pr.title || `Pull Request #${prNumber}`;
       const rawBody = (pr.body || "").trim();
       const branch = pr.head?.ref || "main";
-      const author = pr.user?.login || "EmanExe";
+      const author = pr.user?.login || "Ememman";
       const authorAvatar = pr.user?.avatar_url || "";
       const status = pr.merged_at ? "merged" : pr.state === "closed" ? "closed" : "open";
       const date = pr.created_at ? pr.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10);
-      const url = pr.html_url || `https://github.com/EmanExe/OS/pull/${prNumber}`;
-      const body = rawBody || `Pull Request #${prNumber} on EmanExe/OS: ${title}. Branch: ${branch}`;
+      const url = pr.html_url || `https://github.com/Ememman/OS/pull/${prNumber}`;
+      const body = rawBody || `Pull Request #${prNumber} on Ememman/OS: ${title}. Branch: ${branch}`;
 
       // Category detection: feature | fix | bug
       const labelNames = Array.isArray(pr.labels)
@@ -289,14 +302,28 @@ async function syncGithubUpdates() {
         updateReactions[id] = { heart: 0, fire: 0, rocket: 0, party: 0, total: 0 };
       }
     }
+
+    if (maxNumber > repoStats.total) {
+      repoStats.total = maxNumber;
+      repoStats.open = openCount;
+      repoStats.closed = maxNumber - openCount;
+      repoStats.merged = Math.max(repoStats.merged, repoStats.closed);
+    }
   } catch {
     // network or offline fallback
   }
 }
 syncGithubUpdates().catch(() => {});
 
+app.get("/api/updates/stats", (req, res) => {
+  res.json(repoStats);
+});
+
 app.get("/api/updates", async (req, res) => {
   await syncGithubUpdates().catch(() => {});
+  res.setHeader("X-Total-Count", String(repoStats.total));
+  res.setHeader("X-Merged-Count", String(repoStats.merged));
+  res.setHeader("X-Open-Count", String(repoStats.open));
   const { tag, category, priority, status, q, sort } = req.query;
   let list = [...liveUpdates];
 

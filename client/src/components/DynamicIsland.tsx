@@ -52,19 +52,35 @@ interface UpdateSnippet {
 
 const DEFAULT_UPDATES: UpdateSnippet[] = [
   {
+    id: "pr-280",
+    version: "PR #280",
+    title: "Updated Main: Core system improvements & repository synchronization",
+    tag: "feature",
+    date: "2026-11-23",
+    author: "Ememman",
+  },
+  {
+    id: "pr-279",
+    version: "PR #279",
+    title: "Strict 5-Second Auto-Dismiss Limit & Visual Countdown Progress Bar",
+    tag: "fix",
+    date: "2026-11-23",
+    author: "Ememman",
+  },
+  {
     id: "v2.0-dynamic-island",
     version: "v2.0",
     title: "iPhone-Style Dynamic Island with live Chats, Updates, & Media Hub",
     tag: "feature",
     date: "2026-11-23",
-    author: "EmanExe",
+    author: "Ememman",
   },
   {
     id: "pr-190",
     title: "Safari & Chrome Browser visual enhancements & responsive layout",
     tag: "feature",
     date: "2026-11-20",
-    author: "EmanExe",
+    author: "Ememman",
   },
   {
     id: "pr-189",
