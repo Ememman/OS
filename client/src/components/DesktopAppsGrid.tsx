@@ -201,7 +201,7 @@ function resolveDesktopOverlap(
 
 export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsGridProps) {
   const { items, combineItems, openFolder, moveItem } = useDesktopStore();
-  const { openApp, osMode, dockPosition, widgetsVisible, notify, getAppBadge } = useOS();
+  const { openApp, osMode, dockPosition, widgetsVisible, notify, getAppBadge, dynamicIslandEnabled } = useOS();
   const isWin = osMode === "win";
   const tabletQuery = useIsTablet();
   const mobileQuery = useIsMobile();
@@ -228,7 +228,7 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
       if (typeof window === "undefined") return { x: 20, y: 44 };
       const isNarrow = isMobileDevice || window.innerWidth < 640;
       const startX = isNarrow ? 16 : macDockLeft ? 104 : 28;
-      const startY = isWin ? 16 : isNarrow ? 44 : 54;
+      const startY = isWin ? 16 : isNarrow ? (dynamicIslandEnabled ? 76 : 44) : 54;
       const slotW = isNarrow ? 76 : 92;
       const slotH = isNarrow ? 84 : 96;
 
@@ -244,7 +244,7 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
         y: startY + row * slotH,
       };
     },
-    [isWin, macDockLeft, widgetsVisible, isMobileDevice]
+    [isWin, macDockLeft, widgetsVisible, isMobileDevice, dynamicIslandEnabled]
   );
 
   // --------------------------------------------------------------------------------------------------
