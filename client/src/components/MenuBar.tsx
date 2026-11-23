@@ -920,7 +920,7 @@ export default function MenuBar() {
       </div>
 
       <div
-        className={`flex items-center gap-1.5 sm:gap-2 text-white/90 transition-all duration-300 ease-out ${
+        className={`flex items-center gap-1 sm:gap-2 text-white/90 transition-all duration-300 ease-out ${
           isIslandWide ? "translate-x-1 sm:translate-x-0" : "translate-x-0"
         }`}
       >
@@ -928,7 +928,7 @@ export default function MenuBar() {
         <button
           onClick={toggleMissionControl}
           title="Mission Control (F3)"
-          className={`items-center justify-center p-1.5 rounded-lg transition-all duration-300 cursor-pointer ${
+          className={`items-center justify-center p-1 sm:p-1.5 rounded-lg transition-all duration-300 cursor-pointer ${
             isIslandWide ? "hidden md:flex" : "flex"
           } ${
             missionControlOpen
@@ -943,7 +943,7 @@ export default function MenuBar() {
         <button
           onClick={openSpotlight}
           title="Spotlight Search (⌘K)"
-          className={`items-center gap-1.5 hover:text-white transition-all duration-300 p-1.5 rounded-lg hover:bg-white/10 text-white/80 cursor-pointer ${
+          className={`items-center gap-1 sm:gap-1.5 hover:text-white transition-all duration-300 p-1 sm:p-1.5 rounded-lg hover:bg-white/10 text-white/80 cursor-pointer ${
             isIslandWide ? "hidden sm:flex" : "flex"
           }`}
         >
@@ -967,7 +967,7 @@ export default function MenuBar() {
           onClick={toggleControlCenter}
           data-control-center-trigger="true"
           title="Control Center (Display, Sound & System)"
-          className={`flex items-center justify-center p-1.5 rounded-lg transition-all duration-300 cursor-pointer ${
+          className={`flex items-center justify-center p-1 sm:p-1.5 rounded-lg transition-all duration-300 cursor-pointer ${
             controlCenterOpen
               ? "bg-accent text-accent-contrast shadow-md shadow-accent/20"
               : "hover:bg-white/10 text-white/80 hover:text-white"
@@ -1050,7 +1050,7 @@ export default function MenuBar() {
           <button
             onClick={() => setDateOpen(!dateOpen)}
             title="View Calendar & Clock"
-            className={`font-mono text-[12px] sm:text-[14px] whitespace-nowrap px-1.5 py-1 rounded-lg transition-colors cursor-pointer ${
+            className={`font-mono text-[11px] sm:text-[14px] whitespace-nowrap px-1 sm:px-1.5 py-0.5 sm:py-1 rounded-lg transition-colors cursor-pointer ${
               dateOpen ? "bg-white/20 text-white shadow-sm" : "hover:bg-white/10 text-white font-medium"
             }`}
           >
