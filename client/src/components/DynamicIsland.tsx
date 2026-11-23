@@ -152,6 +152,7 @@ export default function DynamicIsland() {
     clearUnreadChat,
     notify,
     dismissNotification,
+    setDynamicIslandExpanded,
   } = useOS();
 
   const {
@@ -602,10 +603,13 @@ export default function DynamicIsland() {
 
   const isExpanded = isHovered || isPinned;
 
+  useEffect(() => {
+    setDynamicIslandExpanded(isExpanded);
+  }, [isExpanded, setDynamicIslandExpanded]);
+
   // Active top window title
   const activeWin = windows.filter((w) => !w.minimized).sort((a, b) => b.z - a.z)[0];
   const activeAppTitle = activeWin ? activeWin.title : "Portfolio OS";
-  const hasActiveWindow = windows.some((w) => !w.minimized);
 
   // Format seconds to mm:ss
   const formatTime = (secs: number) => {
@@ -839,20 +843,10 @@ export default function DynamicIsland() {
 
   const isMac = osMode === "mac";
 
-  // Responsive, non-overlapping positioning:
-  // On Mobile:
-  //   - When on desktop (no active window, MenuBar is visible): float below MenuBar at top-9.5 (38px)
-  //   - When an app window is active (MenuBar is hidden): float at top-1.5 like true iPhone notch
-  // On Desktop:
-  //   - macOS: centered inside MenuBar at top-0.5 sm:top-1
-  //   - Windows: floating at top-2 sm:top-2.5
-  const topPosition = isMobile
-    ? hasActiveWindow
-      ? "top-1.5"
-      : "top-9.5"
-    : isMac
-      ? "top-0.5 sm:top-1"
-      : "top-2 sm:top-2.5";
+  // Responsive positioning:
+  // - macOS & Mobile: centered seamlessly inside the top MenuBar / status cutout at top-0.5 sm:top-1
+  // - Windows: floating at top-2 sm:top-2.5
+  const topPosition = isMac ? "top-0.5 sm:top-1" : "top-2 sm:top-2.5";
 
   if (!dynamicIslandEnabled) return null;
 
