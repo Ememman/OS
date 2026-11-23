@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { GIconMoon, GIconPower } from "./icons/GravityIcons";
+import { GIconMoon, GIconPower, GIconSparkles } from "./icons/GravityIcons";
 import { DARK_NATURE_SCENES } from "../data/darkNatureScenes";
 import { useOS } from "../store/useOS";
 
@@ -17,6 +17,8 @@ export default function LiveShowWallpaper({
   const storeSceneIndex = useOS((s) => s.liveWallpaperSceneIndex);
   const autoCycle = useOS((s) => s.liveWallpaperAutoCycle);
   const setStoreSceneIndex = useOS((s) => s.setLiveWallpaperSceneIndex);
+  const particleMode = useOS((s) => s.liveShowParticleMode);
+  const cycleParticleMode = useOS((s) => s.cycleLiveShowParticleMode);
 
   const [sceneIndex, setSceneIndex] = useState(isDesktopWallpaper ? storeSceneIndex : 0);
   const [nextSceneIndex, setNextSceneIndex] = useState((sceneIndex + 1) % DARK_NATURE_SCENES.length);
@@ -24,6 +26,7 @@ export default function LiveShowWallpaper({
   const [imagesLoaded, setImagesLoaded] = useState<Record<number, boolean>>({});
   const [time, setTime] = useState("");
   const [date, setDate] = useState("");
+  const [modeNotice, setModeNotice] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Preload all high-res dark aesthetic nature scenes for instantaneous crossfading
@@ -111,6 +114,9 @@ export default function LiveShowWallpaper({
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
         changeScene(sceneIndex + 1);
+      } else if (e.key.toLowerCase() === "p" || e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        cycleParticleMode();
       } else {
         onClose();
       }
@@ -128,7 +134,23 @@ export default function LiveShowWallpaper({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("pointerdown", handlePointerWake);
     };
-  }, [isMini, isDesktopWallpaper, onClose, sceneIndex, changeScene]);
+  }, [isMini, isDesktopWallpaper, onClose, sceneIndex, changeScene, cycleParticleMode]);
+
+  // Notice toast when particle mode is changed in fullscreen mode
+  useEffect(() => {
+    if (isMini || isDesktopWallpaper) return;
+    const label =
+      particleMode === "fireflies"
+        ? "Particles: Emerald Fireflies 🌿"
+        : particleMode === "stars"
+        ? "Particles: Twinkling Stars ✨"
+        : particleMode === "embers"
+        ? "Particles: Golden Embers 🔥"
+        : "Particles: Disabled 🚫";
+    setModeNotice(label);
+    const timer = setTimeout(() => setModeNotice(null), 1800);
+    return () => clearTimeout(timer);
+  }, [particleMode, isMini, isDesktopWallpaper]);
 
   // Touch Swipe Gesture Listener (Swipe Left / Right to switch scenes on mobile & tablets)
   useEffect(() => {
@@ -158,14 +180,13 @@ export default function LiveShowWallpaper({
     };
   }, [isMini, isDesktopWallpaper, sceneIndex, changeScene]);
 
-  // Enhanced Bioluminescent Fireflies & Forest Spores Canvas Simulation
+  // Enhanced Atmospheric Particles Simulation (Fireflies, Stars, Embers, or Off)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let animId: number;
     let width = (canvas.width = canvas.parentElement?.clientWidth || 800);
     let height = (canvas.height = canvas.parentElement?.clientHeight || 600);
 
@@ -176,25 +197,84 @@ export default function LiveShowWallpaper({
     };
     window.addEventListener("resize", handleResize);
 
-    // Multi-tier Bioluminescent Particles: foreground fireflies + background ethereal spores
-    const particleCount = isMini ? 20 : isDesktopWallpaper ? 36 : 56;
-    const particles = Array.from({ length: particleCount }).map((_, i) => {
-      const isFirefly = i % 3 === 0;
-      return {
-        x: Math.random() * width,
-        y: Math.random() * height,
-        r: isFirefly
-          ? Math.random() * (isMini ? 2.0 : 3.0) + 1.2
-          : Math.random() * 1.5 + 0.6,
-        speedY: -(Math.random() * 0.4 + 0.12),
-        swaySpeed: Math.random() * 0.02 + 0.01,
-        swayOffset: Math.random() * Math.PI * 2,
-        baseAlpha: isFirefly ? Math.random() * 0.5 + 0.45 : Math.random() * 0.3 + 0.2,
-        pulseSpeed: Math.random() * 0.035 + 0.015,
-        // 3 organic hues: Emerald Green, Deep Bioluminescent Teal, and Golden Amber
-        palette: i % 3 === 0 ? "emerald" : i % 3 === 1 ? "teal" : "amber",
+    if (particleMode === "off") {
+      ctx.clearRect(0, 0, width, height);
+      return () => {
+        window.removeEventListener("resize", handleResize);
       };
-    });
+    }
+
+    let animId: number;
+    let particles: Array<{
+      x: number;
+      y: number;
+      r: number;
+      speedY: number;
+      swaySpeed: number;
+      swayOffset: number;
+      baseAlpha: number;
+      pulseSpeed: number;
+      palette: string;
+      isSpike?: boolean;
+    }> = [];
+
+    if (particleMode === "stars") {
+      const starCount = isMini ? 35 : isDesktopWallpaper ? 65 : 95;
+      particles = Array.from({ length: starCount }).map((_, i) => {
+        const isBright = i % 4 === 0;
+        return {
+          x: Math.random() * width,
+          y: Math.random() * height,
+          r: isBright
+            ? Math.random() * (isMini ? 1.6 : 2.4) + 1.2
+            : Math.random() * 1.2 + 0.5,
+          speedY: -(Math.random() * 0.05 + 0.01),
+          swaySpeed: Math.random() * 0.008 + 0.003,
+          swayOffset: Math.random() * Math.PI * 2,
+          baseAlpha: isBright ? Math.random() * 0.45 + 0.55 : Math.random() * 0.35 + 0.25,
+          pulseSpeed: Math.random() * 0.045 + 0.02,
+          isSpike: isBright,
+          palette: i % 3 === 0 ? "white" : i % 3 === 1 ? "gold" : "ice",
+        };
+      });
+    } else if (particleMode === "embers") {
+      const emberCount = isMini ? 22 : isDesktopWallpaper ? 40 : 60;
+      particles = Array.from({ length: emberCount }).map((_, i) => {
+        const isEmber = i % 3 === 0;
+        return {
+          x: Math.random() * width,
+          y: Math.random() * height,
+          r: isEmber
+            ? Math.random() * (isMini ? 2.2 : 3.2) + 1.2
+            : Math.random() * 1.5 + 0.6,
+          speedY: -(Math.random() * 0.5 + 0.18),
+          swaySpeed: Math.random() * 0.025 + 0.015,
+          swayOffset: Math.random() * Math.PI * 2,
+          baseAlpha: isEmber ? Math.random() * 0.55 + 0.45 : Math.random() * 0.35 + 0.2,
+          pulseSpeed: Math.random() * 0.04 + 0.02,
+          palette: i % 3 === 0 ? "amber" : i % 3 === 1 ? "coral" : "gold",
+        };
+      });
+    } else {
+      // Default: Bioluminescent Emerald & Forest Fireflies
+      const fireflyCount = isMini ? 20 : isDesktopWallpaper ? 36 : 56;
+      particles = Array.from({ length: fireflyCount }).map((_, i) => {
+        const isFirefly = i % 3 === 0;
+        return {
+          x: Math.random() * width,
+          y: Math.random() * height,
+          r: isFirefly
+            ? Math.random() * (isMini ? 2.0 : 3.0) + 1.2
+            : Math.random() * 1.5 + 0.6,
+          speedY: -(Math.random() * 0.4 + 0.12),
+          swaySpeed: Math.random() * 0.02 + 0.01,
+          swayOffset: Math.random() * Math.PI * 2,
+          baseAlpha: isFirefly ? Math.random() * 0.5 + 0.45 : Math.random() * 0.3 + 0.2,
+          pulseSpeed: Math.random() * 0.035 + 0.015,
+          palette: i % 3 === 0 ? "emerald" : i % 3 === 1 ? "teal" : "amber",
+        };
+      });
+    }
 
     let frame = 0;
     const render = () => {
@@ -203,7 +283,7 @@ export default function LiveShowWallpaper({
 
       particles.forEach((p) => {
         p.y += p.speedY;
-        p.x += Math.sin(frame * p.swaySpeed + p.swayOffset) * 0.55;
+        p.x += Math.sin(frame * p.swaySpeed + p.swayOffset) * (particleMode === "stars" ? 0.18 : 0.55);
 
         if (p.y < -20) {
           p.y = height + 10;
@@ -213,38 +293,105 @@ export default function LiveShowWallpaper({
         const alpha = Math.max(0.08, Math.min(1, p.baseAlpha + Math.sin(frame * p.pulseSpeed) * 0.28));
         const radius = p.r * (1 + Math.sin(frame * p.pulseSpeed) * 0.2);
 
-        // Soft radial bioluminescent halo
-        const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius * 3.8);
-        if (p.palette === "emerald") {
-          glow.addColorStop(0, `rgba(52, 211, 153, ${Math.min(1, alpha * 0.95)})`);
-          glow.addColorStop(0.5, `rgba(16, 185, 129, ${alpha * 0.45})`);
-          glow.addColorStop(1, "rgba(5, 150, 105, 0)");
-        } else if (p.palette === "teal") {
-          glow.addColorStop(0, `rgba(45, 212, 191, ${Math.min(1, alpha * 0.95)})`);
-          glow.addColorStop(0.5, `rgba(20, 184, 166, ${alpha * 0.45})`);
-          glow.addColorStop(1, "rgba(13, 148, 136, 0)");
-        } else {
-          glow.addColorStop(0, `rgba(251, 191, 36, ${Math.min(1, alpha * 0.95)})`);
-          glow.addColorStop(0.5, `rgba(245, 158, 11, ${alpha * 0.45})`);
-          glow.addColorStop(1, "rgba(217, 119, 6, 0)");
-        }
+        if (particleMode === "stars") {
+          // Soft starlight radial halo
+          const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius * 3.8);
+          if (p.palette === "gold") {
+            glow.addColorStop(0, `rgba(254, 240, 138, ${Math.min(1, alpha * 0.95)})`);
+            glow.addColorStop(0.5, `rgba(250, 204, 21, ${alpha * 0.35})`);
+            glow.addColorStop(1, "rgba(234, 179, 8, 0)");
+          } else if (p.palette === "ice") {
+            glow.addColorStop(0, `rgba(224, 242, 254, ${Math.min(1, alpha * 0.95)})`);
+            glow.addColorStop(0.5, `rgba(186, 230, 253, ${alpha * 0.35})`);
+            glow.addColorStop(1, "rgba(125, 211, 252, 0)");
+          } else {
+            glow.addColorStop(0, `rgba(255, 255, 255, ${Math.min(1, alpha * 0.95)})`);
+            glow.addColorStop(0.5, `rgba(241, 245, 249, ${alpha * 0.35})`);
+            glow.addColorStop(1, "rgba(255, 255, 255, 0)");
+          }
 
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, radius * 3.8, 0, Math.PI * 2);
-        ctx.fill();
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radius * 3.8, 0, Math.PI * 2);
+          ctx.fill();
 
-        // Brilliant glowing core
-        if (p.palette === "emerald") {
-          ctx.fillStyle = `rgba(209, 250, 229, ${alpha})`;
-        } else if (p.palette === "teal") {
-          ctx.fillStyle = `rgba(204, 251, 241, ${alpha})`;
+          // Delicate 4-point cross diffraction spikes for bright stars
+          if (p.isSpike) {
+            ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.75})`;
+            ctx.lineWidth = 0.75;
+            const spikeLen = radius * 4.2;
+            ctx.beginPath();
+            ctx.moveTo(p.x - spikeLen, p.y);
+            ctx.lineTo(p.x + spikeLen, p.y);
+            ctx.moveTo(p.x, p.y - spikeLen);
+            ctx.lineTo(p.x + spikeLen, p.y);
+            ctx.stroke();
+          }
+
+          // Diamond star core
+          ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(1, alpha * 1.1)})`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, Math.max(0.6, radius * 0.75), 0, Math.PI * 2);
+          ctx.fill();
+        } else if (particleMode === "embers") {
+          // Warm campfire embers
+          const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius * 3.8);
+          if (p.palette === "amber") {
+            glow.addColorStop(0, `rgba(251, 191, 36, ${Math.min(1, alpha * 0.95)})`);
+            glow.addColorStop(0.5, `rgba(245, 158, 11, ${alpha * 0.45})`);
+            glow.addColorStop(1, "rgba(217, 119, 6, 0)");
+          } else if (p.palette === "coral") {
+            glow.addColorStop(0, `rgba(251, 146, 60, ${Math.min(1, alpha * 0.95)})`);
+            glow.addColorStop(0.5, `rgba(234, 88, 12, ${alpha * 0.45})`);
+            glow.addColorStop(1, "rgba(194, 65, 12, 0)");
+          } else {
+            glow.addColorStop(0, `rgba(254, 215, 170, ${Math.min(1, alpha * 0.95)})`);
+            glow.addColorStop(0.5, `rgba(253, 186, 116, ${alpha * 0.45})`);
+            glow.addColorStop(1, "rgba(249, 115, 22, 0)");
+          }
+
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radius * 3.8, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = `rgba(255, 247, 237, ${alpha})`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radius * 0.8, 0, Math.PI * 2);
+          ctx.fill();
         } else {
-          ctx.fillStyle = `rgba(254, 243, 199, ${alpha})`;
+          // Bioluminescent emerald, teal, and amber fireflies
+          const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius * 3.8);
+          if (p.palette === "emerald") {
+            glow.addColorStop(0, `rgba(52, 211, 153, ${Math.min(1, alpha * 0.95)})`);
+            glow.addColorStop(0.5, `rgba(16, 185, 129, ${alpha * 0.45})`);
+            glow.addColorStop(1, "rgba(5, 150, 105, 0)");
+          } else if (p.palette === "teal") {
+            glow.addColorStop(0, `rgba(45, 212, 191, ${Math.min(1, alpha * 0.95)})`);
+            glow.addColorStop(0.5, `rgba(20, 184, 166, ${alpha * 0.45})`);
+            glow.addColorStop(1, "rgba(13, 148, 136, 0)");
+          } else {
+            glow.addColorStop(0, `rgba(251, 191, 36, ${Math.min(1, alpha * 0.95)})`);
+            glow.addColorStop(0.5, `rgba(245, 158, 11, ${alpha * 0.45})`);
+            glow.addColorStop(1, "rgba(217, 119, 6, 0)");
+          }
+
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radius * 3.8, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (p.palette === "emerald") {
+            ctx.fillStyle = `rgba(209, 250, 229, ${alpha})`;
+          } else if (p.palette === "teal") {
+            ctx.fillStyle = `rgba(204, 251, 241, ${alpha})`;
+          } else {
+            ctx.fillStyle = `rgba(254, 243, 199, ${alpha})`;
+          }
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radius * 0.8, 0, Math.PI * 2);
+          ctx.fill();
         }
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, radius * 0.8, 0, Math.PI * 2);
-        ctx.fill();
       });
 
       animId = requestAnimationFrame(render);
@@ -256,7 +403,7 @@ export default function LiveShowWallpaper({
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", handleResize);
     };
-  }, [isMini, isDesktopWallpaper]);
+  }, [isMini, isDesktopWallpaper, particleMode]);
 
   const currentScene = DARK_NATURE_SCENES[sceneIndex];
   const nextScene = DARK_NATURE_SCENES[nextSceneIndex];
@@ -369,7 +516,7 @@ export default function LiveShowWallpaper({
           <div className="space-y-0.5">
             <p className="text-xs font-semibold text-white drop-shadow-md truncate">{currentScene.subtitle}</p>
             <p className="text-[9px] text-emerald-300/80 font-mono tracking-wide">
-              Cycling dark nature aesthetic scenes & forest fireflies
+              Cycling dark nature aesthetic scenes & {particleMode === "stars" ? "twinkling stars" : particleMode === "embers" ? "golden embers" : particleMode === "off" ? "clean dark scenery" : "forest fireflies"}
             </p>
           </div>
         </div>
@@ -384,6 +531,24 @@ export default function LiveShowWallpaper({
             </div>
           </div>
 
+          {/* Interactive Atmospheric Particle Mode Switcher */}
+          <div className="absolute top-4 sm:top-6 right-4 sm:right-6 z-30">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                cycleParticleMode();
+              }}
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-xl border border-white/15 hover:border-emerald-500/50 text-white/90 hover:text-white text-xs font-medium transition-all duration-200 shadow-2xl cursor-pointer hover:scale-105 active:scale-95 group"
+              title="Click or press 'P' / 'S' to cycle particle styles (Fireflies / Stars / Embers / Off)"
+            >
+              <GIconSparkles size={12} className="text-emerald-400 shrink-0" />
+              <span className="capitalize font-mono text-[11px] sm:text-xs text-white/90 group-hover:text-emerald-300 transition-colors">
+                {particleMode === "off" ? "Particles: Off" : particleMode}
+              </span>
+            </button>
+          </div>
+
           {/* Center Digital Clock */}
           <div className="relative z-20 text-center space-y-3 my-auto flex flex-col items-center justify-center">
             <h1 className="font-display text-5xl sm:text-7xl md:text-8xl font-extralight tracking-tight text-white drop-shadow-[0_8px_32px_rgba(0,0,0,0.85)]">
@@ -393,6 +558,15 @@ export default function LiveShowWallpaper({
               {date}
             </p>
           </div>
+
+          {/* Realtime Particle Mode Notice Toast */}
+          {modeNotice && (
+            <div className="absolute bottom-20 z-30 pointer-events-none animate-fade-in">
+              <div className="px-4 py-2 rounded-full bg-black/75 backdrop-blur-xl border border-emerald-500/40 text-emerald-300 text-xs font-mono font-medium shadow-2xl tracking-wide">
+                {modeNotice}
+              </div>
+            </div>
+          )}
 
           {/* Footer Power Icon */}
           <div className="relative z-20 pb-4 text-center">

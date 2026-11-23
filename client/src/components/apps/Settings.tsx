@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useOS } from "../../store/useOS";
+import { useOS, type LiveShowParticleMode } from "../../store/useOS";
 import type { DockPosition, OSMode } from "../../types/os";
 import {
   GIconCheck,
@@ -34,6 +34,7 @@ import { DARK_NATURE_SCENES } from "../../data/darkNatureScenes";
 
 // Preview images for the wallpaper selector — resolved with getAssetUrl for subpath compatibility
 const PREVIEW_IMAGES: Record<string, string> = {
+  liveshow: DARK_NATURE_SCENES[0].url,
   bg1: getAssetUrl("wallpapers/BG_1.jpg"),
   bg2: getAssetUrl("wallpapers/BG_2.png"),
   bg3: getAssetUrl("wallpapers/BG_3.jpg"),
@@ -170,6 +171,8 @@ export default function Settings() {
     setLiveWallpaperAutoCycle,
     lockScreenLiveShow,
     setLockScreenLiveShow,
+    liveShowParticleMode,
+    setLiveShowParticleMode,
     setSleeping,
   } = useOS();
 
@@ -1070,12 +1073,6 @@ export default function Settings() {
                         isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-60"
                       }`}
                     />
-                    {w.id === "liveshow" && (
-                      <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-mono uppercase bg-emerald-500/90 text-black font-bold tracking-wider z-10 shadow-sm flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                        <span>LIVE</span>
-                      </span>
-                    )}
                     {isSelected && (
                       <span className="absolute top-1.5 right-1.5 w-5 h-5 aspect-square shrink-0 rounded-full bg-accent flex items-center justify-center shadow-lg shadow-accent/40 z-10">
                         <GIconCheck size={11} className="text-accent-contrast" />
@@ -1285,7 +1282,7 @@ export default function Settings() {
             }
           />
           <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
-            When inactive for {liveShowTimeout} minutes, plays a cinematic dark nature aesthetic live show with floating forest fireflies, hiding all widgets and applications.
+            When inactive for {liveShowTimeout} minutes, plays a cinematic dark nature aesthetic live show with {liveShowParticleMode === "stars" ? "twinkling celestial stars" : liveShowParticleMode === "embers" ? "warm glowing embers" : liveShowParticleMode === "off" ? "clean scenic views" : "floating forest fireflies"}, hiding all widgets and applications.
           </p>
 
           <div className="p-3.5 sm:p-4.5 rounded-2xl border border-white/10 bg-white/5 space-y-3.5">
@@ -1374,7 +1371,7 @@ export default function Settings() {
                   Lock Screen Live Show
                 </span>
                 <p className="text-[10px] sm:text-[11px] text-white/45">
-                  Play dynamic dark nature aesthetic scenes and floating fireflies on the lock screen
+                  Play dynamic dark nature aesthetic scenes and floating atmospheric particles on the lock screen
                 </p>
               </div>
               <button
@@ -1395,6 +1392,47 @@ export default function Settings() {
                   }`}
                 />
               </button>
+            </div>
+
+            {/* Live Show Atmospheric Particle Style & Toggle */}
+            <div className="pt-2.5 border-t border-white/5 space-y-2">
+              <div className="flex items-center justify-between text-xs text-white/80">
+                <div className="flex items-center gap-1.5">
+                  <GIconSparkles size={12} className="text-emerald-400" />
+                  <span className="text-[11px] font-medium text-white/70">Atmospheric Particles:</span>
+                </div>
+                <span className="text-[11px] font-mono text-accent font-semibold capitalize">
+                  {liveShowParticleMode === "off" ? "Disabled (Clean)" : liveShowParticleMode}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 min-[460px]:grid-cols-4 gap-1.5">
+                {[
+                  { id: "fireflies", label: "Fireflies", desc: "Emerald forest glow", icon: "🌿" },
+                  { id: "stars", label: "Stars", desc: "Twinkling night stars", icon: "✨" },
+                  { id: "embers", label: "Embers", desc: "Warm golden motes", icon: "🔥" },
+                  { id: "off", label: "Off", desc: "Clean nature scenery", icon: "🚫" },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      soundFx.playClick();
+                      setLiveShowParticleMode(opt.id as LiveShowParticleMode);
+                    }}
+                    className={`px-2 py-2 rounded-xl text-xs font-medium border transition cursor-pointer text-left flex flex-col gap-0.5 min-w-0 ${
+                      liveShowParticleMode === opt.id
+                        ? "border-emerald-500/50 bg-emerald-500/20 text-white shadow-sm ring-1 ring-emerald-500/30"
+                        : "border-white/10 bg-white/5 text-white/60 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 font-semibold">
+                      <span className="text-sm leading-none">{opt.icon}</span>
+                      <span className="truncate">{opt.label}</span>
+                    </div>
+                    <span className="text-[9px] text-white/40 truncate leading-tight">{opt.desc}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Actions: Lock Screen, Set as Desktop, Play Fullscreen */}
