@@ -2642,16 +2642,16 @@ app.delete("/api/chat/:id", (req, res) => {
   const target = chatHistory.find((m) => m.id === id);
   if (target) {
     target.removed = true;
-    target.text = "You unsent a message";
+    target.text = "Message removed";
     target.reactions = {};
     target.userReactions = {};
     pinnedChatMessages = pinnedChatMessages.filter((m) => m.id !== id);
-    io.emit("chat:message_removed", { id, removed: true });
-    io.emit("chat:message_deleted", { id, removed: true });
+    io.emit("chat:message_removed", { id, removed: true, name: target.name, senderId: target.senderId });
+    io.emit("chat:message_deleted", { id, removed: true, name: target.name, senderId: target.senderId });
     if (isDbConnected) {
       ChatModel.updateOne(
         { id },
-        { removed: true, text: "You unsent a message", reactions: {}, userReactions: {}, isPinned: false }
+        { removed: true, text: "Message removed", reactions: {}, userReactions: {}, isPinned: false }
       ).catch((err) => console.error("[DB] Failed to update chat message removal:", err.message));
     }
     return res.json({ ok: true, id, removed: true });
@@ -2914,16 +2914,16 @@ io.on("connection", (socket) => {
     const target = chatHistory.find((m) => m.id === id);
     if (target) {
       target.removed = true;
-      target.text = "You unsent a message";
+      target.text = "Message removed";
       target.reactions = {};
       target.userReactions = {};
       pinnedChatMessages = pinnedChatMessages.filter((m) => m.id !== id);
-      io.emit("chat:message_removed", { id, removed: true });
-      io.emit("chat:message_deleted", { id, removed: true });
+      io.emit("chat:message_removed", { id, removed: true, name: target.name, senderId: target.senderId });
+      io.emit("chat:message_deleted", { id, removed: true, name: target.name, senderId: target.senderId });
       if (isDbConnected) {
         ChatModel.updateOne(
           { id },
-          { removed: true, text: "You unsent a message", reactions: {}, userReactions: {}, isPinned: false }
+          { removed: true, text: "Message removed", reactions: {}, userReactions: {}, isPinned: false }
         ).catch((err) => console.error("[DB] Failed to update chat message removal:", err.message));
       }
     }
@@ -2966,6 +2966,7 @@ async function hydrateFromDatabase() {
     if (dbChats.length > 0) {
       chatHistory = dbChats.map((doc) => ({
         ...doc,
+        removed: Boolean(doc.removed || doc.text === "You unsent a message" || doc.text === "Message removed" || (doc.text && doc.text.includes("removed a message"))),
         reactions: doc.reactions ? (doc.reactions instanceof Map ? Object.fromEntries(doc.reactions) : doc.reactions) : {},
         userReactions: doc.userReactions ? (doc.userReactions instanceof Map ? Object.fromEntries(doc.userReactions) : doc.userReactions) : {}
       }));
