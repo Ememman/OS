@@ -679,7 +679,7 @@ export default function Window({ win, children }) {
         )}
       </div>
       {renderSnapFlyout()}
-      <div className={`flex-1 min-h-0 thin-scroll overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom,0px)] allow-select ${isInteracting ? "pointer-events-none select-none" : ""}`}>{children}</div>
+      <div className={`flex-1 min-h-0 overflow-hidden pb-[env(safe-area-inset-bottom,0px)] allow-select ${isInteracting ? "pointer-events-none select-none" : ""}`}>{children}</div>
       {/* 8-Direction Universal Window Resizing Frame */}
       {!win.maximized && !isMobile && (
         <>

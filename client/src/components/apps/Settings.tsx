@@ -711,7 +711,7 @@ export default function Settings() {
             <div className="flex items-center gap-2 shrink-0">
               {/* Native Color Dropper Button */}
               <label
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-white/15 bg-white/10 hover:bg-white/15 cursor-pointer text-xs transition active:scale-95 shrink-0"
+                className="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-white/15 bg-white/10 hover:bg-white/15 cursor-pointer text-xs transition active:scale-95 shrink-0 overflow-hidden"
                 title="Open system color picker"
               >
                 <input
@@ -721,13 +721,13 @@ export default function Settings() {
                     setCustomHex(e.target.value);
                     setAccent(e.target.value);
                   }}
-                  className="sr-only"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer pointer-events-auto"
                 />
                 <span
-                  className="w-4 h-4 rounded-full border border-white/20 shadow-xs"
+                  className="w-4 h-4 rounded-full border border-white/20 shadow-xs shrink-0 pointer-events-none"
                   style={{ backgroundColor: `rgb(${accent})` }}
                 />
-                <span className="text-[11px] font-medium text-white/80">Picker</span>
+                <span className="text-[11px] font-medium text-white/80 pointer-events-none">Picker</span>
               </label>
 
               {/* Hex Input */}
