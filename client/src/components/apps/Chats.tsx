@@ -518,6 +518,7 @@ export default function Chats() {
         setMessages(
           history.map((h: any) => ({
             ...h,
+            removed: Boolean(h.removed || h.text === "You unsent a message" || h.text === "Message removed" || (h.text && h.text.includes("removed a message"))),
             reactions: normalizeReactions(h.reactions),
           }))
         );
@@ -555,8 +556,16 @@ export default function Chats() {
           );
         }
 
+        const isRemoved = Boolean(
+          msg.removed ||
+          msg.text === "You unsent a message" ||
+          msg.text === "Message removed" ||
+          (msg.text && msg.text.includes("removed a message"))
+        );
+
         const normalizedMsg = {
           ...msg,
+          removed: isRemoved,
           senderId: msg.senderId || (isFromThisClient ? clientIdRef.current : undefined),
           reactions: normalizeReactions(msg.reactions),
         };
@@ -667,25 +676,45 @@ export default function Chats() {
       notify("Anti-Flood Notice", rateMsg || "Please wait a moment before sending more messages.", "warning", 3500);
     };
 
-    const onMessageRemoved = ({ id }: { id: string }) => {
+    const onMessageRemoved = ({ id, name: removedByName, senderId: removedBySenderId }: { id: string; name?: string; senderId?: string }) => {
       setMessages((m) =>
         m.map((x) =>
-          x.id === id ? { ...x, removed: true, reactions: {}, userReactions: {} } : x
+          x.id === id
+            ? {
+                ...x,
+                removed: true,
+                reactions: {},
+                userReactions: {},
+                name: x.name || removedByName || "Guest",
+                senderId: x.senderId || removedBySenderId,
+              }
+            : x
         )
       );
       setPinnedList((p) => p.filter((x) => x.id !== id));
+      setActiveReactionMenu((curr) => (curr === id ? null : curr));
     };
 
-    const onMessageDeleted = ({ id, removed }: { id: string; removed?: boolean }) => {
+    const onMessageDeleted = ({ id, removed, name: removedByName, senderId: removedBySenderId }: { id: string; removed?: boolean; name?: string; senderId?: string }) => {
       if (removed) {
-        onMessageRemoved({ id });
+        onMessageRemoved({ id, name: removedByName, senderId: removedBySenderId });
       } else {
         setMessages((m) =>
           m.map((x) =>
-            x.id === id ? { ...x, removed: true, reactions: {}, userReactions: {} } : x
+            x.id === id
+              ? {
+                  ...x,
+                  removed: true,
+                  reactions: {},
+                  userReactions: {},
+                  name: x.name || removedByName || "Guest",
+                  senderId: x.senderId || removedBySenderId,
+                }
+              : x
           )
         );
         setPinnedList((p) => p.filter((x) => x.id !== id));
+        setActiveReactionMenu((curr) => (curr === id ? null : curr));
       }
     };
 
@@ -893,7 +922,7 @@ export default function Chats() {
       socket.emit("chat:delete", { id });
       fetch(`${API_URL}/api/chat/${id}`, { method: "DELETE" }).catch(() => {});
       if (chatSound) soundFx.playPop();
-      notify("Message Removed", "You unsent a message.", "info", 2000);
+      notify("Message Removed", "You removed a message.", "info", 2000);
     },
     [chatSound, notify]
   );
@@ -1351,7 +1380,11 @@ export default function Chats() {
                   >
                     <GIconRotateLeft size={11} className="text-accent shrink-0 group-hover/quote:-rotate-45 transition-transform" />
                     <span className="font-semibold text-accent" title={m.replyTo.name}>@{formatUsername(m.replyTo.name)}:</span>
-                    <span className="truncate opacity-80">{m.replyTo.text}</span>
+                    <span className="truncate opacity-80">
+                      {m.replyTo.text === "You unsent a message" || m.replyTo.text === "Message removed"
+                        ? "Original message removed"
+                        : m.replyTo.text}
+                    </span>
                   </button>
                 )}
 
@@ -1365,7 +1398,7 @@ export default function Chats() {
                     }`}
                   >
                     <span className="italic">
-                      {isSelf ? "You unsent a message" : `${formatUsername(m.name)} unsent a message`}
+                      {isSelf ? "You removed a message" : `${formatUsername(m.name)} removed a message`}
                     </span>
                   </div>
                 ) : (
