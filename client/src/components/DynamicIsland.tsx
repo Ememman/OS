@@ -842,11 +842,22 @@ export default function DynamicIsland() {
   }, [updateFilter, prSearchQuery]);
 
   const isMac = osMode === "mac";
+  const hasActiveWindow = windows.some((w) => !w.minimized);
 
   // Responsive positioning:
   // - macOS & Mobile: centered seamlessly inside the top MenuBar / status cutout at top-0.5 sm:top-1
   // - Windows: floating at top-2 sm:top-2.5
   const topPosition = isMac ? "top-0.5 sm:top-1" : "top-2 sm:top-2.5";
+
+  // Optical centering:
+  // - When expanded or on desktop or when an active window covers MenuBar: center horizontally (left-1/2)
+  // - On mobile desktop view with MenuBar visible: shift slightly left into the empty gap between the
+  //   left </> logo and the right button cluster (left-[calc(50%-64px)]) so it never covers right buttons.
+  const horizontalPosition = isExpanded
+    ? "left-1/2 -translate-x-1/2"
+    : isMobile && !hasActiveWindow && isMac
+      ? "left-[calc(50%-64px)] sm:left-1/2 -translate-x-1/2"
+      : "left-1/2 -translate-x-1/2";
 
   if (!dynamicIslandEnabled) return null;
 
@@ -855,7 +866,7 @@ export default function DynamicIsland() {
       ref={containerRef}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`fixed ${topPosition} left-1/2 -translate-x-1/2 z-[1001] select-none flex flex-col items-center pointer-events-auto transition-[top] duration-200`}
+      className={`fixed ${topPosition} ${horizontalPosition} z-[1001] select-none flex flex-col items-center pointer-events-auto transition-[top,left] duration-200`}
     >
       <motion.div
         layout
@@ -871,7 +882,7 @@ export default function DynamicIsland() {
             ? isMobile
               ? "rounded-[24px] p-3 w-[calc(100vw-20px)] max-w-[390px] max-h-[82vh] overflow-y-auto thin-scroll"
               : "rounded-[28px] sm:rounded-[32px] p-4 sm:p-5 w-[460px] sm:w-[540px] md:w-[600px] max-w-[94vw] max-h-[85vh] overflow-y-auto thin-scroll"
-            : "rounded-full px-2.5 sm:px-4 md:px-5 h-7 sm:h-8 flex items-center justify-center gap-2 sm:gap-2.5 min-w-[110px] sm:min-w-[180px] md:min-w-[220px] hover:border-white/30 hover:shadow-[0_20px_50px_rgba(0,0,0,0.9)]"
+            : "rounded-full px-2 sm:px-4 md:px-5 h-7 sm:h-8 flex items-center justify-center gap-1.5 sm:gap-2.5 min-w-[96px] sm:min-w-[180px] md:min-w-[220px] hover:border-white/30 hover:shadow-[0_20px_50px_rgba(0,0,0,0.9)]"
         }`}
       >
         <AnimatePresence mode="wait">
