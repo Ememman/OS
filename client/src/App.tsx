@@ -24,6 +24,7 @@ import ControlCenter from "./components/ControlCenter";
 import NotificationToast from "./components/NotificationToast";
 import DesktopContextMenu from "./components/DesktopContextMenu";
 import LiveShowWallpaper from "./components/LiveShowWallpaper";
+import DynamicIsland from "./components/DynamicIsland";
 import { touchChatActivity } from "./lib/chatSession";
 import { API_URL } from "./lib/config";
 import { getSocket } from "./lib/socket";
@@ -262,7 +263,7 @@ export default function App() {
           useDesktopStore.getState().addOrPositionApp(app, e.clientX, e.clientY);
         }
       }}
-      className={`relative w-screen h-screen h-[100dvh] overflow-hidden ${reduceMotion ? "reduced-motion" : ""}`}
+      className={`relative w-screen h-screen overflow-hidden ${reduceMotion ? "reduced-motion" : ""}`}
     >
       <Wallpaper />
       <GlobalAudioPlayer />
@@ -277,6 +278,9 @@ export default function App() {
         }`}
       >
         {!isWin && (!isMobile || !hasActiveWindow) && <MenuBar />}
+
+        {/* Dynamic Island for macOS & Windows */}
+        <DynamicIsland />
 
         {/* Desktop Content & Widgets */}
         {isTablet ? (

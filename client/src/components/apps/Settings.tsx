@@ -173,6 +173,8 @@ export default function Settings() {
     setLockScreenLiveShow,
     liveShowParticleMode,
     setLiveShowParticleMode,
+    dynamicIslandEnabled,
+    toggleDynamicIsland,
     setSleeping,
   } = useOS();
 
@@ -1523,11 +1525,48 @@ export default function Settings() {
       )}
 
       {/* ============ NEXT-GEN SYSTEM & GRAVITY UI ============ */}
-      {matchesFilter("features", ["terminal", "spotlight", "notes", "calculator", "shell", "gravity ui", "features"]) && (
+      {matchesFilter("features", ["terminal", "spotlight", "notes", "calculator", "shell", "gravity ui", "features", "dynamic island", "island", "notch"]) && (
         <section className="space-y-3">
           <GroupHeader icon={GIconCpu} label="Next-Gen Features & Gravity UI" />
           <div className="p-3.5 rounded-xl border border-white/10 bg-white/5 space-y-3">
+            {/* Dynamic Island Toggle */}
             <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
+                  <GIconSparkles size={16} />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-semibold text-white truncate">Dynamic Island (iPhone Style)</h4>
+                  <p className="text-[10px] text-white/45 truncate">Interactive morphing capsule for music, alerts, and system hub</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  soundFx.playClick();
+                  toggleDynamicIsland();
+                  notify(
+                    !dynamicIslandEnabled ? "Dynamic Island Enabled" : "Dynamic Island Disabled",
+                    !dynamicIslandEnabled ? "Interactive island capsule active at top of screen." : "Dynamic island hidden.",
+                    "update",
+                    2200
+                  );
+                }}
+                className={`w-11 sm:w-12 h-6.5 rounded-full relative transition-all duration-300 shrink-0 cursor-pointer ${
+                  dynamicIslandEnabled
+                    ? "bg-accent shadow-[0_0_12px_rgba(var(--accent),0.4)]"
+                    : "bg-white/20 hover:bg-white/25"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.75 w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-300 ${
+                    dynamicIslandEnabled ? "left-[22px] sm:left-6" : "left-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
                   <GIconTerminal size={16} />
