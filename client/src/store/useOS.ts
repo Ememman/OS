@@ -87,6 +87,8 @@ interface OSState {
   dynamicIslandEnabled: boolean;
   setDynamicIslandEnabled: (enabled: boolean) => void;
   toggleDynamicIsland: () => void;
+  dynamicIslandExpanded: boolean;
+  setDynamicIslandExpanded: (expanded: boolean) => void;
   nightShift: boolean;
   toggleNightShift: () => void;
   controlCenterOpen: boolean;
@@ -512,6 +514,8 @@ export const useOS = create<OSState>((set, get) => ({
     const next = !get().dynamicIslandEnabled;
     get().setDynamicIslandEnabled(next);
   },
+  dynamicIslandExpanded: false,
+  setDynamicIslandExpanded: (expanded: boolean) => set({ dynamicIslandExpanded: expanded }),
 
   // Night Shift Mode (disabled/removed)
   nightShift: false,

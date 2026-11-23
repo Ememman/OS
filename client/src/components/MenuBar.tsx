@@ -196,7 +196,12 @@ export default function MenuBar() {
     toggleSystemSounds,
     notify,
     resetDefaults,
+    notification,
+    dynamicIslandEnabled,
+    dynamicIslandExpanded,
   } = useOS();
+
+  const isIslandWide = dynamicIslandEnabled && (Boolean(notification) || dynamicIslandExpanded);
 
   const [now, setNow] = useState(new Date());
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -335,13 +340,24 @@ export default function MenuBar() {
   return (
     <div className="fixed top-0 left-0 right-0 h-8 z-[999] glass flex items-center justify-between px-3 sm:px-4 text-[14px] text-white/95 select-none shadow-md overflow-visible">
       {/* Left Menu Items (Apple, File, Edit, View, Window, Help) */}
-      <div ref={menuNavRef} className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+      <div
+        ref={menuNavRef}
+        className={`flex items-center gap-1 sm:gap-1.5 min-w-0 transition-transform duration-300 ease-out ${
+          isIslandWide ? "-translate-x-1.5 sm:translate-x-0" : "translate-x-0"
+        }`}
+      >
         {/* Apple-style OS Logo using Gravity UI */}
         <MenuDropdown
           label={
             <div className="flex items-center gap-1.5 py-0.5 font-bold tracking-tight text-white transition-opacity">
-              <GIconCode size={16} className="text-accent" />
-              <span className="hidden xs:inline text-[13px] font-semibold">Portfolio OS</span>
+              <GIconCode size={16} className="text-accent shrink-0" />
+              <span
+                className={`transition-all duration-300 ${
+                  isIslandWide ? "hidden sm:inline text-[13px] font-semibold" : "hidden xs:inline text-[13px] font-semibold"
+                }`}
+              >
+                Portfolio OS
+              </span>
             </div>
           }
           isOpen={openMenu === "apple"}
@@ -903,12 +919,18 @@ export default function MenuBar() {
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 sm:gap-2 text-white/90">
+      <div
+        className={`flex items-center gap-1.5 sm:gap-2 text-white/90 transition-all duration-300 ease-out ${
+          isIslandWide ? "translate-x-1 sm:translate-x-0" : "translate-x-0"
+        }`}
+      >
         {/* Mission Control Button */}
         <button
           onClick={toggleMissionControl}
           title="Mission Control (F3)"
-          className={`flex items-center justify-center p-1.5 rounded-lg transition-all cursor-pointer ${
+          className={`items-center justify-center p-1.5 rounded-lg transition-all duration-300 cursor-pointer ${
+            isIslandWide ? "hidden md:flex" : "flex"
+          } ${
             missionControlOpen
               ? "bg-accent text-accent-contrast shadow-md shadow-accent/20"
               : "hover:bg-white/10 text-white/80 hover:text-white"
@@ -921,7 +943,9 @@ export default function MenuBar() {
         <button
           onClick={openSpotlight}
           title="Spotlight Search (⌘K)"
-          className="flex items-center gap-1.5 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10 text-white/80 cursor-pointer"
+          className={`items-center gap-1.5 hover:text-white transition-all duration-300 p-1.5 rounded-lg hover:bg-white/10 text-white/80 cursor-pointer ${
+            isIslandWide ? "hidden sm:flex" : "flex"
+          }`}
         >
           <GIconSearch size={15} />
           <span className="hidden md:inline text-[11px] text-white/40 border border-white/15 rounded px-1.5 py-0.2">⌘K</span>
@@ -931,7 +955,9 @@ export default function MenuBar() {
         <button
           onClick={() => openApp("chats")}
           title="Live Visitors — Click to open Chat"
-          className="hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+          className={`hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer ${
+            isIslandWide ? "hidden sm:block" : "block"
+          }`}
         >
           <LiveBadge compact />
         </button>
@@ -941,7 +967,7 @@ export default function MenuBar() {
           onClick={toggleControlCenter}
           data-control-center-trigger="true"
           title="Control Center (Display, Sound & System)"
-          className={`flex items-center justify-center p-1.5 rounded-lg transition-all cursor-pointer ${
+          className={`flex items-center justify-center p-1.5 rounded-lg transition-all duration-300 cursor-pointer ${
             controlCenterOpen
               ? "bg-accent text-accent-contrast shadow-md shadow-accent/20"
               : "hover:bg-white/10 text-white/80 hover:text-white"
