@@ -209,7 +209,7 @@ export function buildResumePdfBytes(): Uint8Array {
 
 export function createResumePdfBlob(): Blob {
   const bytes = buildResumePdfBytes();
-  return new Blob([bytes], { type: "application/pdf" });
+  return new Blob([bytes as unknown as BlobPart], { type: "application/pdf" });
 }
 
 export function downloadResumePdf(filename = "MendozaJamesEmmanuelCV.pdf") {

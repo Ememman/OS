@@ -56,7 +56,6 @@ export default function WeatherWidget() {
   const [hourly, setHourly] = useState<HourlyForecastItem[]>(() => generateFallbackHourly(31, 2));
   const [minMax, setMinMax] = useState<{ max: number; min: number } | null>({ max: 33, min: 26 });
   const [isLoading, setIsLoading] = useState(false);
-  const [isLive, setIsLive] = useState(false);
 
   const fetchWeather = useCallback(async () => {
     setIsLoading(true);
@@ -89,7 +88,6 @@ export default function WeatherWidget() {
 
     if (loadedData && loadedData.current) {
       setCurrent(loadedData.current);
-      setIsLive(!loadedData.fallback);
 
       if (loadedData.daily?.temperature_2m_max?.[0] !== undefined) {
         setMinMax({
@@ -147,55 +145,58 @@ export default function WeatherWidget() {
   const temp = current ? Math.round(current.temperature_2m) : 31;
   const feelsLike = current?.apparent_temperature ? Math.round(current.apparent_temperature) : null;
 
+  const humidity = current?.relative_humidity_2m ?? 65;
+  const wind = current?.wind_speed_10m ? Math.round(current.wind_speed_10m) : 12;
+
   return (
     <div
-      className="group relative rounded-2xl p-3 sm:p-4 shadow-xl w-full md:w-56 h-48 flex flex-col justify-between text-white shrink-0 select-none overflow-hidden transition-all hover:shadow-2xl"
-      style={{ background: "linear-gradient(160deg, #1c3a63, #0d2340)" }}
+      className="group relative rounded-2xl p-3.5 sm:p-4 shadow-xl w-full md:w-56 h-48 flex flex-col justify-between text-white shrink-0 select-none overflow-hidden transition-all duration-200 border border-white/12 hover:border-white/20 hover:shadow-2xl"
+      style={{ background: "linear-gradient(150deg, #1a3356, #0e1e34)" }}
     >
       {/* Top Header Row */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-semibold text-white truncate">{loc.name}</span>
-            {isLive && (
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 shadow-xs" title="Live Weather Stream" />
-            )}
+          <div className="text-sm font-bold text-white tracking-tight truncate">
+            {loc.name}
           </div>
-          <div className="text-3xl font-display font-bold leading-none mt-1 tracking-tight">
+          <div className="text-[11px] font-medium text-sky-200/80 capitalize truncate">
+            {info.label}
+          </div>
+          <div className="text-3xl font-display font-extrabold leading-none mt-1 text-white tracking-tight">
             {temp}°
-          </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-white/65 mt-1 font-mono">
-            {minMax && <span>H:{minMax.max}° L:{minMax.min}°</span>}
-            {feelsLike && (
-              <>
-                <span className="text-white/30">•</span>
-                <span className="text-white/50 text-[10px]">Feels {feelsLike}°</span>
-              </>
-            )}
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-1 shrink-0 ml-2">
+        <div className="flex flex-col items-end gap-1 shrink-0">
           <div className="flex items-center gap-1.5">
-            <Icon size={26} className="text-amber-200 drop-shadow-sm" strokeWidth={1.75} />
+            <Icon size={28} className="text-amber-300 drop-shadow-sm" strokeWidth={1.75} />
             <button
               onClick={fetchWeather}
               disabled={isLoading}
-              className="p-1 rounded-md hover:bg-white/10 text-white/40 hover:text-white transition cursor-pointer opacity-0 group-hover:opacity-100"
+              className="p-1 rounded-lg hover:bg-white/15 active:bg-white/25 text-white/50 hover:text-white transition cursor-pointer"
               title="Refresh weather data"
             >
-              <GIconRotateRight size={12} className={isLoading ? "animate-spin text-sky-400" : ""} />
+              <GIconRotateRight size={13} className={isLoading ? "animate-spin text-sky-300" : ""} />
             </button>
           </div>
-          <span className="text-[10.5px] font-medium text-white/70 text-right">{info.label}</span>
+          <div className="text-right text-[10px] text-white/60 font-mono">
+            {minMax ? `H:${minMax.max}° L:${minMax.min}°` : feelsLike ? `Feels ${feelsLike}°` : ""}
+          </div>
         </div>
       </div>
 
+      {/* Weather Highlights Row */}
+      <div className="flex items-center justify-between text-[10px] text-white/50 px-1 py-1 rounded-lg bg-black/20 font-mono">
+        {feelsLike && <span>Feels {feelsLike}°</span>}
+        <span>Humidity {humidity}%</span>
+        <span>Wind {wind}km/h</span>
+      </div>
+
       {/* Hourly Forecast Row */}
-      <div className="mt-2 pt-2 border-t border-white/10">
-        <div className="flex items-center justify-between text-white/40 text-[9px] uppercase tracking-wider font-semibold mb-1">
+      <div className="pt-1.5 border-t border-white/10">
+        <div className="flex items-center justify-between text-white/40 text-[8.5px] uppercase tracking-wider font-semibold mb-1">
           <span>Hourly Forecast</span>
-          <span className="font-mono lowercase text-[9px] text-white/30">next 6h</span>
+          <span className="font-mono lowercase text-[8.5px] text-white/30">Next 6h</span>
         </div>
         <div className="grid grid-cols-6 gap-1 text-center">
           {hourly.map((h, i) => {
@@ -203,13 +204,13 @@ export default function WeatherWidget() {
             return (
               <div
                 key={i}
-                className="flex flex-col items-center gap-0.5 p-1 rounded-lg hover:bg-white/5 transition"
+                className="flex flex-col items-center gap-0.5 py-1 px-0.5 rounded-lg hover:bg-white/10 transition"
               >
-                <span className="text-[9.5px] text-white/60 font-mono">
+                <span className="text-[9px] text-white/60 font-mono">
                   {i === 0 ? "Now" : h.time.toLocaleTimeString([], { hour: "numeric", hour12: true }).replace(" ", "")}
                 </span>
-                <HIcon size={14} className="text-white/85 my-0.5" strokeWidth={1.75} />
-                <span className="text-[10.5px] font-semibold text-white font-mono">{h.temp}°</span>
+                <HIcon size={13} className="text-sky-200 my-0.5" strokeWidth={1.75} />
+                <span className="text-[10px] font-bold text-white font-mono">{h.temp}°</span>
               </div>
             );
           })}

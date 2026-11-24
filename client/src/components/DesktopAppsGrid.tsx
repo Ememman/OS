@@ -201,7 +201,7 @@ function resolveDesktopOverlap(
 
 export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsGridProps) {
   const { items, combineItems, openFolder, moveItem } = useDesktopStore();
-  const { openApp, osMode, dockPosition, widgetsVisible, notify, getAppBadge } = useOS();
+  const { openApp, toggleApp, windows, osMode, dockPosition, widgetsVisible, notify, getAppBadge, openAppContextMenu } = useOS();
   const isWin = osMode === "win";
   const tabletQuery = useIsTablet();
   const mobileQuery = useIsMobile();
@@ -213,6 +213,38 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
   const [dragState, setDragState] = useState<DragState | null>(null);
   const dragStateRef = useRef<DragState | null>(null);
   dragStateRef.current = dragState;
+
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const lastClickRef = useRef<{ id: string; time: number }>({ id: "", time: 0 });
+
+  // Deselect on outside canvas pointerdown or Escape
+  useEffect(() => {
+    const handleOutsideDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (
+        target.closest("[data-desktop-item-id]") ||
+        target.closest("[data-dock-app]") ||
+        target.closest(".glass")
+      ) {
+        return;
+      }
+      setSelectedItemId(null);
+    };
+
+    const handleGlobalKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedItemId(null);
+      }
+    };
+
+    window.addEventListener("pointerdown", handleOutsideDown);
+    window.addEventListener("keydown", handleGlobalKey);
+    return () => {
+      window.removeEventListener("pointerdown", handleOutsideDown);
+      window.removeEventListener("keydown", handleGlobalKey);
+    };
+  }, []);
 
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startPointerRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -600,18 +632,105 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
     didDragRef.current = false;
   };
 
-  const handleItemClick = (item: DesktopItem) => {
+  const executeOpen = useCallback(
+    (item: DesktopItem) => {
+      if (item.type === "app") {
+        if (item.label?.toLowerCase().endsWith(".pdf") || item.app === "pdf-viewer") {
+          openApp("pdf-viewer");
+          return;
+        }
+        openApp(item.app);
+      } else {
+        openFolder(item.id);
+      }
+    },
+    [openApp, openFolder]
+  );
+
+  // Keyboard navigation: Enter / Space opens selected item; Delete removes desktop item
+  useEffect(() => {
+    const handleKeyAction = (e: KeyboardEvent) => {
+      if (!selectedItemId) return;
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+
+      if (e.key === "Enter" || e.key === " ") {
+        const item = items.find((it) => it.id === selectedItemId);
+        if (item) {
+          e.preventDefault();
+          executeOpen(item);
+        }
+      } else if (e.key === "Delete" || (e.key === "Backspace" && (e.metaKey || e.ctrlKey))) {
+        const item = items.find((it) => it.id === selectedItemId);
+        if (item) {
+          e.preventDefault();
+          useDesktopStore.getState().removeDesktopItem(item.id);
+          setSelectedItemId(null);
+          soundFx.playClose();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyAction);
+    return () => window.removeEventListener("keydown", handleKeyAction);
+  }, [selectedItemId, items, executeOpen]);
+
+  const handleItemClick = (e: React.MouseEvent, item: DesktopItem) => {
+    e.stopPropagation();
     if (didDragRef.current) return;
+
+    if (isMobileDevice) {
+      executeOpen(item);
+      return;
+    }
+
+    // If an application is already open: 1 click opens/focuses, click again minimizes (older function)
     if (item.type === "app") {
-      if (item.label?.toLowerCase().endsWith(".pdf") || item.app === "pdf-viewer") {
-        openApp("pdf-viewer");
+      const targetApp = item.label?.toLowerCase().endsWith(".pdf") || item.app === "pdf-viewer" ? "pdf-viewer" : item.app;
+      const appWin = windows.find((w) => w.app === targetApp);
+      if (appWin) {
+        toggleApp(targetApp);
+        lastClickRef.current = { id: "", time: 0 };
+        setSelectedItemId(null);
         return;
       }
-      openApp(item.app);
+    }
+
+    // Application is closed or item is a folder: 1 click highlights/selects, double click opens
+    const now = Date.now();
+    if (lastClickRef.current.id === item.id && now - lastClickRef.current.time < 380) {
+      executeOpen(item);
+      lastClickRef.current = { id: "", time: 0 };
     } else {
-      openFolder(item.id);
+      setSelectedItemId(item.id);
+      lastClickRef.current = { id: item.id, time: now };
     }
   };
+
+  const handleItemDoubleClick = (e: React.MouseEvent, item: DesktopItem) => {
+    e.stopPropagation();
+    if (!isMobileDevice) {
+      if (item.type === "app") {
+        const targetApp = item.label?.toLowerCase().endsWith(".pdf") || item.app === "pdf-viewer" ? "pdf-viewer" : item.app;
+        const appWin = windows.find((w) => w.app === targetApp);
+        if (appWin) return;
+      }
+      executeOpen(item);
+      lastClickRef.current = { id: "", time: 0 };
+    }
+  };
+
+  const isNearDockOrBar = useCallback(
+    (clientX: number, clientY: number) => {
+      if (typeof window === "undefined") return false;
+      const isBottomDock = isWin || isMobileDevice || dockPosition === "bottom";
+      if (isBottomDock && clientY > window.innerHeight - 95) return true;
+      if (!isMobileDevice && dockPosition === "left" && clientX < 95) return true;
+      if (!isMobileDevice && dockPosition === "right" && clientX > window.innerWidth - 95) return true;
+      if (!isWin && clientY < 36) return true;
+      return false;
+    },
+    [isWin, isMobileDevice, dockPosition]
+  );
 
   // -------------------------------------------------------------
   // RESPONSIVE HARDWARE-ACCELERATED FREEFORM CANVAS LAYOUT
@@ -622,11 +741,14 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
       <div
         className="relative w-full h-full pointer-events-none select-none overflow-hidden"
         onDragOver={(e) => {
+          if (isNearDockOrBar(e.clientX, e.clientY)) return;
           e.preventDefault();
           e.dataTransfer.dropEffect = "copy";
         }}
         onDrop={(e) => {
+          if (isNearDockOrBar(e.clientX, e.clientY)) return;
           e.preventDefault();
+          e.stopPropagation();
           const app =
             e.dataTransfer.getData("application/x-dock-app") ||
             e.dataTransfer.getData("text/plain");
@@ -638,6 +760,7 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
         {items.map((item, index) => {
           const isBeingDragged = dragState?.isDragging && dragState.item.id === item.id;
           const isTarget = dragState?.hoverTargetId === item.id;
+          const isSelected = selectedItemId === item.id;
 
           // Resolve stored coordinates or default responsive slot
           const def = getDefaultPosition(index);
@@ -653,7 +776,22 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
                 key={item.id}
                 data-desktop-item-id={item.id}
                 onPointerDown={(e) => handlePointerDown(e, item, currentPos)}
-                onClick={() => handleItemClick(item)}
+                onClick={(e) => handleItemClick(e, item)}
+                onDoubleClick={(e) => handleItemDoubleClick(e, item)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedItemId(item.id);
+                  openAppContextMenu({
+                    app: "folder",
+                    x: e.clientX,
+                    y: e.clientY,
+                    source: "folder",
+                    desktopItemId: item.id,
+                    folderId: item.id,
+                    customLabel: item.name,
+                  });
+                }}
                 initial={false}
                 animate={{ x: currentPos.x, y: currentPos.y }}
                 transition={{ type: "spring", stiffness: 380, damping: 28 }}
@@ -670,8 +808,9 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
               >
                 <DesktopFolderIcon
                   folder={item}
-                  onOpen={() => handleItemClick(item)}
+                  onOpen={() => executeOpen(item)}
                   isCombineTarget={isTarget}
+                  isSelected={isSelected}
                 />
                 {isTarget && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-[#0091ff] text-white text-[9px] font-bold shadow-lg shadow-[#0091ff]/50 animate-bounce pointer-events-none whitespace-nowrap z-20">
@@ -698,7 +837,22 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
               key={item.id}
               data-desktop-item-id={item.id}
               onPointerDown={(e) => handlePointerDown(e, item, currentPos)}
-              onClick={() => handleItemClick(item)}
+              onClick={(e) => handleItemClick(e, item)}
+              onDoubleClick={(e) => handleItemDoubleClick(e, item)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setSelectedItemId(item.id);
+                openAppContextMenu({
+                  app: item.app,
+                  x: e.clientX,
+                  y: e.clientY,
+                  source: "desktop",
+                  desktopItemId: item.id,
+                  customLabel: label,
+                  customColor: color,
+                });
+              }}
               initial={false}
               animate={{ x: currentPos.x, y: currentPos.y }}
               transition={{ type: "spring", stiffness: 380, damping: 28 }}
@@ -714,16 +868,22 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
               }`}
             >
               <motion.button
-                whileHover={{ scale: 1.07, y: -2 }}
-                whileTap={{ scale: 0.94 }}
+                whileHover={isBeingDragged ? undefined : { scale: 1.05, y: -2 }}
+                whileTap={isBeingDragged ? undefined : { scale: 0.94 }}
                 transition={{ type: "spring", stiffness: 450, damping: 22 }}
-                className="group flex flex-col items-center gap-1 sm:gap-1.5 w-[72px] sm:w-20 py-1.5 sm:py-2 rounded-xl outline-none cursor-grab active:cursor-grabbing select-none hover:bg-white/5 touch-none"
+                className={`group flex flex-col items-center gap-1 sm:gap-1.5 w-[76px] sm:w-20 py-1.5 sm:py-2 rounded-xl outline-none select-none cursor-grab active:cursor-grabbing touch-none transition-all duration-150 ${
+                  isSelected
+                    ? "border border-dotted border-white/70 bg-white/15 ring-1 ring-white/10 shadow-md backdrop-blur-xs"
+                    : "border border-transparent hover:bg-white/5"
+                }`}
               >
                 <div
                   className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all duration-200 border ${
                     isTarget
                       ? "ring-2 ring-[#0091ff] border-[#0091ff] shadow-[0_0_22px_rgba(0,145,255,0.7)] scale-110 bg-[#0091ff]/20"
-                      : "bg-[#0c1220]/75 backdrop-blur-md border-white/15 group-hover:border-white/30 group-hover:bg-[#0c1220]/90 shadow-lg shadow-black/40"
+                      : isSelected
+                        ? "bg-[#0c1220]/90 border-white/35 shadow-md"
+                        : "bg-[#0c1220]/75 backdrop-blur-md border-white/15 group-hover:border-white/30 group-hover:bg-[#0c1220]/90 shadow-lg shadow-black/40"
                   }`}
                   style={color ? { boxShadow: `0 0 16px ${color}33` } : undefined}
                 >
@@ -744,6 +904,15 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
                       color={color}
                     />
                   ) : null}
+
+                  {/* Windows-style shortcut arrow indicator */}
+                  {(item.id.startsWith("shortcut-") || (item as any).isShortcut) && (
+                    <div className="absolute -bottom-1 -left-1 w-3.5 h-3.5 rounded-[2px] bg-white text-[#0078d7] flex items-center justify-center shadow-xs border border-black/30 pointer-events-none z-10">
+                      <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 16 16">
+                        <path d="M4 12V6h2v4.59L11.29 5.3l1.41 1.41L7.41 12H12v2H4z" />
+                      </svg>
+                    </div>
+                  )}
 
                   {(() => {
                     const badge = getAppBadge(item.app);
@@ -777,9 +946,13 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
                   })()}
                 </div>
                 <span
-                  className="text-[10px] sm:text-[11px] font-semibold text-white/95 group-hover:text-white text-center leading-tight px-1 sm:px-1.5 py-0.5 rounded-md truncate max-w-full tracking-wide transition-colors"
+                  className={`text-[10px] sm:text-[11px] font-medium text-center leading-tight px-1.5 py-0.5 rounded-md truncate max-w-full tracking-wide transition-colors ${
+                    isSelected
+                      ? "bg-[#0078d7] text-white shadow-sm"
+                      : "text-white/95 group-hover:text-white"
+                  }`}
                   style={{
-                    textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 2px 8px rgba(0,0,0,0.85)",
+                    textShadow: isSelected ? "none" : "0 1px 3px rgba(0,0,0,0.95), 0 2px 8px rgba(0,0,0,0.85)",
                   }}
                 >
                   {label}
