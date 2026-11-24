@@ -55,14 +55,5 @@ export const galleryItems: GalleryItem[] = [
     status: "Currently on Development",
     statusBadge: "Full-Stack Ecosystem",
     description: "Award-winning full-stack ecosystem comprising React Native/Expo client & staff mobile apps, public booking website, and real-time administrative operations portal. Screenshot captures and walkthrough media currently on development."
-  },
-  {
-    id: "g-other",
-    type: "placeholder",
-    tag: "Other Projects",
-    caption: "CLI Assessments & Smart Contract Protocols",
-    status: "Currently on Development",
-    statusBadge: "Active Architecture",
-    description: "Automated CLI terminal assessment suite in PHP and decentralized Ethereum smart contracts in Solidity. Interactive demo recordings and terminal captures currently on development."
   }
 ];

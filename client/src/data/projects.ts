@@ -138,37 +138,5 @@ export const fallbackProjects: ProjectItem[] = [
       "Dark sidebar UI: icon-only when collapsed, expands on hover, #FF5000 accent"
     ],
     links: { repo: "https://github.com/Ememman", live: "https://straive-ims.infinityfreeapp.com" }
-  },
-  {
-    id: "terminal-assessment",
-    title: "Terminal Assessment — CLI Assessment Suite",
-    stack: ["PHP", "CLI", "OOP"],
-    category: "CLI / Backend",
-    categories: ["CLI / Backend"],
-    year: "2025",
-    cover: "",
-    summary:
-      "An automated CLI terminal assessment tool built in PHP, showcasing structured command routing, argument parsing, error handling, and test validation logic.",
-    highlights: [
-      "CLI command dispatcher with automated argument validation",
-      "Modular object-oriented architecture in PHP"
-    ],
-    links: { repo: "https://github.com/Ememman/TerminalAssesment2", live: "" }
-  },
-  {
-    id: "metacrafters-solidity",
-    title: "Solidity Smart Contract Token",
-    stack: ["Solidity", "Ethereum", "Smart Contracts", "Web3"],
-    category: "Blockchain",
-    categories: ["Blockchain"],
-    year: "2024",
-    cover: "",
-    summary:
-      "Decentralized Ethereum smart contract implementation in Solidity featuring minting, burning, balance mapping, and security requirements.",
-    highlights: [
-      "Mint and burn functions with balance verification conditionals",
-      "Public state variables for token name, abbreviation, and total supply"
-    ],
-    links: { repo: "https://github.com/Ememman/METACRAFTERS_SOLIDITY_MENDOZA_JAMES_EMANUEL_E._BSIT2.1", live: "" }
   }
 ];
