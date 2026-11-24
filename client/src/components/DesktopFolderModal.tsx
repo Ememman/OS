@@ -34,7 +34,7 @@ export default function DesktopFolderModal() {
     ungroupFolder,
     addAppToFolder,
   } = useDesktopStore();
-  const { openApp, notify, getAppBadge } = useOS();
+  const { openApp, notify, getAppBadge, openAppContextMenu } = useOS();
 
   const folder = items.find(
     (it) => it.id === activeFolderId && it.type === "folder"
@@ -318,6 +318,19 @@ export default function DesktopFolderModal() {
                         openApp(a.app);
                         closeFolder();
                       }
+                    }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openAppContextMenu({
+                        app: a.app,
+                        x: e.clientX,
+                        y: e.clientY,
+                        source: "folder",
+                        folderId: folder.id,
+                        customLabel: a.label,
+                        customColor: a.color,
+                      });
                     }}
                     className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center border border-white/20 hover:border-white/40 bg-black/40 hover:bg-black/60 shadow-lg shadow-black/40 transition-all cursor-grab active:cursor-grabbing relative"
                     style={{

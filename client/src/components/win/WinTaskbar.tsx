@@ -96,7 +96,7 @@ function useFlyoutDismiss(
 
 function StartMenu({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
-  const { openApp, openPowerDialog, systemSounds } = useOS();
+  const { openApp, openPowerDialog, systemSounds, openAppContextMenu } = useOS();
   const [query, setQuery] = useState("");
   useFlyoutDismiss(ref, onClose, "[data-start-trigger]");
 
@@ -177,6 +177,18 @@ function StartMenu({ onClose }: { onClose: () => void }) {
                   if (systemSounds) soundFx.playClick();
                   openApp(app);
                   onClose();
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openAppContextMenu({
+                    app,
+                    x: e.clientX,
+                    y: e.clientY,
+                    source: "start",
+                    customLabel: label,
+                    customColor: color,
+                  });
                 }}
                 className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-white/10 active:bg-white/15 active:scale-95 transition cursor-pointer group"
               >
@@ -417,6 +429,8 @@ export default function WinTaskbar() {
     systemSounds,
     dockApps,
     reorderDockApps,
+    openAppContextMenu,
+    openTaskbarContextMenu,
   } = useOS();
   const [panel, setPanel] = useState<"start" | "tray" | "weather" | "date" | null>(null);
   const isMobile = useIsMobile();
@@ -548,7 +562,14 @@ export default function WinTaskbar() {
   const iconSize = isMobile ? 18 : 19;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-12 bg-[rgba(var(--glass),0.95)] backdrop-blur-3xl border-t border-white/12 flex items-center justify-between px-1 sm:px-2 z-[900] select-none shadow-[0_-4px_30px_rgba(0,0,0,0.5)]">
+    <div
+      onContextMenu={(e) => {
+        if ((e.target as HTMLElement).closest("button, [data-dock-app]")) return;
+        e.preventDefault();
+        openTaskbarContextMenu({ x: e.clientX, y: e.clientY });
+      }}
+      className="fixed bottom-0 left-0 right-0 h-12 bg-[rgba(var(--glass),0.95)] backdrop-blur-3xl border-t border-white/12 flex items-center justify-between px-1 sm:px-2 z-[900] select-none shadow-[0_-4px_30px_rgba(0,0,0,0.5)]"
+    >
       {/* 1. Left Section: Weather chip on desktop */}
       <div className="hidden md:flex items-center flex-1 min-w-0 basis-0">
         <button
@@ -642,6 +663,18 @@ export default function WinTaskbar() {
                   onTouchEnd={handleTouchEnd}
                   onClick={() => {
                     if (!draggedApp) toggleApp(app);
+                  }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openAppContextMenu({
+                      app,
+                      x: e.clientX,
+                      y: e.clientY,
+                      source: "taskbar",
+                      customLabel: label,
+                      customColor: color,
+                    });
                   }}
                   title={`${label}${isActive ? " · Active" : isMinimized ? " · Minimized" : isOpen ? " · Running" : ""} (Drag to rearrange)`}
                   className={`relative ${btnSize} rounded-xl flex items-center justify-center transition-all shrink-0 active:scale-95 cursor-pointer select-none ${

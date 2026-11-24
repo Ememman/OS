@@ -67,6 +67,7 @@ export default function Dock() {
     getAppBadge,
     dockApps,
     reorderDockApps,
+    openAppContextMenu,
   } = useOS();
   const isMobile = useIsMobile();
   const position = isMobile ? "bottom" : dockPosition;
@@ -278,6 +279,18 @@ export default function Dock() {
                 onTouchEnd={handleTouchEnd}
                 onClick={() => {
                   if (!draggedApp) handleLaunch(app);
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openAppContextMenu({
+                    app,
+                    x: e.clientX,
+                    y: e.clientY,
+                    source: "dock",
+                    customLabel: label,
+                    customColor: color,
+                  });
                 }}
                 onMouseEnter={() => !draggedApp && setHoveredApp(app)}
                 onMouseLeave={() => setHoveredApp(null)}

@@ -23,6 +23,9 @@ import SpotlightSearch from "./components/SpotlightSearch";
 import ControlCenter from "./components/ControlCenter";
 import NotificationToast from "./components/NotificationToast";
 import DesktopContextMenu from "./components/DesktopContextMenu";
+import AppContextMenu from "./components/AppContextMenu";
+import AppPropertiesModal from "./components/AppPropertiesModal";
+import WinTaskbarContextMenu from "./components/win/WinTaskbarContextMenu";
 import LiveShowWallpaper from "./components/LiveShowWallpaper";
 import DynamicIsland from "./components/DynamicIsland";
 import { touchChatActivity } from "./lib/chatSession";
@@ -383,6 +386,9 @@ export default function App() {
           widgetsVisible={widgetsVisible}
         />
       )}
+      <AppContextMenu />
+      <AppPropertiesModal />
+      <WinTaskbarContextMenu />
       {powerDialogOpen && <PowerDialog onClose={closePowerDialog} />}
       {isSleeping && <SleepScreen />}
       <DesktopFolderModal />

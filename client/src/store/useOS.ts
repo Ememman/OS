@@ -22,6 +22,29 @@ import { DARK_NATURE_SCENES } from "../data/darkNatureScenes";
 
 export type LiveShowParticleMode = "fireflies" | "stars" | "embers" | "off";
 
+export interface AppContextMenuData {
+  app: string;
+  x: number;
+  y: number;
+  source: "desktop" | "dock" | "taskbar" | "start" | "folder";
+  desktopItemId?: string;
+  folderId?: string;
+  customLabel?: string;
+  customColor?: string;
+}
+
+export interface TaskbarContextMenuData {
+  x: number;
+  y: number;
+}
+
+export interface AppPropertiesModalData {
+  app: string;
+  label?: string;
+  isFolder?: boolean;
+  folderId?: string;
+}
+
 interface OSState {
   windows: WindowState[];
   accent: string;
@@ -100,6 +123,7 @@ interface OSState {
   snapWindow: (id: string, layout: SnapLayout) => void;
   closeAllWindows: () => void;
   minimizeAllWindows: () => void;
+  cascadeWindows: () => void;
   spotlightOpen: boolean;
   openSpotlight: () => void;
   closeSpotlight: () => void;
@@ -140,6 +164,18 @@ interface OSState {
   reorderDockApps: (fromApp: string, toApp: string) => void;
   resetDockApps: () => void;
   setPersistDockOrder: (persist: boolean) => void;
+  pinAppToDock: (app: string) => void;
+  unpinAppFromDock: (app: string) => void;
+  isAppPinnedToDock: (app: string) => boolean;
+  appContextMenu: AppContextMenuData | null;
+  openAppContextMenu: (data: AppContextMenuData) => void;
+  closeAppContextMenu: () => void;
+  taskbarContextMenu: TaskbarContextMenuData | null;
+  openTaskbarContextMenu: (data: TaskbarContextMenuData) => void;
+  closeTaskbarContextMenu: () => void;
+  appPropertiesModal: AppPropertiesModalData | null;
+  openAppProperties: (data: AppPropertiesModalData) => void;
+  closeAppProperties: () => void;
   toggleMaximize: (id: string) => void;
   toggleShowDesktop: () => void;
   moveWindow: (id: string, x: number, y: number) => void;
@@ -591,6 +627,35 @@ export const useOS = create<OSState>((set, get) => ({
     });
   },
 
+  cascadeWindows: () => {
+    if (get().systemSounds) soundFx.playPop();
+    const current = get().windows;
+    if (current.length === 0) return;
+
+    const screenW = typeof window !== "undefined" ? window.innerWidth : 1024;
+    const screenH = typeof window !== "undefined" ? window.innerHeight : 768;
+    const baseW = Math.min(680, Math.max(340, screenW - 80));
+    const baseH = Math.min(480, Math.max(280, screenH - 120));
+
+    const cascaded = current.map((w, index) => {
+      const offsetX = 30 + (index % 8) * 32;
+      const offsetY = 40 + (index % 8) * 32;
+      return {
+        ...w,
+        minimized: false,
+        maximized: false,
+        snapState: null,
+        x: offsetX,
+        y: offsetY,
+        w: baseW,
+        h: baseH,
+        z: index + 10,
+      };
+    });
+
+    set({ windows: cascaded });
+  },
+
   // System-wide Spotlight / Search
   spotlightOpen: false,
   openSpotlight: () => set({ spotlightOpen: true }),
@@ -885,6 +950,59 @@ export const useOS = create<OSState>((set, get) => ({
     } catch {}
     set({ persistDockOrder: persist });
   },
+
+  pinAppToDock: (app: string) => {
+    const current = get().dockApps;
+    if (current.includes(app)) return;
+    const updated = [...current, app];
+    try {
+      sessionStorage.setItem("os_dock_apps_order", JSON.stringify(updated));
+      if (get().persistDockOrder) {
+        localStorage.setItem("os_dock_apps_order", JSON.stringify(updated));
+      }
+    } catch {}
+    set({ dockApps: updated });
+    get().notify(
+      get().osMode === "win" ? "Pinned to Taskbar" : "Kept in Dock",
+      `App is now pinned to the ${get().osMode === "win" ? "taskbar" : "dock"}.`,
+      "success",
+      2200
+    );
+  },
+
+  unpinAppFromDock: (app: string) => {
+    const current = get().dockApps;
+    const updated = current.filter((a) => a !== app);
+    try {
+      sessionStorage.setItem("os_dock_apps_order", JSON.stringify(updated));
+      if (get().persistDockOrder) {
+        localStorage.setItem("os_dock_apps_order", JSON.stringify(updated));
+      }
+    } catch {}
+    set({ dockApps: updated });
+    get().notify(
+      get().osMode === "win" ? "Unpinned from Taskbar" : "Removed from Dock",
+      `App was unpinned from the ${get().osMode === "win" ? "taskbar" : "dock"}.`,
+      "info",
+      2200
+    );
+  },
+
+  isAppPinnedToDock: (app: string) => {
+    return get().dockApps.includes(app);
+  },
+
+  appContextMenu: null,
+  openAppContextMenu: (data) => set({ appContextMenu: data, taskbarContextMenu: null }),
+  closeAppContextMenu: () => set({ appContextMenu: null }),
+
+  taskbarContextMenu: null,
+  openTaskbarContextMenu: (data) => set({ taskbarContextMenu: data, appContextMenu: null }),
+  closeTaskbarContextMenu: () => set({ taskbarContextMenu: null }),
+
+  appPropertiesModal: null,
+  openAppProperties: (data) => set({ appPropertiesModal: data, appContextMenu: null }),
+  closeAppProperties: () => set({ appPropertiesModal: null }),
 
   minimizeWindow: (id) => {
     if (get().systemSounds) soundFx.playMinimize();

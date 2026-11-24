@@ -27,8 +27,12 @@ export default function DesktopNameModal() {
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const finalName = name.trim() || "Featured";
-    renameFolder(namingModal.folderId, finalName);
+    const finalName = name.trim() || (namingModal.isFolder === false ? "Shortcut" : "Featured");
+    if (namingModal.isFolder === false) {
+      useDesktopStore.getState().renameDesktopItem(namingModal.folderId, finalName);
+    } else {
+      renameFolder(namingModal.folderId, finalName);
+    }
   };
 
   return (

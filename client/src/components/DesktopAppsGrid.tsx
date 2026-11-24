@@ -201,7 +201,7 @@ function resolveDesktopOverlap(
 
 export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsGridProps) {
   const { items, combineItems, openFolder, moveItem } = useDesktopStore();
-  const { openApp, osMode, dockPosition, widgetsVisible, notify, getAppBadge } = useOS();
+  const { openApp, osMode, dockPosition, widgetsVisible, notify, getAppBadge, openAppContextMenu } = useOS();
   const isWin = osMode === "win";
   const tabletQuery = useIsTablet();
   const mobileQuery = useIsMobile();
@@ -654,6 +654,19 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
                 data-desktop-item-id={item.id}
                 onPointerDown={(e) => handlePointerDown(e, item, currentPos)}
                 onClick={() => handleItemClick(item)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openAppContextMenu({
+                    app: "folder",
+                    x: e.clientX,
+                    y: e.clientY,
+                    source: "folder",
+                    desktopItemId: item.id,
+                    folderId: item.id,
+                    customLabel: item.name,
+                  });
+                }}
                 initial={false}
                 animate={{ x: currentPos.x, y: currentPos.y }}
                 transition={{ type: "spring", stiffness: 380, damping: 28 }}
@@ -699,6 +712,19 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
               data-desktop-item-id={item.id}
               onPointerDown={(e) => handlePointerDown(e, item, currentPos)}
               onClick={() => handleItemClick(item)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openAppContextMenu({
+                  app: item.app,
+                  x: e.clientX,
+                  y: e.clientY,
+                  source: "desktop",
+                  desktopItemId: item.id,
+                  customLabel: label,
+                  customColor: color,
+                });
+              }}
               initial={false}
               animate={{ x: currentPos.x, y: currentPos.y }}
               transition={{ type: "spring", stiffness: 380, damping: 28 }}

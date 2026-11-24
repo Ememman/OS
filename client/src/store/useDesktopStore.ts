@@ -13,10 +13,13 @@ export const STORAGE_KEY = "portfolio_os_desktop_items_v3";
 interface DesktopStoreState {
   items: DesktopItem[];
   activeFolderId: string | null;
-  namingModal: { isOpen: boolean; folderId: string; initialName: string } | null;
+  namingModal: { isOpen: boolean; folderId: string; initialName: string; isFolder?: boolean } | null;
 
   // Actions
   addOrPositionApp: (appKey: string, x?: number, y?: number) => void;
+  removeDesktopItem: (id: string) => void;
+  renameDesktopItem: (id: string, newLabel: string) => void;
+  duplicateDesktopItem: (id: string) => void;
   moveItem: (
     id: string,
     x: number,
@@ -40,7 +43,7 @@ interface DesktopStoreState {
   addAppToFolder: (folderId: string, appKey: string) => void;
   openFolder: (folderId: string) => void;
   closeFolder: () => void;
-  openNamingModal: (folderId: string, currentName: string) => void;
+  openNamingModal: (folderId: string, currentName: string, isFolder?: boolean) => void;
   closeNamingModal: () => void;
   cleanUpDesktop: () => void;
   resetDesktop: () => void;
@@ -514,12 +517,57 @@ export const useDesktopStore = create<DesktopStoreState>((set, get) => ({
     set({ activeFolderId: null });
   },
 
-  openNamingModal: (folderId: string, currentName: string) => {
+  removeDesktopItem: (id: string) => {
+    soundFx.playClose();
+    const current = get().items;
+    const updated = current.filter((it) => it.id !== id);
+    persistItems(updated);
+    set({ items: updated });
+  },
+
+  renameDesktopItem: (id: string, newLabel: string) => {
+    soundFx.playClick();
+    const current = get().items;
+    const updated = current.map((it) => {
+      if (it.id === id) {
+        return { ...it, label: newLabel };
+      }
+      return it;
+    });
+    persistItems(updated);
+    set({ items: updated, namingModal: null });
+  },
+
+  duplicateDesktopItem: (id: string) => {
+    soundFx.playPop();
+    const current = get().items;
+    const item = current.find((it) => it.id === id);
+    if (!item) return;
+
+    const copyX = (item.x ?? 40) + 24;
+    const copyY = (item.y ?? 50) + 24;
+
+    if (item.type === "app") {
+      const copyApp: DesktopAppItem = {
+        ...item,
+        id: `app-${item.app}-copy-${Date.now()}`,
+        label: `${item.label} (Copy)`,
+        x: copyX,
+        y: copyY,
+      };
+      const updated = [...current, copyApp];
+      persistItems(updated);
+      set({ items: updated });
+    }
+  },
+
+  openNamingModal: (folderId: string, currentName: string, isFolder: boolean = true) => {
     set({
       namingModal: {
         isOpen: true,
         folderId,
         initialName: currentName,
+        isFolder,
       },
     });
   },
