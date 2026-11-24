@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useOS } from "./../store/useOS";
-import { useDesktopStore } from "../store/useDesktopStore";
 import { useIsMobile } from "../lib/useMediaQuery";
 import { soundFx } from "../lib/soundFx";
 import {
@@ -81,7 +80,37 @@ export default function Dock() {
   const [hoveredApp, setHoveredApp] = useState<string | null>(null);
   const [draggedApp, setDraggedApp] = useState<string | null>(null);
   const [dropTargetApp, setDropTargetApp] = useState<string | null>(null);
+  const [selectedDockApp, setSelectedDockApp] = useState<string | null>(null);
+  const lastDockClickRef = useRef<{ app: string; time: number }>({ app: "", time: 0 });
   const touchDragRef = useRef<{ app: string; timeout: any; isDragging: boolean } | null>(null);
+
+  // Dismiss dock selection on outside click or Escape, Enter/Space to open
+  useEffect(() => {
+    const handleOutsideDown = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target?.closest("[data-dock-app]")) {
+        setSelectedDockApp(null);
+      }
+    };
+    const handleDockKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedDockApp(null);
+      } else if ((e.key === "Enter" || e.key === " ") && selectedDockApp) {
+        const target = e.target as HTMLElement | null;
+        if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+        e.preventDefault();
+        toggleApp(selectedDockApp);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideDown);
+    document.addEventListener("touchstart", handleOutsideDown, { passive: true });
+    document.addEventListener("keydown", handleDockKey);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideDown);
+      document.removeEventListener("touchstart", handleOutsideDown);
+      document.removeEventListener("keydown", handleDockKey);
+    };
+  }, [selectedDockApp, toggleApp]);
 
   const orderedDockItems = (dockApps || [])
     .map((id) => DOCK_ITEMS_MAP[id])
@@ -99,7 +128,22 @@ export default function Dock() {
   };
 
   const handleLaunch = (app: string) => {
-    toggleApp(app);
+    if (draggedApp) return;
+
+    if (isMobile) {
+      toggleApp(app);
+      return;
+    }
+
+    const now = Date.now();
+    if (lastDockClickRef.current.app === app && now - lastDockClickRef.current.time < 380) {
+      toggleApp(app);
+      lastDockClickRef.current = { app: "", time: 0 };
+      setSelectedDockApp(null);
+    } else {
+      setSelectedDockApp(app);
+      lastDockClickRef.current = { app, time: now };
+    }
   };
 
   const handleDragStart = (e: React.DragEvent, app: string) => {
@@ -171,22 +215,13 @@ export default function Dock() {
     }
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = () => {
     if (touchDragRef.current) {
       clearTimeout(touchDragRef.current.timeout);
       if (touchDragRef.current.isDragging) {
         if (dropTargetApp && touchDragRef.current.app !== dropTargetApp) {
           reorderDockApps(touchDragRef.current.app, dropTargetApp);
           if (systemSounds) soundFx.playPop();
-        } else {
-          // Touch ended outside dock -> add or position on desktop canvas
-          const touch = e.changedTouches?.[0];
-          if (touch) {
-            const el = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (!el?.closest("[data-dock-app]") && !el?.closest(".glass")) {
-              useDesktopStore.getState().addOrPositionApp(touchDragRef.current.app, touch.clientX, touch.clientY);
-            }
-          }
         }
       }
     }
@@ -277,12 +312,18 @@ export default function Dock() {
                 onTouchStart={() => handleTouchStart(app)}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
-                onClick={() => {
-                  if (!draggedApp) handleLaunch(app);
+                onClick={() => handleLaunch(app)}
+                onDoubleClick={() => {
+                  if (!isMobile) {
+                    toggleApp(app);
+                    lastDockClickRef.current = { app: "", time: 0 };
+                    setSelectedDockApp(null);
+                  }
                 }}
                 onContextMenu={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  setSelectedDockApp(app);
                   openAppContextMenu({
                     app,
                     x: e.clientX,
@@ -297,8 +338,15 @@ export default function Dock() {
                 whileHover={draggedApp ? undefined : hoverMotion}
                 whileTap={{ scale: 0.92 }}
                 title={`${label} (Drag to rearrange)`}
-                className={`relative flex flex-col items-center justify-center shrink-0 ${size} rounded-2xl transition-colors cursor-pointer select-none`}
-                style={{ background: `linear-gradient(160deg, ${color}33, ${color}18)`, border: `1px solid ${color}30` }}
+                className={`relative flex flex-col items-center justify-center shrink-0 ${size} rounded-2xl transition-all cursor-pointer select-none ${
+                  selectedDockApp === app
+                    ? "border border-dotted border-white/80 ring-2 ring-white/35 bg-white/20 shadow-lg scale-105"
+                    : ""
+                }`}
+                style={{
+                  background: `linear-gradient(160deg, ${color}33, ${color}18)`,
+                  border: selectedDockApp === app ? "1px dotted rgba(255,255,255,0.8)" : `1px solid ${color}30`,
+                }}
               >
                 <Icon size={iconSize} color={color} />
                 {openApps.has(app) && (

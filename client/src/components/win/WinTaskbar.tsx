@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { motion } from "framer-motion";
 import { useOS } from "../../store/useOS";
-import { useDesktopStore } from "../../store/useDesktopStore";
 import { useIsMobile } from "../../lib/useMediaQuery";
 import { soundFx } from "../../lib/soundFx";
 import WeatherChip from "./WeatherChip";
@@ -438,7 +437,56 @@ export default function WinTaskbar() {
   const [date, setDate] = useState("");
   const [draggedApp, setDraggedApp] = useState<string | null>(null);
   const [dropTargetApp, setDropTargetApp] = useState<string | null>(null);
+  const [selectedTaskbarApp, setSelectedTaskbarApp] = useState<string | null>(null);
+  const lastTaskbarClickRef = useRef<{ app: string; time: number }>({ app: "", time: 0 });
   const touchDragRef = useRef<{ app: string; timeout: any; isDragging: boolean } | null>(null);
+
+  // Dismiss taskbar selection on outside click or Escape, Enter/Space to open
+  useEffect(() => {
+    const handleOutsideDown = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target?.closest("[data-dock-app]")) {
+        setSelectedTaskbarApp(null);
+      }
+    };
+    const handleTaskbarKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedTaskbarApp(null);
+      } else if ((e.key === "Enter" || e.key === " ") && selectedTaskbarApp) {
+        const target = e.target as HTMLElement | null;
+        if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+        e.preventDefault();
+        toggleApp(selectedTaskbarApp);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideDown);
+    document.addEventListener("touchstart", handleOutsideDown, { passive: true });
+    document.addEventListener("keydown", handleTaskbarKey);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideDown);
+      document.removeEventListener("touchstart", handleOutsideDown);
+      document.removeEventListener("keydown", handleTaskbarKey);
+    };
+  }, [selectedTaskbarApp, toggleApp]);
+
+  const handleTaskbarAppClick = (app: string) => {
+    if (draggedApp) return;
+
+    if (isMobile) {
+      toggleApp(app);
+      return;
+    }
+
+    const now = Date.now();
+    if (lastTaskbarClickRef.current.app === app && now - lastTaskbarClickRef.current.time < 380) {
+      toggleApp(app);
+      lastTaskbarClickRef.current = { app: "", time: 0 };
+      setSelectedTaskbarApp(null);
+    } else {
+      setSelectedTaskbarApp(app);
+      lastTaskbarClickRef.current = { app, time: now };
+    }
+  };
 
   useEffect(() => {
     const update = () => {
@@ -524,22 +572,13 @@ export default function WinTaskbar() {
     }
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = () => {
     if (touchDragRef.current) {
       clearTimeout(touchDragRef.current.timeout);
       if (touchDragRef.current.isDragging) {
         if (dropTargetApp && touchDragRef.current.app !== dropTargetApp) {
           reorderDockApps(touchDragRef.current.app, dropTargetApp);
           if (systemSounds) soundFx.playPop();
-        } else {
-          // Touch ended outside taskbar -> add or position on desktop
-          const touch = e.changedTouches?.[0];
-          if (touch) {
-            const el = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (!el?.closest("[data-dock-app]")) {
-              useDesktopStore.getState().addOrPositionApp(touchDragRef.current.app, touch.clientX, touch.clientY);
-            }
-          }
         }
       }
     }
@@ -661,12 +700,18 @@ export default function WinTaskbar() {
                   onTouchStart={() => handleTouchStart(app)}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
-                  onClick={() => {
-                    if (!draggedApp) toggleApp(app);
+                  onClick={() => handleTaskbarAppClick(app)}
+                  onDoubleClick={() => {
+                    if (!isMobile) {
+                      toggleApp(app);
+                      lastTaskbarClickRef.current = { app: "", time: 0 };
+                      setSelectedTaskbarApp(null);
+                    }
                   }}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    setSelectedTaskbarApp(app);
                     openAppContextMenu({
                       app,
                       x: e.clientX,
@@ -678,14 +723,21 @@ export default function WinTaskbar() {
                   }}
                   title={`${label}${isActive ? " · Active" : isMinimized ? " · Minimized" : isOpen ? " · Running" : ""} (Drag to rearrange)`}
                   className={`relative ${btnSize} rounded-xl flex items-center justify-center transition-all shrink-0 active:scale-95 cursor-pointer select-none ${
-                    isActive
-                      ? "bg-white/16 border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
-                      : isMinimized
-                        ? "bg-white/5 hover:bg-white/10"
-                        : isOpen
-                          ? "bg-white/10 hover:bg-white/15"
-                          : "hover:bg-white/10"
+                    selectedTaskbarApp === app
+                      ? "border border-dotted border-white/80 ring-2 ring-sky-400/50 bg-white/20 shadow-sm scale-105"
+                      : isActive
+                        ? "bg-white/16 border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
+                        : isMinimized
+                          ? "bg-white/5 hover:bg-white/10"
+                          : isOpen
+                            ? "bg-white/10 hover:bg-white/15"
+                            : "hover:bg-white/10"
                   }`}
+                  style={
+                    selectedTaskbarApp === app
+                      ? { border: "1px dotted rgba(255, 255, 255, 0.8)" }
+                      : undefined
+                  }
                 >
                   <Icon size={iconSize} color={color} />
                   {isOpen && (

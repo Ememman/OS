@@ -244,10 +244,21 @@ export default function App() {
 
   const hasActiveWindow = windows.some((w) => !w.minimized);
 
+  const isNearDockOrBar = (clientX: number, clientY: number) => {
+    if (typeof window === "undefined") return false;
+    const isBottomDock = isWin || isMobile || dockPosition === "bottom";
+    if (isBottomDock && clientY > window.innerHeight - 95) return true;
+    if (!isMobile && dockPosition === "left" && clientX < 95) return true;
+    if (!isMobile && dockPosition === "right" && clientX > window.innerWidth - 95) return true;
+    if (!isWin && clientY < 36) return true;
+    return false;
+  };
+
   return (
     <div
       onContextMenu={handleDesktopContextMenu}
       onDragOver={(e) => {
+        if (isNearDockOrBar(e.clientX, e.clientY)) return;
         // Allow dropping dock applications onto the desktop canvas
         if (
           e.dataTransfer.types.includes("application/x-dock-app") ||
@@ -258,6 +269,7 @@ export default function App() {
         }
       }}
       onDrop={(e) => {
+        if (isNearDockOrBar(e.clientX, e.clientY)) return;
         const app =
           e.dataTransfer.getData("application/x-dock-app") ||
           e.dataTransfer.getData("text/plain");
