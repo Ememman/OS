@@ -9,6 +9,7 @@ interface DesktopFolderIconProps {
   onOpen: () => void;
   style?: CSSProperties;
   isCombineTarget?: boolean;
+  isSelected?: boolean;
 }
 
 export default function DesktopFolderIcon({
@@ -16,6 +17,7 @@ export default function DesktopFolderIcon({
   onOpen,
   style,
   isCombineTarget,
+  isSelected,
 }: DesktopFolderIconProps) {
   const { getAppBadge } = useOS();
   // Mini-grid displays up to 9 apps (3x3)
@@ -32,7 +34,11 @@ export default function DesktopFolderIcon({
       onClick={onOpen}
       onDoubleClick={onOpen}
       style={{ touchAction: "none", ...style }}
-      className="group relative flex flex-col items-center gap-1 sm:gap-1.5 w-full max-w-[84px] sm:w-20 py-1.5 sm:py-2 rounded-xl outline-none select-none cursor-pointer"
+      className={`group relative flex flex-col items-center gap-1 sm:gap-1.5 w-full max-w-[84px] sm:w-20 py-1.5 sm:py-2 rounded-xl outline-none select-none cursor-pointer transition-all duration-150 ${
+        isSelected
+          ? "border border-dotted border-white/70 bg-white/15 ring-1 ring-white/10 shadow-md backdrop-blur-xs"
+          : "border border-transparent hover:bg-white/5"
+      }`}
     >
       {/* Folder Container: Frosted Glass Squircle with floating notification badge */}
       <div className="relative w-12 h-12 sm:w-14 sm:h-14 shrink-0">
@@ -97,9 +103,13 @@ export default function DesktopFolderIcon({
 
       {/* Folder Name Label */}
       <span
-        className="text-[10px] sm:text-[11px] font-semibold text-white text-center leading-tight px-1.5 py-0.5 rounded-md truncate max-w-full tracking-wide transition-colors group-hover:text-white text-white/95"
+        className={`text-[10px] sm:text-[11px] font-medium text-center leading-tight px-1.5 py-0.5 rounded-md truncate max-w-full tracking-wide transition-colors ${
+          isSelected
+            ? "bg-[#0078d7] text-white shadow-sm"
+            : "text-white/95 group-hover:text-white"
+        }`}
         style={{
-          textShadow: "0 1px 3px rgba(0,0,0,0.95), 0 2px 8px rgba(0,0,0,0.85)",
+          textShadow: isSelected ? "none" : "0 1px 3px rgba(0,0,0,0.95), 0 2px 8px rgba(0,0,0,0.85)",
         }}
         title={folder.name}
       >

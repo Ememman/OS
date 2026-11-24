@@ -23,6 +23,10 @@ import SpotlightSearch from "./components/SpotlightSearch";
 import ControlCenter from "./components/ControlCenter";
 import NotificationToast from "./components/NotificationToast";
 import DesktopContextMenu from "./components/DesktopContextMenu";
+import AppContextMenu from "./components/AppContextMenu";
+import AppPropertiesModal from "./components/AppPropertiesModal";
+import WinTaskbarContextMenu from "./components/win/WinTaskbarContextMenu";
+import WinTaskbarSettingsModal from "./components/win/WinTaskbarSettingsModal";
 import LiveShowWallpaper from "./components/LiveShowWallpaper";
 import DynamicIsland from "./components/DynamicIsland";
 import { touchChatActivity } from "./lib/chatSession";
@@ -241,10 +245,21 @@ export default function App() {
 
   const hasActiveWindow = windows.some((w) => !w.minimized);
 
+  const isNearDockOrBar = (clientX: number, clientY: number) => {
+    if (typeof window === "undefined") return false;
+    const isBottomDock = isWin || isMobile || dockPosition === "bottom";
+    if (isBottomDock && clientY > window.innerHeight - 95) return true;
+    if (!isMobile && dockPosition === "left" && clientX < 95) return true;
+    if (!isMobile && dockPosition === "right" && clientX > window.innerWidth - 95) return true;
+    if (!isWin && clientY < 36) return true;
+    return false;
+  };
+
   return (
     <div
       onContextMenu={handleDesktopContextMenu}
       onDragOver={(e) => {
+        if (isNearDockOrBar(e.clientX, e.clientY)) return;
         // Allow dropping dock applications onto the desktop canvas
         if (
           e.dataTransfer.types.includes("application/x-dock-app") ||
@@ -255,6 +270,7 @@ export default function App() {
         }
       }}
       onDrop={(e) => {
+        if (isNearDockOrBar(e.clientX, e.clientY)) return;
         const app =
           e.dataTransfer.getData("application/x-dock-app") ||
           e.dataTransfer.getData("text/plain");
@@ -383,6 +399,10 @@ export default function App() {
           widgetsVisible={widgetsVisible}
         />
       )}
+      <AppContextMenu />
+      <AppPropertiesModal />
+      <WinTaskbarContextMenu />
+      <WinTaskbarSettingsModal />
       {powerDialogOpen && <PowerDialog onClose={closePowerDialog} />}
       {isSleeping && <SleepScreen />}
       <DesktopFolderModal />

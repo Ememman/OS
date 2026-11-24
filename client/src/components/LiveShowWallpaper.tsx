@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { GIconMoon, GIconPower, GIconSparkles } from "./icons/GravityIcons";
+import { GIconMoon, GIconPower } from "./icons/GravityIcons";
 import { DARK_NATURE_SCENES } from "../data/darkNatureScenes";
 import { useOS } from "../store/useOS";
 
@@ -527,26 +527,8 @@ export default function LiveShowWallpaper({
           <div className="relative z-20 mt-3 sm:mt-6 w-full flex items-center justify-center">
             <div className="inline-flex items-center justify-center gap-2 text-white/80 text-xs tracking-wider uppercase font-medium bg-black/50 backdrop-blur-xl px-4 py-2 rounded-full border border-emerald-500/25 shadow-2xl">
               <GIconMoon size={13} className="text-emerald-400 shrink-0" />
-              <span className="leading-none text-center">Dark Nature · Live Show</span>
+              <span className="leading-none text-center">Live Show</span>
             </div>
-          </div>
-
-          {/* Interactive Atmospheric Particle Mode Switcher */}
-          <div className="absolute top-4 sm:top-6 right-4 sm:right-6 z-30">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                cycleParticleMode();
-              }}
-              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-xl border border-white/15 hover:border-emerald-500/50 text-white/90 hover:text-white text-xs font-medium transition-all duration-200 shadow-2xl cursor-pointer hover:scale-105 active:scale-95 group"
-              title="Click or press 'P' / 'S' to cycle particle styles (Fireflies / Stars / Embers / Off)"
-            >
-              <GIconSparkles size={12} className="text-emerald-400 shrink-0" />
-              <span className="capitalize font-mono text-[11px] sm:text-xs text-white/90 group-hover:text-emerald-300 transition-colors">
-                {particleMode === "off" ? "Particles: Off" : particleMode}
-              </span>
-            </button>
           </div>
 
           {/* Center Digital Clock */}

@@ -124,6 +124,7 @@ export const GIconBriefcase = (props: any) => <GravityIcon icon={(GIcons as any)
 export const GIconGraduationCap = (props: any) => <GravityIcon icon={(GIcons as any).GraduationCap || GIcons.BookOpen} {...props} />;
 export const GIconPersons = (props: any) => <GravityIcon icon={GIcons.Persons || GIcons.Person} {...props} />;
 export const GIconPencil = (props: any) => <GravityIcon icon={GIcons.Pencil} {...props} />;
+export const GIconArrowUpRight = (props: any) => <GravityIcon icon={(GIcons as any).ArrowUpRight || GIcons.ArrowUpRightFromSquare || GIcons.Link} {...props} />;
 export const GIconExternalLink = (props: any) => <GravityIcon icon={GIcons.ArrowUpRightFromSquare || GIcons.Link} {...props} />;
 export const GIconGithub = (props: any) => <GravityIcon icon={GIcons.LogoGithub || GIcons.Code} {...props} />;
 export const GIconLinkedin = (props: any) => (

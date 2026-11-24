@@ -6,11 +6,12 @@ interface DesktopIconProps {
   icon: ComponentType<{ size?: number; className?: string; color?: string }>;
   label: string;
   onOpen: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
   style?: CSSProperties;
   color?: string;
 }
 
-export default function DesktopIcon({ icon: Icon, label, onOpen, style, color }: DesktopIconProps) {
+export default function DesktopIcon({ icon: Icon, label, onOpen, onContextMenu, style, color }: DesktopIconProps) {
   const [selected, setSelected] = useState(false);
   const isMobile = useIsMobile();
   const lastTap = useRef(0);
@@ -32,6 +33,7 @@ export default function DesktopIcon({ icon: Icon, label, onOpen, style, color }:
     <motion.button
       onClick={handleClick}
       onDoubleClick={onOpen}
+      onContextMenu={onContextMenu}
       onBlur={() => setSelected(false)}
       style={{ touchAction: "pan-y", ...style }}
       whileHover={isMobile ? undefined : { scale: 1.07, y: -2 }}

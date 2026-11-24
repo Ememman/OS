@@ -1791,13 +1791,13 @@ export default function DynamicIsland() {
                       type="button"
                       onClick={() => {
                         if (systemSounds) soundFx.playClick();
-                        setThemeMode(themeMode === "oled" ? "dark" : themeMode === "dark" ? "light" : "oled");
+                        setThemeMode(themeMode === "night" ? "dark" : themeMode === "dark" ? "light" : "night");
                       }}
                       className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition cursor-pointer flex flex-col items-center justify-center gap-1"
                     >
                       <GIconMoon size={14} className="text-indigo-400" />
                       <span className="text-[10px] text-white/80 font-medium capitalize truncate">
-                        {themeMode}
+                        {themeMode === "night" ? "OLED" : themeMode}
                       </span>
                     </button>
 
