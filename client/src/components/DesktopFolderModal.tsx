@@ -52,7 +52,7 @@ export default function DesktopFolderModal() {
   const activeAppRef = useRef<DesktopAppItem | null>(null);
   const startPointerRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const didDragRef = useRef(false);
-  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     dragStateRef.current = dragState;

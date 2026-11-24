@@ -163,6 +163,7 @@ export default function Settings() {
     liveShowTimeout,
     setLiveShowTimeout,
     startLiveShow,
+    openTaskbarSettingsModal,
     liveWallpaperSceneIndex,
     setLiveWallpaperSceneIndex,
     nextLiveWallpaperScene,
@@ -821,6 +822,44 @@ export default function Settings() {
                 {dockPosition === o.id && <GIconCheck size={11} className="text-accent" />}
               </button>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Windows Taskbar Configuration - visible in Windows mode */}
+      {osMode === "win" && matchesFilter("appearance", ["taskbar", "taskbar settings", "alignment", "widgets", "badges"]) && (
+        <section className="space-y-3">
+          <GroupHeader
+            icon={GIconSliders}
+            label="Windows Taskbar Settings"
+            rightElement={
+              <button
+                type="button"
+                onClick={() => {
+                  soundFx.playClick();
+                  openTaskbarSettingsModal();
+                }}
+                className="text-[10px] font-semibold text-sky-400 hover:text-sky-300 underline cursor-pointer"
+              >
+                Open Full Settings
+              </button>
+            }
+          />
+          <p className="text-[10px] sm:text-[11px] text-white/40 leading-relaxed">
+            Customize Windows 11 Taskbar alignment (Center vs Left), toggle Widgets board, and control system tray behaviors.
+          </p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                soundFx.playClick();
+                openTaskbarSettingsModal();
+              }}
+              className="px-3.5 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-400/30 text-xs font-semibold flex items-center gap-2 transition cursor-pointer"
+            >
+              <GIconSliders size={14} />
+              <span>Configure Taskbar & Widgets</span>
+            </button>
           </div>
         </section>
       )}

@@ -4,9 +4,9 @@ import { useOS } from "../../store/useOS";
 import { useIsMobile } from "../../lib/useMediaQuery";
 import { soundFx } from "../../lib/soundFx";
 import WeatherChip from "./WeatherChip";
+import WinWidgetsBoard from "./WinWidgetsBoard";
 import LiveBadge from "../LiveBadge";
 import CalendarWidget from "../widgets/CalendarWidget";
-import WeatherWidget from "../widgets/WeatherWidget";
 import {
   GIconTerminal,
   GIconLibrary,
@@ -34,6 +34,7 @@ import {
   GIconBookOpen,
   GIconCode,
   GIconLayoutCells,
+  GIconPencil,
 } from "../icons/GravityIcons";
 
 const TASKBAR_ITEMS = [
@@ -385,19 +386,6 @@ function TrayFlyout({ onClose }: { onClose: () => void }) {
   );
 }
 
-function WeatherFlyout({ onClose }: { onClose: () => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useFlyoutDismiss(ref, onClose, "[data-weather-trigger]");
-  return (
-    <div
-      ref={ref}
-      className="absolute bottom-14 sm:bottom-16 left-2 sm:left-3 w-72 max-w-[calc(100vw-20px)] bg-[#0c101d]/96 sm:bg-[#0c101d]/94 backdrop-blur-3xl rounded-2xl border border-white/15 shadow-[0_24px_70px_rgba(0,0,0,0.85)] ring-1 ring-white/10 p-2.5 z-[1200] origin-bottom-left"
-      style={POP_ANIM}
-    >
-      <WeatherWidget />
-    </div>
-  );
-}
 
 function DateFlyout({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -430,8 +418,10 @@ export default function WinTaskbar() {
     reorderDockApps,
     openAppContextMenu,
     openTaskbarContextMenu,
+    winTaskbarConfig,
   } = useOS();
   const [panel, setPanel] = useState<"start" | "tray" | "weather" | "date" | null>(null);
+  const [isTaskbarHovered, setIsTaskbarHovered] = useState(false);
   const isMobile = useIsMobile();
   const [time, setTime] = useState("");
   const [date, setDate] = useState("");
@@ -601,269 +591,331 @@ export default function WinTaskbar() {
   const iconSize = isMobile ? 18 : 19;
 
   return (
-    <div
-      onContextMenu={(e) => {
-        if ((e.target as HTMLElement).closest("button, [data-dock-app]")) return;
-        e.preventDefault();
-        openTaskbarContextMenu({ x: e.clientX, y: e.clientY });
-      }}
-      className="fixed bottom-0 left-0 right-0 h-12 bg-[rgba(var(--glass),0.95)] backdrop-blur-3xl border-t border-white/12 flex items-center justify-between px-1 sm:px-2 z-[900] select-none shadow-[0_-4px_30px_rgba(0,0,0,0.5)]"
-    >
-      {/* 1. Left Section: Weather chip on desktop */}
-      <div className="hidden md:flex items-center flex-1 min-w-0 basis-0">
-        <button
-          data-weather-trigger="true"
-          onClick={() => toggle("weather")}
-          className="hover:bg-white/10 active:bg-white/15 px-2.5 py-1 rounded-xl transition-colors shrink-0 cursor-pointer"
-        >
-          <WeatherChip />
-        </button>
-      </div>
-
-      {/* 2. Center/Navigation Section: Start + Search + TaskView + App Icons */}
-      <div className="flex items-center gap-1 sm:gap-1.5 flex-1 md:flex-initial min-w-0 md:max-w-[calc(100vw-360px)] justify-center">
-        {/* Core Windows navigation controls */}
-        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-          <button
-            data-start-trigger="true"
-            onClick={() => toggle("start")}
-            title="Start"
-            className={`${btnSize} rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-              panel === "start" ? "bg-white/20 scale-95 shadow-sm" : "hover:bg-white/10 active:scale-95"
-            }`}
-          >
-            <div className="grid grid-cols-2 gap-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4">
-              <span className="bg-sky-400 rounded-[1.5px]" />
-              <span className="bg-sky-400 rounded-[1.5px]" />
-              <span className="bg-sky-400 rounded-[1.5px]" />
-              <span className="bg-sky-400 rounded-[1.5px]" />
-            </div>
-          </button>
-
-          <button
-            onClick={() => {
-              if (systemSounds) soundFx.playClick();
-              toggleSpotlight();
-            }}
-            title="Search (Ctrl+K)"
-            className={`${btnSize} rounded-xl flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all text-white/70 hover:text-white cursor-pointer`}
-          >
-            <GIconSearch size={iconSize} />
-          </button>
-
-          <button
-            onClick={() => {
-              if (systemSounds) soundFx.playClick();
-              toggleMissionControl();
-            }}
-            title="Task View (F3 / Alt+Tab)"
-            className={`${btnSize} rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-              missionControlOpen ? "bg-white/20 text-accent shadow-sm" : "hover:bg-white/10 text-white/70 hover:text-white active:scale-95"
-            }`}
-          >
-            <GIconLayoutCells size={iconSize} />
-          </button>
-        </div>
-
-        {/* Separator between system navigation and app icons */}
-        <div className="w-px h-5 bg-white/15 shrink-0 mx-0.5 sm:mx-1" />
-
-        {/* Scrollable app icons track - strictly bounded by flex-1 min-w-0 */}
-        <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar touch-pan-x flex-1 min-w-0 py-0.5 px-0.5">
-          {taskbarApps.map(({ app, label, icon: Icon, color }) => {
-            const existing = windows.find((w) => w.app === app);
-            const isOpen = !!existing;
-            const isMinimized = existing?.minimized ?? false;
-            const isActive = isOpen && !isMinimized && existing.z >= maxZ;
-            const isBeingDragged = draggedApp === app;
-            const isDropTarget = dropTargetApp === app && draggedApp !== app;
-
-            return (
-              <motion.div
-                key={app}
-                layout
-                transition={{ type: "spring", stiffness: 450, damping: 28 }}
-                className={`relative transition-all duration-150 rounded-xl ${
-                  isBeingDragged ? "opacity-35 scale-90" : ""
-                } ${
-                  isDropTarget ? "ring-2 ring-sky-400 bg-sky-500/25 scale-105 shadow-md shadow-sky-500/30" : ""
-                }`}
-                onDragOver={(e) => handleDragOver(e, app)}
-                onDragLeave={(e) => handleDragLeave(e, app)}
-                onDrop={(e) => handleDrop(e, app)}
-              >
-                <button
-                  data-dock-app={app}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, app)}
-                  onDragEnd={handleDragEnd}
-                  onTouchStart={() => handleTouchStart(app)}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                  onClick={() => handleTaskbarAppClick(app)}
-                  onDoubleClick={() => {
-                    if (!isMobile) {
-                      toggleApp(app);
-                      lastTaskbarClickRef.current = { app: "", time: 0 };
-                      setSelectedTaskbarApp(null);
-                    }
-                  }}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setSelectedTaskbarApp(app);
-                    openAppContextMenu({
-                      app,
-                      x: e.clientX,
-                      y: e.clientY,
-                      source: "taskbar",
-                      customLabel: label,
-                      customColor: color,
-                    });
-                  }}
-                  title={`${label}${isActive ? " · Active" : isMinimized ? " · Minimized" : isOpen ? " · Running" : ""} (Drag to rearrange)`}
-                  className={`relative ${btnSize} rounded-xl flex items-center justify-center transition-all shrink-0 active:scale-95 cursor-pointer select-none ${
-                    selectedTaskbarApp === app
-                      ? "border border-dotted border-white/80 ring-2 ring-sky-400/50 bg-white/20 shadow-sm scale-105"
-                      : isActive
-                        ? "bg-white/16 border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
-                        : isMinimized
-                          ? "bg-white/5 hover:bg-white/10"
-                          : isOpen
-                            ? "bg-white/10 hover:bg-white/15"
-                            : "hover:bg-white/10"
-                  }`}
-                  style={
-                    selectedTaskbarApp === app
-                      ? { border: "1px dotted rgba(255, 255, 255, 0.8)" }
-                      : undefined
-                  }
-                >
-                  <Icon size={iconSize} color={color} />
-                  {isOpen && (
-                    <span
-                      className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 rounded-full transition-all duration-200 ${
-                        isActive
-                          ? "w-4 h-0.75 bg-accent shadow-[0_0_8px_var(--color-accent,#38bdf8)]"
-                          : isMinimized
-                            ? "w-1.5 h-0.75 bg-white/40"
-                            : "w-3 h-0.75 bg-white/70"
-                      }`}
-                    />
-                  )}
-                  {(() => {
-                    const badge = getAppBadge(app);
-                    if (!badge || badge.count <= 0) return null;
-                    return (
-                      <motion.span
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{
-                          scale: 1,
-                          opacity: 1,
-                          y: [0, -3, 0],
-                        }}
-                        transition={{
-                          y: {
-                            repeat: Infinity,
-                            duration: 1.5,
-                            ease: "easeInOut",
-                          },
-                          scale: { type: "spring", stiffness: 500, damping: 25 },
-                        }}
-                        className={`absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full text-white text-[9px] font-bold flex items-center justify-center border border-white/25 z-20 pointer-events-none select-none ${
-                          badge.type === "chat"
-                            ? "bg-rose-500 shadow-md shadow-rose-500/60"
-                            : "bg-[#0091ff] shadow-md shadow-[#0091ff]/60"
-                        }`}
-                        title={badge.type === "chat" ? `${badge.count} unread message(s)` : `${badge.count} update(s) available`}
-                      >
-                        {badge.count > 99 ? "99+" : badge.count}
-                      </motion.span>
-                    );
-                  })()}
-                </button>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 3. Right Section: System Tray & Clock & Show Desktop */}
-      <div className="flex items-center justify-end shrink-0 gap-1 sm:gap-1.5 pl-1.5 sm:pl-2 ml-1 border-l border-white/15 md:flex-1 md:basis-0 relative">
-        <div className="hidden sm:block">
-          <button
-            onClick={() => {
-              if (systemSounds) soundFx.playClick();
-              openApp("chats");
-            }}
-            title="Live Visitors — Open Chats"
-            className="cursor-pointer hover:scale-105 active:scale-95 transition-transform"
-          >
-            <LiveBadge compact />
-          </button>
-        </div>
-
-        <button
-          data-tray-trigger="true"
-          onClick={() => toggle("tray")}
-          title="Quick Actions & Power"
-          className="p-1.5 rounded-lg hover:bg-white/10 active:bg-white/15 transition-colors shrink-0 text-white/70 hover:text-white cursor-pointer"
-        >
-          <GIconChevronUp size={13} className={`transition-transform duration-200 ${panel === "tray" ? "rotate-180" : ""}`} />
-        </button>
-
-        <button
-          onClick={toggleControlCenter}
-          data-control-center-trigger="true"
-          title="Quick Settings (Volume, Wi-Fi, Display)"
-          className={`hidden xs:flex items-center gap-1.5 px-2 h-7.5 rounded-lg transition-all shrink-0 cursor-pointer ${
-            controlCenterOpen
-              ? "bg-white/20 text-accent shadow-sm"
-              : "hover:bg-white/10 text-white/70 hover:text-white active:scale-95"
-          }`}
-        >
-          <GIconSignal size={13} />
-          <GIconVolume size={13} />
-        </button>
-
-        <button
-          data-date-trigger="true"
-          onClick={() => toggle("date")}
-          title="Calendar & Date"
-          className="h-8 px-1.5 sm:px-2 rounded-lg hover:bg-white/10 active:bg-white/15 transition-colors shrink-0 flex flex-col justify-center text-right font-mono cursor-pointer"
-        >
-          <div className="text-[11px] sm:text-xs font-semibold text-white/90 leading-none">{time}</div>
-          <div className="text-[9px] text-white/45 leading-none mt-0.5 hidden sm:block">{date}</div>
-        </button>
-
-        {/* 4. Far Right: Show Desktop Peek Bar */}
-        <button
-          onClick={() => {
-            if (systemSounds) soundFx.playClick();
-            toggleShowDesktop();
-          }}
-          title="Show Desktop (Minimize/Restore all)"
-          className="w-1.5 sm:w-2 h-7 sm:h-8 hover:bg-white/20 active:bg-white/30 rounded-[2px] transition-colors shrink-0 ml-0.5 sm:ml-1 border-l border-white/20 cursor-pointer"
-          aria-label="Show Desktop"
-        />
-
-        {panel === "tray" && <TrayFlyout onClose={() => setPanel(null)} />}
-        {panel === "date" && <DateFlyout onClose={() => setPanel(null)} />}
-      </div>
-
-      {/* Desktop Backdrop Blur Overlay — active whenever any taskbar flyout is open */}
-      {panel && (
+    <>
+      {/* Auto-hide Sensor: hovering near the bottom reveals taskbar when auto-hidden */}
+      {winTaskbarConfig.autoHide && (
         <div
-          className="fixed inset-0 bottom-12 z-[950] bg-black/50 backdrop-blur-md transition-opacity duration-200 cursor-pointer"
-          onClick={() => {
-            if (systemSounds) soundFx.playClick();
-            setPanel(null);
-          }}
+          onMouseEnter={() => setIsTaskbarHovered(true)}
+          className="fixed bottom-0 left-0 right-0 h-2 z-[899] pointer-events-auto"
         />
       )}
 
-      {panel === "weather" && <WeatherFlyout onClose={() => setPanel(null)} />}
-      {panel === "start" && <StartMenu onClose={() => setPanel(null)} />}
-    </div>
+      <div
+        onMouseEnter={() => setIsTaskbarHovered(true)}
+        onMouseLeave={() => setIsTaskbarHovered(false)}
+        onContextMenu={(e) => {
+          if ((e.target as HTMLElement).closest("button, [data-dock-app]")) return;
+          e.preventDefault();
+          openTaskbarContextMenu({ x: e.clientX, y: e.clientY });
+        }}
+        className={`fixed bottom-0 left-0 right-0 h-12 bg-[rgba(var(--glass),0.95)] backdrop-blur-3xl border-t border-white/12 flex items-center justify-between px-1 sm:px-2 z-[900] select-none shadow-[0_-4px_30px_rgba(0,0,0,0.5)] transition-transform duration-200 ease-out ${
+          winTaskbarConfig.autoHide && !isTaskbarHovered && !panel
+            ? "translate-y-[calc(100%-3px)]"
+            : "translate-y-0"
+        }`}
+      >
+        {/* 1. Left Section: Widgets button */}
+        {winTaskbarConfig.showWidgets && (
+          <div className={`hidden md:flex items-center min-w-0 ${winTaskbarConfig.alignment === "left" ? "mr-1 shrink-0" : "flex-1 basis-0"}`}>
+            <button
+              data-weather-trigger="true"
+              onClick={() => toggle("weather")}
+              className="hover:bg-white/10 active:bg-white/15 px-2.5 py-1 rounded-xl transition-colors shrink-0 cursor-pointer"
+              title="Open Widgets Board (Win+W)"
+            >
+              <WeatherChip />
+            </button>
+          </div>
+        )}
+        {!winTaskbarConfig.showWidgets && winTaskbarConfig.alignment === "center" && (
+          <div className="hidden md:flex items-center flex-1 min-w-0 basis-0" />
+        )}
+
+        {/* 2. Center/Navigation Section: Start + Search + TaskView + App Icons */}
+        <div
+          className={`flex items-center gap-1 sm:gap-1.5 min-w-0 md:max-w-[calc(100vw-360px)] ${
+            winTaskbarConfig.alignment === "left"
+              ? "flex-1 justify-start"
+              : "flex-1 md:flex-initial justify-center"
+          }`}
+        >
+          {/* Core Windows navigation controls */}
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+            <button
+              data-start-trigger="true"
+              onClick={() => toggle("start")}
+              title="Start"
+              className={`${btnSize} rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                panel === "start" ? "bg-white/20 scale-95 shadow-sm" : "hover:bg-white/10 active:scale-95"
+              }`}
+            >
+              <div className="grid grid-cols-2 gap-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4">
+                <span className="bg-sky-400 rounded-[1.5px]" />
+                <span className="bg-sky-400 rounded-[1.5px]" />
+                <span className="bg-sky-400 rounded-[1.5px]" />
+                <span className="bg-sky-400 rounded-[1.5px]" />
+              </div>
+            </button>
+
+            {winTaskbarConfig.showSearch && (
+              <button
+                onClick={() => {
+                  if (systemSounds) soundFx.playClick();
+                  toggleSpotlight();
+                }}
+                title="Search (Ctrl+K)"
+                className={`${btnSize} rounded-xl flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all text-white/70 hover:text-white cursor-pointer`}
+              >
+                <GIconSearch size={iconSize} />
+              </button>
+            )}
+
+            {winTaskbarConfig.showTaskView && (
+              <button
+                onClick={() => {
+                  if (systemSounds) soundFx.playClick();
+                  toggleMissionControl();
+                }}
+                title="Task View (F3 / Alt+Tab)"
+                className={`${btnSize} rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                  missionControlOpen ? "bg-white/20 text-accent shadow-sm" : "hover:bg-white/10 text-white/70 hover:text-white active:scale-95"
+                }`}
+              >
+                <GIconLayoutCells size={iconSize} />
+              </button>
+            )}
+          </div>
+
+          {/* Separator between system navigation and app icons */}
+          <div className="w-px h-5 bg-white/15 shrink-0 mx-0.5 sm:mx-1" />
+
+          {/* Scrollable app icons track - strictly bounded by flex-1 min-w-0 */}
+          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar touch-pan-x flex-1 min-w-0 py-0.5 px-0.5">
+            {taskbarApps.map(({ app, label, icon: Icon, color }) => {
+              const existing = windows.find((w) => w.app === app);
+              const isOpen = !!existing;
+              const isMinimized = existing?.minimized ?? false;
+              const isActive = isOpen && !isMinimized && existing.z >= maxZ;
+              const isBeingDragged = draggedApp === app;
+              const isDropTarget = dropTargetApp === app && draggedApp !== app;
+
+              return (
+                <motion.div
+                  key={app}
+                  layout
+                  transition={{ type: "spring", stiffness: 450, damping: 28 }}
+                  className={`relative transition-all duration-150 rounded-xl ${
+                    isBeingDragged ? "opacity-35 scale-90" : ""
+                  } ${
+                    isDropTarget ? "ring-2 ring-sky-400 bg-sky-500/25 scale-105 shadow-md shadow-sky-500/30" : ""
+                  }`}
+                  onDragOver={(e) => handleDragOver(e, app)}
+                  onDragLeave={(e) => handleDragLeave(e, app)}
+                  onDrop={(e) => handleDrop(e, app)}
+                >
+                  <button
+                    data-dock-app={app}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, app)}
+                    onDragEnd={handleDragEnd}
+                    onTouchStart={() => handleTouchStart(app)}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onClick={() => handleTaskbarAppClick(app)}
+                    onDoubleClick={() => {
+                      if (!isMobile) {
+                        toggleApp(app);
+                        lastTaskbarClickRef.current = { app: "", time: 0 };
+                        setSelectedTaskbarApp(null);
+                      }
+                    }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSelectedTaskbarApp(app);
+                      openAppContextMenu({
+                        app,
+                        x: e.clientX,
+                        y: e.clientY,
+                        source: "taskbar",
+                        customLabel: label,
+                        customColor: color,
+                      });
+                    }}
+                    title={`${label}${isActive ? " · Active" : isMinimized ? " · Minimized" : isOpen ? " · Running" : ""} (Drag to rearrange)`}
+                    className={`relative ${btnSize} rounded-xl flex items-center justify-center transition-all shrink-0 active:scale-95 cursor-pointer select-none ${
+                      selectedTaskbarApp === app
+                        ? "border border-dotted border-white/80 ring-2 ring-sky-400/50 bg-white/20 shadow-sm scale-105"
+                        : isActive
+                          ? "bg-white/16 border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
+                          : isMinimized
+                            ? "bg-white/5 hover:bg-white/10"
+                            : isOpen
+                              ? "bg-white/10 hover:bg-white/15"
+                              : "hover:bg-white/10"
+                    }`}
+                    style={
+                      selectedTaskbarApp === app
+                        ? { border: "1px dotted rgba(255, 255, 255, 0.8)" }
+                        : undefined
+                    }
+                  >
+                    <Icon size={iconSize} color={color} />
+                    {isOpen && (
+                      <span
+                        className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 rounded-full transition-all duration-200 ${
+                          isActive
+                            ? "w-4 h-0.75 bg-accent shadow-[0_0_8px_var(--color-accent,#38bdf8)]"
+                            : isMinimized
+                              ? "w-1.5 h-0.75 bg-white/40"
+                              : "w-3 h-0.75 bg-white/70"
+                        }`}
+                      />
+                    )}
+                    {winTaskbarConfig.showBadges && (() => {
+                      const badge = getAppBadge(app);
+                      if (!badge || badge.count <= 0) return null;
+                      return (
+                        <motion.span
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{
+                            scale: 1,
+                            opacity: 1,
+                            y: [0, -3, 0],
+                          }}
+                          transition={{
+                            y: {
+                              repeat: Infinity,
+                              duration: 1.5,
+                              ease: "easeInOut",
+                            },
+                            scale: { type: "spring", stiffness: 500, damping: 25 },
+                          }}
+                          className={`absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full text-white text-[9px] font-bold flex items-center justify-center border border-white/25 z-20 pointer-events-none select-none ${
+                            badge.type === "chat"
+                              ? "bg-rose-500 shadow-md shadow-rose-500/60"
+                              : "bg-[#0091ff] shadow-md shadow-[#0091ff]/60"
+                          }`}
+                          title={badge.type === "chat" ? `${badge.count} unread message(s)` : `${badge.count} update(s) available`}
+                        >
+                          {badge.count > 99 ? "99+" : badge.count}
+                        </motion.span>
+                      );
+                    })()}
+                  </button>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 3. Right Section: System Tray & Clock & Show Desktop */}
+        <div className="flex items-center justify-end shrink-0 gap-1 sm:gap-1.5 pl-1.5 sm:pl-2 ml-1 border-l border-white/15 md:flex-1 md:basis-0 relative">
+          <div className="hidden sm:block">
+            <button
+              onClick={() => {
+                if (systemSounds) soundFx.playClick();
+                openApp("chats");
+              }}
+              title="Live Visitors — Open Chats"
+              className="cursor-pointer hover:scale-105 active:scale-95 transition-transform"
+            >
+              <LiveBadge compact />
+            </button>
+          </div>
+
+          {/* Windows Ink Workspace */}
+          {winTaskbarConfig.showInkWorkspace && (
+            <button
+              onClick={() => {
+                if (systemSounds) soundFx.playClick();
+                openApp("notes");
+              }}
+              title="Windows Ink Workspace (Sticky Notes & Sketch)"
+              className="p-1.5 rounded-lg hover:bg-white/10 active:bg-white/15 transition-colors shrink-0 text-white/70 hover:text-amber-300 cursor-pointer hidden xs:flex items-center justify-center"
+            >
+              <GIconPencil size={13} />
+            </button>
+          )}
+
+          {/* Touch Keyboard */}
+          {winTaskbarConfig.showTouchKeyboard && (
+            <button
+              onClick={() => {
+                if (systemSounds) soundFx.playClick();
+                openApp("terminal");
+              }}
+              title="Touch Keyboard & Shell"
+              className="p-1.5 rounded-lg hover:bg-white/10 active:bg-white/15 transition-colors shrink-0 text-white/70 hover:text-sky-300 cursor-pointer hidden xs:flex items-center justify-center"
+            >
+              <GIconCode size={13} />
+            </button>
+          )}
+
+          <button
+            data-tray-trigger="true"
+            onClick={() => toggle("tray")}
+            title="Quick Actions & Power"
+            className="p-1.5 rounded-lg hover:bg-white/10 active:bg-white/15 transition-colors shrink-0 text-white/70 hover:text-white cursor-pointer"
+          >
+            <GIconChevronUp size={13} className={`transition-transform duration-200 ${panel === "tray" ? "rotate-180" : ""}`} />
+          </button>
+
+          <button
+            onClick={toggleControlCenter}
+            data-control-center-trigger="true"
+            title="Quick Settings (Volume, Wi-Fi, Display)"
+            className={`hidden xs:flex items-center gap-1.5 px-2 h-7.5 rounded-lg transition-all shrink-0 cursor-pointer ${
+              controlCenterOpen
+                ? "bg-white/20 text-accent shadow-sm"
+                : "hover:bg-white/10 text-white/70 hover:text-white active:scale-95"
+            }`}
+          >
+            <GIconSignal size={13} />
+            <GIconVolume size={13} />
+          </button>
+
+          <button
+            data-date-trigger="true"
+            onClick={() => toggle("date")}
+            title="Calendar & Date"
+            className="h-8 px-1.5 sm:px-2 rounded-lg hover:bg-white/10 active:bg-white/15 transition-colors shrink-0 flex flex-col justify-center text-right font-mono cursor-pointer"
+          >
+            <div className="text-[11px] sm:text-xs font-semibold text-white/90 leading-none">{time}</div>
+            <div className="text-[9px] text-white/45 leading-none mt-0.5 hidden sm:block">{date}</div>
+          </button>
+
+          {/* 4. Far Right: Show Desktop Peek Bar */}
+          {winTaskbarConfig.showDesktop && (
+            <button
+              onClick={() => {
+                if (systemSounds) soundFx.playClick();
+                toggleShowDesktop();
+              }}
+              title="Show Desktop (Minimize/Restore all)"
+              className="w-1.5 sm:w-2 h-7 sm:h-8 hover:bg-white/20 active:bg-white/30 rounded-[2px] transition-colors shrink-0 ml-0.5 sm:ml-1 border-l border-white/20 cursor-pointer"
+              aria-label="Show Desktop"
+            />
+          )}
+
+          {panel === "tray" && <TrayFlyout onClose={() => setPanel(null)} />}
+          {panel === "date" && <DateFlyout onClose={() => setPanel(null)} />}
+        </div>
+
+        {/* Desktop Backdrop Blur Overlay — active whenever any taskbar flyout is open */}
+        {panel && (
+          <div
+            className="fixed inset-0 bottom-12 z-[950] bg-black/50 backdrop-blur-md transition-opacity duration-200 cursor-pointer"
+            onClick={() => {
+              if (systemSounds) soundFx.playClick();
+              setPanel(null);
+            }}
+          />
+        )}
+
+        {panel === "weather" && <WinWidgetsBoard onClose={() => setPanel(null)} />}
+        {panel === "start" && <StartMenu onClose={() => setPanel(null)} />}
+      </div>
+    </>
   );
 }

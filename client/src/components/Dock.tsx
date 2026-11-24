@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useOS } from "./../store/useOS";
 import { useIsMobile } from "../lib/useMediaQuery";
@@ -307,7 +307,7 @@ export default function Dock() {
               <motion.button
                 data-dock-app={app}
                 draggable
-                onDragStart={(e) => handleDragStart(e, app)}
+                onDragStart={(e: any) => handleDragStart(e, app)}
                 onDragEnd={handleDragEnd}
                 onTouchStart={() => handleTouchStart(app)}
                 onTouchMove={handleTouchMove}

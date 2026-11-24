@@ -21,6 +21,7 @@ import {
 import { DARK_NATURE_SCENES } from "../data/darkNatureScenes";
 
 export type LiveShowParticleMode = "fireflies" | "stars" | "embers" | "off";
+export type NotificationVariant = ToastVariant;
 
 export interface AppContextMenuData {
   app: string;
@@ -37,6 +38,41 @@ export interface TaskbarContextMenuData {
   x: number;
   y: number;
 }
+
+export interface WinTaskbarConfig {
+  alignment: "center" | "left";
+  showWidgets: boolean;
+  showDesktop: boolean;
+  autoHide: boolean;
+  showBadges: boolean;
+  showInkWorkspace: boolean;
+  showTouchKeyboard: boolean;
+  showTaskView: boolean;
+  showSearch: boolean;
+}
+
+const DEFAULT_WIN_TASKBAR_CONFIG: WinTaskbarConfig = {
+  alignment: "center",
+  showWidgets: true,
+  showDesktop: true,
+  autoHide: false,
+  showBadges: true,
+  showInkWorkspace: true,
+  showTouchKeyboard: true,
+  showTaskView: true,
+  showSearch: true,
+};
+
+const getSavedWinTaskbarConfig = (): WinTaskbarConfig => {
+  if (typeof window === "undefined") return DEFAULT_WIN_TASKBAR_CONFIG;
+  try {
+    const raw = localStorage.getItem("portfolio_os_win_taskbar_cfg");
+    if (raw) {
+      return { ...DEFAULT_WIN_TASKBAR_CONFIG, ...JSON.parse(raw) };
+    }
+  } catch {}
+  return DEFAULT_WIN_TASKBAR_CONFIG;
+};
 
 export interface AppPropertiesModalData {
   app: string;
@@ -173,6 +209,11 @@ interface OSState {
   taskbarContextMenu: TaskbarContextMenuData | null;
   openTaskbarContextMenu: (data: TaskbarContextMenuData) => void;
   closeTaskbarContextMenu: () => void;
+  winTaskbarConfig: WinTaskbarConfig;
+  setWinTaskbarConfig: (partial: Partial<WinTaskbarConfig>) => void;
+  taskbarSettingsModalOpen: boolean;
+  openTaskbarSettingsModal: () => void;
+  closeTaskbarSettingsModal: () => void;
   appPropertiesModal: AppPropertiesModalData | null;
   openAppProperties: (data: AppPropertiesModalData) => void;
   closeAppProperties: () => void;
@@ -999,6 +1040,18 @@ export const useOS = create<OSState>((set, get) => ({
   taskbarContextMenu: null,
   openTaskbarContextMenu: (data) => set({ taskbarContextMenu: data, appContextMenu: null }),
   closeTaskbarContextMenu: () => set({ taskbarContextMenu: null }),
+
+  winTaskbarConfig: getSavedWinTaskbarConfig(),
+  setWinTaskbarConfig: (partial) => {
+    const next = { ...get().winTaskbarConfig, ...partial };
+    set({ winTaskbarConfig: next });
+    try {
+      localStorage.setItem("portfolio_os_win_taskbar_cfg", JSON.stringify(next));
+    } catch {}
+  },
+  taskbarSettingsModalOpen: false,
+  openTaskbarSettingsModal: () => set({ taskbarSettingsModalOpen: true, taskbarContextMenu: null }),
+  closeTaskbarSettingsModal: () => set({ taskbarSettingsModalOpen: false }),
 
   appPropertiesModal: null,
   openAppProperties: (data) => set({ appPropertiesModal: data, appContextMenu: null }),

@@ -15,6 +15,7 @@ export default function WinTaskbarContextMenu() {
     taskbarContextMenu,
     closeTaskbarContextMenu,
     openApp,
+    openTaskbarSettingsModal,
     toggleShowDesktop,
     setOsMode,
     nextLiveWallpaperScene,
@@ -72,7 +73,7 @@ export default function WinTaskbarContextMenu() {
       <button
         onClick={() => {
           if (systemSounds) soundFx.playClick();
-          openApp("settings");
+          openTaskbarSettingsModal();
           closeTaskbarContextMenu();
         }}
         className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-white/85 hover:text-white hover:bg-white/10 transition-colors text-left cursor-pointer"

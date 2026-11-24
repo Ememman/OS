@@ -26,6 +26,7 @@ import DesktopContextMenu from "./components/DesktopContextMenu";
 import AppContextMenu from "./components/AppContextMenu";
 import AppPropertiesModal from "./components/AppPropertiesModal";
 import WinTaskbarContextMenu from "./components/win/WinTaskbarContextMenu";
+import WinTaskbarSettingsModal from "./components/win/WinTaskbarSettingsModal";
 import LiveShowWallpaper from "./components/LiveShowWallpaper";
 import DynamicIsland from "./components/DynamicIsland";
 import { touchChatActivity } from "./lib/chatSession";
@@ -401,6 +402,7 @@ export default function App() {
       <AppContextMenu />
       <AppPropertiesModal />
       <WinTaskbarContextMenu />
+      <WinTaskbarSettingsModal />
       {powerDialogOpen && <PowerDialog onClose={closePowerDialog} />}
       {isSleeping && <SleepScreen />}
       <DesktopFolderModal />
