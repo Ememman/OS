@@ -160,7 +160,7 @@ export const SEARCH_INDEX: SearchResultItem[] = [
       "emmanuel",
       "mendoza",
       "emman",
-      "emanexe",
+      "ememman",
       "about",
       "bio",
       "profile",

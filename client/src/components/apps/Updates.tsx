@@ -175,9 +175,9 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     category: "feature",
     priority: "high",
     status: "merged",
-    author: "EmanExe",
+    author: "Ememman",
     branch: "fix/dock-dragging-applications",
-    url: "https://github.com/EmanExe/OS/pull/188",
+    url: "https://github.com/Ememman/OS/pull/188",
     pinned: true,
   },
   {
@@ -189,9 +189,9 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     category: "fix",
     priority: "critical",
     status: "merged",
-    author: "EmanExe",
+    author: "Ememman",
     branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/187",
+    url: "https://github.com/Ememman/OS/pull/187",
   },
   {
     id: "pr-186",
@@ -202,9 +202,9 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     category: "fix",
     priority: "critical",
     status: "merged",
-    author: "EmanExe",
+    author: "Ememman",
     branch: "fix/deployment-error",
-    url: "https://github.com/EmanExe/OS/pull/186",
+    url: "https://github.com/Ememman/OS/pull/186",
   },
   {
     id: "pr-185",
@@ -215,9 +215,9 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     category: "fix",
     priority: "high",
     status: "merged",
-    author: "EmanExe",
+    author: "Ememman",
     branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/185",
+    url: "https://github.com/Ememman/OS/pull/185",
   },
   {
     id: "pr-151",
@@ -228,9 +228,9 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     category: "feature",
     priority: "medium",
     status: "merged",
-    author: "EmanExe",
+    author: "Ememman",
     branch: "feat/library-preview-image",
-    url: "https://github.com/EmanExe/OS/pull/151",
+    url: "https://github.com/Ememman/OS/pull/151",
   },
   {
     id: "pr-150",
@@ -241,9 +241,9 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     category: "fix",
     priority: "high",
     status: "merged",
-    author: "EmanExe",
+    author: "Ememman",
     branch: "fix/activity-monitor-enhancement",
-    url: "https://github.com/EmanExe/OS/pull/150",
+    url: "https://github.com/Ememman/OS/pull/150",
   },
   {
     id: "pr-149",
@@ -256,7 +256,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/149",
+    url: "https://github.com/Ememman/OS/pull/149",
   },
   {
     id: "pr-148",
@@ -269,7 +269,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "fix/remove-dev-in-the-deployment",
-    url: "https://github.com/EmanExe/OS/pull/148",
+    url: "https://github.com/Ememman/OS/pull/148",
   },
   {
     id: "pr-147",
@@ -282,7 +282,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "fix/notes-layouts-templates",
-    url: "https://github.com/EmanExe/OS/pull/147",
+    url: "https://github.com/Ememman/OS/pull/147",
   },
   {
     id: "pr-146",
@@ -295,7 +295,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/146",
+    url: "https://github.com/Ememman/OS/pull/146",
   },
   {
     id: "pr-145",
@@ -308,7 +308,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "fix/terminal-reponsiveness",
-    url: "https://github.com/EmanExe/OS/pull/145",
+    url: "https://github.com/Ememman/OS/pull/145",
   },
   {
     id: "pr-144",
@@ -321,7 +321,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/144",
+    url: "https://github.com/Ememman/OS/pull/144",
   },
   {
     id: "pr-143",
@@ -334,7 +334,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "fix/codeplay-preview-issue",
-    url: "https://github.com/EmanExe/OS/pull/143",
+    url: "https://github.com/Ememman/OS/pull/143",
   },
   {
     id: "pr-142",
@@ -347,7 +347,7 @@ const FALLBACK_UPDATES: UpdateItem[] = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/142",
+    url: "https://github.com/Ememman/OS/pull/142",
   },
 ];
 
@@ -360,7 +360,7 @@ function parseGithubPR(pr: any): UpdateItem {
   const branch = pr.head?.ref || "main";
   const status: UpdateStatus = pr.merged_at ? "merged" : pr.state === "closed" ? "closed" : "open";
   const date = pr.created_at ? pr.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10);
-  const url = pr.html_url || `https://github.com/EmanExe/OS/pull/${prNumber}`;
+  const url = pr.html_url || `https://github.com/Ememman/OS/pull/${prNumber}`;
   const rawBody = (pr.body || "").trim();
   const body = rawBody || `Pull Request #${prNumber} on Ememman/OS: ${title}. Branch: ${branch}`;
 

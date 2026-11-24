@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useOS } from "../store/useOS";
+import { APP_ITEMS_MAP } from "../data/appItems";
 import { soundFx } from "../lib/soundFx";
+import { downloadResumePdf } from "../lib/resumePdf";
 import { useOutsideClick as useOutsideClose } from "../lib/useOutsideClick";
 import LiveBadge from "./LiveBadge";
 import CalendarWidget from "./widgets/CalendarWidget";
@@ -25,6 +27,7 @@ import {
   GIconFolder,
   GIconSettings,
   GIconBookOpen,
+  GIconGithub,
 } from "./icons/GravityIcons";
 
 interface MenuDropdownProps {
@@ -60,8 +63,8 @@ function MenuDropdown({
       </button>
       {isOpen && (
         <div
-          className={`absolute top-full left-0 mt-1 ${minWidth} max-w-[calc(100vw-20px)] max-h-[82vh] overflow-y-auto thin-scroll bg-[#0c111d]/98 backdrop-blur-2xl rounded-xl border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.7),0_0_1px_rgba(255,255,255,0.25)] p-1 z-[1300] origin-top-left select-none`}
-          style={{ animation: "menuOpen 120ms cubic-bezier(.16,1,.3,1) both" }}
+          className={`absolute top-full left-0 mt-1.5 ${minWidth} max-w-[calc(100vw-20px)] max-h-[85vh] overflow-y-auto thin-scroll bg-[#121826]/96 backdrop-blur-3xl rounded-2xl border border-white/18 shadow-[0_24px_64px_rgba(0,0,0,0.85),0_0_0_1px_rgba(255,255,255,0.12)] p-1.5 z-[1300] origin-top-left select-none`}
+          style={{ animation: "menuOpen 140ms cubic-bezier(.16,1,.3,1) both" }}
           role="menu"
         >
           {children}
@@ -78,6 +81,7 @@ interface MenuItemProps {
   checked?: boolean;
   shortcut?: string;
   danger?: boolean;
+  icon?: ReactNode;
 }
 
 function MenuItem({
@@ -87,6 +91,7 @@ function MenuItem({
   checked,
   shortcut,
   danger,
+  icon,
 }: MenuItemProps) {
   return (
     <button
@@ -97,20 +102,24 @@ function MenuItem({
       }}
       disabled={disabled}
       role="menuitem"
-      className={`w-full flex items-center gap-2 text-left px-3 py-1.5 mx-0.5 rounded-lg text-[13px] transition-colors select-none group ${
+      className={`w-full flex items-center gap-2 text-left px-2.5 py-1.5 rounded-lg text-[13px] transition-all duration-100 select-none group ${
         disabled
-          ? "text-white/25 cursor-not-allowed"
+          ? "text-white/30 cursor-not-allowed pointer-events-none"
           : danger
-            ? "text-rose-400 hover:bg-rose-500/15 hover:text-rose-300 active:bg-rose-500/25 cursor-pointer"
-            : "text-white/90 hover:bg-white/12 hover:text-white active:bg-white/18 cursor-pointer"
+            ? "text-rose-400 hover:bg-rose-500/20 hover:text-rose-200 active:bg-rose-500/30 cursor-pointer"
+            : "text-white/90 hover:bg-accent hover:text-accent-contrast active:brightness-95 cursor-pointer"
       }`}
     >
-      <span className="w-4 shrink-0 flex items-center justify-center text-white/80">
-        {checked && <GIconCheck size={13} className="text-white" />}
+      <span className="w-4 shrink-0 flex items-center justify-center">
+        {checked ? (
+          <GIconCheck size={12} className="text-current stroke-[2.5]" />
+        ) : icon ? (
+          <span className="text-white/60 group-hover:text-current">{icon}</span>
+        ) : null}
       </span>
-      <span className="flex-1 truncate">{children}</span>
+      <span className="flex-1 truncate font-normal tracking-wide">{children}</span>
       {shortcut && (
-        <span className="text-[11px] font-mono text-white/35 group-hover:text-white/60 ml-2 tracking-wider">
+        <span className="text-[11px] font-mono text-white/40 group-hover:text-inherit ml-2 tracking-wider shrink-0 transition-colors">
           {shortcut}
         </span>
       )}
@@ -120,7 +129,7 @@ function MenuItem({
 
 function MenuHeader({ label }: { label: string }) {
   return (
-    <div className="px-3 pt-1.5 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/40 select-none">
+    <div className="px-2.5 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/45 select-none">
       {label}
     </div>
   );
@@ -171,6 +180,9 @@ export default function MenuBar() {
     snapWindow,
     closeAllWindows,
     minimizeAllWindows,
+    cascadeWindows,
+    dockPosition,
+    setDockPosition,
     toggleShowDesktop,
     focusWindow,
     reduceMotion,
@@ -505,9 +517,9 @@ export default function MenuBar() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                openApp("resume");
+                downloadResumePdf();
+                notify("Resume Downloaded", "MendozaJamesEmmanuelCV.pdf saved to your device.", "success", 2600);
                 setOpenMenu(null);
-                notify("Resume Ready", "Open Resume window to preview or download PDF.", "info", 2400);
               }}
               shortcut="⌘P">
               Download Resume (PDF)
@@ -699,6 +711,32 @@ export default function MenuBar() {
               Desktop Widgets
             </MenuItem>
             <MenuSeparator />
+            <MenuHeader label="Dock Position" />
+            <MenuItem
+              checked={dockPosition === "bottom"}
+              onClick={() => {
+                setDockPosition("bottom");
+                setOpenMenu(null);
+              }}>
+              Dock at Bottom
+            </MenuItem>
+            <MenuItem
+              checked={dockPosition === "left"}
+              onClick={() => {
+                setDockPosition("left");
+                setOpenMenu(null);
+              }}>
+              Dock on Left
+            </MenuItem>
+            <MenuItem
+              checked={dockPosition === "right"}
+              onClick={() => {
+                setDockPosition("right");
+                setOpenMenu(null);
+              }}>
+              Dock on Right
+            </MenuItem>
+            <MenuSeparator />
             <MenuItem
               checked={reduceMotion}
               onClick={() => {
@@ -782,6 +820,15 @@ export default function MenuBar() {
             <MenuItem
               disabled={windows.length === 0}
               onClick={() => {
+                cascadeWindows();
+                notify("Cascaded Windows", "Organized all open windows in cascade.", "info", 1800);
+                setOpenMenu(null);
+              }}>
+              Cascade All Windows
+            </MenuItem>
+            <MenuItem
+              disabled={windows.length === 0}
+              onClick={() => {
                 windows.forEach((w) => {
                   if (w.minimized) restoreWindow(w.id);
                 });
@@ -810,29 +857,44 @@ export default function MenuBar() {
               Close All Windows
             </MenuItem>
             <MenuSeparator />
-            <MenuHeader label="Active Windows" />
+            <MenuHeader label={`Active Windows (${windows.length})`} />
             {windows.length === 0 ? (
-              <MenuItem disabled>No Open Windows</MenuItem>
+              <div className="px-3 py-2 text-xs text-white/40 italic flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                No Open Windows
+              </div>
             ) : (
-              windows.map((w) => (
-                <MenuItem
-                  key={w.id}
-                  checked={w.id === focusedId && !w.minimized}
-                  onClick={() => {
-                    if (w.minimized) restoreWindow(w.id);
-                    focusWindow(w.id);
-                    setOpenMenu(null);
-                  }}>
-                  <div className="flex items-center gap-2">
-                    <span className="truncate">{w.title}</span>
-                    {w.minimized && (
-                      <span className="text-[10px] text-white/40 font-mono italic shrink-0">
-                        (minimized)
-                      </span>
-                    )}
-                  </div>
-                </MenuItem>
-              ))
+              windows.map((w) => {
+                const meta = APP_ITEMS_MAP[w.app];
+                const AppIcon = meta?.icon;
+                return (
+                  <MenuItem
+                    key={w.id}
+                    checked={w.id === focusedId && !w.minimized}
+                    onClick={() => {
+                      if (w.minimized) restoreWindow(w.id);
+                      focusWindow(w.id);
+                      setOpenMenu(null);
+                    }}>
+                    <div className="flex items-center gap-2 min-w-0">
+                      {AppIcon && (
+                        <div
+                          className="w-4 h-4 rounded flex items-center justify-center shrink-0 border border-white/10"
+                          style={{ backgroundColor: `${meta.color || "#0091ff"}25` }}
+                        >
+                          <AppIcon size={10} color={meta.color} />
+                        </div>
+                      )}
+                      <span className="truncate">{w.title}</span>
+                      {w.minimized && (
+                        <span className="text-[10px] opacity-60 font-mono italic shrink-0">
+                          (minimized)
+                        </span>
+                      )}
+                    </div>
+                  </MenuItem>
+                );
+              })
             )}
           </MenuDropdown>
 
@@ -898,11 +960,20 @@ export default function MenuBar() {
             </MenuItem>
             <MenuSeparator />
             <MenuItem
+              icon={<GIconGithub size={13} />}
               onClick={() => {
-                window.open("https://github.com/emman", "_blank");
+                window.open("https://github.com/Ememman/OS", "_blank");
                 setOpenMenu(null);
               }}>
               View Source on GitHub
+            </MenuItem>
+            <MenuItem
+              icon={<GIconGithub size={13} />}
+              onClick={() => {
+                window.open("https://github.com/Ememman", "_blank");
+                setOpenMenu(null);
+              }}>
+              Developer GitHub Profile (@Ememman)
             </MenuItem>
             <MenuItem
               danger

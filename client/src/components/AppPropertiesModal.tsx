@@ -185,7 +185,7 @@ export default function AppPropertiesModal() {
                   </div>
                   <div className="flex justify-between py-1 border-b border-white/5">
                     <span className="text-white/50">Publisher:</span>
-                    <span className="text-white/90 font-semibold">James Mendoza (EmanExe)</span>
+                    <span className="text-white/90 font-semibold">James Mendoza (Ememman)</span>
                   </div>
                 </div>
 
