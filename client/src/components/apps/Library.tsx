@@ -98,7 +98,23 @@ export default function Library() {
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data) && data.length) {
-          setProjects(data);
+          const filtered = data.filter((p: any) => {
+            const id = (p.id || "").toLowerCase();
+            const title = (p.title || "").toLowerCase();
+            const repo = (p.links?.repo || "").toLowerCase();
+            return !(
+              id.includes("terminal") ||
+              id.includes("metacrafter") ||
+              id.includes("solidity") ||
+              title.includes("terminal assessment") ||
+              title.includes("cli assessment") ||
+              title.includes("solidity smart") ||
+              title.includes("metacrafter") ||
+              repo.includes("terminalassesment") ||
+              repo.includes("metacrafter")
+            );
+          });
+          setProjects(filtered);
         }
       })
       .catch(() => {})
@@ -112,6 +128,15 @@ export default function Library() {
           const updated = [...prev];
           for (const gr of ghRepos) {
             if (gr.fork || gr.name === "Ememman") continue;
+            const nameLower = (gr.name || "").toLowerCase();
+            if (
+              nameLower.includes("terminalassesment") ||
+              nameLower.includes("terminal-assessment") ||
+              nameLower.includes("metacrafter") ||
+              nameLower.includes("solidity")
+            ) {
+              continue;
+            }
             const exists = updated.some(
               (p) =>
                 p.id === gr.name.toLowerCase() ||

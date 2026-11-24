@@ -8,9 +8,9 @@ export const updates = [
     category: "feature",
     priority: "high",
     status: "merged",
-    author: "EmanExe",
+    author: "Ememman",
     branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/189",
+    url: "https://github.com/Ememman/OS/pull/189",
     pinned: true,
   },
   {
@@ -22,9 +22,9 @@ export const updates = [
     category: "feature",
     priority: "high",
     status: "merged",
-    author: "EmanExe",
+    author: "Ememman",
     branch: "fix/dock-dragging-applications",
-    url: "https://github.com/EmanExe/OS/pull/188",
+    url: "https://github.com/Ememman/OS/pull/188",
     pinned: true,
   },
   {
@@ -36,9 +36,9 @@ export const updates = [
     category: "fix",
     priority: "critical",
     status: "merged",
-    author: "EmanExe",
+    author: "Ememman",
     branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/187",
+    url: "https://github.com/Ememman/OS/pull/187",
   },
   {
     id: "pr-186",
@@ -49,9 +49,9 @@ export const updates = [
     category: "fix",
     priority: "critical",
     status: "merged",
-    author: "EmanExe",
+    author: "Ememman",
     branch: "fix/deployment-error",
-    url: "https://github.com/EmanExe/OS/pull/186",
+    url: "https://github.com/Ememman/OS/pull/186",
   },
   {
     id: "pr-185",
@@ -62,9 +62,9 @@ export const updates = [
     category: "fix",
     priority: "high",
     status: "merged",
-    author: "EmanExe",
+    author: "Ememman",
     branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/185",
+    url: "https://github.com/Ememman/OS/pull/185",
   },
   {
     id: "pr-151",
@@ -75,9 +75,9 @@ export const updates = [
     category: "feature",
     priority: "medium",
     status: "merged",
-    author: "EmanExe",
+    author: "Ememman",
     branch: "feat/library-preview-image",
-    url: "https://github.com/EmanExe/OS/pull/151",
+    url: "https://github.com/Ememman/OS/pull/151",
   },
   {
     id: "pr-150",
@@ -88,9 +88,9 @@ export const updates = [
     category: "fix",
     priority: "high",
     status: "merged",
-    author: "EmanExe",
+    author: "Ememman",
     branch: "fix/activity-monitor-enhancement",
-    url: "https://github.com/EmanExe/OS/pull/150",
+    url: "https://github.com/Ememman/OS/pull/150",
   },
   {
     id: "pr-149",
@@ -103,7 +103,7 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/149"
+    url: "https://github.com/Ememman/OS/pull/149"
   },
   {
     id: "pr-148",
@@ -116,7 +116,7 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "fix/remove-dev-in-the-deployment",
-    url: "https://github.com/EmanExe/OS/pull/148"
+    url: "https://github.com/Ememman/OS/pull/148"
   },
   {
     id: "pr-147",
@@ -129,7 +129,7 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "fix/notes-layouts-templates",
-    url: "https://github.com/EmanExe/OS/pull/147"
+    url: "https://github.com/Ememman/OS/pull/147"
   },
   {
     id: "pr-146",
@@ -142,7 +142,7 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/146"
+    url: "https://github.com/Ememman/OS/pull/146"
   },
   {
     id: "pr-145",
@@ -155,7 +155,7 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "fix/terminal-reponsiveness",
-    url: "https://github.com/EmanExe/OS/pull/145"
+    url: "https://github.com/Ememman/OS/pull/145"
   },
   {
     id: "pr-144",
@@ -168,7 +168,7 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/144"
+    url: "https://github.com/Ememman/OS/pull/144"
   },
   {
     id: "pr-143",
@@ -181,7 +181,7 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "fix/codeplay-preview-issue",
-    url: "https://github.com/EmanExe/OS/pull/143"
+    url: "https://github.com/Ememman/OS/pull/143"
   },
   {
     id: "pr-142",
@@ -194,6 +194,6 @@ export const updates = [
     status: "merged",
     author: "Ememman",
     branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/142"
+    url: "https://github.com/Ememman/OS/pull/142"
   }
 ];

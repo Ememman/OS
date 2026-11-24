@@ -23,26 +23,15 @@ import { getSocket } from "../../lib/socket";
 import { useOS } from "../../store/useOS";
 import { soundFx } from "../../lib/soundFx";
 import CustomDropdown from "../ui/CustomDropdown";
+import {
+  type UpdateCategory,
+  type UpdatePriority,
+  type UpdateStatus,
+  type UpdateItem,
+  FALLBACK_UPDATES,
+} from "../../data/updates";
 
-export type UpdateCategory = "feature" | "fix" | "bug";
-export type UpdatePriority = "critical" | "high" | "medium" | "low";
-export type UpdateStatus = "merged" | "open" | "closed";
-
-export interface UpdateItem {
-  id: string;
-  prNumber: number;
-  title: string;
-  body: string;
-  date: string;
-  category: UpdateCategory;
-  priority: UpdatePriority;
-  status: UpdateStatus;
-  author: string;
-  authorAvatar?: string;
-  branch?: string;
-  url: string;
-  pinned?: boolean;
-}
+export type { UpdateCategory, UpdatePriority, UpdateStatus, UpdateItem };
 
 export interface DetailedReaction {
   heart: number;
@@ -123,234 +112,6 @@ const REACTION_BUTTONS = [
   { type: "party" as const, Icon: GIconTrophy, label: "Celebrate", color: "text-emerald-400" },
 ];
 
-// Fallback PR list representing real repository pull requests on Ememman/OS
-const FALLBACK_UPDATES: UpdateItem[] = [
-  {
-    id: "pr-280",
-    prNumber: 280,
-    title: "Updated Main",
-    body: "Merged core system improvements and synchronization updates into main branch.",
-    date: "2026-11-23",
-    category: "feature",
-    priority: "medium",
-    status: "merged",
-    author: "Ememman",
-    branch: "dev",
-    url: "https://github.com/Ememman/OS/pull/280",
-    pinned: true,
-  },
-  {
-    id: "pr-279",
-    prNumber: 279,
-    title: "Strict 5-Second Auto-Dismiss Limit & Visual Countdown Progress Bar",
-    body: "Enhanced Dynamic Island notification toastbar auto-dismissal within 5 seconds with countdown progress indicator.",
-    date: "2026-11-23",
-    category: "fix",
-    priority: "medium",
-    status: "merged",
-    author: "Ememman",
-    branch: "fix/dynamic-island-modifications",
-    url: "https://github.com/Ememman/OS/pull/279",
-  },
-  {
-    id: "pr-189",
-    prNumber: 189,
-    title: "Updated Main │ Implement the dragging function to the dock applications",
-    body: "Merged dock dragging and reordering capabilities into main branch.",
-    date: "2026-11-13",
-    category: "feature",
-    priority: "high",
-    status: "merged",
-    author: "Ememman",
-    branch: "dev",
-    url: "https://github.com/Ememman/OS/pull/189",
-    pinned: true,
-  },
-  {
-    id: "pr-188",
-    prNumber: 188,
-    title: "Implement the dragging function to the dock applications",
-    body: "Allowed users to drag and reorder application icons inside the macOS Dock and Windows Taskbar with persisted arrangement.",
-    date: "2026-11-13",
-    category: "feature",
-    priority: "high",
-    status: "merged",
-    author: "EmanExe",
-    branch: "fix/dock-dragging-applications",
-    url: "https://github.com/EmanExe/OS/pull/188",
-    pinned: true,
-  },
-  {
-    id: "pr-187",
-    prNumber: 187,
-    title: "Updated Main │ Fixes in Deployment in Render & Github Pages",
-    body: "Resolved PostCSS skeleton CSS resolution on GitHub Pages and compression module handling on Render.",
-    date: "2026-11-13",
-    category: "fix",
-    priority: "critical",
-    status: "merged",
-    author: "EmanExe",
-    branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/187",
-  },
-  {
-    id: "pr-186",
-    prNumber: 186,
-    title: "Fixes in Deployment in Render & Github Pages",
-    body: "Fixed production build pipeline issues across static and dynamic deployment targets.",
-    date: "2026-11-13",
-    category: "fix",
-    priority: "critical",
-    status: "merged",
-    author: "EmanExe",
-    branch: "fix/deployment-error",
-    url: "https://github.com/EmanExe/OS/pull/186",
-  },
-  {
-    id: "pr-185",
-    prNumber: 185,
-    title: "Main Updated │ Did some major fixes & configurations in the system",
-    body: "Sonner removal, native glassmorphism notification integration, and calculator programmer mode improvements.",
-    date: "2026-11-13",
-    category: "fix",
-    priority: "high",
-    status: "merged",
-    author: "EmanExe",
-    branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/185",
-  },
-  {
-    id: "pr-151",
-    prNumber: 151,
-    title: "Change the preview image for the project in Library",
-    body: "Enhanced the Engineering Library with custom screenshot previews for Portfolio OS, Flash-Cards, and Quiz-App, alongside polished 'Currently in Development' frosted glassmorphism placeholders for upcoming works.",
-    date: "2026-11-12",
-    category: "feature",
-    priority: "medium",
-    status: "merged",
-    author: "EmanExe",
-    branch: "feat/library-preview-image",
-    url: "https://github.com/EmanExe/OS/pull/151",
-  },
-  {
-    id: "pr-150",
-    prNumber: 150,
-    title: "Refactor code structure for improved readability and maintainability",
-    body: "Comprehensive Activity Monitor overhaul: responsive mobile touch cards, dismissible compositor banner, 24-package client/server ecosystem registry, and interactive 43-endpoint API testing with latency tracking.",
-    date: "2026-11-12",
-    category: "fix",
-    priority: "high",
-    status: "merged",
-    author: "EmanExe",
-    branch: "fix/activity-monitor-enhancement",
-    url: "https://github.com/EmanExe/OS/pull/150",
-  },
-  {
-    id: "pr-149",
-    prNumber: 149,
-    title: "Updated Main │ Remove the Dev in the Deployment for the Github Pages",
-    body: "Merged production deployment isolation into main branch, eliminating non-production deployment triggers.",
-    date: "2026-11-12",
-    category: "fix",
-    priority: "critical",
-    status: "merged",
-    author: "Ememman",
-    branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/149",
-  },
-  {
-    id: "pr-148",
-    prNumber: 148,
-    title: "Remove the Dev in the Deployment for the Github Pages",
-    body: "Updated GitHub Actions deploy.yml workflow to restrict continuous deployment execution solely to the main branch.",
-    date: "2026-11-12",
-    category: "fix",
-    priority: "critical",
-    status: "merged",
-    author: "Ememman",
-    branch: "fix/remove-dev-in-the-deployment",
-    url: "https://github.com/EmanExe/OS/pull/148",
-  },
-  {
-    id: "pr-147",
-    prNumber: 147,
-    title: "Fix the Layouts and Organize the templates in the Notes",
-    body: "Resolved template dropdown z-index clipping bug, added clean responsive split-view editor, and improved typography.",
-    date: "2026-11-12",
-    category: "fix",
-    priority: "high",
-    status: "merged",
-    author: "Ememman",
-    branch: "fix/notes-layouts-templates",
-    url: "https://github.com/EmanExe/OS/pull/147",
-  },
-  {
-    id: "pr-146",
-    prNumber: 146,
-    title: "Updated Main │ Organize the Terminal's layout in the mobile-view or it's reponsiveness",
-    body: "Merged mobile terminal responsive layout improvements into the primary production branch.",
-    date: "2026-11-12",
-    category: "feature",
-    priority: "medium",
-    status: "merged",
-    author: "Ememman",
-    branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/146",
-  },
-  {
-    id: "pr-145",
-    prNumber: 145,
-    title: "Organize the Terminal's layout in the mobile-view or it's reponsiveness",
-    body: "Enhanced terminal shell responsiveness: horizontal touch quick-action pills, full viewport wrapping, and enhanced command execution.",
-    date: "2026-11-12",
-    category: "fix",
-    priority: "high",
-    status: "merged",
-    author: "Ememman",
-    branch: "fix/terminal-reponsiveness",
-    url: "https://github.com/EmanExe/OS/pull/145",
-  },
-  {
-    id: "pr-144",
-    prNumber: 144,
-    title: "Updated Main │ Preview overlapping issue in the responsiveness",
-    body: "Merged sandbox layout fixes preventing live preview container from breaking viewport boundaries.",
-    date: "2026-11-12",
-    category: "bug",
-    priority: "high",
-    status: "merged",
-    author: "Ememman",
-    branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/144",
-  },
-  {
-    id: "pr-143",
-    prNumber: 143,
-    title: "Preview overlapping issue in the responsiveness",
-    body: "Fixed CodePlay Sandbox preview iframe overflowing horizontal boundaries on mobile viewport and added word wrap to code editor.",
-    date: "2026-11-12",
-    category: "bug",
-    priority: "high",
-    status: "merged",
-    author: "Ememman",
-    branch: "fix/codeplay-preview-issue",
-    url: "https://github.com/EmanExe/OS/pull/143",
-  },
-  {
-    id: "pr-142",
-    prNumber: 142,
-    title: "Updated Main │ Fix the overlapping issue in the mobile-responsiveness in CodePlay",
-    body: "Resolved mobile view slider bugs in CodePlay by enforcing CSS touch constraints and eye preview icon.",
-    date: "2026-11-12",
-    category: "bug",
-    priority: "high",
-    status: "merged",
-    author: "Ememman",
-    branch: "dev",
-    url: "https://github.com/EmanExe/OS/pull/142",
-  },
-];
-
 function parseGithubPR(pr: any): UpdateItem {
   const prNumber = pr.number;
   const id = `pr-${prNumber}`;
@@ -360,7 +121,7 @@ function parseGithubPR(pr: any): UpdateItem {
   const branch = pr.head?.ref || "main";
   const status: UpdateStatus = pr.merged_at ? "merged" : pr.state === "closed" ? "closed" : "open";
   const date = pr.created_at ? pr.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10);
-  const url = pr.html_url || `https://github.com/EmanExe/OS/pull/${prNumber}`;
+  const url = pr.html_url || `https://github.com/Ememman/OS/pull/${prNumber}`;
   const rawBody = (pr.body || "").trim();
   const body = rawBody || `Pull Request #${prNumber} on Ememman/OS: ${title}. Branch: ${branch}`;
 

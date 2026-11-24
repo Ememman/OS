@@ -1,7 +1,10 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useOS } from "../../store/useOS";
 import { soundFx } from "../../lib/soundFx";
+import { API_URL } from "../../lib/config";
 import WeatherWidget from "../widgets/WeatherWidget";
+import { fallbackProjects } from "../../data/projects";
+import { FALLBACK_UPDATES, type UpdateItem } from "../../data/updates";
 import {
   GIconClose,
   GIconSearch,
@@ -19,6 +22,24 @@ const POP_ANIM = { animation: "menuOpen 160ms cubic-bezier(.16,1,.3,1) both" };
 
 interface WinWidgetsBoardProps {
   onClose: () => void;
+}
+
+function formatRelativeOrDate(dateStr: string): string {
+  if (!dateStr) return "";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const diffMs = Date.now() - d.getTime();
+    if (diffMs < 0) return d.toLocaleDateString([], { month: "short", day: "numeric" });
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (diffHours < 1) return `${Math.max(1, Math.floor(diffMs / 60000))}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return d.toLocaleDateString([], { month: "short", day: "numeric" });
+  } catch {
+    return dateStr;
+  }
 }
 
 export default function WinWidgetsBoard({ onClose }: WinWidgetsBoardProps) {
@@ -47,10 +68,21 @@ export default function WinWidgetsBoard({ onClose }: WinWidgetsBoardProps) {
     } catch {}
   };
 
-  // Sticky Note internal state
+  // Sticky Note state with real local persistence and two-way sync with user notes
   const [stickyNote, setStickyNote] = useState(() => {
-    if (typeof window === "undefined") return "Ship Portfolio OS v2.5 with native Windows 11 widgets and adaptive taskbar!";
-    return localStorage.getItem("portfolio_os_sticky_note") || "Ship Portfolio OS v2.5 with native Windows 11 widgets and adaptive taskbar!";
+    if (typeof window === "undefined") return "";
+    const saved = localStorage.getItem("portfolio_os_sticky_note");
+    if (saved !== null) return saved;
+    try {
+      const notesData = localStorage.getItem("os_notes_data");
+      if (notesData) {
+        const parsed = JSON.parse(notesData);
+        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.content) {
+          return parsed[0].content.slice(0, 300);
+        }
+      }
+    } catch {}
+    return "";
   });
 
   const handleStickyChange = (val: string) => {
@@ -59,6 +91,237 @@ export default function WinWidgetsBoard({ onClose }: WinWidgetsBoardProps) {
       localStorage.setItem("portfolio_os_sticky_note", val);
     } catch {}
   };
+
+  // 1. Real System Performance Telemetry
+  const [perfData, setPerfData] = useState({
+    cpuPercent: 12,
+    usedRamGb: 4.2,
+    totalRamGb: 16.0,
+    ramPercent: 26,
+    pingMs: 18,
+    threads: 16,
+  });
+
+  useEffect(() => {
+    let active = true;
+
+    const sampleTelemetry = async () => {
+      let ping = 18;
+      try {
+        const t0 = performance.now();
+        const pingRes = await fetch(`${API_URL}/api/system/ping`, { cache: "no-store" });
+        if (pingRes.ok) {
+          ping = Math.max(1, Math.round(performance.now() - t0));
+        }
+      } catch {
+        try {
+          const t0 = performance.now();
+          await fetch(window.location.origin, { method: "HEAD", cache: "no-store" });
+          ping = Math.max(1, Math.round(performance.now() - t0));
+        } catch {
+          ping = 22;
+        }
+      }
+
+      let cpu = 14;
+      let usedRam = 4.5;
+      let totalRam = 16.0;
+      let ramUsagePct = 28;
+      let threads = (navigator.hardwareConcurrency || 8) * 2;
+
+      try {
+        const [metricsRes, infoRes] = await Promise.all([
+          fetch(`${API_URL}/api/system/metrics`).then((r) => (r.ok ? r.json() : null)),
+          fetch(`${API_URL}/api/system/info`).then((r) => (r.ok ? r.json() : null)),
+        ]);
+
+        if (metricsRes?.current) {
+          cpu = Math.round(metricsRes.current.cpuPercent || 14);
+        }
+        if (infoRes?.memory) {
+          const usedMb = infoRes.memory.systemUsedMb || (infoRes.memory.systemTotalMb - infoRes.memory.systemFreeMb);
+          const totalMb = infoRes.memory.systemTotalMb || 16384;
+          usedRam = Math.round((usedMb / 1024) * 10) / 10;
+          totalRam = Math.round((totalMb / 1024) * 10) / 10;
+          ramUsagePct = Math.round(infoRes.memory.usagePercent || (usedMb / totalMb) * 100);
+        }
+        if (infoRes?.cpu?.cores) {
+          threads = infoRes.cpu.cores * 2;
+        }
+      } catch {
+        // Fallback to real browser performance API
+        if (typeof window !== "undefined") {
+          const mem = (performance as any).memory;
+          const devMem = (navigator as any).deviceMemory || 16;
+          totalRam = devMem;
+          if (mem) {
+            usedRam = Math.round((mem.usedJSHeapSize / 1024 / 1024 / 1024) * 10) / 10;
+            ramUsagePct = Math.min(95, Math.max(5, Math.round((mem.usedJSHeapSize / mem.jsHeapSizeLimit) * 100)));
+          } else {
+            usedRam = Math.round(devMem * 0.3 * 10) / 10;
+            ramUsagePct = 30;
+          }
+        }
+      }
+
+      if (active) {
+        setPerfData({
+          cpuPercent: cpu,
+          usedRamGb: usedRam,
+          totalRamGb: totalRam,
+          ramPercent: ramUsagePct,
+          pingMs: ping,
+          threads,
+        });
+      }
+    };
+
+    sampleTelemetry();
+    const interval = setInterval(sampleTelemetry, 3500);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // 2. Real Updates & Project Records
+  const [liveUpdatesList, setLiveUpdatesList] = useState<UpdateItem[]>(FALLBACK_UPDATES);
+  const [liveProjectsList, setLiveProjectsList] = useState(fallbackProjects);
+
+  useEffect(() => {
+    let active = true;
+
+    // Fetch real updates
+    fetch(`${API_URL}/api/updates`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (active && Array.isArray(data) && data.length > 0) {
+          setLiveUpdatesList(data);
+        }
+      })
+      .catch(() => {});
+
+    // Fetch real projects
+    fetch(`${API_URL}/api/projects`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (active && Array.isArray(data) && data.length > 0) {
+          setLiveProjectsList(data);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Upcoming Agenda derived from user notes (#todo or #work) + real repo milestones from /api/updates
+  const agendaItems = useMemo(() => {
+    const items: Array<{
+      id: string;
+      time: string;
+      title: string;
+      tag: string;
+      type: "note" | "update";
+      action: () => void;
+    }> = [];
+
+    // Check user notes first
+    try {
+      const notesData = localStorage.getItem("os_notes_data");
+      if (notesData) {
+        const parsed = JSON.parse(notesData);
+        if (Array.isArray(parsed)) {
+          const todoNotes = parsed.filter((n) => n?.tag === "todo" || n?.tag === "work");
+          for (const n of todoNotes.slice(0, 2)) {
+            items.push({
+              id: `note-${n.id}`,
+              time: "Task",
+              title: n.title || n.content?.split("\n")[0] || "Untitled Note",
+              tag: (n.tag || "Note").toUpperCase(),
+              type: "note",
+              action: () => {
+                if (systemSounds) soundFx.playClick();
+                openApp("notes");
+                onClose();
+              },
+            });
+          }
+        }
+      }
+    } catch {}
+
+    // Fill remaining slots with real updates / merged PR milestones
+    const needed = 3 - items.length;
+    if (needed > 0) {
+      const updates = liveUpdatesList.slice(0, needed);
+      for (const u of updates) {
+        items.push({
+          id: `update-${u.id}`,
+          time: u.date ? formatRelativeOrDate(u.date) : `PR #${u.prNumber}`,
+          title: u.title,
+          tag: (u.category || "PR").toUpperCase(),
+          type: "update",
+          action: () => {
+            if (systemSounds) soundFx.playClick();
+            openApp("updates");
+            onClose();
+          },
+        });
+      }
+    }
+
+    return items;
+  }, [liveUpdatesList, onClose, openApp, systemSounds]);
+
+  // Real Top Stories & Releases derived from actual updates & real projects
+  const feedStories = useMemo(() => {
+    const stories: Array<{
+      id: string;
+      title: string;
+      source: string;
+      time: string;
+      tag: string;
+      action: () => void;
+    }> = [];
+
+    // Take top 2 real updates
+    const updates = liveUpdatesList.slice(0, 2);
+    for (const u of updates) {
+      stories.push({
+        id: `story-up-${u.id}`,
+        title: u.title,
+        source: `${u.author || "Ememman"} / OS`,
+        time: u.date ? formatRelativeOrDate(u.date) : "Recent",
+        tag: (u.category || "Release").toUpperCase(),
+        action: () => {
+          if (systemSounds) soundFx.playClick();
+          openApp("updates");
+          onClose();
+        },
+      });
+    }
+
+    // Take top 2 real projects
+    const projects = liveProjectsList.slice(0, 2);
+    for (const p of projects) {
+      stories.push({
+        id: `story-proj-${p.id}`,
+        title: `${p.title} — ${p.summary || ""}`.trim(),
+        source: "Engineering Library",
+        time: p.year || "2026",
+        tag: (p.categories?.[0] || p.category || "Project").toUpperCase(),
+        action: () => {
+          if (systemSounds) soundFx.playClick();
+          openApp("library");
+          onClose();
+        },
+      });
+    }
+
+    return stories;
+  }, [liveUpdatesList, liveProjectsList, onClose, openApp, systemSounds]);
 
   // Dismiss on outside click or Escape
   useEffect(() => {
@@ -92,6 +355,9 @@ export default function WinWidgetsBoard({ onClose }: WinWidgetsBoardProps) {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     if (systemSounds) soundFx.playClick();
+    try {
+      localStorage.setItem("browser_initial_search", searchQuery.trim());
+    } catch {}
     openApp("browser");
     onClose();
   };
@@ -267,31 +533,39 @@ export default function WinWidgetsBoard({ onClose }: WinWidgetsBoardProps) {
                   <div>
                     <div className="flex justify-between text-[11px] mb-1 font-mono">
                       <span className="text-white/60">CPU Usage</span>
-                      <span className="text-emerald-300 font-semibold">18%</span>
+                      <span className="text-emerald-300 font-semibold">{perfData.cpuPercent}%</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-                      <div className="h-full bg-emerald-400 rounded-full w-[18%]" />
+                      <div
+                        className="h-full bg-emerald-400 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, Math.max(3, perfData.cpuPercent))}%` }}
+                      />
                     </div>
                   </div>
 
                   <div>
                     <div className="flex justify-between text-[11px] mb-1 font-mono">
                       <span className="text-white/60">Memory (RAM)</span>
-                      <span className="text-sky-300 font-semibold">4.8 GB / 16 GB</span>
+                      <span className="text-sky-300 font-semibold">
+                        {perfData.usedRamGb} GB / {perfData.totalRamGb} GB
+                      </span>
                     </div>
                     <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-                      <div className="h-full bg-sky-400 rounded-full w-[30%]" />
+                      <div
+                        className="h-full bg-sky-400 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, Math.max(3, perfData.ramPercent))}%` }}
+                      />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/10 text-center font-mono text-[10px]">
                     <div className="p-1 rounded-lg bg-white/5">
                       <div className="text-white/40">Network Ping</div>
-                      <div className="text-white/90 font-bold">22 ms</div>
+                      <div className="text-white/90 font-bold">{perfData.pingMs} ms</div>
                     </div>
                     <div className="p-1 rounded-lg bg-white/5">
                       <div className="text-white/40">Active Threads</div>
-                      <div className="text-white/90 font-bold">142</div>
+                      <div className="text-white/90 font-bold">{perfData.threads}</div>
                     </div>
                   </div>
                 </div>
@@ -308,21 +582,24 @@ export default function WinWidgetsBoard({ onClose }: WinWidgetsBoardProps) {
                     </div>
                     <span className="text-xs font-bold text-white">Upcoming Agenda</span>
                   </div>
-                  <span className="text-[10px] text-white/40 font-mono">November 2026</span>
+                  <span className="text-[10px] text-white/40 font-mono">
+                    {now.toLocaleDateString([], { month: "short", year: "numeric" })}
+                  </span>
                 </div>
 
                 <div className="space-y-2 my-auto">
-                  {[
-                    { time: "11:30 AM", title: "React 19 & Next.js Performance Review", tag: "Dev" },
-                    { time: "02:00 PM", title: "Docker Microservices & Redis Cache", tag: "Ops" },
-                    { time: "04:30 PM", title: "Portfolio OS Native Windows Enhancements", tag: "System" },
-                  ].map((evt, i) => (
-                    <div key={i} className="flex items-center justify-between p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition">
+                  {agendaItems.map((evt) => (
+                    <div
+                      key={evt.id}
+                      onClick={evt.action}
+                      className="flex items-center justify-between p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition cursor-pointer group"
+                      title="Click to inspect in system"
+                    >
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-[9.5px] font-mono text-sky-400 shrink-0">{evt.time}</span>
-                        <span className="text-[11px] text-white/90 truncate">{evt.title}</span>
+                        <span className="text-[11px] text-white/90 truncate group-hover:text-white">{evt.title}</span>
                       </div>
-                      <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/10 text-white/70 shrink-0">
+                      <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/10 text-white/70 group-hover:text-white shrink-0 ml-1.5">
                         {evt.tag}
                       </span>
                     </div>
@@ -357,7 +634,7 @@ export default function WinWidgetsBoard({ onClose }: WinWidgetsBoardProps) {
                 <textarea
                   value={stickyNote}
                   onChange={(e) => handleStickyChange(e.target.value)}
-                  placeholder="Type a quick memo or checklist here..."
+                  placeholder="Type a quick note, checklist, or reminder here..."
                   className="w-full flex-1 my-2 bg-transparent resize-none outline-none text-xs text-amber-100 placeholder:text-amber-200/40 leading-relaxed thin-scroll font-sans"
                 />
 
@@ -392,53 +669,24 @@ export default function WinWidgetsBoard({ onClose }: WinWidgetsBoardProps) {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {[
-                {
-                  title: "Portfolio OS 2.5: Native Windows 11 Widgets & Taskbar Alignments Released",
-                  source: "James Mendoza Dev",
-                  time: "10m ago",
-                  tag: "Release",
-                },
-                {
-                  title: "React 19 Server Components and Multi-Window Architecture Deep Dive",
-                  source: "Engineering Log",
-                  time: "1h ago",
-                  tag: "Architecture",
-                },
-                {
-                  title: "SandreaLee Salon Booking & Straive IMS Commercial Deployments Live",
-                  source: "Enterprise",
-                  time: "3h ago",
-                  tag: "Commercial",
-                },
-                {
-                  title: "Metro Manila Tech Radar: Next-Gen Full-Stack Ecosystem Innovations",
-                  source: "Tech Journal",
-                  time: "5h ago",
-                  tag: "Insight",
-                },
-              ].map((news, i) => (
+              {feedStories.map((story) => (
                 <div
-                  key={i}
-                  onClick={() => {
-                    if (systemSounds) soundFx.playClick();
-                    openApp("updates");
-                    onClose();
-                  }}
+                  key={story.id}
+                  onClick={story.action}
                   className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition cursor-pointer group flex flex-col justify-between"
                 >
                   <div className="flex items-start justify-between gap-2 mb-1.5">
                     <span className="text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300">
-                      {news.tag}
+                      {story.tag}
                     </span>
-                    <span className="text-[9px] text-white/40 font-mono">{news.time}</span>
+                    <span className="text-[9px] text-white/40 font-mono">{story.time}</span>
                   </div>
                   <h4 className="text-xs font-semibold text-white/90 group-hover:text-white leading-snug line-clamp-2">
-                    {news.title}
+                    {story.title}
                   </h4>
                   <div className="mt-2 text-[9px] text-white/50 flex items-center justify-between">
-                    <span>{news.source}</span>
-                    <GIconArrowUpRight size={10} className="text-white/40 group-hover:text-white" />
+                    <span className="truncate max-w-[180px]">{story.source}</span>
+                    <GIconArrowUpRight size={10} className="text-white/40 group-hover:text-white shrink-0" />
                   </div>
                 </div>
               ))}
