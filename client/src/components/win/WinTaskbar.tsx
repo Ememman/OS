@@ -467,6 +467,16 @@ export default function WinTaskbar() {
       return;
     }
 
+    const appWin = windows.find((w) => w.app === app);
+    if (appWin) {
+      // Application is already open: 1 click opens/focuses it, clicking it back again minimizes it
+      toggleApp(app);
+      lastTaskbarClickRef.current = { app: "", time: 0 };
+      setSelectedTaskbarApp(null);
+      return;
+    }
+
+    // Application is closed: 1 click highlights/selects, double click opens
     const now = Date.now();
     if (lastTaskbarClickRef.current.app === app && now - lastTaskbarClickRef.current.time < 380) {
       toggleApp(app);
@@ -724,9 +734,12 @@ export default function WinTaskbar() {
                     onClick={() => handleTaskbarAppClick(app)}
                     onDoubleClick={() => {
                       if (!isMobile) {
-                        toggleApp(app);
-                        lastTaskbarClickRef.current = { app: "", time: 0 };
-                        setSelectedTaskbarApp(null);
+                        const appWin = windows.find((w) => w.app === app);
+                        if (!appWin) {
+                          toggleApp(app);
+                          lastTaskbarClickRef.current = { app: "", time: 0 };
+                          setSelectedTaskbarApp(null);
+                        }
                       }
                     }}
                     onContextMenu={(e) => {
