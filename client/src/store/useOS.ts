@@ -190,6 +190,8 @@ interface OSState {
   openApp: (app: string) => void;
   toggleApp: (app: string) => void;
   closeWindow: (id: string) => void;
+  lastClosedWindow: WindowState | null;
+  reopenLastClosedWindow: () => boolean;
   focusWindow: (id: string) => void;
   restoreWindow: (id: string) => void;
   minimizeWindow: (id: string) => void;
@@ -856,9 +858,26 @@ export const useOS = create<OSState>((set, get) => ({
     set({ windows: [...get().windows, win] });
   },
 
+  lastClosedWindow: null,
   closeWindow: (id) => {
     if (get().systemSounds) soundFx.playClose();
-    set({ windows: get().windows.filter((w) => w.id !== id) });
+    const win = get().windows.find((w) => w.id === id);
+    set({
+      windows: get().windows.filter((w) => w.id !== id),
+      lastClosedWindow: win || get().lastClosedWindow,
+    });
+  },
+  reopenLastClosedWindow: () => {
+    const last = get().lastClosedWindow;
+    if (!last) return false;
+    if (get().systemSounds) soundFx.playOpen();
+    z += 1;
+    const restored = { ...last, id: `${last.app}-${Date.now()}`, minimized: false, z };
+    set({
+      windows: [...get().windows, restored],
+      lastClosedWindow: null,
+    });
+    return true;
   },
 
   focusWindow: (id) => {

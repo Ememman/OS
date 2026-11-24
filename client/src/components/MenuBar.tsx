@@ -181,6 +181,8 @@ export default function MenuBar() {
     closeAllWindows,
     minimizeAllWindows,
     cascadeWindows,
+    lastClosedWindow,
+    reopenLastClosedWindow,
     dockPosition,
     setDockPosition,
     toggleShowDesktop,
@@ -222,6 +224,48 @@ export default function MenuBar() {
   const [fullscreen, setFullscreen] = useState(false);
   const [wifiOpen, setWifiOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
+
+  // Preserve active editable focus and text selection before menu bar clicks
+  const lastActiveTargetRef = useRef<{
+    el: HTMLElement | null;
+    start: number;
+    end: number;
+    text: string;
+  }>({ el: null, start: 0, end: 0, text: "" });
+
+  useEffect(() => {
+    const recordActive = () => {
+      const activeEl = document.activeElement as HTMLElement | null;
+      if (activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA" || activeEl.isContentEditable)) {
+        const input = activeEl as HTMLInputElement | HTMLTextAreaElement;
+        const s = input.selectionStart ?? 0;
+        const e = input.selectionEnd ?? 0;
+        lastActiveTargetRef.current = {
+          el: activeEl,
+          start: s,
+          end: e,
+          text: (input.value ? input.value.slice(s, e) : "") || (window.getSelection()?.toString() || ""),
+        };
+      } else {
+        const sel = window.getSelection()?.toString() || "";
+        if (sel) {
+          lastActiveTargetRef.current = {
+            el: null,
+            start: 0,
+            end: 0,
+            text: sel,
+          };
+        }
+      }
+    };
+
+    document.addEventListener("selectionchange", recordActive, { passive: true });
+    document.addEventListener("focusin", recordActive, { passive: true });
+    return () => {
+      document.removeEventListener("selectionchange", recordActive);
+      document.removeEventListener("focusin", recordActive);
+    };
+  }, []);
 
   const menuNavRef = useRef<HTMLDivElement>(null);
   const wifiRef = useRef<HTMLDivElement>(null);
@@ -551,12 +595,23 @@ export default function MenuBar() {
             isOpen={openMenu === "edit"}
             onToggle={() => handleMenuToggle("edit")}
             onMouseEnter={() => handleMenuHover("edit")}
-            minWidth="min-w-[240px]"
+            minWidth="min-w-[250px]"
           >
             <MenuItem
               onClick={() => {
-                document.execCommand("undo");
-                notify("Undo", "Reverted recent action.", "info", 1800);
+                const target = lastActiveTargetRef.current.el;
+                if (target) {
+                  target.focus();
+                  document.execCommand("undo");
+                  notify("Undo", "Reverted recent edit in active document.", "info", 1800);
+                } else if (lastClosedWindow) {
+                  const restored = reopenLastClosedWindow();
+                  if (restored) {
+                    notify("Window Restored", "Reopened recently closed window.", "success", 2400);
+                  }
+                } else {
+                  notify("Undo", "No recent action to undo.", "info", 1800);
+                }
                 setOpenMenu(null);
               }}
               shortcut="⌘Z">
@@ -564,23 +619,55 @@ export default function MenuBar() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                document.execCommand("redo");
-                notify("Redo", "Restored recent action.", "info", 1800);
+                const target = lastActiveTargetRef.current.el;
+                if (target) {
+                  target.focus();
+                  document.execCommand("redo");
+                  notify("Redo", "Restored recent edit in active document.", "info", 1800);
+                } else {
+                  notify("Redo", "No recent action to redo.", "info", 1800);
+                }
                 setOpenMenu(null);
               }}
               shortcut="⇧⌘Z">
               Redo
             </MenuItem>
+            {lastClosedWindow && (
+              <MenuItem
+                onClick={() => {
+                  reopenLastClosedWindow();
+                  notify("Window Restored", "Reopened recently closed window.", "success", 2400);
+                  setOpenMenu(null);
+                }}
+                shortcut="⇧⌘T">
+                Reopen Closed Window
+              </MenuItem>
+            )}
             <MenuSeparator />
             <MenuItem
               onClick={() => {
-                const sel = window.getSelection()?.toString();
-                if (sel) {
-                  navigator.clipboard?.writeText(sel);
+                const target = lastActiveTargetRef.current.el;
+                const textToCut = lastActiveTargetRef.current.text || window.getSelection()?.toString();
+                if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
+                  const input = target as HTMLInputElement | HTMLTextAreaElement;
+                  const start = input.selectionStart ?? 0;
+                  const end = input.selectionEnd ?? 0;
+                  const val = input.value;
+                  const selectedText = val.slice(start, end);
+                  if (selectedText) {
+                    navigator.clipboard?.writeText(selectedText);
+                    input.setRangeText("", start, end, "end");
+                    input.focus();
+                    notify("Cut", `"${selectedText.slice(0, 30)}" cut to clipboard.`, "info", 2000);
+                  } else {
+                    notify("Cut", "Select text inside an input to cut.", "warning", 2000);
+                  }
+                } else if (textToCut) {
+                  navigator.clipboard?.writeText(textToCut);
                   document.execCommand("delete");
-                  notify("Cut", "Selection cut to clipboard.", "info", 1800);
+                  notify("Cut", "Selection cut to clipboard.", "info", 2000);
                 } else {
-                  notify("Cut", "Select text inside a document to cut.", "warning", 2000);
+                  notify("Cut", "Select text inside an editor or document to cut.", "warning", 2200);
                 }
                 setOpenMenu(null);
               }}
@@ -589,12 +676,22 @@ export default function MenuBar() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                const sel = window.getSelection()?.toString();
-                if (sel) {
-                  navigator.clipboard?.writeText(sel);
-                  notify("Copied", "Selection copied to clipboard.", "info", 1800);
+                const target = lastActiveTargetRef.current.el;
+                let textToCopy = lastActiveTargetRef.current.text || window.getSelection()?.toString();
+                if (!textToCopy && target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
+                  const input = target as HTMLInputElement | HTMLTextAreaElement;
+                  const start = input.selectionStart ?? 0;
+                  const end = input.selectionEnd ?? 0;
+                  if (start !== end) {
+                    textToCopy = input.value.slice(start, end);
+                  }
+                }
+                if (textToCopy && textToCopy.trim()) {
+                  navigator.clipboard?.writeText(textToCopy);
+                  notify("Copied to Clipboard", `"${textToCopy.slice(0, 32)}${textToCopy.length > 32 ? "…" : ""}" copied.`, "success", 2200);
                 } else {
-                  navigator.clipboard?.writeText(window.location.href);
+                  const url = window.location.href;
+                  navigator.clipboard?.writeText(url);
                   notify("Portfolio Link Copied", "Direct portfolio URL copied to clipboard.", "success", 2400);
                 }
                 setOpenMenu(null);
@@ -603,15 +700,37 @@ export default function MenuBar() {
               Copy
             </MenuItem>
             <MenuItem
-              onClick={() => {
-                navigator.clipboard?.readText().then((text) => {
-                  if (text) {
-                    document.execCommand("insertText", false, text);
-                    notify("Pasted", "Pasted clipboard content.", "info", 1800);
+              onClick={async () => {
+                try {
+                  const text = await navigator.clipboard?.readText();
+                  if (!text) {
+                    notify("Clipboard Empty", "No text found on system clipboard.", "info", 2000);
+                    setOpenMenu(null);
+                    return;
                   }
-                }).catch(() => {
-                  notify("Paste", "Press ⌘V / Ctrl+V to paste in active editor.", "info", 2400);
-                });
+                  const target = lastActiveTargetRef.current.el;
+                  if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
+                    const input = target as HTMLInputElement | HTMLTextAreaElement;
+                    const start = input.selectionStart ?? input.value.length;
+                    const end = input.selectionEnd ?? input.value.length;
+                    input.setRangeText(text, start, end, "end");
+                    input.focus();
+                    notify("Pasted", `Inserted clipboard text (${text.length} chars).`, "success", 2000);
+                  } else {
+                    const activeWins = windows.filter((w) => !w.minimized);
+                    const focused = activeWins.length ? activeWins.reduce((a, b) => (a.z > b.z ? a : b)) : null;
+                    if (focused?.app === "notes") {
+                      notify("Ready in Notes", `Copied text ready to paste in Notes.`, "success", 2200);
+                    } else if (focused?.app === "terminal") {
+                      notify("Ready in Terminal", `Press Ctrl+V in Terminal shell to paste.`, "info", 2200);
+                    } else {
+                      openApp("notes");
+                      notify("Opened Notes", `Ready with clipboard content.`, "info", 2200);
+                    }
+                  }
+                } catch {
+                  notify("Paste Access", "Press ⌘V / Ctrl+V to paste directly into active editor.", "info", 2400);
+                }
                 setOpenMenu(null);
               }}
               shortcut="⌘V">
@@ -619,13 +738,16 @@ export default function MenuBar() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                const activeEl = document.activeElement as HTMLElement | null;
-                if (activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA")) {
-                  (activeEl as HTMLInputElement).select();
+                const target = lastActiveTargetRef.current.el;
+                if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
+                  const input = target as HTMLInputElement | HTMLTextAreaElement;
+                  input.focus();
+                  input.select();
+                  notify("Selected All", "All text selected in active editor.", "info", 1800);
                 } else {
                   window.getSelection()?.selectAllChildren(document.body);
+                  notify("Selected All", "Selected page content.", "info", 1800);
                 }
-                notify("Select All", "Selected all text content.", "info", 1500);
                 setOpenMenu(null);
               }}
               shortcut="⌘A">
@@ -643,7 +765,7 @@ export default function MenuBar() {
             <MenuItem
               onClick={() => {
                 navigator.clipboard?.writeText(window.location.href);
-                notify("Portfolio Link Copied", "Link copied to clipboard.", "success", 2400);
+                notify("Portfolio Link Copied", "Direct shareable portfolio link copied to clipboard.", "success", 2400);
                 setOpenMenu(null);
               }}
               shortcut="⇧⌘C">
