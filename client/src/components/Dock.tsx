@@ -135,6 +135,16 @@ export default function Dock() {
       return;
     }
 
+    const appWin = windows.find((w) => w.app === app);
+    if (appWin) {
+      // Application is already open: 1 click opens/focuses it, clicking it back again minimizes it
+      toggleApp(app);
+      lastDockClickRef.current = { app: "", time: 0 };
+      setSelectedDockApp(null);
+      return;
+    }
+
+    // Application is closed: 1 click highlights/selects, double click opens
     const now = Date.now();
     if (lastDockClickRef.current.app === app && now - lastDockClickRef.current.time < 380) {
       toggleApp(app);
@@ -315,9 +325,12 @@ export default function Dock() {
                 onClick={() => handleLaunch(app)}
                 onDoubleClick={() => {
                   if (!isMobile) {
-                    toggleApp(app);
-                    lastDockClickRef.current = { app: "", time: 0 };
-                    setSelectedDockApp(null);
+                    const appWin = windows.find((w) => w.app === app);
+                    if (!appWin) {
+                      toggleApp(app);
+                      lastDockClickRef.current = { app: "", time: 0 };
+                      setSelectedDockApp(null);
+                    }
                   }
                 }}
                 onContextMenu={(e) => {

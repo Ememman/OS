@@ -201,7 +201,7 @@ function resolveDesktopOverlap(
 
 export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsGridProps) {
   const { items, combineItems, openFolder, moveItem } = useDesktopStore();
-  const { openApp, osMode, dockPosition, widgetsVisible, notify, getAppBadge, openAppContextMenu } = useOS();
+  const { openApp, toggleApp, windows, osMode, dockPosition, widgetsVisible, notify, getAppBadge, openAppContextMenu } = useOS();
   const isWin = osMode === "win";
   const tabletQuery = useIsTablet();
   const mobileQuery = useIsMobile();
@@ -683,6 +683,19 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
       return;
     }
 
+    // If an application is already open: 1 click opens/focuses, click again minimizes (older function)
+    if (item.type === "app") {
+      const targetApp = item.label?.toLowerCase().endsWith(".pdf") || item.app === "pdf-viewer" ? "pdf-viewer" : item.app;
+      const appWin = windows.find((w) => w.app === targetApp);
+      if (appWin) {
+        toggleApp(targetApp);
+        lastClickRef.current = { id: "", time: 0 };
+        setSelectedItemId(null);
+        return;
+      }
+    }
+
+    // Application is closed or item is a folder: 1 click highlights/selects, double click opens
     const now = Date.now();
     if (lastClickRef.current.id === item.id && now - lastClickRef.current.time < 380) {
       executeOpen(item);
@@ -696,6 +709,11 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
   const handleItemDoubleClick = (e: React.MouseEvent, item: DesktopItem) => {
     e.stopPropagation();
     if (!isMobileDevice) {
+      if (item.type === "app") {
+        const targetApp = item.label?.toLowerCase().endsWith(".pdf") || item.app === "pdf-viewer" ? "pdf-viewer" : item.app;
+        const appWin = windows.find((w) => w.app === targetApp);
+        if (appWin) return;
+      }
       executeOpen(item);
       lastClickRef.current = { id: "", time: 0 };
     }
