@@ -147,15 +147,49 @@ export default function App() {
     };
   }, []);
 
-  // Global Spotlight Keyboard Shortcut (Cmd+K / Ctrl+K)
+  // Global System Keyboard Shortcuts (Spotlight, Mission Control, Window Management)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isInput = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         toggleSpotlight();
-      } else if (e.key === "F3" || ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "m")) {
+        return;
+      }
+      if (e.key === "F3" || ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "m")) {
         e.preventDefault();
         toggleMissionControl();
+        return;
+      }
+
+      if (isInput) return;
+
+      const cmd = e.metaKey || e.ctrlKey;
+      if (cmd && e.key.toLowerCase() === "d" && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        useOS.getState().toggleShowDesktop();
+      } else if (cmd && e.key.toLowerCase() === "m" && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        const activeWins = useOS.getState().windows.filter((w) => !w.minimized);
+        if (activeWins.length > 0) {
+          const focused = activeWins.reduce((a, b) => (a.z > b.z ? a : b));
+          useOS.getState().minimizeWindow(focused.id);
+        }
+      } else if (cmd && e.key.toLowerCase() === "w" && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        const activeWins = useOS.getState().windows.filter((w) => !w.minimized);
+        if (activeWins.length > 0) {
+          const focused = activeWins.reduce((a, b) => (a.z > b.z ? a : b));
+          useOS.getState().closeWindow(focused.id);
+        }
+      } else if (cmd && e.shiftKey && e.key.toLowerCase() === "w") {
+        e.preventDefault();
+        useOS.getState().closeAllWindows();
+      } else if (cmd && e.key === ",") {
+        e.preventDefault();
+        useOS.getState().openApp("settings");
       }
     };
     window.addEventListener("keydown", handleKeyDown);
