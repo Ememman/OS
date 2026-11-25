@@ -41,7 +41,6 @@ import ShortcutTiles from "./components/widgets/ShortcutTiles";
 import { useDesktopStore } from "./store/useDesktopStore";
 import { APP_REGISTRY } from "./types/desktop";
 
-// Lazy-loaded application components for high-speed mobile booting & low memory footprint
 const Library = lazy(() => import("./components/apps/Library"));
 const Music = lazy(() => import("./components/apps/Music"));
 const Updates = lazy(() => import("./components/apps/Updates"));
@@ -129,7 +128,6 @@ export default function App() {
     document.documentElement.style.setProperty("--glass-alpha", String(glassAlpha));
   }, [glassAlpha]);
 
-  // Keep chat session active while user is interacting with the OS (1hr inactivity timeout)
   useEffect(() => {
     let lastTouched = 0;
     const onUserInteraction = () => {
@@ -148,7 +146,6 @@ export default function App() {
     };
   }, []);
 
-  // Global System Keyboard Shortcuts (Spotlight, Mission Control, Window Management)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -197,12 +194,9 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleSpotlight, toggleMissionControl]);
 
-  // Connect global real-time socket and verify genuine system updates
   useEffect(() => {
-    // Initiate socket connection for real-time notifications
     getSocket();
 
-    // Check for genuinely unviewed system updates
     const checkRealUpdates = async () => {
       try {
         const res = await fetch(`${API_URL}/api/updates`);
@@ -211,7 +205,6 @@ export default function App() {
         if (Array.isArray(list) && list.length > 0) {
           const lastViewed = localStorage.getItem("os_last_viewed_update_id");
           if (!lastViewed) {
-            // First boot on this browser: initialize baseline to latest update so we never spam artificial badges
             localStorage.setItem("os_last_viewed_update_id", list[0].id);
           } else {
             const idx = list.findIndex((u: any) => u.id === lastViewed);
@@ -226,7 +219,6 @@ export default function App() {
     checkRealUpdates();
   }, []);
 
-  // Dark Nature Live Show Inactivity Screensaver (5-minute default)
   useEffect(() => {
     if (!booted || !osChosen || isPoweredOff || isSleeping || !liveShowEnabled || liveShowTimeout <= 0) {
       return;
@@ -295,7 +287,6 @@ export default function App() {
       onContextMenu={handleDesktopContextMenu}
       onDragOver={(e) => {
         if (isNearDockOrBar(e.clientX, e.clientY)) return;
-        // Allow dropping dock applications onto the desktop canvas
         if (
           e.dataTransfer.types.includes("application/x-dock-app") ||
           e.dataTransfer.types.includes("text/plain")
@@ -319,10 +310,8 @@ export default function App() {
       <Wallpaper />
       <GlobalAudioPlayer />
 
-      {/* Dark Nature Live Show Screensaver Overlay */}
       {isLiveShowActive && <LiveShowWallpaper onClose={stopLiveShow} />}
 
-      {/* Desktop Layer: hides widgets, applications, and dock when live show is active */}
       <div
         className={`transition-opacity duration-700 ease-in-out ${
           isLiveShowActive ? "opacity-0 pointer-events-none invisible" : "opacity-100"
@@ -332,14 +321,10 @@ export default function App() {
           <MenuBar />
         )}
 
-        {/* Dynamic Island for macOS & Windows */}
         <DynamicIsland />
 
-        {/* Desktop Content & Widgets */}
         {isTablet ? (
-          /* Mobile & Tablet: Fullscreen freeform desktop with scrollable widget stack */
           <>
-            {/* Applications on desktop — draggable to any position on desktop canvas, avoiding widgets when active */}
             {showDesktopApps && (
               <div
                 className="absolute inset-0 z-10 pointer-events-none reveal overflow-hidden"
@@ -349,7 +334,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Widget stack below icons — macOS style only */}
             {!isWin && widgetsVisible && (
               <div
                 data-widget-area="true"
@@ -369,9 +353,8 @@ export default function App() {
             )}
           </>
         ) : (
-          /* Desktop: Spacious multi-column layout with scrollable widget columns so lower widgets are never cut off */
           <>
-            {/* Desktop application icons — draggable to any position on desktop, avoiding widgets, and combinable into folders */}
+            
             {showDesktopApps && (
               <div
                 className="absolute inset-0 z-10 pointer-events-none reveal overflow-hidden"
@@ -381,10 +364,8 @@ export default function App() {
               </div>
             )}
 
-            {/* Widget columns with scrollability — lower part is always accessible */}
             {!isWin && widgetsVisible && (
               <>
-                {/* Left column: photo, shortcuts below it, then note */}
                 <div
                   data-widget-area="true"
                   data-widget-column="left"
@@ -395,7 +376,6 @@ export default function App() {
                   <div className="reveal" style={{ animationDelay: "240ms" }}><NoteWidget /></div>
                 </div>
 
-                {/* Right column: weather, clock, calendar */}
                 <div
                   data-widget-area="true"
                   data-widget-column="right"
@@ -410,7 +390,6 @@ export default function App() {
           </>
         )}
 
-        {/* Windows */}
         {windows.map((win) => {
           const Comp = APP_COMPONENTS[win.app];
           if (!Comp) return null;
