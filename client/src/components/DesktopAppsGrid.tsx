@@ -201,7 +201,7 @@ function resolveDesktopOverlap(
 
 export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsGridProps) {
   const { items, combineItems, openFolder, moveItem } = useDesktopStore();
-  const { openApp, toggleApp, windows, osMode, dockPosition, widgetsVisible, notify, getAppBadge, openAppContextMenu } = useOS();
+  const { openApp, toggleApp, windows, osMode, dockPosition, widgetsVisible, desktopIconSize, notify, getAppBadge, openAppContextMenu } = useOS();
   const isWin = osMode === "win";
   const tabletQuery = useIsTablet();
   const mobileQuery = useIsMobile();
@@ -261,8 +261,12 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
       const isNarrow = isMobileDevice || window.innerWidth < 640;
       const startX = isNarrow ? 16 : macDockLeft ? 104 : 28;
       const startY = isWin ? 16 : isNarrow ? 44 : 54;
-      const slotW = isNarrow ? 76 : 92;
-      const slotH = isNarrow ? 84 : 96;
+      const slotW = isNarrow
+        ? desktopIconSize === "small" ? 64 : desktopIconSize === "large" ? 92 : 76
+        : desktopIconSize === "small" ? 78 : desktopIconSize === "large" ? 112 : 92;
+      const slotH = isNarrow
+        ? desktopIconSize === "small" ? 72 : desktopIconSize === "large" ? 98 : 84
+        : desktopIconSize === "small" ? 82 : desktopIconSize === "large" ? 118 : 96;
 
       // On desktop avoid right widget column if visible; on mobile icons span the available width
       const reservedRight = !isNarrow && widgetsVisible && !isWin ? 280 : 16;
@@ -276,7 +280,7 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
         y: startY + row * slotH,
       };
     },
-    [isWin, macDockLeft, widgetsVisible, isMobileDevice]
+    [isWin, macDockLeft, widgetsVisible, isMobileDevice, desktopIconSize]
   );
 
   // --------------------------------------------------------------------------------------------------
@@ -832,6 +836,12 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
                 : item.label || reg?.label || item.app;
           const color = item.app === "browser" && isWin ? "#4285F4" : item.color || reg?.color || "#38bdf8";
 
+          const btnWidth = desktopIconSize === "small" ? "w-[62px] sm:w-[68px]" : desktopIconSize === "large" ? "w-[94px] sm:w-28" : "w-[76px] sm:w-20";
+          const iconBoxSize = desktopIconSize === "small" ? "w-9 h-9 sm:w-10 sm:h-10 rounded-xl" : desktopIconSize === "large" ? "w-14 h-14 sm:w-16 sm:h-16 rounded-2xl" : "w-11 h-11 sm:w-12 sm:h-12 rounded-2xl";
+          const iconGlyphSize = desktopIconSize === "small" ? 18 : desktopIconSize === "large" ? 28 : 22;
+          const pdfGlyphSize = desktopIconSize === "small" ? 19 : desktopIconSize === "large" ? 29 : 23;
+          const labelText = desktopIconSize === "small" ? "text-[9px] sm:text-[10px]" : desktopIconSize === "large" ? "text-[11px] sm:text-xs" : "text-[10px] sm:text-[11px]";
+
           return (
             <motion.div
               key={item.id}
@@ -871,14 +881,14 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
                 whileHover={isBeingDragged ? undefined : { scale: 1.05, y: -2 }}
                 whileTap={isBeingDragged ? undefined : { scale: 0.94 }}
                 transition={{ type: "spring", stiffness: 450, damping: 22 }}
-                className={`group flex flex-col items-center gap-1 sm:gap-1.5 w-[76px] sm:w-20 py-1.5 sm:py-2 rounded-xl outline-none select-none cursor-grab active:cursor-grabbing touch-none transition-all duration-150 ${
+                className={`group flex flex-col items-center gap-1 sm:gap-1.5 ${btnWidth} py-1.5 sm:py-2 rounded-xl outline-none select-none cursor-grab active:cursor-grabbing touch-none transition-all duration-150 ${
                   isSelected
                     ? "border border-dotted border-white/70 bg-white/15 ring-1 ring-white/10 shadow-md backdrop-blur-xs"
                     : "border border-transparent hover:bg-white/5"
                 }`}
               >
                 <div
-                  className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all duration-200 border ${
+                  className={`relative ${iconBoxSize} flex items-center justify-center transition-all duration-200 border ${
                     isTarget
                       ? "ring-2 ring-[#0091ff] border-[#0091ff] shadow-[0_0_22px_rgba(0,145,255,0.7)] scale-110 bg-[#0091ff]/20"
                       : isSelected
@@ -890,7 +900,7 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
                   {label?.toLowerCase().endsWith(".pdf") ? (
                     <div className="relative flex items-center justify-center">
                       <GIconFileText
-                        size={23}
+                        size={pdfGlyphSize}
                         className="text-rose-400 group-hover:text-rose-300 transition-colors scale-105"
                       />
                       <span className="absolute -bottom-1 -right-1 px-1 py-0.2 rounded bg-rose-600 text-white font-bold text-[7px] leading-tight shadow-xs uppercase">
@@ -899,7 +909,7 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
                     </div>
                   ) : Icon ? (
                     <Icon
-                      size={22}
+                      size={iconGlyphSize}
                       className="text-white/90 group-hover:text-white transition-colors scale-105"
                       color={color}
                     />
@@ -946,7 +956,7 @@ export default function DesktopAppsGrid({ isMobile: isMobileProp }: DesktopAppsG
                   })()}
                 </div>
                 <span
-                  className={`text-[10px] sm:text-[11px] font-medium text-center leading-tight px-1.5 py-0.5 rounded-md truncate max-w-full tracking-wide transition-colors ${
+                  className={`${labelText} font-medium text-center leading-tight px-1.5 py-0.5 rounded-md truncate max-w-full tracking-wide transition-colors ${
                     isSelected
                       ? "bg-[#0078d7] text-white shadow-sm"
                       : "text-white/95 group-hover:text-white"
