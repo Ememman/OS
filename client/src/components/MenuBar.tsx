@@ -234,6 +234,8 @@ export default function MenuBar() {
   const [fullscreen, setFullscreen] = useState(false);
   const [wifiOpen, setWifiOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
+  const [isBarHovered, setIsBarHovered] = useState(false);
+  const isBarVisible = showHeaderButtons || isBarHovered || openMenu !== null;
 
   // Preserve active editable focus and text selection before menu bar clicks
   const lastActiveTargetRef = useRef<{
@@ -404,7 +406,23 @@ export default function MenuBar() {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-8 z-[999] glass flex items-center justify-between px-3 sm:px-4 text-[14px] text-white/95 select-none shadow-md overflow-visible">
+    <>
+      {!showHeaderButtons && (
+        <div
+          onMouseEnter={() => setIsBarHovered(true)}
+          className="fixed top-0 left-0 right-0 h-2.5 z-[998] pointer-events-auto cursor-default"
+          title="Hover to reveal menu bar"
+        />
+      )}
+      <div
+        onMouseEnter={() => setIsBarHovered(true)}
+        onMouseLeave={() => setIsBarHovered(false)}
+        className={`fixed top-0 left-0 right-0 h-8 z-[999] glass flex items-center justify-between px-3 sm:px-4 text-[14px] text-white/95 select-none shadow-md overflow-visible transition-all duration-300 ease-out ${
+          !isBarVisible
+            ? "-translate-y-full opacity-0 pointer-events-none"
+            : "translate-y-0 opacity-100 pointer-events-auto"
+        }`}
+      >
       {/* Left Menu Items (Apple, File, Edit, View, Window, Help) */}
       <div
         ref={menuNavRef}
@@ -1517,5 +1535,6 @@ export default function MenuBar() {
         </InfoModal>
       )}
     </div>
+    </>
   );
 }

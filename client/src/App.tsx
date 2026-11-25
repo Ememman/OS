@@ -106,8 +106,6 @@ export default function App() {
     startLiveShow,
     stopLiveShow,
     showDesktopApps,
-    showHeaderButtons,
-    showDock,
   } = useOS();
 
   const isWin = osMode === "win";
@@ -116,8 +114,6 @@ export default function App() {
   const macDockLeft = !isWin && !isMobile && dockPosition === "left";
   const macDockRight = !isWin && !isMobile && dockPosition === "right";
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
-  const [isHeaderHovered, setIsHeaderHovered] = useState(false);
-  const [isDockHovered, setIsDockHovered] = useState(false);
 
   const handleDesktopContextMenu = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest(".glass, input, textarea, button, a")) return;
@@ -333,24 +329,7 @@ export default function App() {
         }`}
       >
         {!isWin && (!isMobile || !hasActiveWindow) && (
-          <div
-            onMouseEnter={() => setIsHeaderHovered(true)}
-            onMouseLeave={() => setIsHeaderHovered(false)}
-            className={`transition-all duration-300 ease-out z-[999] ${
-              !showHeaderButtons && !isHeaderHovered
-                ? "-translate-y-full opacity-0 pointer-events-none fixed top-0 left-0 right-0"
-                : "translate-y-0 opacity-100"
-            }`}
-          >
-            <MenuBar />
-          </div>
-        )}
-        {!isWin && !showHeaderButtons && (
-          <div
-            onMouseEnter={() => setIsHeaderHovered(true)}
-            className="fixed top-0 left-0 right-0 h-2 z-[998] pointer-events-auto cursor-default"
-            title="Hover to reveal menu bar"
-          />
+          <MenuBar />
         )}
 
         {/* Dynamic Island for macOS & Windows */}
@@ -447,26 +426,7 @@ export default function App() {
         })}
 
         {(!isMobile || !hasActiveWindow) && (
-          <div
-            onMouseEnter={() => setIsDockHovered(true)}
-            onMouseLeave={() => setIsDockHovered(false)}
-            className={`transition-transform duration-300 ease-out ${
-              !showDock && !isDockHovered
-                ? isWin
-                  ? "translate-y-full opacity-0 pointer-events-none fixed bottom-0 left-0 right-0 z-[900]"
-                  : "translate-y-32 opacity-0 pointer-events-none fixed bottom-0 left-0 right-0 z-[900]"
-                : "translate-y-0 opacity-100"
-            }`}
-          >
-            {isWin ? <WinTaskbar /> : <Dock />}
-          </div>
-        )}
-        {!showDock && (
-          <div
-            onMouseEnter={() => setIsDockHovered(true)}
-            className="fixed bottom-0 left-0 right-0 h-2 z-[890] pointer-events-auto cursor-default"
-            title="Hover to reveal dock / taskbar"
-          />
+          isWin ? <WinTaskbar /> : <Dock />
         )}
         <MiniPlayer />
       </div>

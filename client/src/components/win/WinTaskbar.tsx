@@ -419,6 +419,7 @@ export default function WinTaskbar() {
     openAppContextMenu,
     openTaskbarContextMenu,
     winTaskbarConfig,
+    showDock,
   } = useOS();
   const [panel, setPanel] = useState<"start" | "tray" | "weather" | "date" | null>(null);
   const [isTaskbarHovered, setIsTaskbarHovered] = useState(false);
@@ -602,11 +603,12 @@ export default function WinTaskbar() {
 
   return (
     <>
-      {/* Auto-hide Sensor: hovering near the bottom reveals taskbar when auto-hidden */}
-      {winTaskbarConfig.autoHide && (
+      {/* Auto-hide Sensor: hovering near the bottom reveals taskbar when auto-hidden or dock hidden */}
+      {(winTaskbarConfig.autoHide || !showDock) && (
         <div
           onMouseEnter={() => setIsTaskbarHovered(true)}
-          className="fixed bottom-0 left-0 right-0 h-2 z-[899] pointer-events-auto"
+          className="fixed bottom-0 left-0 right-0 h-2 z-[899] pointer-events-auto cursor-default"
+          title="Hover to reveal taskbar"
         />
       )}
 
@@ -618,10 +620,10 @@ export default function WinTaskbar() {
           e.preventDefault();
           openTaskbarContextMenu({ x: e.clientX, y: e.clientY });
         }}
-        className={`fixed bottom-0 left-0 right-0 h-12 bg-[rgba(var(--glass),0.95)] backdrop-blur-3xl border-t border-white/12 flex items-center justify-between px-1 sm:px-2 z-[900] select-none shadow-[0_-4px_30px_rgba(0,0,0,0.5)] transition-transform duration-200 ease-out ${
-          winTaskbarConfig.autoHide && !isTaskbarHovered && !panel
-            ? "translate-y-[calc(100%-3px)]"
-            : "translate-y-0"
+        className={`fixed bottom-0 left-0 right-0 h-12 bg-[rgba(var(--glass),0.95)] backdrop-blur-3xl border-t border-white/12 flex items-center justify-between px-1 sm:px-2 z-[900] select-none shadow-[0_-4px_30px_rgba(0,0,0,0.5)] transition-all duration-200 ease-out ${
+          (!showDock || winTaskbarConfig.autoHide) && !isTaskbarHovered && !panel
+            ? "translate-y-full opacity-0 pointer-events-none"
+            : "translate-y-0 opacity-100 pointer-events-auto"
         }`}
       >
         {/* 1. Left Section: Widgets button */}
