@@ -81,6 +81,8 @@ export interface AppPropertiesModalData {
   folderId?: string;
 }
 
+export type DesktopIconSize = "small" | "medium" | "large";
+
 interface OSState {
   windows: WindowState[];
   accent: string;
@@ -224,6 +226,19 @@ interface OSState {
   moveWindow: (id: string, x: number, y: number) => void;
   resizeWindow: (id: string, w: number, h: number) => void;
   updateWindowBounds: (id: string, bounds: { x?: number; y?: number; w?: number; h?: number }) => void;
+  showDesktopApps: boolean;
+  setShowDesktopApps: (show: boolean) => void;
+  toggleShowDesktopApps: () => void;
+  showHeaderButtons: boolean;
+  setShowHeaderButtons: (show: boolean) => void;
+  toggleShowHeaderButtons: () => void;
+  showDock: boolean;
+  setShowDock: (show: boolean) => void;
+  toggleShowDock: () => void;
+  desktopIconSize: DesktopIconSize;
+  setDesktopIconSize: (size: DesktopIconSize) => void;
+  autoArrangeIcons: boolean;
+  toggleAutoArrangeIcons: () => void;
 }
 
 export const DEFAULT_DOCK_APPS = [
@@ -712,13 +727,82 @@ export const useOS = create<OSState>((set, get) => ({
   togglePowerDialog: () => set((s) => ({ powerDialogOpen: !s.powerDialogOpen })),
 
   resetDefaults: () => {
-    ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift", "os_window_indicators", "os_dock_apps_order", "os_persist_dock_order", "os_liveshow_enabled", "os_liveshow_timeout", "os_live_wallpaper_scene", "os_live_wallpaper_autocycle", "os_lockscreen_liveshow"].forEach((k) =>
+    ["os_accent", "os_theme_mode", "os_wallpaper", "os_motion", "os_photo", "os_weather_loc", "os_chat_sound", "os_reminders_items", "os_reminders_done", "os_compact", "os_dock_position", "os_chat_bg", "os_glass_alpha", "os_widgets", "os_chat_text_scale", "os_night_shift", "os_window_indicators", "os_dock_apps_order", "os_persist_dock_order", "os_liveshow_enabled", "os_liveshow_timeout", "os_live_wallpaper_scene", "os_live_wallpaper_autocycle", "os_lockscreen_liveshow", "os_show_desktop_apps", "os_show_header_buttons", "os_show_dock", "os_desktop_icon_size", "os_auto_arrange_icons"].forEach((k) =>
       localStorage.removeItem(k)
     );
     try {
       sessionStorage.removeItem("os_dock_apps_order");
     } catch {}
     window.location.reload();
+  },
+
+  showDesktopApps: typeof window !== "undefined" ? localStorage.getItem("os_show_desktop_apps") !== "false" : true,
+  setShowDesktopApps: (show) => {
+    localStorage.setItem("os_show_desktop_apps", show ? "true" : "false");
+    set({ showDesktopApps: show });
+  },
+  toggleShowDesktopApps: () => {
+    const next = !get().showDesktopApps;
+    localStorage.setItem("os_show_desktop_apps", next ? "true" : "false");
+    set({ showDesktopApps: next });
+    if (get().systemSounds) soundFx.playPop();
+    get().notify(
+      next ? "Desktop Apps Visible" : "Desktop Apps Hidden",
+      next ? "Desktop application icons are now visible on the screen." : "Desktop applications hidden for an unobstructed backdrop view.",
+      "info",
+      2200
+    );
+  },
+
+  showHeaderButtons: typeof window !== "undefined" ? localStorage.getItem("os_show_header_buttons") !== "false" : true,
+  setShowHeaderButtons: (show) => {
+    localStorage.setItem("os_show_header_buttons", show ? "true" : "false");
+    set({ showHeaderButtons: show });
+  },
+  toggleShowHeaderButtons: () => {
+    const next = !get().showHeaderButtons;
+    localStorage.setItem("os_show_header_buttons", next ? "true" : "false");
+    set({ showHeaderButtons: next });
+    if (get().systemSounds) soundFx.playPop();
+    get().notify(
+      next ? "Header Buttons Visible" : "Header Buttons Hidden",
+      next ? "Top MenuBar and header buttons restored." : "Top header buttons hidden. Right-click desktop or move mouse to top edge to access.",
+      "info",
+      2400
+    );
+  },
+
+  showDock: typeof window !== "undefined" ? localStorage.getItem("os_show_dock") !== "false" : true,
+  setShowDock: (show) => {
+    localStorage.setItem("os_show_dock", show ? "true" : "false");
+    set({ showDock: show });
+  },
+  toggleShowDock: () => {
+    const next = !get().showDock;
+    localStorage.setItem("os_show_dock", next ? "true" : "false");
+    set({ showDock: next });
+    if (get().systemSounds) soundFx.playPop();
+    get().notify(
+      next ? (get().osMode === "win" ? "Taskbar Visible" : "Dock Visible") : (get().osMode === "win" ? "Taskbar Hidden" : "Dock Hidden"),
+      next ? "Dock application icons restored." : "Dock applications hidden. Right-click desktop or move mouse to bottom edge to access.",
+      "info",
+      2400
+    );
+  },
+
+  desktopIconSize: typeof window !== "undefined" ? ((localStorage.getItem("os_desktop_icon_size") as DesktopIconSize) || "medium") : "medium",
+  setDesktopIconSize: (size) => {
+    localStorage.setItem("os_desktop_icon_size", size);
+    set({ desktopIconSize: size });
+    if (get().systemSounds) soundFx.playClick();
+  },
+
+  autoArrangeIcons: typeof window !== "undefined" ? localStorage.getItem("os_auto_arrange_icons") !== "false" : true,
+  toggleAutoArrangeIcons: () => {
+    const next = !get().autoArrangeIcons;
+    localStorage.setItem("os_auto_arrange_icons", next ? "true" : "false");
+    set({ autoArrangeIcons: next });
+    if (get().systemSounds) soundFx.playClick();
   },
 
   compact: localStorage.getItem("os_compact") === "on",

@@ -105,6 +105,7 @@ export default function App() {
     isLiveShowActive,
     startLiveShow,
     stopLiveShow,
+    showDesktopApps,
   } = useOS();
 
   const isWin = osMode === "win";
@@ -327,7 +328,9 @@ export default function App() {
           isLiveShowActive ? "opacity-0 pointer-events-none invisible" : "opacity-100"
         }`}
       >
-        {!isWin && (!isMobile || !hasActiveWindow) && <MenuBar />}
+        {!isWin && (!isMobile || !hasActiveWindow) && (
+          <MenuBar />
+        )}
 
         {/* Dynamic Island for macOS & Windows */}
         <DynamicIsland />
@@ -337,12 +340,14 @@ export default function App() {
           /* Mobile & Tablet: Fullscreen freeform desktop with scrollable widget stack */
           <>
             {/* Applications on desktop — draggable to any position on desktop canvas, avoiding widgets when active */}
-            <div
-              className="absolute inset-0 z-10 pointer-events-none reveal overflow-hidden"
-              style={{ animationDelay: "50ms" }}
-            >
-              <DesktopAppsGrid isMobile={true} />
-            </div>
+            {showDesktopApps && (
+              <div
+                className="absolute inset-0 z-10 pointer-events-none reveal overflow-hidden"
+                style={{ animationDelay: "50ms" }}
+              >
+                <DesktopAppsGrid isMobile={true} />
+              </div>
+            )}
 
             {/* Widget stack below icons — macOS style only */}
             {!isWin && widgetsVisible && (
@@ -367,12 +372,14 @@ export default function App() {
           /* Desktop: Spacious multi-column layout with scrollable widget columns so lower widgets are never cut off */
           <>
             {/* Desktop application icons — draggable to any position on desktop, avoiding widgets, and combinable into folders */}
-            <div
-              className="absolute inset-0 z-10 pointer-events-none reveal overflow-hidden"
-              style={{ animationDelay: "50ms" }}
-            >
-              <DesktopAppsGrid isMobile={false} />
-            </div>
+            {showDesktopApps && (
+              <div
+                className="absolute inset-0 z-10 pointer-events-none reveal overflow-hidden"
+                style={{ animationDelay: "50ms" }}
+              >
+                <DesktopAppsGrid isMobile={false} />
+              </div>
+            )}
 
             {/* Widget columns with scrollability — lower part is always accessible */}
             {!isWin && widgetsVisible && (
@@ -418,7 +425,9 @@ export default function App() {
           );
         })}
 
-        {(!isMobile || !hasActiveWindow) && (isWin ? <WinTaskbar /> : <Dock />)}
+        {(!isMobile || !hasActiveWindow) && (
+          isWin ? <WinTaskbar /> : <Dock />
+        )}
         <MiniPlayer />
       </div>
       <SpotlightSearch />

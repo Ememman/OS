@@ -67,6 +67,7 @@ export default function Dock() {
     dockApps,
     reorderDockApps,
     openAppContextMenu,
+    showDock,
   } = useOS();
   const isMobile = useIsMobile();
   const position = isMobile ? "bottom" : dockPosition;
@@ -81,6 +82,8 @@ export default function Dock() {
   const [draggedApp, setDraggedApp] = useState<string | null>(null);
   const [dropTargetApp, setDropTargetApp] = useState<string | null>(null);
   const [selectedDockApp, setSelectedDockApp] = useState<string | null>(null);
+  const [isDockHovered, setIsDockHovered] = useState(false);
+  const isDockVisible = showDock || isDockHovered;
   const lastDockClickRef = useRef<{ app: string; time: number }>({ app: "", time: 0 });
   const touchDragRef = useRef<{ app: string; timeout: any; isDragging: boolean } | null>(null);
 
@@ -248,17 +251,45 @@ export default function Dock() {
   };
 
   return (
-    <div className={`fixed z-[900] ${POSITION_CLASSES[position]}`}>
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 350, damping: 26 }}
-        className={`glass rounded-2xl shadow-2xl border border-white/10 ${
-          vertical
-            ? "flex flex-col items-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-2 max-w-full overflow-y-auto thin-scroll touch-pan-y"
-            : "flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-2.5 py-1.5 sm:py-2 max-w-full overflow-x-auto no-scrollbar touch-pan-x"
+    <>
+      {!showDock && (
+        <div
+          onMouseEnter={() => setIsDockHovered(true)}
+          className={
+            position === "left"
+              ? "fixed top-0 bottom-0 left-0 w-3 z-[890] pointer-events-auto cursor-default"
+              : position === "right"
+                ? "fixed top-0 bottom-0 right-0 w-3 z-[890] pointer-events-auto cursor-default"
+                : "fixed bottom-0 left-0 right-0 h-3 z-[890] pointer-events-auto cursor-default"
+          }
+          title="Hover to reveal dock"
+        />
+      )}
+      <div
+        onMouseEnter={() => setIsDockHovered(true)}
+        onMouseLeave={() => setIsDockHovered(false)}
+        className={`fixed z-[900] ${POSITION_CLASSES[position]} ${
+          !isDockVisible ? "pointer-events-none" : "pointer-events-auto"
         }`}
       >
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{
+            y: !isDockVisible
+              ? (position === "bottom" ? 130 : 0)
+              : 0,
+            x: !isDockVisible
+              ? (position === "left" ? -130 : position === "right" ? 130 : 0)
+              : 0,
+            opacity: isDockVisible ? 1 : 0,
+          }}
+          transition={{ type: "spring", stiffness: 350, damping: 28 }}
+          className={`glass rounded-2xl shadow-2xl border border-white/10 ${
+            vertical
+              ? "flex flex-col items-center gap-1 sm:gap-1.5 py-2 sm:py-2.5 px-1.5 sm:px-2 max-w-full overflow-y-auto thin-scroll touch-pan-y"
+              : "flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-2.5 py-1.5 sm:py-2 max-w-full overflow-x-auto no-scrollbar touch-pan-x"
+          }`}
+        >
         {/* Mission Control button */}
         <div className="relative">
           <motion.button
@@ -458,5 +489,6 @@ export default function Dock() {
         </div>
       </motion.div>
     </div>
+    </>
   );
 }
