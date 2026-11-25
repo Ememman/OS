@@ -206,6 +206,16 @@ export default function MenuBar() {
     setWallpaper,
     widgetsVisible,
     toggleWidgets,
+    showDesktopApps,
+    toggleShowDesktopApps,
+    showHeaderButtons,
+    toggleShowHeaderButtons,
+    showDock,
+    toggleShowDock,
+    desktopIconSize,
+    setDesktopIconSize,
+    autoArrangeIcons,
+    toggleAutoArrangeIcons,
     systemSounds,
     toggleSystemSounds,
     notify,
@@ -831,6 +841,64 @@ export default function MenuBar() {
                 setOpenMenu(null);
               }}>
               Desktop Widgets
+            </MenuItem>
+            <MenuItem
+              checked={showDesktopApps}
+              onClick={() => {
+                toggleShowDesktopApps();
+                setOpenMenu(null);
+              }}>
+              Show Desktop Applications
+            </MenuItem>
+            <MenuItem
+              checked={showHeaderButtons}
+              onClick={() => {
+                toggleShowHeaderButtons();
+                setOpenMenu(null);
+              }}>
+              Show Header Buttons
+            </MenuItem>
+            <MenuItem
+              checked={showDock}
+              onClick={() => {
+                toggleShowDock();
+                setOpenMenu(null);
+              }}>
+              Show Dock Applications
+            </MenuItem>
+            <MenuSeparator />
+            <MenuHeader label="Desktop Icon Size" />
+            <MenuItem
+              checked={desktopIconSize === "large"}
+              onClick={() => {
+                setDesktopIconSize("large");
+                setOpenMenu(null);
+              }}>
+              Large Icons
+            </MenuItem>
+            <MenuItem
+              checked={desktopIconSize === "medium"}
+              onClick={() => {
+                setDesktopIconSize("medium");
+                setOpenMenu(null);
+              }}>
+              Medium Icons
+            </MenuItem>
+            <MenuItem
+              checked={desktopIconSize === "small"}
+              onClick={() => {
+                setDesktopIconSize("small");
+                setOpenMenu(null);
+              }}>
+              Small Icons
+            </MenuItem>
+            <MenuItem
+              checked={autoArrangeIcons}
+              onClick={() => {
+                toggleAutoArrangeIcons();
+                setOpenMenu(null);
+              }}>
+              Auto Arrange Icons
             </MenuItem>
             <MenuSeparator />
             <MenuHeader label="Dock Position" />
