@@ -1,0 +1,98 @@
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - "client/**"
+      - ".github/workflows/deploy-cloudflare.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "client/**"
+  workflow_dispatch:
+    inputs:
+      vite_api_url:
+        description: "Backend API URL"
+        required: false
+        default: "https://portfolio-os-api-5c7z.onrender.com"
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: cloudflare-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preflight:
+    name: Prepare Cloudflare Deployment
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+      is_prod: ${{ steps.check.outputs.is_prod }}
+      env_name: ${{ steps.check.outputs.env_name }}
+    steps:
+      - name: Check credentials & target environment
+        id: check
+        env:
+          CF_TOKEN: ${{ secrets['CLOUDFLARE_API_TOKEN'] }}
+          CF_ACCOUNT: ${{ secrets['CLOUDFLARE_ACCOUNT_ID'] }}
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "is_prod=true" >> "$GITHUB_OUTPUT"
+            echo "env_name=cloudflare-production" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_prod=false" >> "$GITHUB_OUTPUT"
+            echo "env_name=cloudflare-preview" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ -n "$CF_TOKEN" ] && [ -n "$CF_ACCOUNT" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping Cloudflare deploy: set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in GitHub repository secrets."
+          fi
+
+  deploy:
+    name: Deploy (${{ needs.preflight.outputs.env_name }})
+    needs: preflight
+    if: needs.preflight.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ needs.preflight.outputs.env_name }}
+      url: ${{ needs.preflight.outputs.is_prod == 'true' && 'https://emman-os-portfolio.com' || (steps.deploy.outputs.deployment-url || 'https://os-portfolio.mendozajamesemmanuel.workers.dev') }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: client
+        run: npm ci || npm install
+
+      - name: Build Client SPA
+        working-directory: client
+        env:
+          VITE_API_URL: ${{ inputs.vite_api_url || 'https://portfolio-os-api-5c7z.onrender.com' }}
+        run: npm run build
+
+      - name: Deploy to Cloudflare Workers
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets['CLOUDFLARE_API_TOKEN'] }}
+          accountId: ${{ secrets['CLOUDFLARE_ACCOUNT_ID'] }}
+          workingDirectory: client
+          command: ${{ needs.preflight.outputs.is_prod == 'true' && 'deploy' || 'versions upload' }}
