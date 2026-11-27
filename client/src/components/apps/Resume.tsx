@@ -147,12 +147,12 @@ const SKILL_CATEGORIES: SkillCategory[] = [
     accentColor: "from-sky-500 to-blue-600",
     description: "Enterprise component systems, strict TypeScript typings, state caching, and mobile apps",
     skills: [
-      { name: "Next.js & React 19", level: 96, tier: "Core Stack", category: "Frontend", experience: "Dowinn Group & Portfolio OS" },
-      { name: "TypeScript (Strict)", level: 94, tier: "Core Stack", category: "Language", experience: "100% Type-Safe Applications" },
-      { name: "shadcn/ui & Tailwind CSS", level: 96, tier: "Core Stack", category: "Styling", experience: "Design Systems & Micro-Interactions" },
-      { name: "TanStack Query", level: 92, tier: "Core Stack", category: "State", experience: "Async Server-State Sync & Cache" },
-      { name: "React Native & Expo", level: 88, tier: "Production", category: "Mobile", experience: "SALON Ecosystem Mobile Apps" },
-      { name: "Figma & Canva (UI/UX)", level: 92, tier: "Production", category: "Design", experience: "Interactive Wireframes & Assets" },
+      { name: "Next.js & React 19", level: 50, tier: "Core Stack", category: "Frontend", experience: "Dowinn Group & Portfolio OS" },
+      { name: "TypeScript (Strict)", level: 30, tier: "Core Stack", category: "Language", experience: "100% Type-Safe Applications" },
+      { name: "shadcn/ui & Tailwind CSS", level: 60, tier: "Core Stack", category: "Styling", experience: "Design Systems & Micro-Interactions" },
+      { name: "TanStack Query", level: 20, tier: "Core Stack", category: "State", experience: "Async Server-State Sync & Cache" },
+      { name: "React Native & Expo", level: 70, tier: "Production", category: "Mobile", experience: "SALON Ecosystem Mobile Apps" },
+      { name: "Figma & Canva (UI/UX)", level: 90, tier: "Production", category: "Design", experience: "Interactive Wireframes & Assets" },
     ]
   },
   {
@@ -162,12 +162,12 @@ const SKILL_CATEGORIES: SkillCategory[] = [
     accentColor: "from-indigo-500 to-purple-600",
     description: "PHP frameworks, RESTful APIs, Node microservices, and real-time bi-directional WebSockets",
     skills: [
-      { name: "Laravel", level: 90, tier: "Production", category: "Backend", experience: "Eloquent ORM, Blade & REST Routing" },
-      { name: "CodeIgniter", level: 89, tier: "Production", category: "Backend", experience: "MVC Patterns & Lightweight APIs" },
-      { name: "PHP (MVC Architecture)", level: 92, tier: "Production", category: "Backend", experience: "Straive IMS Enterprise Architecture" },
-      { name: "Node.js & Express 5", level: 93, tier: "Core Stack", category: "Backend", experience: "High-Throughput Services & Routing" },
-      { name: "Socket.IO WebSockets", level: 91, tier: "Production", category: "Realtime", experience: "Bidirectional Real-Time Mesh" },
-      { name: "RESTful API Engineering", level: 95, tier: "Core Stack", category: "Architecture", experience: "Contract-First Endpoints & CRUD" },
+      { name: "Laravel", level: 50, tier: "Production", category: "Backend", experience: "Eloquent ORM, Blade & REST Routing" },
+      { name: "CodeIgniter", level: 59, tier: "Production", category: "Backend", experience: "MVC Patterns & Lightweight APIs" },
+      { name: "PHP (MVC Architecture)", level: 50, tier: "Production", category: "Backend", experience: "Straive IMS Enterprise Architecture" },
+      { name: "Node.js & Express 5", level: 40, tier: "Core Stack", category: "Backend", experience: "High-Throughput Services & Routing" },
+      { name: "Socket.IO WebSockets", level: 30, tier: "Production", category: "Realtime", experience: "Bidirectional Real-Time Mesh" },
+      { name: "RESTful API Engineering", level: 40, tier: "Core Stack", category: "Architecture", experience: "Contract-First Endpoints & CRUD" },
     ]
   },
   {
@@ -177,10 +177,10 @@ const SKILL_CATEGORIES: SkillCategory[] = [
     accentColor: "from-emerald-500 to-teal-600",
     description: "Relational SQL engines, ACID transactions, NoSQL document pipelines, and query performance",
     skills: [
-      { name: "PostgreSQL", level: 91, tier: "Production", category: "SQL", experience: "Relational Schemas, Constraints & ACID" },
-      { name: "MySQL", level: 93, tier: "Production", category: "SQL", experience: "Straive IMS Relational Data Architecture" },
-      { name: "MongoDB & Mongoose", level: 92, tier: "Production", category: "NoSQL", experience: "Document Aggregation & Collections" },
-      { name: "Schema Design & Migrations", level: 90, tier: "Production", category: "Database", experience: "Normalized Tables & Data Integrity" },
+      { name: "PostgreSQL", level: 20, tier: "Production", category: "SQL", experience: "Relational Schemas, Constraints & ACID" },
+      { name: "MySQL", level: 70, tier: "Production", category: "SQL", experience: "Straive IMS Relational Data Architecture" },
+      { name: "MongoDB & Mongoose", level: 70, tier: "Production", category: "NoSQL", experience: "Document Aggregation & Collections" },
+      { name: "Schema Design & Migrations", level: 60, tier: "Production", category: "Database", experience: "Normalized Tables & Data Integrity" },
     ]
   },
   {
@@ -190,10 +190,10 @@ const SKILL_CATEGORIES: SkillCategory[] = [
     accentColor: "from-amber-500 to-orange-600",
     description: "Cross-browser test suites, mobile test harnesses, enterprise identity, and agile version control",
     skills: [
-      { name: "Playwright E2E Testing", level: 94, tier: "Core Stack", category: "Testing", experience: "Automated Cross-Browser Sprints" },
+      { name: "Playwright E2E Testing", level: 90, tier: "Core Stack", category: "Testing", experience: "Automated Cross-Browser Sprints" },
       { name: "Appium & Cypress", level: 90, tier: "Production", category: "Testing", experience: "Mobile & Browser Automation Suites" },
-      { name: "1Kosmos MFA & Active Directory", level: 88, tier: "Applied", category: "Security", experience: "Enterprise Access & Identity Config" },
-      { name: "Git, GitHub & Notion", level: 95, tier: "Core Stack", category: "Tooling", experience: "Agile Sprints, PRs & Documentation" },
+      { name: "1Kosmos MFA & Active Directory", level: 90, tier: "Applied", category: "Security", experience: "Enterprise Access & Identity Config" },
+      { name: "Git, GitHub & Notion", level: 90, tier: "Core Stack", category: "Tooling", experience: "Agile Sprints, PRs & Documentation" },
     ]
   }
 ];
