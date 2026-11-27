@@ -270,6 +270,53 @@ function formatChatDateTime(ts: number | string | Date) {
   return { dateLabel, timeLabel, full: `${dateLabel} · ${timeLabel}` };
 }
 
+function isRemovedText(text?: string) {
+  if (!text) return false;
+  const lower = text.trim().toLowerCase();
+  return (
+    lower === "you unsent a message" ||
+    lower === "message removed" ||
+    lower === "removed message" ||
+    lower === "original message removed" ||
+    lower.includes("removed a message")
+  );
+}
+
+function scrubChatMessages(rawList: any[]) {
+  if (!Array.isArray(rawList)) return [];
+  const normalized = rawList.map((h: any) => {
+    const isRemoved = Boolean(h.removed || isRemovedText(h.text));
+    return {
+      ...h,
+      removed: isRemoved,
+      text: isRemoved ? "Message removed" : h.text,
+      reactions: isRemoved ? {} : normalizeReactions(h.reactions),
+    };
+  });
+
+  const removedIds = new Set<string>(
+    normalized.filter((m) => m.removed && m.id).map((m) => m.id)
+  );
+
+  return normalized.map((m) => {
+    if (!m.replyTo) return m;
+    const replyRemoved = Boolean(
+      m.replyTo.removed ||
+      (m.replyTo.id && removedIds.has(m.replyTo.id)) ||
+      isRemovedText(m.replyTo.text)
+    );
+    if (!replyRemoved) return m;
+    return {
+      ...m,
+      replyTo: {
+        ...m.replyTo,
+        text: "Removed message",
+        removed: true,
+      },
+    };
+  });
+}
+
 export default function Chats() {
   const isMobile = useIsMobile();
   const chatSound = useOS((s) => s.chatSound);
@@ -305,7 +352,7 @@ export default function Chats() {
   const [name, setName] = useState(() => session.name || cached?.name || "");
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState("");
-  const [messages, setMessages] = useState<any[]>(() => cached?.history || []);
+  const [messages, setMessages] = useState<any[]>(() => scrubChatMessages(cached?.history || []));
   const [pinnedList, setPinnedList] = useState<any[]>(() => cached?.pinned || []);
   const [activeUsers, setActiveUsers] = useState<any[]>(() => cached?.users || []);
   const [showUsersModal, setShowUsersModal] = useState(false);
@@ -348,6 +395,18 @@ export default function Chats() {
   const longPressTimer = useRef<any>(null);
   const touchStartCoords = useRef<{ x: number; y: number } | null>(null);
 
+  // Track IDs of all removed messages so replies to removed messages never expose old chat text
+  const removedMessageIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const m of messages) {
+      if (m.removed || isRemovedText(m.text)) {
+        if (m.id) ids.add(m.id);
+        if (m.tempId) ids.add(m.tempId);
+      }
+    }
+    return ids;
+  }, [messages]);
+
   // Filter messages based on search query with ID deduplication
   const displayedMessages = useMemo(() => {
     const seen = new Set<string>();
@@ -362,7 +421,9 @@ export default function Chats() {
     if (!searchQuery.trim()) return unique;
     const q = searchQuery.toLowerCase();
     return unique.filter(
-      (m) => (m.text && m.text.toLowerCase().includes(q)) || (m.name && m.name.toLowerCase().includes(q))
+      (m) =>
+        (!m.removed && m.text && m.text.toLowerCase().includes(q)) ||
+        (m.name && m.name.toLowerCase().includes(q))
     );
   }, [messages, searchQuery]);
 
@@ -515,13 +576,7 @@ export default function Chats() {
           return merged;
         });
 
-        setMessages(
-          history.map((h: any) => ({
-            ...h,
-            removed: Boolean(h.removed || h.text === "You unsent a message" || h.text === "Message removed" || (h.text && h.text.includes("removed a message"))),
-            reactions: normalizeReactions(h.reactions),
-          }))
-        );
+        setMessages(scrubChatMessages(history));
       }
       if (pinned) setPinnedList(pinned);
       if (users && Array.isArray(users)) setActiveUsers(users);
@@ -556,18 +611,25 @@ export default function Chats() {
           );
         }
 
-        const isRemoved = Boolean(
-          msg.removed ||
-          msg.text === "You unsent a message" ||
-          msg.text === "Message removed" ||
-          (msg.text && msg.text.includes("removed a message"))
+        const isRemoved = Boolean(msg.removed || isRemovedText(msg.text));
+        const replyTargetRemoved = Boolean(
+          msg.replyTo &&
+          (msg.replyTo.removed ||
+            isRemovedText(msg.replyTo.text) ||
+            (msg.replyTo.id && m.some((x) => x.id === msg.replyTo.id && (x.removed || isRemovedText(x.text)))))
         );
 
         const normalizedMsg = {
           ...msg,
           removed: isRemoved,
+          text: isRemoved ? "Message removed" : msg.text,
+          replyTo: msg.replyTo
+            ? replyTargetRemoved
+              ? { ...msg.replyTo, text: "Removed message", removed: true }
+              : msg.replyTo
+            : undefined,
           senderId: msg.senderId || (isFromThisClient ? clientIdRef.current : undefined),
-          reactions: normalizeReactions(msg.reactions),
+          reactions: isRemoved ? {} : normalizeReactions(msg.reactions),
         };
 
         // Find pending optimistic message placeholder to replace
@@ -678,44 +740,38 @@ export default function Chats() {
 
     const onMessageRemoved = ({ id, name: removedByName, senderId: removedBySenderId }: { id: string; name?: string; senderId?: string }) => {
       setMessages((m) =>
-        m.map((x) =>
-          x.id === id
-            ? {
-                ...x,
+        m.map((x) => {
+          if (x.id === id) {
+            return {
+              ...x,
+              removed: true,
+              text: "Message removed",
+              reactions: {},
+              userReactions: {},
+              name: x.name || removedByName || "Guest",
+              senderId: x.senderId || removedBySenderId,
+            };
+          }
+          if (x.replyTo && x.replyTo.id === id) {
+            return {
+              ...x,
+              replyTo: {
+                ...x.replyTo,
+                text: "Removed message",
                 removed: true,
-                reactions: {},
-                userReactions: {},
-                name: x.name || removedByName || "Guest",
-                senderId: x.senderId || removedBySenderId,
-              }
-            : x
-        )
+              },
+            };
+          }
+          return x;
+        })
       );
       setPinnedList((p) => p.filter((x) => x.id !== id));
       setActiveReactionMenu((curr) => (curr === id ? null : curr));
+      setReplyTarget((curr) => (curr?.id === id ? null : curr));
     };
 
-    const onMessageDeleted = ({ id, removed, name: removedByName, senderId: removedBySenderId }: { id: string; removed?: boolean; name?: string; senderId?: string }) => {
-      if (removed) {
-        onMessageRemoved({ id, name: removedByName, senderId: removedBySenderId });
-      } else {
-        setMessages((m) =>
-          m.map((x) =>
-            x.id === id
-              ? {
-                  ...x,
-                  removed: true,
-                  reactions: {},
-                  userReactions: {},
-                  name: x.name || removedByName || "Guest",
-                  senderId: x.senderId || removedBySenderId,
-                }
-              : x
-          )
-        );
-        setPinnedList((p) => p.filter((x) => x.id !== id));
-        setActiveReactionMenu((curr) => (curr === id ? null : curr));
-      }
+    const onMessageDeleted = ({ id, name: removedByName, senderId: removedBySenderId }: { id: string; removed?: boolean; name?: string; senderId?: string }) => {
+      onMessageRemoved({ id, name: removedByName, senderId: removedBySenderId });
     };
 
     socket.on("connect", onConnect);
@@ -911,14 +967,22 @@ export default function Chats() {
     (id: string) => {
       const socket = getSocket();
       setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === id
-            ? { ...msg, removed: true, reactions: {}, userReactions: {} }
-            : msg
-        )
+        prev.map((msg) => {
+          if (msg.id === id) {
+            return { ...msg, removed: true, text: "Message removed", reactions: {}, userReactions: {} };
+          }
+          if (msg.replyTo && msg.replyTo.id === id) {
+            return {
+              ...msg,
+              replyTo: { ...msg.replyTo, text: "Removed message", removed: true },
+            };
+          }
+          return msg;
+        })
       );
       setPinnedList((p) => p.filter((x) => x.id !== id));
       setActiveReactionMenu(null);
+      setReplyTarget((curr) => (curr?.id === id ? null : curr));
       socket.emit("chat:delete", { id });
       fetch(`${API_URL}/api/chat/${id}`, { method: "DELETE" }).catch(() => {});
       if (chatSound) soundFx.playPop();
@@ -1064,7 +1128,7 @@ export default function Chats() {
   };
 
   const exportChat = () => {
-    const json = JSON.stringify(messages, null, 2);
+    const json = JSON.stringify(scrubChatMessages(messages), null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -1369,24 +1433,40 @@ export default function Chats() {
                 </div>
 
                 {/* Quoted Message in Reply with Click to Jump */}
-                {!m.removed && m.replyTo && (
-                  <button
-                    type="button"
-                    onClick={() => scrollToMessage(m.replyTo.id)}
-                    className={`text-[11px] p-1.5 mb-1 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-panel)]/80 text-[var(--chat-muted)] hover:border-accent/40 hover:bg-[var(--chat-panel)] transition truncate flex items-center gap-1.5 max-w-full cursor-pointer group/quote ${
-                      isSelf ? "justify-end" : "justify-start"
-                    }`}
-                    title="Jump to quoted message"
-                  >
-                    <GIconRotateLeft size={11} className="text-accent shrink-0 group-hover/quote:-rotate-45 transition-transform" />
-                    <span className="font-semibold text-accent" title={m.replyTo.name}>@{formatUsername(m.replyTo.name)}:</span>
-                    <span className="truncate opacity-80">
-                      {m.replyTo.text === "You unsent a message" || m.replyTo.text === "Message removed"
-                        ? "Original message removed"
-                        : m.replyTo.text}
-                    </span>
-                  </button>
-                )}
+                {!m.removed && m.replyTo && (() => {
+                  const isQuotedRemoved = Boolean(
+                    m.replyTo.removed ||
+                    (m.replyTo.id && removedMessageIds.has(m.replyTo.id)) ||
+                    isRemovedText(m.replyTo.text)
+                  );
+                  if (isQuotedRemoved) {
+                    return (
+                      <div
+                        className={`text-[11px] px-2.5 py-1.5 mb-1 rounded-xl border border-dashed border-white/15 bg-white/[0.03] text-white/45 flex items-center gap-1.5 max-w-full select-none ${
+                          isSelf ? "justify-end" : "justify-start"
+                        }`}
+                        title="This message was removed"
+                      >
+                        <GIconRotateLeft size={11} className="opacity-50 shrink-0" />
+                        <span className="italic truncate">Removed message</span>
+                      </div>
+                    );
+                  }
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => scrollToMessage(m.replyTo.id)}
+                      className={`text-[11px] p-1.5 mb-1 rounded-xl border border-[var(--chat-border)] bg-[var(--chat-panel)]/80 text-[var(--chat-muted)] hover:border-accent/40 hover:bg-[var(--chat-panel)] transition truncate flex items-center gap-1.5 max-w-full cursor-pointer group/quote ${
+                        isSelf ? "justify-end" : "justify-start"
+                      }`}
+                      title="Jump to quoted message"
+                    >
+                      <GIconRotateLeft size={11} className="text-accent shrink-0 group-hover/quote:-rotate-45 transition-transform" />
+                      <span className="font-semibold text-accent" title={m.replyTo.name}>@{formatUsername(m.replyTo.name)}:</span>
+                      <span className="truncate opacity-80">{m.replyTo.text}</span>
+                    </button>
+                  );
+                })()}
 
                 {/* Bubble Container & Messenger Action Bar */}
                 {m.removed ? (

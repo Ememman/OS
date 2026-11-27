@@ -98,22 +98,37 @@ export default function Library() {
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data) && data.length) {
-          const filtered = data.filter((p: any) => {
-            const id = (p.id || "").toLowerCase();
-            const title = (p.title || "").toLowerCase();
-            const repo = (p.links?.repo || "").toLowerCase();
-            return !(
-              id.includes("terminal") ||
-              id.includes("metacrafter") ||
-              id.includes("solidity") ||
-              title.includes("terminal assessment") ||
-              title.includes("cli assessment") ||
-              title.includes("solidity smart") ||
-              title.includes("metacrafter") ||
-              repo.includes("terminalassesment") ||
-              repo.includes("metacrafter")
-            );
-          });
+          const filtered = data
+            .filter((p: any) => {
+              const id = (p.id || "").toLowerCase();
+              const title = (p.title || "").toLowerCase();
+              const repo = (p.links?.repo || "").toLowerCase();
+              return !(
+                id.includes("terminal") ||
+                id.includes("metacrafter") ||
+                id.includes("solidity") ||
+                title.includes("terminal assessment") ||
+                title.includes("cli assessment") ||
+                title.includes("solidity smart") ||
+                title.includes("metacrafter") ||
+                repo.includes("terminalassesment") ||
+                repo.includes("metacrafter")
+              );
+            })
+            .map((p: any) => {
+              const id = (p.id || "").toLowerCase();
+              const live = (p.links?.live || "").toLowerCase();
+              if (id === "os-portfolio" || live.includes("ememman.github.io/os")) {
+                return {
+                  ...p,
+                  links: {
+                    ...p.links,
+                    live: "https://emman-os-portfolio.com/",
+                  },
+                };
+              }
+              return p;
+            });
           setProjects(filtered);
         }
       })
