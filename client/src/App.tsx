@@ -339,7 +339,7 @@ export default function App() {
                 data-widget-area="true"
                 className={`absolute ${
                   !isWin ? "top-60 sm:top-68" : "top-56"
-                } left-0 right-0 bottom-0 overflow-y-auto overscroll-contain thin-scroll px-3 pt-2 pb-28 flex flex-col items-center gap-4 z-20 pointer-events-auto`}
+                } left-0 right-0 bottom-0 overflow-y-auto overscroll-contain thin-scroll px-3 pt-2 pb-28 flex flex-col items-center gap-4 z-[15] pointer-events-auto`}
                 style={{ touchAction: "pan-y" }}
               >
                 <div className="reveal w-full flex justify-center" style={{ animationDelay: "120ms" }}><PhotoWidget /></div>
@@ -369,7 +369,7 @@ export default function App() {
                 <div
                   data-widget-area="true"
                   data-widget-column="left"
-                  className={`absolute top-36 ${macDockLeft ? "left-24" : "left-6"} flex flex-col gap-4 max-h-[calc(100vh-160px)] overflow-y-auto overscroll-contain thin-scroll pr-1 pb-20 pointer-events-auto z-20`}
+                  className={`absolute top-36 ${macDockLeft ? "left-24" : "left-6"} flex flex-col gap-4 max-h-[calc(100vh-160px)] overflow-y-auto overscroll-contain thin-scroll pr-1 pb-20 pointer-events-auto z-[15]`}
                 >
                   <div className="reveal" style={{ animationDelay: "140ms" }}><PhotoWidget /></div>
                   <div className="reveal" style={{ animationDelay: "190ms" }}><ShortcutTiles /></div>
@@ -379,7 +379,7 @@ export default function App() {
                 <div
                   data-widget-area="true"
                   data-widget-column="right"
-                  className={`absolute top-12 ${macDockRight ? "right-24" : "right-6"} flex flex-col gap-4 items-end max-h-[calc(100vh-100px)] overflow-y-auto overscroll-contain thin-scroll pl-1 pb-20 pointer-events-auto z-20`}
+                  className={`absolute top-12 ${macDockRight ? "right-24" : "right-6"} flex flex-col gap-4 items-end max-h-[calc(100vh-100px)] overflow-y-auto overscroll-contain thin-scroll pl-1 pb-20 pointer-events-auto z-[15]`}
                 >
                   <div className="reveal" style={{ animationDelay: "170ms" }}><WeatherWidget /></div>
                   <div className="reveal" style={{ animationDelay: "220ms" }}><ClockWidget /></div>
