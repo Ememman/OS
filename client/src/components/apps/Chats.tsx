@@ -983,8 +983,11 @@ export default function Chats() {
       setPinnedList((p) => p.filter((x) => x.id !== id));
       setActiveReactionMenu(null);
       setReplyTarget((curr) => (curr?.id === id ? null : curr));
-      socket.emit("chat:delete", { id });
-      fetch(`${API_URL}/api/chat/${id}`, { method: "DELETE" }).catch(() => {});
+      socket.emit("chat:delete", { id, senderId: clientIdRef.current });
+      fetch(`${API_URL}/api/chat/${id}`, {
+        method: "DELETE",
+        headers: { "x-client-id": clientIdRef.current },
+      }).catch(() => {});
       if (chatSound) soundFx.playPop();
       notify("Message Removed", "You removed a message.", "info", 2000);
     },

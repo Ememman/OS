@@ -109,16 +109,20 @@ mongoose.connection.on("error", (err) => {
   console.error("[MongoDB] Connection error:", err.message);
 });
 
-const DEFAULT_MONGODB_URI =
-  "mongodb+srv://mendozajamesemmanuel_db_user:sGDgreUP30KFryg9@cluster0.2m91o5d.mongodb.net/portfolio_os?retryWrites=true&w=majority";
-
 let retryTimer = null;
 
 /**
- * Connect to MongoDB Atlas with automatic retry and graceful fallback
+ * Connect to MongoDB Atlas with automatic retry and graceful fallback.
+ * Requires MONGODB_URI environment variable (never hardcode database credentials).
  */
 export async function connectDB() {
-  const uri = (process.env.MONGODB_URI || "").trim() || DEFAULT_MONGODB_URI;
+  const uri = (process.env.MONGODB_URI || "").trim();
+
+  if (!uri) {
+    isDbConnected = false;
+    console.warn("[MongoDB] MONGODB_URI is not set. Running with in-memory storage fallback.");
+    return false;
+  }
 
   if (retryTimer) {
     clearTimeout(retryTimer);

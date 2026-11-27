@@ -1170,7 +1170,7 @@ export default function MenuBar() {
             <MenuItem
               icon={<GIconGithub size={13} />}
               onClick={() => {
-                window.open("https://github.com/Ememman/OS", "_blank");
+                window.open("https://github.com/Ememman/OS", "_blank", "noopener,noreferrer");
                 setOpenMenu(null);
               }}>
               View Source on GitHub
@@ -1178,7 +1178,7 @@ export default function MenuBar() {
             <MenuItem
               icon={<GIconGithub size={13} />}
               onClick={() => {
-                window.open("https://github.com/Ememman", "_blank");
+                window.open("https://github.com/Ememman", "_blank", "noopener,noreferrer");
                 setOpenMenu(null);
               }}>
               Developer GitHub Profile (@Ememman)
