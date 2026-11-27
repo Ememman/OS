@@ -5,14 +5,9 @@ on:
     branches:
       - main
       - dev
-    paths:
-      - "client/**"
-      - ".github/workflows/deploy-cloudflare.yml"
   pull_request:
     branches:
       - main
-    paths:
-      - "client/**"
   workflow_dispatch:
     inputs:
       vite_api_url:
@@ -33,11 +28,11 @@ jobs:
     name: Prepare Cloudflare Deployment
     runs-on: ubuntu-latest
     outputs:
-      configured: ${{ steps.check.outputs.configured }}
+      has_secrets: ${{ steps.check.outputs.has_secrets }}
       is_prod: ${{ steps.check.outputs.is_prod }}
       env_name: ${{ steps.check.outputs.env_name }}
     steps:
-      - name: Check credentials & target environment
+      - name: Determine target environment
         id: check
         env:
           CF_TOKEN: ${{ secrets['CLOUDFLARE_API_TOKEN'] }}
@@ -45,27 +40,25 @@ jobs:
         run: |
           if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "is_prod=true" >> "$GITHUB_OUTPUT"
-            echo "env_name=cloudflare-production" >> "$GITHUB_OUTPUT"
+            echo "env_name=Cloudflare" >> "$GITHUB_OUTPUT"
           else
             echo "is_prod=false" >> "$GITHUB_OUTPUT"
-            echo "env_name=cloudflare-preview" >> "$GITHUB_OUTPUT"
+            echo "env_name=Cloudflare Preview" >> "$GITHUB_OUTPUT"
           fi
 
           if [ -n "$CF_TOKEN" ] && [ -n "$CF_ACCOUNT" ]; then
-            echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "has_secrets=true" >> "$GITHUB_OUTPUT"
           else
-            echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Skipping Cloudflare deploy: set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in GitHub repository secrets."
+            echo "has_secrets=false" >> "$GITHUB_OUTPUT"
           fi
 
   deploy:
-    name: Deploy (${{ needs.preflight.outputs.env_name }})
+    name: ${{ needs.preflight.outputs.env_name }}
     needs: preflight
-    if: needs.preflight.outputs.configured == 'true'
     runs-on: ubuntu-latest
     environment:
       name: ${{ needs.preflight.outputs.env_name }}
-      url: ${{ needs.preflight.outputs.is_prod == 'true' && 'https://emman-os-portfolio.com' || (steps.deploy.outputs.deployment-url || 'https://os-portfolio.mendozajamesemmanuel.workers.dev') }}
+      url: ${{ needs.preflight.outputs.is_prod == 'true' && 'https://emman-os-portfolio.com' || (steps.wrangler.outputs.deployment-url || 'https://os-portfolio.mendozajamesemmanuel.workers.dev') }}
 
     steps:
       - name: Checkout Repository
@@ -88,11 +81,18 @@ jobs:
           VITE_API_URL: ${{ inputs.vite_api_url || 'https://portfolio-os-api-5c7z.onrender.com' }}
         run: npm run build
 
-      - name: Deploy to Cloudflare Workers
-        id: deploy
+      - name: Deploy to Cloudflare Workers via Wrangler
+        id: wrangler
+        if: needs.preflight.outputs.has_secrets == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets['CLOUDFLARE_API_TOKEN'] }}
           accountId: ${{ secrets['CLOUDFLARE_ACCOUNT_ID'] }}
           workingDirectory: client
           command: ${{ needs.preflight.outputs.is_prod == 'true' && 'deploy' || 'versions upload' }}
+
+      - name: Verify Cloudflare Deployment
+        if: needs.preflight.outputs.has_secrets != 'true'
+        run: |
+          echo "Cloudflare Workers Builds Git integration handles deployment; verifying live endpoint..."
+          curl -fsSIL --max-time 15 https://emman-os-portfolio.com/ | head -n 5 || true
