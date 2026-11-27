@@ -330,7 +330,7 @@ if (typeof document !== "undefined") {
   applyHarmonizedPaletteToDoc(initialPalette, savedThemeMode);
 }
 
-let z = 10;
+let z = 100;
 
 const INITIAL_APP_UPDATES: Record<string, number> = {};
 
@@ -707,10 +707,11 @@ export const useOS = create<OSState>((set, get) => ({
         y: offsetY,
         w: baseW,
         h: baseH,
-        z: index + 10,
+        z: index + 100,
       };
     });
 
+    z = Math.max(z, cascaded.length + 100);
     set({ windows: cascaded });
   },
 
