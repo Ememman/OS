@@ -1020,12 +1020,24 @@ export default function Guestbook() {
                 const roleMeta = ROLE_OPTIONS.find((r) => r.id === item.role) || ROLE_OPTIONS[4];
                 const RoleIcon = roleMeta.Icon;
 
-                // Format website link
-                const formattedLink = item.link
-                  ? item.link.startsWith("http://") || item.link.startsWith("https://")
-                    ? item.link
-                    : `https://${item.link}`
-                  : null;
+                // Format and validate website link (strictly allow http/https only)
+                const formattedLink = (() => {
+                  if (!item.link) return null;
+                  const raw = item.link.trim();
+                  if (!raw || /^(javascript|data|vbscript):/i.test(raw)) return null;
+                  const candidate =
+                    raw.startsWith("http://") || raw.startsWith("https://")
+                      ? raw
+                      : `https://${raw}`;
+                  try {
+                    const parsed = new URL(candidate);
+                    return parsed.protocol === "http:" || parsed.protocol === "https:"
+                      ? parsed.toString()
+                      : null;
+                  } catch {
+                    return null;
+                  }
+                })();
 
                 return (
                   <div
@@ -1068,7 +1080,7 @@ export default function Guestbook() {
                               <a
                                 href={formattedLink}
                                 target="_blank"
-                                rel="noreferrer"
+                                rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
                                 className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-md font-medium border border-white/[0.08] bg-white/[0.02] text-white/60 hover:text-white hover:bg-white/[0.08] transition"
                                 title={formattedLink}

@@ -102,14 +102,17 @@ export default function CodePlay() {
   // Listen for console logs routed from the sandboxed iframe
   useEffect(() => {
     const handleFrameMessage = (event: MessageEvent) => {
+      // Sandboxed srcDoc iframes (without allow-same-origin) always have opaque origin "null"
+      if (event.origin !== "null") return;
       if (event.data && event.data.type === "CODEPLAY_CONSOLE") {
         const { logType, args } = event.data;
+        const safeType = ["log", "warn", "error", "info"].includes(logType) ? logType : "log";
         const getTime = () => new Date().toLocaleTimeString([], { hour12: false });
         setOutputLogs((prev) => [
-          ...prev,
+          ...prev.slice(-199),
           {
-            type: logType || "log",
-            args: Array.isArray(args) ? args : [String(args)],
+            type: safeType,
+            args: Array.isArray(args) ? args.slice(0, 20).map((a) => String(a).slice(0, 1000)) : [String(args).slice(0, 1000)],
             time: getTime(),
           },
         ]);
