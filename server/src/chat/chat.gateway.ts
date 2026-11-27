@@ -23,9 +23,10 @@ export interface ChatMessage {
   name: string;
   text: string;
   ts: number;
+  removed?: boolean;
   reactions?: Record<string, number>;
   userReactions?: Record<string, string>;
-  replyTo?: { id: string; name: string; text: string };
+  replyTo?: { id: string; name: string; text: string; removed?: boolean };
 }
 
 interface ConnectedUser {
@@ -291,6 +292,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         userReactions: msg.userReactions,
       });
     }
+  }
+
+  @SubscribeMessage("chat:delete")
+  handleDelete(@MessageBody() payload: { id?: string }) {
+    if (!payload?.id) return;
+    const target = this.chatHistory.find((m) => m.id === payload.id);
+    if (!target) return;
+
+    target.removed = true;
+    target.text = "Message removed";
+    target.reactions = {};
+    target.userReactions = {};
+
+    for (const m of this.chatHistory) {
+      if (m.replyTo && m.replyTo.id === payload.id) {
+        m.replyTo = { ...m.replyTo, text: "Removed message", removed: true };
+      }
+    }
+
+    const eventPayload = { id: payload.id, removed: true, name: target.name, senderId: target.senderId };
+    this.server.emit("chat:message_removed", eventPayload);
+    this.server.emit("chat:message_deleted", eventPayload);
   }
 
   @SubscribeMessage("chat:typing")
