@@ -22,6 +22,7 @@ const ChatMessageSchema = new mongoose.Schema(
       id: String,
       name: String,
       text: String,
+      removed: { type: Boolean, default: false },
     },
     isPinned: { type: Boolean, default: false, index: true },
     removed: { type: Boolean, default: false },

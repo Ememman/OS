@@ -15,7 +15,7 @@ export const projects = [
       "Audio player engine with HTML5 Audio & WebAudio analyzer visualizer",
       "Retro arcade games suite (Block Blast, 2048, Snake, Minesweeper)"
     ],
-    links: { repo: "https://github.com/Ememman/OS", live: "https://ememman.github.io/OS/" }
+    links: { repo: "https://github.com/Ememman/OS", live: "https://emman-os-portfolio.com/" }
   },
   {
     id: "flash-cards",
