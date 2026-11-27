@@ -295,10 +295,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage("chat:delete")
-  handleDelete(@MessageBody() payload: { id?: string }) {
+  handleDelete(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { id?: string; senderId?: string }
+  ) {
     if (!payload?.id) return;
     const target = this.chatHistory.find((m) => m.id === payload.id);
     if (!target) return;
+    const callerId = (client as any).clientId || String(payload.senderId || "");
+    if (target.senderId && callerId && target.senderId !== callerId) {
+      return;
+    }
 
     target.removed = true;
     target.text = "Message removed";

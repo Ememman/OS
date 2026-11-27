@@ -1,4 +1,5 @@
 import "dotenv/config";
+import crypto from "node:crypto";
 import dns from "node:dns";
 import os from "node:os";
 import fs from "node:fs";
@@ -31,16 +32,57 @@ dns.setDefaultResultOrder("ipv4first");
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+app.disable("x-powered-by");
+app.set("trust proxy", 1);
+
+// ---------- Strict Origin Allowlist (CORS & Socket.IO) ----------
+const EXTRA_ALLOWED_ORIGINS = String(process.env.CLIENT_URL || "")
+  .split(",")
+  .map((s) => s.trim().replace(/\/$/, ""))
+  .filter(Boolean);
+
+const ALLOWED_EXACT_ORIGINS = new Set([
+  "https://emman-os-portfolio.com",
+  "https://www.emman-os-portfolio.com",
+  "https://os-portfolio.mendozajamesemmanuel.workers.dev",
+  "https://ememman.github.io",
+  ...EXTRA_ALLOWED_ORIGINS,
+]);
+
+function isAllowedOrigin(origin) {
+  // Allow same-origin / server-to-server / CLI healthchecks with no Origin header
+  if (!origin) return true;
+  const normalized = String(origin).replace(/\/$/, "");
+  if (ALLOWED_EXACT_ORIGINS.has(normalized)) return true;
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(normalized)) return true;
+  // Allow Cloudflare Workers & Vercel preview deployments for this project
+  if (/^https:\/\/[a-z0-9-]*os[a-z0-9-]*\.mendozajamesemmanuel\.workers\.dev$/i.test(normalized)) return true;
+  if (/^https:\/\/[a-z0-9-]*(os|portfolio|ememman)[a-z0-9-]*\.vercel\.app$/i.test(normalized)) return true;
+  return false;
+}
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (isAllowedOrigin(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-client-id", "x-admin-key"],
+};
+
 // ---------- Security & Content Protection Middleware ----------
 app.use((req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "SAMEORIGIN");
-  res.setHeader("X-XSS-Protection", "1; mode=block");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   next();
 });
 
-app.use(cors({ origin: "*" }));
+app.use(cors(corsOptions));
 
 // Gzip & Brotli HTTP payload compression (graceful fallback if package is absent)
 try {
@@ -51,8 +93,23 @@ try {
 } catch {
   console.warn("[Server] 'compression' module not available, running without compression.");
 }
-app.use(express.json({ limit: "5mb" }));
-app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+app.use(express.json({ limit: "512kb" }));
+app.use(express.urlencoded({ extended: true, limit: "512kb" }));
+
+// ---------- Admin Auth Helper (Timing-Safe) ----------
+function isAdminRequest(req) {
+  const configuredKey = (process.env.ADMIN_API_KEY || "").trim();
+  if (!configuredKey) return false;
+  const authHeader = String(req.headers.authorization || "");
+  const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+  const provided = String(req.headers["x-admin-key"] || bearer || "").trim();
+  if (!provided || provided.length !== configuredKey.length) return false;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(provided, "utf8"), Buffer.from(configuredKey, "utf8"));
+  } catch {
+    return false;
+  }
+}
 
 // ---------- Validation & Sanitization Utilities ----------
 export function sanitizeText(str, maxLen = 1000) {
@@ -71,6 +128,39 @@ export function sanitizePlain(str, maxLen = 1000) {
   return str.trim().slice(0, maxLen);
 }
 
+export function sanitizeSafeUrl(raw, maxLen = 200) {
+  if (typeof raw !== "string") return "";
+  const trimmed = raw.trim().slice(0, maxLen);
+  if (!trimmed) return "";
+  if (/^(javascript|data|vbscript|file):/i.test(trimmed)) return "";
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const parsed = new URL(candidate);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return "";
+    return parsed.toString().slice(0, maxLen);
+  } catch {
+    return "";
+  }
+}
+
+export function sanitizeSafeAvatar(raw) {
+  const str = typeof raw === "string" ? raw.trim() : "";
+  if (!str) return "lorelei:guest";
+  // Allow DiceBear preset tokens like "lorelei:seed-name"
+  if (/^[a-z0-9_-]{2,32}:[a-z0-9 _.-]{1,64}$/i.test(str)) {
+    return str;
+  }
+  // Allow safe HTTPS image URLs
+  if (/^https:\/\//i.test(str)) {
+    return sanitizeSafeUrl(str, 500) || "lorelei:guest";
+  }
+  // Allow safe raster base64 data URIs up to 150 KB (explicitly reject SVG to prevent XSS)
+  if (/^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=]+$/i.test(str) && str.length <= 150000) {
+    return str;
+  }
+  return "lorelei:guest";
+}
+
 export function isValidEmail(email) {
   if (!email || typeof email !== "string") return false;
   const re = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
@@ -79,15 +169,20 @@ export function isValidEmail(email) {
 
 // ---------- In-Memory Rate Limiting (Sliding Window) ----------
 const rateLimitBuckets = new Map();
+const MAX_RATE_LIMIT_BUCKETS = 5000;
 
 function createRateLimiter(options = { windowMs: 60000, max: 120, message: "Too many requests. Please slow down." }) {
   return (req, res, next) => {
-    const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress || "127.0.0.1";
+    const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
     const key = `${req.baseUrl || req.path}:${ip}`;
     const now = Date.now();
     let record = rateLimitBuckets.get(key);
 
     if (!record || now - record.resetTime > options.windowMs) {
+      if (rateLimitBuckets.size >= MAX_RATE_LIMIT_BUCKETS) {
+        const oldestKey = rateLimitBuckets.keys().next().value;
+        if (oldestKey) rateLimitBuckets.delete(oldestKey);
+      }
       record = { count: 1, resetTime: now };
       rateLimitBuckets.set(key, record);
     } else {
@@ -122,7 +217,7 @@ app.use("/api", generalLimiter);
 
 // ---------- HTTP Server & Socket.IO Initialization ----------
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, { cors: corsOptions });
 
 // ---------- Activity Stream & Notifications ----------
 let activityFeed = [
@@ -546,7 +641,11 @@ app.post("/api/projects/:id/feedback", strictSubmissionLimiter, (req, res) => {
 // ---------- Contact / Hire Inquiry Endpoint with Schema Validation ----------
 let contactInquiries = [];
 
+// Protected: never expose private visitor contact inquiries (emails/messages) publicly
 app.get("/api/contact/inquiries", (req, res) => {
+  if (!isAdminRequest(req)) {
+    return res.status(401).json({ ok: false, error: "Unauthorized" });
+  }
   res.json({ count: contactInquiries.length, inquiries: contactInquiries.slice(0, 20) });
 });
 
@@ -583,6 +682,7 @@ app.post("/api/contact", strictSubmissionLimiter, (req, res) => {
   };
 
   contactInquiries.unshift(inquiry);
+  if (contactInquiries.length > 50) contactInquiries = contactInquiries.slice(0, 50);
   addActivity("contact", `Inquiry received from ${cleanName}: "${cleanSubject}"`);
   if (isDbConnected) {
     ContactInquiryModel.create(inquiry).catch((err) => console.error("[DB] Failed to save contact inquiry:", err.message));
@@ -622,13 +722,11 @@ app.get("/api/system/info", (req, res) => {
     os: {
       platform: os.platform(),
       arch: os.arch(),
-      release: os.release(),
       uptime: os.uptime(),
-      hostname: os.hostname(),
+      hostname: "portfolio-os-node",
     },
     node: {
-      version: process.version,
-      pid: process.pid,
+      version: process.version.split(".")[0] + ".x",
       uptimeSeconds: Math.floor(process.uptime()),
     },
     cpu: {
@@ -1590,17 +1688,21 @@ app.get("/api/files/:id", (req, res) => {
   res.json({ ok: true, file });
 });
 
-app.post("/api/files", (req, res) => {
+app.post("/api/files", strictSubmissionLimiter, (req, res) => {
   const { id, name, path: filePath, content, type } = req.body || {};
   const cleanName = sanitizePlain(name, 60);
   if (!cleanName) return res.status(400).json({ ok: false, error: "Filename is required" });
 
-  const rawContent = typeof content === "string" ? content : "";
-  const cleanPath = String(filePath || "/").trim();
-  const fileType = String(type || "text").trim().toLowerCase();
+  const rawContent = typeof content === "string" ? content.slice(0, 100000) : "";
+  const cleanPath = sanitizePlain(filePath || "/", 120) || "/";
+  const fileType = String(type || "text").trim().toLowerCase().slice(0, 24);
 
   const fileId = id || `file-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   const existingIdx = cloudFiles.findIndex((f) => f.id === fileId);
+
+  if (existingIdx === -1 && cloudFiles.length >= 80) {
+    return res.status(429).json({ ok: false, error: "Cloud drive file limit reached." });
+  }
 
   const fileObj = {
     id: fileId,
@@ -1753,25 +1855,37 @@ app.get("/api/github/stats", (req, res) => {
 
 // ---------- Weather Proxy (Cached & Resilient) ----------
 const weatherCache = new Map();
+const MAX_WEATHER_CACHE = 200;
 app.get("/api/weather", async (req, res) => {
-  const lat = parseFloat(req.query.lat) || 14.5995;
-  const lon = parseFloat(req.query.lon) || 120.9842;
+  const rawLat = Number(req.query.lat);
+  const rawLon = Number(req.query.lon);
+  const lat = Number.isFinite(rawLat) ? Math.max(-90, Math.min(90, rawLat)) : 14.5995;
+  const lon = Number.isFinite(rawLon) ? Math.max(-180, Math.min(180, rawLon)) : 120.9842;
   const key = `${lat.toFixed(2)},${lon.toFixed(2)}`;
   const cached = weatherCache.get(key);
   if (cached && Date.now() - cached.ts < 600000) {
     return res.json(cached.data);
   }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=3`;
-    const r = await fetch(url);
+    const r = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
     if (r.ok) {
       const data = await r.json();
       if (data && data.current && data.hourly) {
+        if (weatherCache.size >= MAX_WEATHER_CACHE) {
+          const oldestKey = weatherCache.keys().next().value;
+          if (oldestKey) weatherCache.delete(oldestKey);
+        }
         weatherCache.set(key, { ts: Date.now(), data });
         return res.json(data);
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    clearTimeout(timeoutId);
+  }
 
   // Safe mock fallback with full 24h hourly timestamps for uninterrupted widget rendering
   const now = new Date();
@@ -1863,9 +1977,9 @@ app.post("/api/guestbook", strictSubmissionLimiter, (req, res) => {
 
   const cleanName = sanitizeText(name, 40);
   const cleanRole = sanitizePlain(role || "Visitor", 30);
-  const cleanAvatar = String(avatar || "lorelei:guest").trim().slice(0, 500000);
+  const cleanAvatar = sanitizeSafeAvatar(avatar);
   const cleanMsg = sanitizeText(message, 500);
-  const cleanLink = sanitizePlain(link || "", 200);
+  const cleanLink = sanitizeSafeUrl(link || "", 200);
   const cleanLocation = sanitizeText(location || "", 80);
 
   if (!cleanName || cleanName.length < 2) {
@@ -1973,8 +2087,8 @@ app.post("/api/terminal/exec", async (req, res) => {
       return res.json({
         ok: true,
         output: [
-          `Server Host: ${os.hostname()} (${os.platform()} ${os.arch()})`,
-          `Node Version: ${process.version}`,
+          `Server Host: portfolio-os-node (${os.platform()} ${os.arch()})`,
+          `Node Runtime: ${process.version.split(".")[0]}.x`,
           `Process Uptime: ${hours}h ${mins}m ${secs}s`,
           `Heap Memory: ${Math.round(mem.heapUsed / 1024 / 1024)}MB / ${Math.round(mem.heapTotal / 1024 / 1024)}MB`,
           `RSS Memory: ${Math.round(mem.rss / 1024 / 1024)}MB`,
@@ -2716,13 +2830,19 @@ function markChatMessageRemoved(id) {
   return target;
 }
 
-app.delete("/api/chat/:id", (req, res) => {
+app.delete("/api/chat/:id", strictSubmissionLimiter, (req, res) => {
   const { id } = req.params;
-  const target = markChatMessageRemoved(id);
-  if (target) {
-    return res.json({ ok: true, id, removed: true });
+  const target = chatHistory.find((m) => m.id === id);
+  if (!target) {
+    return res.status(404).json({ ok: false, error: "Message not found" });
   }
-  res.status(404).json({ ok: false, error: "Message not found" });
+  const callerClientId = String(req.headers["x-client-id"] || "").trim();
+  const isOwner = Boolean(target.senderId && callerClientId && target.senderId === callerClientId);
+  if (!isOwner && !isAdminRequest(req)) {
+    return res.status(403).json({ ok: false, error: "You can only remove your own messages." });
+  }
+  markChatMessageRemoved(id);
+  return res.json({ ok: true, id, removed: true });
 });
 
 app.get("/api/chat/export", (req, res) => {
@@ -2987,8 +3107,15 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Chat message unsend / removal via socket
-  socket.on("chat:delete", ({ id }) => {
+  // Chat message unsend / removal via socket (enforces sender ownership)
+  socket.on("chat:delete", ({ id, senderId } = {}) => {
+    if (!id) return;
+    const target = chatHistory.find((m) => m.id === id);
+    if (!target) return;
+    const callerId = socket.data.clientId || String(senderId || "");
+    if (target.senderId && callerId && target.senderId !== callerId) {
+      return;
+    }
     markChatMessageRemoved(id);
   });
 
