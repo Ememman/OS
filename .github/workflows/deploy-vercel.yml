@@ -5,14 +5,9 @@ on:
     branches:
       - main
       - dev
-    paths:
-      - "client/**"
-      - ".github/workflows/deploy-vercel.yml"
   pull_request:
     branches:
       - main
-    paths:
-      - "client/**"
   workflow_dispatch:
     inputs:
       vite_api_url:
@@ -33,11 +28,11 @@ jobs:
     name: Prepare Vercel Deployment
     runs-on: ubuntu-latest
     outputs:
-      configured: ${{ steps.check.outputs.configured }}
+      has_secrets: ${{ steps.check.outputs.has_secrets }}
       is_prod: ${{ steps.check.outputs.is_prod }}
       env_name: ${{ steps.check.outputs.env_name }}
     steps:
-      - name: Check credentials & target environment
+      - name: Determine target environment
         id: check
         env:
           V_TOKEN: ${{ secrets['VERCEL_TOKEN'] }}
@@ -46,27 +41,25 @@ jobs:
         run: |
           if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "is_prod=true" >> "$GITHUB_OUTPUT"
-            echo "env_name=vercel-production" >> "$GITHUB_OUTPUT"
+            echo "env_name=Vercel" >> "$GITHUB_OUTPUT"
           else
             echo "is_prod=false" >> "$GITHUB_OUTPUT"
-            echo "env_name=vercel-preview" >> "$GITHUB_OUTPUT"
+            echo "env_name=Vercel Preview" >> "$GITHUB_OUTPUT"
           fi
 
           if [ -n "$V_TOKEN" ] && [ -n "$V_ORG" ] && [ -n "$V_PROJECT" ]; then
-            echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "has_secrets=true" >> "$GITHUB_OUTPUT"
           else
-            echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Skipping Vercel Action deploy: set VERCEL_TOKEN, VERCEL_ORG_ID, and VERCEL_PROJECT_ID in GitHub repository secrets (or connect the Vercel GitHub App)."
+            echo "has_secrets=false" >> "$GITHUB_OUTPUT"
           fi
 
   deploy:
-    name: Deploy (${{ needs.preflight.outputs.env_name }})
+    name: ${{ needs.preflight.outputs.env_name }}
     needs: preflight
-    if: needs.preflight.outputs.configured == 'true'
     runs-on: ubuntu-latest
     environment:
       name: ${{ needs.preflight.outputs.env_name }}
-      url: ${{ steps.deploy.outputs.url }}
+      url: ${{ steps.deploy.outputs.url || 'https://emman-os-portfolio.com' }}
 
     steps:
       - name: Checkout Repository
@@ -79,11 +72,23 @@ jobs:
           cache: "npm"
           cache-dependency-path: client/package-lock.json
 
+      - name: Install Dependencies & Build Verification
+        if: needs.preflight.outputs.has_secrets != 'true'
+        working-directory: client
+        env:
+          VITE_API_URL: ${{ inputs.vite_api_url || 'https://portfolio-os-api-5c7z.onrender.com' }}
+        run: |
+          npm ci || npm install
+          npm run build
+          echo "Vercel GitHub App handles live deployment; Vite build verified."
+
       - name: Install Vercel CLI
+        if: needs.preflight.outputs.has_secrets == 'true'
         run: npm install --global vercel@latest
 
       - name: Pull, Build & Deploy to Vercel
         id: deploy
+        if: needs.preflight.outputs.has_secrets == 'true'
         working-directory: client
         env:
           VERCEL_TOKEN: ${{ secrets['VERCEL_TOKEN'] }}
